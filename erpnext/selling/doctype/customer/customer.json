@@ -152,7 +152,7 @@
    "depends_on": "eval:doc.customer_type!='Company'",
    "fieldname": "salutation",
    "fieldtype": "Link",
-   "label": "Danh X\u01b0ng",
+   "label": "Salutation",
    "link_filters": "[[\"Salutation\",\"name\",\"in\",[\"B\u00e1c\",\"Ch\u00fa\",\"C\u00f4\",\"Ch\u1ecb\",\"Anh\",\"B\u00e0\",\"\u00d4ng\"]]]",
    "options": "Salutation"
   },
@@ -889,7 +889,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2025-05-07 01:19:33.718859",
+ "modified": "2025-05-07 02:40:55.337020",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",
