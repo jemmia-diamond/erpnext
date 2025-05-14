@@ -110,8 +110,6 @@
   "contact_phone",
   "contact_mobile",
   "contact_email",
-  "invoice_location",
-  "invoice_date",
   "column_break_biok",
   "default_address_heading",
   "customer_address",
@@ -121,18 +119,17 @@
   "shipping_address_heading",
   "shipping_address_name",
   "shipping_address",
-  "shipping_address_column",
+  "customer_section_break",
   "column_break_xnxx",
+  "customer",
+  "gender",
+  "birth_date",
   "column_break_93",
+  "customer_personal_id",
+  "date_of_issuance",
+  "place_of_issuance",
   "dispatch_address_name",
   "dispatch_address",
-  "customer",
-  "birth_date",
-  "gender",
-  "column_break_xpik",
-  "customer_personal_id",
-  "place_of_issuance",
-  "date_of_issuance",
   "col_break46",
   "company_address",
   "company_address_display",
@@ -178,8 +175,9 @@
   "campaign",
   "party_account_currency",
   "payment_schedule_section",
-  "payment_section",
+  "payment_section_section",
   "payment_records",
+  "paid_in_percentage",
   "payment_terms_section",
   "payment_terms_template",
   "payment_schedule",
@@ -190,12 +188,15 @@
   "section_break1",
   "sales_team",
   "haravan_tab",
+  "section_break_pulu",
   "haravan_order_id",
   "haravan_ref_order_id",
   "cancelled_status",
   "column_break_phue",
   "haravan_created_at",
   "source_name",
+  "section_break_gxdk",
+  "ref_sales_orders",
   "connections_tab"
  ],
  "fields": [
@@ -344,7 +345,6 @@
    "fieldtype": "Date",
    "hide_days": 1,
    "hide_seconds": 1,
-   "in_list_view": 1,
    "label": "Delivery Date",
    "no_copy": 1
   },
@@ -477,6 +477,7 @@
    "allow_on_submit": 1,
    "fieldname": "shipping_address_name",
    "fieldtype": "Link",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Shipping Address Name",
@@ -487,6 +488,7 @@
    "allow_on_submit": 1,
    "fieldname": "shipping_address",
    "fieldtype": "Small Text",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Shipping Address",
@@ -1338,7 +1340,6 @@
    "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
-   "in_standard_filter": 1,
    "label": "Delivery Status",
    "no_copy": 1,
    "options": "Not Delivered\nFully Delivered\nPartially Delivered\nClosed\nNot Applicable",
@@ -1351,7 +1352,6 @@
    "fieldtype": "Percent",
    "hide_days": 1,
    "hide_seconds": 1,
-   "in_list_view": 1,
    "label": "%  Delivered",
    "no_copy": 1,
    "oldfieldname": "per_delivered",
@@ -1373,7 +1373,6 @@
    "fieldtype": "Percent",
    "hide_days": 1,
    "hide_seconds": 1,
-   "in_list_view": 1,
    "label": "% Amount Billed",
    "no_copy": 1,
    "oldfieldname": "per_billed",
@@ -1645,11 +1644,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "shipping_address_column",
-   "fieldtype": "Section Break",
-   "label": "Shipping Adress"
-  },
-  {
    "fieldname": "column_break_93",
    "fieldtype": "Column Break",
    "hidden": 1
@@ -1718,6 +1712,8 @@
   {
    "fieldname": "order_number",
    "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Order Number",
    "read_only": 1,
    "unique": 1
@@ -1739,32 +1735,25 @@
   {
    "fieldname": "haravan_order_id",
    "fieldtype": "Int",
-   "label": "Haravan Order ID"
+   "label": "Haravan Order ID",
+   "read_only": 1
   },
   {
    "fieldname": "haravan_ref_order_id",
    "fieldtype": "Int",
-   "label": "Haravan Ref Order ID"
+   "label": "Haravan Ref Order ID",
+   "read_only": 1
   },
   {
    "fieldname": "haravan_created_at",
    "fieldtype": "Datetime",
-   "label": "Haravan Created At"
+   "label": "Haravan Created At",
+   "read_only": 1
   },
   {
    "fieldname": "product_category",
    "fieldtype": "Select",
    "label": "Product Category"
-  },
-  {
-   "fieldname": "invoice_location",
-   "fieldtype": "Select",
-   "label": "Invoice Location"
-  },
-  {
-   "fieldname": "invoice_date",
-   "fieldtype": "Datetime",
-   "label": "Invoice Date"
   },
   {
    "fieldname": "section_break_uceh",
@@ -1785,10 +1774,6 @@
    "fieldname": "customer_personal_id",
    "fieldtype": "Data",
    "label": "CMND/CCCD"
-  },
-  {
-   "fieldname": "column_break_xpik",
-   "fieldtype": "Column Break"
   },
   {
    "fetch_from": "customer.place_of_issuance",
@@ -1816,8 +1801,7 @@
   },
   {
    "fieldname": "address_contact_section",
-   "fieldtype": "Section Break",
-   "label": "Address Contact Section"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "column_break_biok",
@@ -1842,12 +1826,14 @@
   {
    "fieldname": "source_name",
    "fieldtype": "Data",
-   "label": "Source Name"
+   "label": "Source Name",
+   "read_only": 1
   },
   {
    "fieldname": "payment_records",
    "fieldtype": "Table",
-   "options": "Sales Order Payment Record"
+   "options": "Sales Order Payment Record",
+   "read_only": 1
   },
   {
    "fieldname": "sales_team_tab",
@@ -1861,8 +1847,7 @@
   },
   {
    "fieldname": "shipping_address_heading",
-   "fieldtype": "Heading",
-   "label": "Shipping Address Heading"
+   "fieldtype": "Heading"
   },
   {
    "fieldname": "contact_info_heading",
@@ -1875,16 +1860,43 @@
    "label": "Default Address Heading"
   },
   {
-   "fieldname": "payment_section",
+   "fieldname": "customer_section_break",
    "fieldtype": "Section Break",
-   "label": "Payment Section"
+   "label": "Customer"
+  },
+  {
+   "fieldname": "paid_in_percentage",
+   "fieldtype": "Percent",
+   "label": "Paid In Percentage",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_section_section",
+   "fieldtype": "Section Break",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ref_sales_orders",
+   "fieldtype": "Table",
+   "label": "Reference Sales Orders",
+   "options": "Dynamic Link",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_gxdk",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_pulu",
+   "fieldtype": "Section Break",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-09 11:46:00.666904",
+ "modified": "2025-05-14 15:44:51.776407",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",

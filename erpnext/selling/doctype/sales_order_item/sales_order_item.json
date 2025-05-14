@@ -179,6 +179,7 @@
    "oldfieldtype": "Data",
    "print_hide": 1,
    "print_width": "150",
+   "read_only": 1,
    "reqd": 1,
    "width": "150"
   },
@@ -237,6 +238,7 @@
    "oldfieldtype": "Currency",
    "precision": "0",
    "print_width": "100px",
+   "read_only": 1,
    "reqd": 1,
    "width": "100px"
   },
@@ -298,6 +300,7 @@
    "options": "currency",
    "print_hide": 1,
    "print_width": "70px",
+   "read_only": 1,
    "width": "70px"
   },
   {
@@ -366,7 +369,8 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Discount Amount",
-   "options": "currency"
+   "options": "currency",
+   "read_only": 1
   },
   {
    "depends_on": "eval:doc.margin_type && doc.price_list_rate && doc.margin_rate_or_amount",
@@ -393,6 +397,7 @@
    "oldfieldtype": "Currency",
    "options": "currency",
    "print_width": "100px",
+   "read_only": 1,
    "width": "100px"
   },
   {
@@ -1013,12 +1018,14 @@
   {
    "fieldname": "sku",
    "fieldtype": "Data",
-   "label": "SKU"
+   "label": "SKU",
+   "read_only": 1
   },
   {
    "fieldname": "barcode",
    "fieldtype": "Data",
-   "label": "Barcode"
+   "label": "Barcode",
+   "read_only": 1
   },
   {
    "fieldname": "haravan_variant_id",
@@ -1043,7 +1050,8 @@
   {
    "fieldname": "variant_title",
    "fieldtype": "Data",
-   "label": "Variant Title"
+   "label": "Variant Title",
+   "read_only": 1
   },
   {
    "fieldname": "product_details",
@@ -1138,7 +1146,7 @@
  "idx": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-05-08 14:23:20.494611",
+ "modified": "2025-05-14 16:00:35.619580",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order Item",

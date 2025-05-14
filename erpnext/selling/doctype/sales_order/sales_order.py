@@ -60,6 +60,7 @@ class SalesOrder(SellingController):
 		from erpnext.selling.doctype.sales_order_promotion.sales_order_promotion import SalesOrderPromotion
 		from erpnext.selling.doctype.sales_team.sales_team import SalesTeam
 		from erpnext.stock.doctype.packed_item.packed_item import PackedItem
+		from frappe.core.doctype.dynamic_link.dynamic_link import DynamicLink
 		from frappe.types import DF
 
 		additional_discount_percentage: DF.Float
@@ -120,8 +121,6 @@ class SalesOrder(SellingController):
 		in_words: DF.Data | None
 		incoterm: DF.Link | None
 		inter_company_order_reference: DF.Link | None
-		invoice_date: DF.Datetime | None
-		invoice_location: DF.Literal[None]
 		is_internal_customer: DF.Check
 		items: DF.Table[SalesOrderItem]
 		language: DF.Data | None
@@ -135,6 +134,7 @@ class SalesOrder(SellingController):
 		order_type: DF.Literal["Sales", "Maintenance", "Shopping Cart"]
 		other_charges_calculation: DF.TextEditor | None
 		packed_items: DF.Table[PackedItem]
+		paid_in_percentage: DF.Percent
 		party_account_currency: DF.Link | None
 		payment_records: DF.Table[SalesOrderPaymentRecord]
 		payment_schedule: DF.Table[PaymentSchedule]
@@ -151,6 +151,7 @@ class SalesOrder(SellingController):
 		product_category: DF.Literal[None]
 		project: DF.Link | None
 		promotions: DF.TableMultiSelect[SalesOrderPromotion]
+		ref_sales_orders: DF.Table[DynamicLink]
 		represents_company: DF.Link | None
 		reserve_stock: DF.Check
 		rounded_total: DF.Currency
@@ -759,27 +760,23 @@ class SalesOrder(SellingController):
 		)
 
 
-	def cancel_sales_order(self):
-		if self.docstatus == 1:  # Only cancel submitted documents
-			self.cancel()
-		elif self.docstatus == 0:  # For draft documents
-			self.flags.ignore_permissions = True
-			self.docstatus = 2
-			self.flags.ignore_on_cancel = True
+	def handle_order_cancellation(self):
+		"""
+			If order from Haravan is cancelled, cancel the current order too
+		"""
+		if self.cancelled_status == "Cancelled":
+			if self.docstatus == 1:  # Only cancel submitted documents
+				self.cancel()
+			elif self.docstatus == 0:  # For draft documents
+				self.flags.ignore_permissions = True
+				self.docstatus = 2
+				self.flags.ignore_on_cancel = True
 
 	def before_save(self):
-		"""
-			If order from Haravan is cancelled, cancel the current order too
-		"""
-		if self.cancelled_status == "Cancelled":
-			self.cancel_sales_order()
-
+		self.handle_order_cancellation()
+		
 	def before_insert(self):
-		"""
-			If order from Haravan is cancelled, cancel the current order too
-		"""
-		if self.cancelled_status == "Cancelled":
-			self.cancel_sales_order()
+		self.handle_order_cancellation()
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:
 	"""Returns the unreserved quantity for the Sales Order Item."""
