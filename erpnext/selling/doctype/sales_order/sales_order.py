@@ -134,7 +134,6 @@ class SalesOrder(SellingController):
 		order_type: DF.Literal["Sales", "Maintenance", "Shopping Cart"]
 		other_charges_calculation: DF.TextEditor | None
 		packed_items: DF.Table[PackedItem]
-		paid_in_percentage: DF.Percent
 		party_account_currency: DF.Link | None
 		payment_records: DF.Table[SalesOrderPaymentRecord]
 		payment_schedule: DF.Table[PaymentSchedule]
@@ -759,11 +758,19 @@ class SalesOrder(SellingController):
 			voucher_type=self.doctype, voucher_no=self.name, sre_list=sre_list, notify=notify
 		)
 
+	def handle_payment_transaction(self):
+		"""Handle Payment Transaction for Sales Order, Calculate Percentage of billed Amount"""
+		
+		if isinstance(self.payment_records, list):
+			total_amount = sum([x.get("amount") for x in self.payment_records])
+			if self.grand_total != 0:
+				self.per_billed = round((total_amount / self.grand_total) * 100, 2)
+			else:
+				self.per_billed = 100
 
 	def handle_order_cancellation(self):
-		"""
-			If order from Haravan is cancelled, cancel the current order too
-		"""
+		"""If order from Haravan is cancelled, cancel the current order too"""
+
 		if self.cancelled_status == "Cancelled":
 			if self.docstatus == 1:  # Only cancel submitted documents
 				self.cancel()
@@ -774,9 +781,11 @@ class SalesOrder(SellingController):
 
 	def before_save(self):
 		self.handle_order_cancellation()
+		self.handle_payment_transaction()
 		
 	def before_insert(self):
 		self.handle_order_cancellation()
+		self.handle_payment_transaction()
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:
 	"""Returns the unreserved quantity for the Sales Order Item."""
