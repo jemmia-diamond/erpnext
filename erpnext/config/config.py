@@ -1,11 +1,6 @@
-import os
-import os
-from dotenv import load_dotenv
-
-# Load environment variables from a .env file
-load_dotenv()
+import frappe
 
 class ConfigBase:
-    GAPONE_API_KEY: str  = os.getenv("GAPONE_API_KEY")
+    GAPONE_API_KEY: str  = frappe.conf.get("gapone_api_key")
 
 config = ConfigBase()
