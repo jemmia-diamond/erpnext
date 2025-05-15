@@ -1,7 +1,9 @@
 # Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-# import frappe
+import frappe
+from erpnext.config.config import config
+from erpnext.packages.gapone_client import GapOneClient
 from frappe.model.document import Document
 
 
@@ -16,7 +18,20 @@ class SMSTemplate(Document):
 
 		branch_name: DF.Literal[None]
 		content: DF.Text | None
-		name1: DF.SmallText | None
-		type: DF.Literal["Advertisement", "Customer Care"]
+		template_name: DF.SmallText | None
+		template_staus: DF.Literal["Drafting", "Done"]
+		template_type: DF.Literal["Advertisement", "Customer Care"]
 	# end: auto-generated types
 	pass
+
+
+@frappe.whitelist()
+def get_branches():
+	"""
+	get branches
+	"""
+	gap_one_client = GapOneClient(api_key=config.GAPONE_API_KEY)
+	branches = gap_one_client.branch.get_branches()
+	
+	branch_names  = list(map(lambda x: x["name"], branches))
+	return branch_names

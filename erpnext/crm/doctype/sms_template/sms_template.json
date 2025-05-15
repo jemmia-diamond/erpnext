@@ -2,26 +2,23 @@
  "actions": [],
  "allow_rename": 1,
  "creation": "2025-05-15 04:36:41.195400",
+ "default_view": "Dashboard",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "name1_section",
-  "name1",
+  "template_name",
   "branch_name",
-  "type",
+  "template_type",
   "column_break_cymq",
-  "content"
+  "content",
+  "template_staus"
  ],
  "fields": [
   {
    "fieldname": "name1_section",
    "fieldtype": "Section Break",
    "label": "Create New Template"
-  },
-  {
-   "fieldname": "name1",
-   "fieldtype": "Small Text",
-   "label": "Name"
   },
   {
    "fieldname": "content",
@@ -31,6 +28,7 @@
   {
    "fieldname": "branch_name",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Branch name"
   },
   {
@@ -38,17 +36,31 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "type",
+   "fieldname": "template_name",
+   "fieldtype": "Small Text",
+   "label": "Name"
+  },
+  {
+   "fieldname": "template_type",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Type",
-   "length": 2,
    "options": "Advertisement\nCustomer Care"
+  },
+  {
+   "default": "Drafting",
+   "fieldname": "template_staus",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Drafting\nDone",
+   "sort_options": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-15 05:11:10.702376",
+ "modified": "2025-05-15 10:17:46.104507",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "SMS Template",
@@ -68,7 +80,10 @@
   }
  ],
  "row_format": "Dynamic",
+ "search_fields": "template_name",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "template_name"
 }
