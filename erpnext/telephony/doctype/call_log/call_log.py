@@ -79,9 +79,11 @@ class CallLog(Document):
 			# Add Contact
 			contact = self.get_contact_from_lead(lead)
 			self.add_link(link_type="Contact", link_name=contact)
-		
-		if lead := get_lead_with_phone_number(lead_number):
+			
 			self.add_link(link_type="Lead", link_name=lead)
+ 		
+		# if lead := get_lead_with_phone_number(lead_number):
+		# 	self.add_link(link_type="Lead", link_name=lead)
 
 		# Add Employee Name
 		if self.is_incoming_call():

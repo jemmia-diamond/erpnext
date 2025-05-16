@@ -34,7 +34,7 @@ def create_group(data):
     }
 
     group = frappe.get_doc(doc_data)
-    group.insert()
-    group.reload()
+    group.insert() 
+    group.reload() 
     print(f"Created {group.get("name")} {group.get("budget_label")}")
     return group
