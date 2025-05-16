@@ -78,7 +78,7 @@
   "company",
   "pancake_data",
   "stringee_data",
-  "website_from_data",
+  "website_form_data",
   "column_break_22",
   "language",
   "image",
@@ -696,7 +696,6 @@
   {
    "fieldname": "demand_notes",
    "fieldtype": "Small Text",
-   "hidden": 1,
    "label": "Demand Notes"
   },
   {
@@ -726,7 +725,7 @@
    "label": "Stringeex Data"
   },
   {
-   "fieldname": "website_from_data",
+   "fieldname": "website_form_data",
    "fieldtype": "JSON",
    "label": "Website Form Data"
   },
@@ -751,7 +750,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2025-05-13 19:47:45.265396",
+ "modified": "2025-05-14 02:54:06.691269",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",

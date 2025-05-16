@@ -93,7 +93,7 @@ class Lead(SellingController, CRMNote):
 		type: DF.Literal["Individual", "Company", "Consultant", "Channel Partner"]
 		unsubscribed: DF.Check
 		website: DF.Data | None
-		website_from_data: DF.JSON | None
+		website_form_data: DF.JSON | None
 		whatsapp_no: DF.Data | None
 	# end: auto-generated types
 
@@ -340,7 +340,14 @@ class Lead(SellingController, CRMNote):
 				parsed_pancake_data = frappe.parse_json(self.pancake_data)
 			except Exception as e:
 				parsed_pancake_data = None
-
+		
+		parsed_form_website_data = None
+		if self.website_form_data:
+			try:
+				parsed_form_website_data = frappe.parse_json(self.website_form_data)
+			except Exception as e:
+				parsed_form_website_data = None	
+			
 		contact.update(
 			{
 				"first_name": self.first_name or self.lead_name,
@@ -356,6 +363,9 @@ class Lead(SellingController, CRMNote):
 				"pancake_updated_at": parsed_pancake_data.get("updated_at") if parsed_pancake_data and parsed_pancake_data.get("updated_at") else None,
 				"pancake_page_id": parsed_pancake_data.get("page_id") if parsed_pancake_data and parsed_pancake_data.get("page_id") else None,
 				"can_inbox": parsed_pancake_data.get("can_inbox") if parsed_pancake_data and parsed_pancake_data.get("can_inbox") else 0,
+				"page_url": parsed_form_website_data.get("url_page") if  parsed_form_website_data and parsed_form_website_data.get("url_page") else None,
+				"remote_ip": parsed_form_website_data.get("ip") if  parsed_form_website_data and parsed_form_website_data.get("ip") else None,
+				"form_id": parsed_form_website_data.get("ladi_form_id") if  parsed_form_website_data and parsed_form_website_data.get("ladi_form_id") else None,
 			}
 		)
 

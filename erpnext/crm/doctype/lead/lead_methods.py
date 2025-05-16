@@ -92,7 +92,15 @@ def insert_lead(doc) -> "Document":
 			match = re.search(pattern, str(e))
 			if match:
 				reference_frappe_doc_name = match.group(0)
-				return frappe.get_doc(frappe_doc.doctype, reference_frappe_doc_name)
+				existing_doc = frappe.get_doc(frappe_doc.doctype, reference_frappe_doc_name)
+				existing_doc.update({
+					"demand_notes": frappe_doc.get("demand_notes", None),
+					"purpose_lead": frappe_doc.get("purpose_lead", None),
+					"budget_lead": frappe_doc.get("budget_lead", None)
+				})
+				existing_doc.save()
+				existing_doc.reload()
+				return existing_doc
 			return None
 
 @frappe.whitelist(methods=["POST", "PUT"])
