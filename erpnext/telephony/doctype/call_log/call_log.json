@@ -90,7 +90,7 @@
   },
   {
    "fieldname": "recording_url",
-   "fieldtype": "Text",
+   "fieldtype": "Long Text",
    "label": "Recording URL"
   },
   {
@@ -318,7 +318,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-12 03:09:09.460887",
+ "modified": "2025-05-15 22:29:00.579946",
  "modified_by": "Administrator",
  "module": "Telephony",
  "name": "Call Log",

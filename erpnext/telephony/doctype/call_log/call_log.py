@@ -48,7 +48,7 @@ class CallLog(Document):
 		project_name: DF.Data | None
 		record_path: DF.Data | None
 		recorded: DF.Check
-		recording_url: DF.Text | None
+		recording_url: DF.LongText | None
 		start_time: DF.Datetime | None
 		status: DF.Literal["Ringing", "In Progress", "Completed", "Failed", "Busy", "No Answer", "Queued", "Canceled"]
 		stop_time: DF.Datetime | None
