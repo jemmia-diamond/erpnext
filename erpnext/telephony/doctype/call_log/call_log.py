@@ -90,15 +90,22 @@ class CallLog(Document):
 			self.update_received_by()
 
 	def create_lead_from_phone(self, lead_number):
-		print("creating ...", lead_number)
-		lead = frappe.new_doc("Lead")
-		lead.update({
-			"lead_name": lead_number,  
-			"phone": lead_number,
-			"source": "CRM-LEAD-SOURCE-0000001",
-		})
-		lead.insert(ignore_permissions=True)
-		return lead
+		lead = frappe.get_doc(
+			{
+				"doctype": "Lead",
+				"lead_name": lead_number,
+				"phone": lead_number,
+				"source": "CRM-LEAD-SOURCE-0000001",
+			}
+		)
+		# lead = frappe.new_doc("Lead")
+		# lead.update({
+		# 	"lead_name": lead_number,  
+		# 	"phone": lead_number,
+		# 	"source": "CRM-LEAD-SOURCE-0000001",
+		# })
+		lead.insert(ignore_permissions=True, raise_direct_exception=True) 
+		return lead 
 
 	def get_contact_from_lead(self, lead):
 		contact = frappe.get_all(
