@@ -762,7 +762,8 @@ class SalesOrder(SellingController):
 		# allow to link to cancelled documents
 		self.flags.ignore_links = True
 		if isinstance(self.haravan_ref_order_id, int):
-			ref_sales_order = frappe.get_last_doc("Sales Order", filters=[["haravan_order_id", "=", 1688413232]])
+			# find sales order by haravan_ref_order_id
+			ref_sales_order = frappe.get_last_doc("Sales Order", filters=[["haravan_order_id", "=", self.haravan_ref_order_id]])
 			if not ref_sales_order or ref_sales_order.name == self.name:
 				return
 			# link to the reference sales order
