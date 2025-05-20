@@ -781,12 +781,17 @@ class SalesOrder(SellingController):
 	def handle_order_cancellation(self):
 		"""If order from Haravan is cancelled, cancel the current order too"""
 
+		DRAFT_STATUS = 0
+		SUBMITTED_STATUS = 1
+		CANCELLED_STATUS = 2
+
 		if self.cancelled_status == "Cancelled":
-			if self.docstatus == 1:  # Only cancel submitted documents
+			if self.docstatus == SUBMITTED_STATUS:  # Only cancel submitted documents
 				self.cancel()
-			elif self.docstatus == 0:  # For draft documents
+				return
+			if self.docstatus == DRAFT_STATUS:  # For draft documents
 				self.flags.ignore_permissions = True
-				self.docstatus = 2
+				self.docstatus = CANCELLED_STATUS
 				self.flags.ignore_on_cancel = True
 
 	def before_save(self):
