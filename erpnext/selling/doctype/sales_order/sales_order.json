@@ -116,7 +116,6 @@
   "address_display",
   "customer_group",
   "territory",
-  "shipping_address_heading",
   "shipping_address_name",
   "shipping_address",
   "customer_section_break",
@@ -1845,10 +1844,6 @@
    "label": "Details"
   },
   {
-   "fieldname": "shipping_address_heading",
-   "fieldtype": "Heading"
-  },
-  {
    "fieldname": "contact_info_heading",
    "fieldtype": "Heading",
    "label": "Contact Info Heading"
@@ -1888,7 +1883,7 @@
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-19 23:03:28.473091",
+ "modified": "2025-05-20 16:49:03.656446",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
