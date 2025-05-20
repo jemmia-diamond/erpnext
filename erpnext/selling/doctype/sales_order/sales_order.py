@@ -37,6 +37,7 @@ from erpnext.stock.doctype.stock_reservation_entry.stock_reservation_entry impor
 )
 from erpnext.stock.get_item_details import get_bin_details, get_default_bom, get_price_list_rate
 from erpnext.stock.stock_balance import get_reserved_qty, update_bin_qty
+from frappe.model.docstatus import DocStatus
 
 form_grid_templates = {"items": "templates/form_grid/item_grid.html"}
 
@@ -781,17 +782,13 @@ class SalesOrder(SellingController):
 	def handle_order_cancellation(self):
 		"""If order from Haravan is cancelled, cancel the current order too"""
 
-		DRAFT_STATUS = 0
-		SUBMITTED_STATUS = 1
-		CANCELLED_STATUS = 2
-
 		if self.cancelled_status == "Cancelled":
-			if self.docstatus == SUBMITTED_STATUS:  # Only cancel submitted documents
+			if self.docstatus == DocStatus.SUBMITTED:  # Only cancel submitted documents
 				self.cancel()
 				return
-			if self.docstatus == DRAFT_STATUS:  # For draft documents
+			if self.docstatus == DocStatus.DRAFT:  # For draft documents
 				self.flags.ignore_permissions = True
-				self.docstatus = CANCELLED_STATUS
+				self.docstatus = DocStatus.CANCELLED
 				self.flags.ignore_on_cancel = True
 
 	def before_save(self):
