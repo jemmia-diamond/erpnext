@@ -1,0 +1,13 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Lead",
+  "enabled": 1,
+  "modified": "2025-05-20 07:24:44.577269",
+  "module": null,
+  "name": "region_on_change",
+  "script": "frappe.ui.form.on('Lead', {\n\trefresh(frm) {\n\t\t// your code here\n\t    \n\t},\n\tprovince(frm) {\n        if (frm.doc.province) {\n            frappe.db.get_doc('Province', frm.doc.province).then(doc => {\n                frm.set_value('region', doc.region);\n            });\n        }\n    },\n\tregion(frm){\n\t    refresh_province(frm)\n\t},\n    refresh_province(frm){\n        frm.set_query(\"province\", function() {\n            if (frm.doc.region) {\n                return {\n                    filters: {\n                        region: frm.doc.region\n                    }\n                };\n            }\n        });\n    }\n})",
+  "view": "Form"
+ }
+]
