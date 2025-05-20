@@ -122,6 +122,8 @@
   "is_frozen",
   "disabled",
   "haravan_id",
+  "bizfly_id",
+  "bizfly_code",
   "portal_users_tab",
   "portal_users",
   "dashboard_tab",
@@ -864,6 +866,18 @@
    "fieldtype": "Int",
    "label": "Haravan ID",
    "read_only": 1
+  },
+  {
+   "fieldname": "bizfly_id",
+   "fieldtype": "Data",
+   "label": "Bizfly ID",
+   "unique": 1
+  },
+  {
+   "fieldname": "bizfly_code",
+   "fieldtype": "Data",
+   "label": "Bizfly Code",
+   "unique": 1
   }
  ],
  "icon": "fa fa-user",
@@ -877,7 +891,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2025-05-20 09:06:34.913540",
+ "modified": "2025-05-20 17:08:04.142854",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",
