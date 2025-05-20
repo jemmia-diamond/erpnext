@@ -194,7 +194,7 @@
   "column_break_phue",
   "haravan_created_at",
   "source_name",
-  "section_break_gxdk",
+  "section_break_ctso",
   "ref_sales_orders",
   "connections_tab"
  ],
@@ -1869,27 +1869,26 @@
    "read_only": 1
   },
   {
-   "fieldname": "ref_sales_orders",
-   "fieldtype": "Table",
-   "label": "Reference Sales Orders",
-   "options": "Dynamic Link",
-   "read_only": 1
-  },
-  {
-   "fieldname": "section_break_gxdk",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "section_break_pulu",
    "fieldtype": "Section Break",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_ctso",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "ref_sales_orders",
+   "fieldtype": "Table",
+   "label": "Ref Sales Order",
+   "options": "Sales Order Reference"
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-14 17:39:45.587576",
+ "modified": "2025-05-19 23:03:28.473091",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",

@@ -68,6 +68,7 @@ class Customer(TransactionBase):
 		email_id: DF.ReadOnly | None
 		first_channel: DF.Data | None
 		gender: DF.Link | None
+		haravan_id: DF.Int
 		image: DF.AttachImage | None
 		industry: DF.Link | None
 		invoice_type: DF.Literal["Individual", "Company"]

@@ -121,6 +121,7 @@
   "column_break_53",
   "is_frozen",
   "disabled",
+  "haravan_id",
   "portal_users_tab",
   "portal_users",
   "dashboard_tab",
@@ -857,6 +858,12 @@
    "fieldname": "detail_tab",
    "fieldtype": "Tab Break",
    "label": "Details"
+  },
+  {
+   "fieldname": "haravan_id",
+   "fieldtype": "Int",
+   "label": "Haravan ID",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-user",
@@ -870,7 +877,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2025-05-09 14:31:31.991153",
+ "modified": "2025-05-20 09:06:34.913540",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",

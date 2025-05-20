@@ -58,9 +58,9 @@ class SalesOrder(SellingController):
 		from erpnext.selling.doctype.sales_order_item.sales_order_item import SalesOrderItem
 		from erpnext.selling.doctype.sales_order_payment_record.sales_order_payment_record import SalesOrderPaymentRecord
 		from erpnext.selling.doctype.sales_order_promotion.sales_order_promotion import SalesOrderPromotion
+		from erpnext.selling.doctype.sales_order_reference.sales_order_reference import SalesOrderReference
 		from erpnext.selling.doctype.sales_team.sales_team import SalesTeam
 		from erpnext.stock.doctype.packed_item.packed_item import PackedItem
-		from frappe.core.doctype.dynamic_link.dynamic_link import DynamicLink
 		from frappe.types import DF
 
 		additional_discount_percentage: DF.Float
@@ -150,7 +150,7 @@ class SalesOrder(SellingController):
 		product_category: DF.Literal[None]
 		project: DF.Link | None
 		promotions: DF.TableMultiSelect[SalesOrderPromotion]
-		ref_sales_orders: DF.Table[DynamicLink]
+		ref_sales_orders: DF.Table[SalesOrderReference]
 		represents_company: DF.Link | None
 		reserve_stock: DF.Check
 		rounded_total: DF.Currency
@@ -758,15 +758,23 @@ class SalesOrder(SellingController):
 			voucher_type=self.doctype, voucher_no=self.name, sre_list=sre_list, notify=notify
 		)
 
-	def handle_payment_transaction(self):
-		"""Handle Payment Transaction for Sales Order, Calculate Percentage of billed Amount"""
-		
-		if isinstance(self.payment_records, list):
-			total_amount = sum([x.get("amount") for x in self.payment_records])
-			if self.grand_total != 0:
-				self.per_billed = round((total_amount / self.grand_total) * 100, 2)
-			else:
-				self.per_billed = 100
+	def handle_re_order(self):
+		# allow to link to cancelled documents
+		self.flags.ignore_links = True
+		if isinstance(self.haravan_ref_order_id, int):
+			ref_sales_order = frappe.get_last_doc("Sales Order", filters=[["haravan_order_id", "=", self.haravan_ref_order_id]])
+			if not ref_sales_order:
+				return
+			# link to the reference sales order
+			self.append("ref_sales_orders", {"sales_order": ref_sales_order.name})
+
+			# update allocation
+			if len(ref_sales_order.sales_team) > 0:
+				for team in ref_sales_order.sales_team:
+					self.append("sales_team", {
+						"sales_person": team.sales_person,
+						"allocated_percentage": team.allocated_percentage
+					})
 
 	def handle_order_cancellation(self):
 		"""If order from Haravan is cancelled, cancel the current order too"""
@@ -781,11 +789,10 @@ class SalesOrder(SellingController):
 
 	def before_save(self):
 		self.handle_order_cancellation()
-		self.handle_payment_transaction()
 		
 	def before_insert(self):
 		self.handle_order_cancellation()
-		self.handle_payment_transaction()
+		self.handle_re_order()
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:
 	"""Returns the unreserved quantity for the Sales Order Item."""
