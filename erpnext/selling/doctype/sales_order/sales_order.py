@@ -762,14 +762,15 @@ class SalesOrder(SellingController):
 		# allow to link to cancelled documents
 		self.flags.ignore_links = True
 		if isinstance(self.haravan_ref_order_id, int):
-			ref_sales_order = frappe.get_last_doc("Sales Order", filters=[["haravan_order_id", "=", self.haravan_ref_order_id]])
-			if not ref_sales_order:
+			ref_sales_order = frappe.get_last_doc("Sales Order", filters=[["haravan_order_id", "=", 1688413232]])
+			if not ref_sales_order or ref_sales_order.name == self.name:
 				return
 			# link to the reference sales order
 			self.append("ref_sales_orders", {"sales_order": ref_sales_order.name})
 
 			# update allocation
 			if len(ref_sales_order.sales_team) > 0:
+				self.sales_team = []  # Clear existing sales team entries
 				for team in ref_sales_order.sales_team:
 					self.append("sales_team", {
 						"sales_person": team.sales_person,
