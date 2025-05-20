@@ -791,8 +791,8 @@ class SalesOrder(SellingController):
 		self.handle_order_cancellation()
 		
 	def before_insert(self):
-		self.handle_order_cancellation()
 		self.handle_re_order()
+		self.handle_order_cancellation()
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:
 	"""Returns the unreserved quantity for the Sales Order Item."""
