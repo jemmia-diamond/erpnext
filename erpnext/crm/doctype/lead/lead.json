@@ -27,7 +27,6 @@
   "job_title",
   "last_name",
   "gender",
-  "region",
   "province",
   "col_break123",
   "lead_owner",
@@ -763,12 +762,6 @@
    "options": "Lead\nQualified Lead\nOpportunity\nCustomer"
   },
   {
-   "fieldname": "region",
-   "fieldtype": "Link",
-   "label": "Region",
-   "options": "Region"
-  },
-  {
    "fieldname": "province",
    "fieldtype": "Link",
    "label": "Province",
@@ -780,7 +773,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2025-05-20 07:12:55.677146",
+ "modified": "2025-05-21 06:19:37.861350",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",

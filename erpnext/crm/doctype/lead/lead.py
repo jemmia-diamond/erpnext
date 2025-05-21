@@ -83,7 +83,6 @@ class Lead(SellingController, CRMNote):
 		qualification_status: DF.Literal["Unqualified", "In Process", "Qualified"]
 		qualified_by: DF.Link | None
 		qualified_on: DF.Date | None
-		region: DF.Link | None
 		request_type: DF.Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
 		salutation: DF.Link | None
 		source: DF.Link | None
