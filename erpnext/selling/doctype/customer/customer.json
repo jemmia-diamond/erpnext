@@ -95,7 +95,7 @@
   "column_break_ikkg",
   "personal_tax_id",
   "bank_section",
-  "bank_name",
+  "bank_account",
   "credit_limit_section",
   "payment_terms",
   "credit_limits",
@@ -693,12 +693,6 @@
    "label": "Website"
   },
   {
-   "fieldname": "bank_name",
-   "fieldtype": "Link",
-   "label": "Bank Name",
-   "options": "Bank Account"
-  },
-  {
    "fieldname": "personal_tax_id",
    "fieldtype": "Data",
    "label": "Personal Tax ID"
@@ -855,6 +849,12 @@
    "fieldtype": "Data",
    "label": "Bizfly Code",
    "unique": 1
+  },
+  {
+   "fieldname": "bank_account",
+   "fieldtype": "Link",
+   "label": "Bank Account",
+   "options": "Bank Account"
   }
  ],
  "icon": "fa fa-user",
@@ -868,7 +868,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2025-05-21 10:09:03.334494",
+ "modified": "2025-05-21 10:21:49.144281",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",

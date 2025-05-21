@@ -39,7 +39,7 @@ class Customer(TransactionBase):
 
 		account_manager: DF.Link | None
 		accounts: DF.Table[PartyAccount]
-		bank_name: DF.Link | None
+		bank_account: DF.Link | None
 		birth_date: DF.Date | None
 		bizfly_code: DF.Data | None
 		bizfly_id: DF.Data | None
