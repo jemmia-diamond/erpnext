@@ -71,23 +71,32 @@ class CallLog(Document):
 		lead_number = self.get("from") if self.is_incoming_call() else self.get("to")
 		lead_number = strip_number(lead_number)
 
-		if contact := get_contact_with_phone_number(strip_number(lead_number)):
+		contact = get_contact_with_phone_number(strip_number(lead_number))
+		if contact:
 			self.add_link(link_type="Contact", link_name=contact)
-
 		else:
 			lead = self.create_lead_from_phone(lead_number)
-			# Add Contact
-			contact = self.get_contact_from_lead(lead)
-			self.add_link(link_type="Contact", link_name=contact)
+			contact_name = self.get_contact_from_lead(lead)
 			
+			self.add_link(link_type="Contact", link_name=contact_name)
 			self.add_link(link_type="Lead", link_name=lead)
- 		
-		# if lead := get_lead_with_phone_number(lead_number):
-		# 	self.add_link(link_type="Lead", link_name=lead)
-
+		
 		# Add Employee Name
 		if self.is_incoming_call():
 			self.update_received_by()
+
+		
+		contact = frappe.get_doc("Contact", contact_name)
+		contact.update({
+			"stringee_id": self.id,
+			"stringee_to_number": self.to,
+			"stringee_from_number": self.get("from"),
+			"stringee_start_time": self.start_time,
+			"stringee_from_internal": self.from_internal,
+			"stringee_to_internal": self.to_internal,
+			"stringee_recorded": self.recorded,
+			"video_call": self.video_call,
+		})
 
 	def create_lead_from_phone(self, lead_number):
 		lead = frappe.get_doc(
@@ -98,22 +107,20 @@ class CallLog(Document):
 				"source": "CRM-LEAD-SOURCE-0000001",
 			}
 		)
-		# lead = frappe.new_doc("Lead")
-		# lead.update({
-		# 	"lead_name": lead_number,  
-		# 	"phone": lead_number,
-		# 	"source": "CRM-LEAD-SOURCE-0000001",
-		# })
 		lead.insert(ignore_permissions=True, raise_direct_exception=True) 
 		return lead 
 
 	def get_contact_from_lead(self, lead):
-		contact = frappe.get_all(
-			"Contact", 
-			filters={"lead": lead.name}, 
-			limit=1
+		contacts = frappe.get_all(
+			"Dynamic Link",
+			filters={
+				"link_doctype": "Lead",
+				"link_name": lead.name,
+				"parenttype": "Contact"
+			},
+			fields=["parent"]
 		)
-		return contact[0] if contact else None
+		return contacts[0].get("parent") if contacts else None
 
 	def after_insert(self):
 		self.trigger_call_popup()
