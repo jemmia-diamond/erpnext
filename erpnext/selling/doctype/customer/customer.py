@@ -38,10 +38,8 @@ class Customer(TransactionBase):
 		from frappe.types import DF
 
 		account_manager: DF.Link | None
-		account_number: DF.Data | None
 		accounts: DF.Table[PartyAccount]
-		bank_account_name: DF.Data | None
-		bank_name: DF.Literal["Agribank", "ACB", "BIDV", "Vietcombank", "VietinBank", "Techcombank", "Sacombank", "MB Bank", "Eximbank", "VPBank", "SHB", "NamABank", "OceanBank", "TPBank"]
+		bank_name: DF.Link | None
 		birth_date: DF.Date | None
 		bizfly_code: DF.Data | None
 		bizfly_id: DF.Data | None

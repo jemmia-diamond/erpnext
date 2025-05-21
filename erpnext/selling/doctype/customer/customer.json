@@ -96,10 +96,6 @@
   "personal_tax_id",
   "bank_section",
   "bank_name",
-  "column_break_kufu",
-  "account_number",
-  "column_break_kqch",
-  "bank_account_name",
   "credit_limit_section",
   "payment_terms",
   "credit_limits",
@@ -698,14 +694,9 @@
   },
   {
    "fieldname": "bank_name",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "label": "Bank Name",
-   "options": "Agribank\nACB\nBIDV\nVietcombank\nVietinBank\nTechcombank\nSacombank\nMB Bank\nEximbank\nVPBank\nSHB\nNamABank\nOceanBank\nTPBank"
-  },
-  {
-   "fieldname": "account_number",
-   "fieldtype": "Data",
-   "label": "Account Number"
+   "options": "Bank Account"
   },
   {
    "fieldname": "personal_tax_id",
@@ -806,8 +797,7 @@
   },
   {
    "fieldname": "bank_section",
-   "fieldtype": "Section Break",
-   "label": "Bank Account"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "vat_name",
@@ -824,19 +814,6 @@
    "fieldname": "vat_address",
    "fieldtype": "Data",
    "label": "VAT Address"
-  },
-  {
-   "fieldname": "column_break_kufu",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_kqch",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "bank_account_name",
-   "fieldtype": "Data",
-   "label": "Bank Account Name"
   },
   {
    "fieldname": "address_section",
@@ -891,7 +868,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2025-05-20 17:08:04.142854",
+ "modified": "2025-05-21 10:09:03.334494",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",
