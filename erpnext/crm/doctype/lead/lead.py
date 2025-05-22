@@ -354,7 +354,7 @@ class Lead(SellingController, CRMNote):
 				"company_name": self.company_name,
 				"pancake_conversation_id": parsed_pancake_data.get("conversation_id") if parsed_pancake_data and parsed_pancake_data.get("conversation_id") else None,
 				"pancake_customer_id": parsed_pancake_data.get("customer_id") if parsed_pancake_data and parsed_pancake_data.get("customer_id") else None,
-				"inserted_at": parsed_pancake_data.get("inserted_at") if parsed_pancake_data and parsed_pancake_data.get("inserted_at") else None,
+				"pancake_inserted_at": parsed_pancake_data.get("inserted_at") if parsed_pancake_data and parsed_pancake_data.get("inserted_at") else None,
 				"pancake_updated_at": parsed_pancake_data.get("updated_at") if parsed_pancake_data and parsed_pancake_data.get("updated_at") else None,
 				"pancake_page_id": parsed_pancake_data.get("page_id") if parsed_pancake_data and parsed_pancake_data.get("page_id") else None,
 				"can_inbox": parsed_pancake_data.get("can_inbox") if parsed_pancake_data and parsed_pancake_data.get("can_inbox") else 0,
