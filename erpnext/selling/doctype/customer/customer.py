@@ -68,7 +68,7 @@ class Customer(TransactionBase):
 		disabled: DF.Check
 		dn_required: DF.Check
 		email_id: DF.ReadOnly | None
-		first_channel: DF.Literal["", "Facebook", "Zalo", "TikTok", "Call Center", "Website Form", "Visiting Guests", "Email"]
+		first_source: DF.Link | None
 		gender: DF.Link | None
 		haravan_id: DF.Int
 		image: DF.AttachImage | None

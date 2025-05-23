@@ -47,7 +47,7 @@
   "person_name",
   "date_of_issuance",
   "orther_section",
-  "first_channel",
+  "first_source",
   "customer_website",
   "column_break_ioxt",
   "customer_journey",
@@ -685,12 +685,6 @@
    "label": "Birth Date"
   },
   {
-   "fieldname": "first_channel",
-   "fieldtype": "Select",
-   "label": "First Channel",
-   "options": "\nFacebook\nZalo\nTikTok\nCall Center\nWebsite Form\nVisiting Guests\nEmail"
-  },
-  {
    "fieldname": "personal_id",
    "fieldtype": "Data",
    "label": "Personal ID"
@@ -698,13 +692,13 @@
   {
    "fieldname": "place_of_issuance",
    "fieldtype": "Select",
-   "label": "Place Of Issuance",
+   "label": "Place of Issuance",
    "options": "Ministry of Public Security\nDepartment of Police for Administrative Management of Social Order\nDepartment of Police for Registration, Residency Management, and National Population Data"
   },
   {
    "fieldname": "date_of_issuance",
    "fieldtype": "Date",
-   "label": "Date Of Issuance"
+   "label": "Date of Issuance"
   },
   {
    "fieldname": "customer_website",
@@ -959,6 +953,12 @@
    "fieldtype": "Link",
    "label": "Priority Bank Account",
    "options": "Bank Account"
+  },
+  {
+   "fieldname": "first_source",
+   "fieldtype": "Link",
+   "label": "First Source",
+   "options": "Lead Source"
   }
  ],
  "icon": "fa fa-user",
@@ -972,7 +972,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2025-05-22 14:56:29.634259",
+ "modified": "2025-05-22 21:19:23.526654",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",

@@ -111,7 +111,6 @@
   "all_activities_section",
   "all_activities_html",
   "column_break_bwya",
-  "table_uzxd",
   "merge_lead_tab",
   "check_duplicate",
   "dashboard_tab"
@@ -606,11 +605,6 @@
    "label": "Detail"
   },
   {
-   "fieldname": "table_uzxd",
-   "fieldtype": "Table",
-   "options": "Lead Channel"
-  },
-  {
    "fieldname": "bank_name",
    "fieldtype": "Link",
    "label": "Bank Name",
@@ -773,7 +767,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2025-05-21 06:19:37.861350",
+ "modified": "2025-05-22 02:52:32.659028",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",

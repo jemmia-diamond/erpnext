@@ -24,7 +24,6 @@ class Lead(SellingController, CRMNote):
 
 	if TYPE_CHECKING:
 		from erpnext.crm.doctype.crm_note.crm_note import CRMNote
-		from erpnext.crm.doctype.lead_channel.lead_channel import LeadChannel
 		from erpnext.crm.doctype.lead_diamond.lead_diamond import LeadDiamond
 		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from frappe.types import DF
@@ -88,7 +87,6 @@ class Lead(SellingController, CRMNote):
 		source: DF.Link | None
 		status: DF.Literal["Lead", "Open", "Replied", "Opportunity", "Quotation", "Lost Quotation", "Interested", "Converted", "Do Not Contact", "Spam"]
 		stringee_data: DF.JSON | None
-		table_uzxd: DF.Table[LeadChannel]
 		tax_number: DF.Data | None
 		territory: DF.Link | None
 		title: DF.Data | None
