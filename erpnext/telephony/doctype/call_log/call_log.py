@@ -25,23 +25,42 @@ class CallLog(Document):
 		from frappe.core.doctype.dynamic_link.dynamic_link import DynamicLink
 		from frappe.types import DF
 
+		account_id: DF.Data | None
+		amount: DF.Currency
+		answer_duration: DF.Int
+		answer_duration_minutes: DF.Int
+		answer_time: DF.Datetime | None
 		call_received_by: DF.Link | None
+		created: DF.Datetime | None
 		customer: DF.Link | None
 		duration: DF.Duration | None
 		employee_user_id: DF.Link | None
 		end_time: DF.Datetime | None
+		first_answer_time: DF.Datetime | None
+		from_internal: DF.Check
+		from_number: DF.Data | None
+		from_user_id: DF.Data | None
 		id: DF.Data | None
 		links: DF.Table[DynamicLink]
 		medium: DF.Data | None
-		recording_url: DF.Data | None
+		object_type: DF.Data | None
+		project_id: DF.Data | None
+		project_name: DF.Data | None
+		record_path: DF.Data | None
+		recorded: DF.Check
+		recording_url: DF.LongText | None
 		start_time: DF.Datetime | None
-		status: DF.Literal[
-			"Ringing", "In Progress", "Completed", "Failed", "Busy", "No Answer", "Queued", "Canceled"
-		]
+		status: DF.Literal["Ringing", "In Progress", "Completed", "Failed", "Busy", "No Answer", "Queued", "Canceled"]
+		stop_time: DF.Datetime | None
 		summary: DF.SmallText | None
 		to: DF.Data | None
+		to_alias: DF.Data | None
+		to_internal: DF.Check
+		to_number: DF.Data | None
 		type: DF.Literal["Incoming", "Outgoing"]
 		type_of_call: DF.Link | None
+		uuid: DF.Data | None
+		video_call: DF.Check
 	# end: auto-generated types
 
 	def validate(self):
@@ -55,12 +74,46 @@ class CallLog(Document):
 		if contact := get_contact_with_phone_number(strip_number(lead_number)):
 			self.add_link(link_type="Contact", link_name=contact)
 
-		if lead := get_lead_with_phone_number(lead_number):
+		else:
+			lead = self.create_lead_from_phone(lead_number)
+			# Add Contact
+			contact = self.get_contact_from_lead(lead)
+			self.add_link(link_type="Contact", link_name=contact)
+			
 			self.add_link(link_type="Lead", link_name=lead)
+ 		
+		# if lead := get_lead_with_phone_number(lead_number):
+		# 	self.add_link(link_type="Lead", link_name=lead)
 
 		# Add Employee Name
 		if self.is_incoming_call():
 			self.update_received_by()
+
+	def create_lead_from_phone(self, lead_number):
+		lead = frappe.get_doc(
+			{
+				"doctype": "Lead",
+				"lead_name": lead_number,
+				"phone": lead_number,
+				"source": "CRM-LEAD-SOURCE-0000001",
+			}
+		)
+		# lead = frappe.new_doc("Lead")
+		# lead.update({
+		# 	"lead_name": lead_number,  
+		# 	"phone": lead_number,
+		# 	"source": "CRM-LEAD-SOURCE-0000001",
+		# })
+		lead.insert(ignore_permissions=True, raise_direct_exception=True) 
+		return lead 
+
+	def get_contact_from_lead(self, lead):
+		contact = frappe.get_all(
+			"Contact", 
+			filters={"lead": lead.name}, 
+			limit=1
+		)
+		return contact[0] if contact else None
 
 	def after_insert(self):
 		self.trigger_call_popup()
@@ -217,5 +270,4 @@ def get_linked_call_logs(doctype, docname):
 				"template_data": log,
 			}
 		)
-
 	return timeline_contents

@@ -6,14 +6,18 @@
  "engine": "InnoDB",
  "field_order": [
   "call_details_section",
-  "id",
   "from",
   "to",
+  "to_number",
+  "from_number",
+  "id",
+  "to_alias",
   "call_received_by",
   "employee_user_id",
   "medium",
-  "start_time",
   "end_time",
+  "from_user_id",
+  "uuid",
   "column_break_4",
   "type",
   "customer",
@@ -21,6 +25,26 @@
   "duration",
   "recording_url",
   "recording_html",
+  "stringeex_selections",
+  "created",
+  "start_time",
+  "answer_time",
+  "first_answer_time",
+  "stop_time",
+  "column_break_gztc",
+  "answer_duration",
+  "answer_duration_minutes",
+  "from_internal",
+  "to_internal",
+  "recorded",
+  "video_call",
+  "system_selections",
+  "account_id",
+  "object_type",
+  "project_name",
+  "amount",
+  "record_path",
+  "project_id",
   "section_break_11",
   "type_of_call",
   "summary",
@@ -32,7 +56,6 @@
    "fieldname": "id",
    "fieldtype": "Data",
    "label": "ID",
-   "read_only": 1,
    "unique": 1
   },
   {
@@ -67,8 +90,7 @@
   },
   {
    "fieldname": "recording_url",
-   "fieldtype": "Data",
-   "hidden": 1,
+   "fieldtype": "Long Text",
    "label": "Recording URL"
   },
   {
@@ -80,7 +102,7 @@
   {
    "fieldname": "type",
    "fieldtype": "Select",
-   "label": "Type",
+   "label": "Call Type",
    "options": "Incoming\nOutgoing",
    "read_only": 1
   },
@@ -112,6 +134,7 @@
   {
    "fieldname": "section_break_11",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_border": 1,
    "label": "Call Summary"
   },
@@ -137,7 +160,7 @@
   {
    "fieldname": "call_details_section",
    "fieldtype": "Section Break",
-   "label": "Call Details"
+   "label": "Details"
   },
   {
    "fieldname": "employee_user_id",
@@ -159,12 +182,143 @@
    "label": "Call Received By",
    "options": "Employee",
    "read_only": 1
+  },
+  {
+   "fieldname": "uuid",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "uuid",
+   "unique": 1
+  },
+  {
+   "fieldname": "stringeex_selections",
+   "fieldtype": "Section Break",
+   "label": "Stringee Information"
+  },
+  {
+   "fieldname": "answer_time",
+   "fieldtype": "Datetime",
+   "label": "Answer Time"
+  },
+  {
+   "fieldname": "stop_time",
+   "fieldtype": "Datetime",
+   "label": "Stop Time"
+  },
+  {
+   "fieldname": "first_answer_time",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "label": "First Answer Time"
+  },
+  {
+   "fieldname": "to_alias",
+   "fieldtype": "Data",
+   "label": "Name"
+  },
+  {
+   "fieldname": "column_break_gztc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "answer_duration",
+   "fieldtype": "Int",
+   "label": "Answer Duration(s)"
+  },
+  {
+   "default": "0",
+   "fieldname": "from_internal",
+   "fieldtype": "Check",
+   "label": "From Internal"
+  },
+  {
+   "default": "0",
+   "fieldname": "to_internal",
+   "fieldtype": "Check",
+   "label": "To Internal"
+  },
+  {
+   "default": "0",
+   "fieldname": "recorded",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Recorded"
+  },
+  {
+   "default": "0",
+   "fieldname": "video_call",
+   "fieldtype": "Check",
+   "label": "Video Call"
+  },
+  {
+   "fieldname": "project_id",
+   "fieldtype": "Data",
+   "label": "ID D\u1ef1 \u00c1n"
+  },
+  {
+   "fieldname": "project_name",
+   "fieldtype": "Data",
+   "label": "Project Name"
+  },
+  {
+   "fieldname": "account_id",
+   "fieldtype": "Data",
+   "label": "Account ID"
+  },
+  {
+   "fieldname": "object_type",
+   "fieldtype": "Data",
+   "label": "Object Type"
+  },
+  {
+   "fieldname": "created",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "label": "Created At"
+  },
+  {
+   "fieldname": "from_number",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "To"
+  },
+  {
+   "fieldname": "to_number",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "From"
+  },
+  {
+   "fieldname": "from_user_id",
+   "fieldtype": "Data",
+   "label": "From User ID"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount"
+  },
+  {
+   "fieldname": "record_path",
+   "fieldtype": "Data",
+   "label": "Record Path"
+  },
+  {
+   "fieldname": "answer_duration_minutes",
+   "fieldtype": "Int",
+   "label": "Answer Duration Minutes"
+  },
+  {
+   "fieldname": "system_selections",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "System Selections"
   }
  ],
- "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2022-04-14 02:59:22.503202",
+ "modified": "2025-05-15 22:29:00.579946",
  "modified_by": "Administrator",
  "module": "Telephony",
  "name": "Call Log",
@@ -188,6 +342,7 @@
    "role": "Employee"
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
