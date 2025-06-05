@@ -2692,7 +2692,7 @@ Temporary Accounts,Tài khoản tạm thời,
 Temporary Opening,Mở cửa tạm thời,
 Terms and Conditions,Các Điều khoản/Điều kiện,
 Terms and Conditions Template,Điều khoản và Điều kiện mẫu,
-Territory,Địa bàn,
+Territory,Khu vực
 Thank you for your business!,Cảm ơn vì công việc kinh doanh của bạn !,
 The 'From Package No.' field must neither be empty nor it's value less than 1.,&#39;Từ Gói số&#39; trường không được để trống hoặc giá trị còn nhỏ hơn 1.,
 The Brand,Thương hiệu,
@@ -3540,7 +3540,7 @@ Pending,Chờ,
 Performance,Hiệu suất,
 Period based On,Thời gian dựa trên,
 Perpetual inventory required for the company {0} to view this report.,Hàng tồn kho vĩnh viễn cần thiết cho công ty {0} để xem báo cáo này.,
-Phone,Chuyển tệp,
+Phone,Số điện thoại,
 Pick List,Danh sách lựa chọn,
 Plaid authentication error,Lỗi xác thực kẻ sọc,
 Plaid public token error,Lỗi mã thông báo công khai kẻ sọc,
@@ -8744,4 +8744,45 @@ Make a call,Thực hiện cuộc gọi,
 Approve,Tán thành,
 Reject,Từ chối,
 Convert to Group,Chuyển đổi cho Tập đoàn,Warehouse
-General Ledger,Sổ cái tổng hợp,Warehouse
+General Ledger,Sổ cái tổng hợp,warehouse
+Greeting, Sự chào
+Gender, Giới Tính
+Lead Status: Potential, Trạng thái Tiềm năng: Tiềm năng
+Lead Name (required), Tên Tiềm năng (bắt buộc)
+Province, Tỉnh/Thành phố
+Lead Stage: Potential, Giai đoạn Tiềm năng: Tiềm năng
+Lead Received Date: 22-05-2025 18:24:54, Ngày nhận Tiềm năng: 22-05-2025 18:24:54
+Time Zone: Asia/Vientiane, Múi giờ: Asia/Vientiane
+Qualified Information, Thông tin đủ điều kiện
+Budget Lead, Ngân sách Tiềm năng
+Expected Delivery Date, Ngày Dự kiến giao hàng
+Preferred Product Type, Loại sản phẩm ưu tiên
+Preferred Diamond, Kim cương ưu tiên
+Shape,Hình dáng
+Color,Màu
+Clarity,Độ trong
+Size,Kích thước
+(No data), (Không có dữ liệu)
+Add Row, Thêm dòng
+Contact Information, Thông tin liên lạc
+Address Information, Thông tin địa chỉ
+Lead Received Date, Ngày được cập nhật
+Asia/Vientiane,Châu Á/Việt Nam
+District, Quận
+Ward, Phường
+Purpose Lead, Nhu cầu Tiềm năng
+Budget Lead, Ngân sách Tiềm năng
+Expected Delivery Date, Ngày Dự kiến giao hàng
+Preferred Product Type, Loại sản phẩm ưu tiên
+Preferred Diamond, Kim cương ưu tiên
+- Shape, - Hình dáng
+- Color, - Màu
+- Clarity, - Độ trong
+- Size, - Kích thước
+(No data), (Không có dữ liệu)
+Add Row, Thêm dòng
+Contact Information, Thông tin liên lạc
+Address Information, Thông tin địa chỉ
+Lead Status, Trạng thái tiềm năng
+Customer Rank, Xếp hạng
+Created Date

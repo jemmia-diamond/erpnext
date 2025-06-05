@@ -1,0 +1,42 @@
+[
+  {
+    "name": "CRM-LEAD-BUDGET-0001",
+    "budget_label": "< 30 Triệu",
+    "budget_from": 0.0,
+    "budget_to": 30000000.0,
+    "doctype": "Lead Budget",
+    "docstatus": 0
+  },
+  {
+    "name": "CRM-LEAD-BUDGET-0002",
+    "budget_label": "30 - 50 Triệu",
+    "budget_from": 30000000.0,
+    "budget_to": 50000000.0,
+    "doctype": "Lead Budget",
+    "docstatus": 0
+  },
+  {
+    "name": "CRM-LEAD-BUDGET-0003",
+    "budget_label": "50 - 80 Triệu",
+    "budget_from": 50000000.0,
+    "budget_to": 80000000.0,
+    "doctype": "Lead Budget",
+    "docstatus": 0
+  },
+  {
+    "name": "CRM-LEAD-BUDGET-0004",
+    "budget_label": "80 - 120 Triệu",
+    "budget_from": 80000000.0,
+    "budget_to": 120000000.0,
+    "doctype": "Lead Budget",
+    "docstatus": 0
+  },
+  {
+    "name": "CRM-LEAD-BUDGET-0005",
+    "budget_label": "> 120 Triệu",
+    "budget_from": 120000000.0,
+    "budget_to": 0.0,
+    "doctype": "Lead Budget",
+    "docstatus": 0
+  }
+]

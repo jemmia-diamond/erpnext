@@ -24,7 +24,6 @@ class Lead(SellingController, CRMNote):
 
 	if TYPE_CHECKING:
 		from erpnext.crm.doctype.crm_note.crm_note import CRMNote
-		from erpnext.crm.doctype.lead_diamond.lead_diamond import LeadDiamond
 		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from frappe.types import DF
 
@@ -46,7 +45,6 @@ class Lead(SellingController, CRMNote):
 		company_name: DF.Data | None
 		customer: DF.Link | None
 		date_of_issuance: DF.Date | None
-		demand_notes: DF.SmallText | None
 		disabled: DF.Check
 		email_id: DF.Data | None
 		expected_delivery_date: DF.Date | None
@@ -75,13 +73,13 @@ class Lead(SellingController, CRMNote):
 		phone: DF.Data | None
 		phone_ext: DF.Data | None
 		place_of_issuance: DF.Literal["Ministry of Public Security", "Department of Police for Administrative Management of Social Order", "Department of Police for Registration, Residency Management, and National Population Data"]
-		preferred_diamond: DF.Table[LeadDiamond]
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
 		province: DF.Link | None
 		purpose_lead: DF.Link | None
 		qualification_status: DF.Literal["Unqualified", "In Process", "Qualified"]
 		qualified_by: DF.Link | None
 		qualified_on: DF.Date | None
+		region: DF.Link | None
 		request_type: DF.Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
 		salutation: DF.Link | None
 		source: DF.Link | None
@@ -157,18 +155,31 @@ class Lead(SellingController, CRMNote):
 				lead_source = frappe.new_doc("Lead Source")
 
 				pc_platform = parsed_pancake_data.get("platform", None)
+				lead_source_prefix = ''
 				lead_source_platform = None
 				if "facebook" in pc_platform:
 					lead_source_platform = "Facebook"
+					lead_source_prefix = "FB"
 				elif "zalo" in pc_platform:
 					lead_source_platform = "Zalo"
+					lead_source_prefix = "ZNS"
 				elif "instagram" in pc_platform:
 					lead_source_platform = "Instagram"
+					lead_source_prefix = "IG"
 				elif "tiktok" in pc_platform:
 					lead_source_platform = "Tiktok"	
+					lead_source_prefix = "TT"
+				
+				source_name = None
+				if lead_source_prefix:
+					source_name = f"{lead_source_prefix} {parsed_pancake_data.get('page_name', '')}"
+				else:
+					source_name = parsed_pancake_data.get("page_name", '')
+
+
 
 				lead_source.update({
-					"source_name": "Unspecified",
+					"source_name": source_name,
 					"pancake_page_id": parsed_pancake_data.get("page_id", None),
 					"pancake_platform": lead_source_platform
 				})
@@ -356,6 +367,7 @@ class Lead(SellingController, CRMNote):
 				"pancake_updated_at": parsed_pancake_data.get("updated_at") if parsed_pancake_data and parsed_pancake_data.get("updated_at") else None,
 				"pancake_page_id": parsed_pancake_data.get("page_id") if parsed_pancake_data and parsed_pancake_data.get("page_id") else None,
 				"can_inbox": parsed_pancake_data.get("can_inbox") if parsed_pancake_data and parsed_pancake_data.get("can_inbox") else 0,
+				"last_message_time" :  parsed_pancake_data.get("latest_message_at", None) if parsed_pancake_data else None
 			}
 		)
 

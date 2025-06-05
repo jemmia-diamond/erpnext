@@ -70,7 +70,7 @@ class Customer(TransactionBase):
 		email_id: DF.ReadOnly | None
 		first_source: DF.Link | None
 		gender: DF.Link | None
-		haravan_id: DF.Int
+		haravan_id: DF.Data | None
 		image: DF.AttachImage | None
 		industry: DF.Link | None
 		invoice_type: DF.Literal["Individual", "Company"]

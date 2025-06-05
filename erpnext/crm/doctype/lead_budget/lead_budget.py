@@ -14,6 +14,8 @@ class LeadBudget(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		budget_from: DF.Float
 		budget_label: DF.Data | None
+		budget_to: DF.Float
 	# end: auto-generated types
 	pass

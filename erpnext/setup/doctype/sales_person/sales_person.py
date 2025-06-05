@@ -23,10 +23,10 @@ class SalesPerson(NestedSet):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
+		from erpnext.setup.doctype.target_detail.target_detail import TargetDetail
 		from frappe.types import DF
 
-		from erpnext.setup.doctype.target_detail.target_detail import TargetDetail
-
+		bizfly_id: DF.Data | None
 		commission_rate: DF.Data | None
 		department: DF.Link | None
 		employee: DF.Link | None
@@ -37,6 +37,7 @@ class SalesPerson(NestedSet):
 		parent_sales_person: DF.Link | None
 		rgt: DF.Int
 		sales_person_name: DF.Data
+		sales_region: DF.Link | None
 		targets: DF.Table[TargetDetail]
 	# end: auto-generated types
 

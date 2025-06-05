@@ -6,7 +6,9 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "budget_label"
+  "budget_label",
+  "budget_from",
+  "budget_to"
  ],
  "fields": [
   {
@@ -16,12 +18,22 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Budget"
+  },
+  {
+   "fieldname": "budget_from",
+   "fieldtype": "Float",
+   "label": "From"
+  },
+  {
+   "fieldname": "budget_to",
+   "fieldtype": "Float",
+   "label": "To"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-08 22:40:51.339978",
+ "modified": "2025-05-21 04:18:37.703103",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead Budget",
