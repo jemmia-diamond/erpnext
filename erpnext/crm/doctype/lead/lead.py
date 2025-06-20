@@ -443,9 +443,17 @@ class Lead(SellingController, CRMNote):
 				"pancake_updated_at": parsed_pancake_data.get("updated_at") if parsed_pancake_data and parsed_pancake_data.get("updated_at") else None,
 				"pancake_page_id": parsed_pancake_data.get("page_id") if parsed_pancake_data and parsed_pancake_data.get("page_id") else None,
 				"can_inbox": parsed_pancake_data.get("can_inbox") if parsed_pancake_data and parsed_pancake_data.get("can_inbox") else 0,
-				"last_message_time" :  parsed_pancake_data.get("latest_message_at", None) if parsed_pancake_data else None
 			}
 		)
+
+		if parsed_pancake_data.get("page_id") and parsed_pancake_data.get("page_id") not in [
+			"zl_2838947343790196672", "110263770893806", "114459901519364", "ttm_-000GnI37aFDBuqWw6N750AvvJXaodrxaoS6"
+		]:
+			if parsed_pancake_data.get("latest_message_at"):
+				contact.update({
+					"last_message_time": parsed_pancake_data.get("latest_message_at")
+				})
+
 
 		if self.email_id:
 			contact.append("email_ids", {"email_id": self.email_id, "is_primary": 1})
