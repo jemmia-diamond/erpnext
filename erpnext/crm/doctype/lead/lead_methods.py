@@ -5,8 +5,7 @@ from typing import TYPE_CHECKING
 from erpnext.crm.doctype.lead_product.lead_product_dao import get_products_in_names
 from erpnext.crm.doctype.lead.lead_dao import (
 	get_lead_by_name,
-	get_lead_name_by_conversation_id,
-	get_leads_to_summary
+	get_lead_name_by_conversation_id
 )
 from erpnext.crm.doctype.lead_budget.lead_budget_dao import find_range_budget
 from erpnext.crm.doctype.lead_demand.lead_demand_dao import get_lead_purpose
