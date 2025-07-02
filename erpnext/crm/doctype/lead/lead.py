@@ -112,6 +112,7 @@ class Lead(SellingController, CRMNote):
 		self.set_title()
 		self.set_status()
 		self.check_email_id_is_unique()
+		self.check_phone_is_unique()
 		self.validate_email_id()
 
 	def before_insert(self):
@@ -353,6 +354,24 @@ class Lead(SellingController, CRMNote):
 			if self.is_new() or not self.image:
 				self.image = has_gravatar(self.email_id)
 
+	def check_phone_is_unique(self):
+		if self.phone:
+			# Validate phone number is unique
+			filters = {"phone": self.phone}
+			if self.name:
+				filters["name"] = ["!=", self.name]
+				
+			duplicate_leads = frappe.get_all("Lead", filters=filters)
+			duplicate_leads = [
+				frappe.bold(get_link_to_form("Lead", lead.name)) for lead in duplicate_leads
+			]
+			if duplicate_leads:
+				frappe.throw(
+					_("Phone Number must be unique, it is already used in {0}").format(
+						comma_and(duplicate_leads)
+					),
+					frappe.DuplicateEntryError,
+				)
 
 	def link_to_contact(self):
 		# update contact links
