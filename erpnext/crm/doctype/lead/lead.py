@@ -112,6 +112,7 @@ class Lead(SellingController, CRMNote):
 		self.set_title()
 		self.set_status()
 		self.check_email_id_is_unique()
+		self.check_phone_is_unique()
 		self.validate_email_id()
 
 	def before_insert(self):
@@ -134,7 +135,9 @@ class Lead(SellingController, CRMNote):
 
 				lead_source = self.check_lead_source()
 				if lead_source:
-					self.contact_doc = self.create_contact(lead_source)
+					existing_contact = self.check_contact()
+					if not existing_contact:
+						self.contact_doc = self.create_contact(lead_source)
 					if self.contact_doc:
 						self.source = self.contact_doc.source
 			else:
@@ -237,6 +240,24 @@ class Lead(SellingController, CRMNote):
 					self.source = self.contact_doc.source 
 					self.link_to_contact()
 
+	def check_contact(self):
+		parsed_pancake_data = frappe.parse_json(self.pancake_data)
+		'''
+		If contact with pancake data exists, do not create again
+		'''
+		existing_contact_name = frappe.db.get_value(
+			"Contact", 
+			{
+				"pancake_page_id": parsed_pancake_data.get("page_id"),
+				"pancake_conversation_id": parsed_pancake_data.get("conversation_id"),
+			},
+			"name"
+		)
+		if existing_contact_name:
+			return frappe.get_doc("Contact", existing_contact_name)
+		
+		return None
+		
 	def check_lead_source(self):
 		lead_source = None
 		parsed_pancake_data = None
@@ -294,6 +315,17 @@ class Lead(SellingController, CRMNote):
 		return lead_source
 
 	def after_insert(self):
+		if self.contact_doc:
+			contact_link = frappe.get_doc("Dynamic Link", {
+				{
+					"link_doctype": self.doctype,
+					"link_name": self.name,
+					"parenttype": "Contact",
+					"parent": self.contact_doc.name
+				}
+			})
+			if contact_link:
+				return
 		self.link_to_contact()
 
 	def on_update(self):
@@ -353,6 +385,24 @@ class Lead(SellingController, CRMNote):
 			if self.is_new() or not self.image:
 				self.image = has_gravatar(self.email_id)
 
+	def check_phone_is_unique(self):
+		if self.phone:
+			# Validate phone number is unique
+			filters = {"phone": self.phone}
+			if self.name:
+				filters["name"] = ["!=", self.name]
+				
+			duplicate_leads = frappe.get_all("Lead", filters=filters)
+			duplicate_leads = [
+				frappe.bold(get_link_to_form("Lead", lead.name)) for lead in duplicate_leads
+			]
+			if duplicate_leads:
+				frappe.throw(
+					_("Phone Number must be unique, it is already used in {0}").format(
+						comma_and(duplicate_leads)
+					),
+					frappe.DuplicateEntryError,
+				)
 
 	def link_to_contact(self):
 		# update contact links
