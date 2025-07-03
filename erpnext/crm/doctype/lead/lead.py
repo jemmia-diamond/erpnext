@@ -318,14 +318,12 @@ class Lead(SellingController, CRMNote):
 
 	def after_insert(self):
 		if self.contact_doc:
-			contact_link = frappe.get_doc("Dynamic Link", {
-				{
+			contact_link = frappe.get_value("Dynamic Link", {
 					"link_doctype": self.doctype,
 					"link_name": self.name,
 					"parenttype": "Contact",
 					"parent": self.contact_doc.name
-				}
-			})
+			}, "name")
 			if contact_link:
 				return
 		self.link_to_contact()
