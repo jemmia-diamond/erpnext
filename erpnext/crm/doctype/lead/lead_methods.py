@@ -99,9 +99,9 @@ def insert_lead(doc) -> "Document":
 		return frappe_doc
 	except Exception as e:
 		try: 
-			check_exist_doc = frappe.get_doc(frappe_doc.doctype, frappe_doc.name)
-			if check_exist_doc:
-				return check_exist_doc 
+			existing_doc = frappe.get_doc(frappe_doc.doctype, frappe_doc.name)
+			if existing_doc:
+				return existing_doc 
 			return None 
 		except Exception as get_exception:
 			pattern = r'CRM-LEAD-\d+-\d+'
