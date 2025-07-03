@@ -263,7 +263,8 @@
    "label": "Phone",
    "oldfieldname": "contact_no",
    "oldfieldtype": "Data",
-   "options": "Phone"
+   "options": "Phone",
+   "unique": 1
   },
   {
    "fieldname": "mobile_no",
@@ -791,7 +792,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2025-06-15 08:47:39.108254",
+ "modified": "2025-07-03 08:25:49.026080",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
