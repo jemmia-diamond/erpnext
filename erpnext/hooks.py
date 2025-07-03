@@ -426,9 +426,6 @@ scheduler_events = {
 		# Daily but offset by 45 minutes
 		"45 0 * * *": [
 			"erpnext.stock.reorder_item.reorder_item",
-		],
-        "*/15 * * * *": [
-            "erpnext.crm.doctype.lead.lead_methods.get_leads_to_summary_from_pancake"
 		]
 	},
 	"hourly": [
