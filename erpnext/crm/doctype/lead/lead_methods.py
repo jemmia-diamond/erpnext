@@ -337,6 +337,8 @@ def update_lead_from_summary(data):
 				pass
 
 		return
+	
+	lead.reload()
 
 	budget_to = data.get("budget_to", None)
 	budget_from =  None if budget_to else data.get("budget_from", None)
@@ -370,7 +372,6 @@ def update_lead_from_summary(data):
 			})
 
 	lead.save()
-	frappe.db.commit()
 
 	#update last summarize at 
 	contacts = get_contacts_by_conversation_id(conversation_id)
