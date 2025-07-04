@@ -135,7 +135,11 @@ class Lead(SellingController, CRMNote):
 
 				lead_source = self.check_lead_source()
 				if lead_source:
-					self.contact_doc = self.create_contact(lead_source)
+					existing_contact = self.check_contact()
+					if not existing_contact:
+						self.contact_doc = self.create_contact(lead_source)
+					else:
+						self.contact_doc = existing_contact 
 					if self.contact_doc:
 						self.source = self.contact_doc.source
 			else:
@@ -238,6 +242,23 @@ class Lead(SellingController, CRMNote):
 					self.source = self.contact_doc.source 
 					self.link_to_contact()
 
+	def check_contact(self):
+		parsed_pancake_data = frappe.parse_json(self.pancake_data)
+		'''
+		If contact with pancake data exists, do not create again
+		'''
+		existing_contact_name = frappe.db.get_value(
+			"Contact", 
+			{
+				"pancake_page_id": parsed_pancake_data.get("page_id"),
+				"pancake_conversation_id": parsed_pancake_data.get("conversation_id"),
+			},
+			"name"
+		)
+		if existing_contact_name:
+			return frappe.get_doc("Contact", existing_contact_name)
+		
+		return None
 		
 	def check_lead_source(self):
 		lead_source = None
@@ -296,6 +317,15 @@ class Lead(SellingController, CRMNote):
 		return lead_source
 
 	def after_insert(self):
+		if self.contact_doc:
+			contact_link = frappe.get_value("Dynamic Link", {
+					"link_doctype": self.doctype,
+					"link_name": self.name,
+					"parenttype": "Contact",
+					"parent": self.contact_doc.name
+			}, "name")
+			if contact_link:
+				return
 		self.link_to_contact()
 
 	def on_update(self):
