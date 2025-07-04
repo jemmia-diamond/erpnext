@@ -2,6 +2,7 @@ import asyncio
 import json
 from typing import TYPE_CHECKING
 
+from erpnext.crm.doctype.lead.lead import Lead
 from erpnext.crm.doctype.lead_product.lead_product_dao import get_products_in_names
 from erpnext.crm.doctype.lead.lead_dao import (
 	get_lead_by_name,
@@ -106,7 +107,17 @@ def insert_lead(doc) -> "Document":
 			match = re.search(pattern, str(e))
 			if match:
 				reference_frappe_doc_name = match.group(0)
-				return frappe.get_doc(frappe_doc.doctype, reference_frappe_doc_name)
+				existing_doc : Lead = frappe.get_doc(frappe_doc.doctype, reference_frappe_doc_name)
+				
+				'''
+				Check if contact exists by (pancake) conversation_id
+				If not, create a new one and link 
+				'''
+				existing_doc.link_to_contacts(
+					page_id=doc.get("pancake_data", {}).get("page_id"),
+					conversation_id=doc.get("pancake_data", {}).get("conversation_id"),
+				)
+				return existing_doc
 			return None
 		
 @frappe.whitelist(methods=["PUT", "PATCH"])

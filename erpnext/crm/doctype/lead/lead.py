@@ -135,7 +135,11 @@ class Lead(SellingController, CRMNote):
 
 				lead_source = self.check_lead_source()
 				if lead_source:
-					existing_contact = self.check_contact()
+					parsed_pancake_data = frappe.parse_json(self.pancake_data)
+					existing_contact = self.check_contact(
+						page_id=parsed_pancake_data.get("page_id"), 
+						conversation_id=parsed_pancake_data.get("conversation_id")
+					)
 					if not existing_contact:
 						self.contact_doc = self.create_contact(lead_source)
 					else:
@@ -242,16 +246,15 @@ class Lead(SellingController, CRMNote):
 					self.source = self.contact_doc.source 
 					self.link_to_contact()
 
-	def check_contact(self):
-		parsed_pancake_data = frappe.parse_json(self.pancake_data)
+	def check_contact(self, page_id, conversation_id):
 		'''
 		If contact with pancake data exists, do not create again
 		'''
 		existing_contact_name = frappe.db.get_value(
 			"Contact", 
 			{
-				"pancake_page_id": parsed_pancake_data.get("page_id"),
-				"pancake_conversation_id": parsed_pancake_data.get("conversation_id"),
+				"pancake_page_id": page_id,
+				"pancake_conversation_id": conversation_id,
 			},
 			"name"
 		)
@@ -411,6 +414,53 @@ class Lead(SellingController, CRMNote):
 				"links", {"link_doctype": "Lead", "link_name": self.name, "link_title": self.lead_name}
 			)
 			self.contact_doc.save()
+
+	def link_to_contacts(self, page_id, conversation_id):
+		print("link_to_contacts")
+		try:
+			self.contact_doc = self.check_contact(
+				page_id=page_id, 
+				conversation_id=conversation_id
+			)
+			if self.contact_doc:
+				contact_link = frappe.get_value("Dynamic Link", {
+						"link_doctype": self.doctype,
+						"link_name": self.name,
+						"parenttype": "Contact",
+						"parent": self.contact_doc.name
+				}, "name")
+				if not contact_link:
+					self.link_to_contact()
+					
+				self.set_first_lead_source()
+		except Exception as e:
+			print(f"Error link_to_contacts {e}")
+	
+	def set_first_lead_source(self):
+		try:
+			linked_contacts_data = frappe.db.sql(
+				'''
+				SELECT tdl.parent 
+				FROM `tabDynamic Link` as tdl
+				LEFT JOIN `tabContact` as tc ON tdl.parent = tc.name
+				WHERE tdl.link_name = %s
+					AND tdl.link_doctype = 'Lead'
+					AND tdl.parenttype = 'Contact'
+				ORDER BY tc.pancake_inserted_at ASC
+				LIMIT 1
+				''',
+				(self.name),
+				as_dict=True
+			)
+			if linked_contacts_data:
+				if linked_contacts_data[0].get('parent', None):
+					contact_name = linked_contacts_data[0].get('parent', None)
+					contact = frappe.get_doc("Contact", contact_name)
+					self.source = contact.source
+					self.save()
+
+		except Exception as e:
+			print(f"Error set_first_lead_source {e}")
 
 	def update_prospect(self):
 		lead_row_name = frappe.db.get_value("Prospect Lead", filters={"lead": self.name}, fieldname="name")
