@@ -163,21 +163,6 @@ class Customer(TransactionBase):
 		"""If customer created from Lead, update customer id in quotations, opportunities"""
 		self.update_lead_status()
 
-	def calculate_customer_cumulative_revenue(self):
-		# Step 1: Sum all grand_total from submitted Sales Orders of this customer
-		customer_id = self.name
-		total_revenue = frappe.db.sql("""
-			SELECT SUM(grand_total)
-			FROM `tabSales Order`
-			WHERE customer = %s AND docstatus = 1
-		""", (customer_id,), as_list=True)[0][0] or 0
-
-		# Step 2: Set cumulative_revenue field
-		frappe.db.set_value("Customer", customer_id, "cumulative_revenue", total_revenue)
-		frappe.db.commit()
-
-		return total_revenue
-
 	def validate(self):
 		self.flags.is_new_doc = self.is_new()
 		self.flags.old_lead = self.lead_name
