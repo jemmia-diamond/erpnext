@@ -157,6 +157,21 @@ class Customer(TransactionBase):
 		"""If customer created from Lead, update customer id in quotations, opportunities"""
 		self.update_lead_status()
 
+	def calculate_customer_cumulative_revenue(self):
+		# Step 1: Sum all grand_total from submitted Sales Orders of this customer
+		customer_id = self.name
+		total_revenue = frappe.db.sql("""
+			SELECT SUM(grand_total)
+			FROM `tabSales Order`
+			WHERE customer = %s AND docstatus = 1
+		""", (customer_id,), as_list=True)[0][0] or 0
+
+		# Step 2: Set cumulative_revenue field
+		frappe.db.set_value("Customer", customer_id, "cumulative_revenue", total_revenue)
+		frappe.db.commit()
+
+		return total_revenue
+
 	def validate(self):
 		self.flags.is_new_doc = self.is_new()
 		self.flags.old_lead = self.lead_name
@@ -832,3 +847,40 @@ def parse_full_name(full_name: str) -> tuple[str, str | None, str | None]:
 	last_name = names[-1] if len(names) > 1 else None
 
 	return first_name, middle_name, last_name
+
+def update_customer_cumulative_revenue(customer_id):
+    result = frappe.db.sql("""
+        SELECT SUM(grand_total)
+        FROM `tabSales Order`
+        WHERE customer = %s and cancelled_status='Uncancelled'
+    """, (customer_id,), as_list=True)
+
+    total_revenue = result[0][0] if result and result[0][0] else 0
+
+    # Optionally update the Customer field:
+    frappe.db.set_value("Customer", customer_id, "cumulative_revenue", total_revenue)
+    frappe.db.commit()
+
+def update_customer_true_cumulative_revenue(customer_id):
+    result = frappe.db.sql("""
+        SELECT SUM(grand_total)
+        FROM `tabSales Order`
+        WHERE customer = %s
+          AND cancelled_status = 'Uncancelled'
+          AND financial_status = 'Paid'
+          AND fulfillment_status = 'Fulfilled'
+    """, (customer_id,), as_list=True)
+
+    total_revenue = result[0][0] if result and result[0][0] else 0
+    frappe.db.set_value("Customer", customer_id, "true_cumulative_revenue", total_revenue)
+
+
+def update_all_customers_revenue():
+    customers = frappe.get_all("Customer", pluck="name")
+    for customer_id in customers:
+        update_customer_cumulative_revenue(customer_id)
+        update_customer_true_cumulative_revenue(customer_id)
+
+@frappe.whitelist()
+def update_customer_revenue_api(customer_id):
+    return update_customer_cumulative_revenue(customer_id)
