@@ -163,6 +163,17 @@ class Customer(TransactionBase):
         """If customer created from Lead, update customer id in quotations, opportunities"""
         self.update_lead_status()
 
+	def validate(self):
+		self.flags.is_new_doc = self.is_new()
+		self.flags.old_lead = self.lead_name
+		validate_party_accounts(self)
+		self.validate_credit_limit_on_change()
+		self.set_loyalty_program()
+		self.check_customer_group_change()
+		self.validate_default_bank_account()
+		self.validate_internal_customer()
+		self.add_role_for_user()
+		self.validate_currency_for_receivable_payable_and_advance_account()
     def validate(self):
         self.flags.is_new_doc = self.is_new()
         self.flags.old_lead = self.lead_name
@@ -860,5 +871,7 @@ def parse_full_name(full_name: str) -> tuple[str, str | None, str | None]:
     first_name = names[0]
     middle_name = " ".join(names[1:-1]) if len(names) > 2 else None
     last_name = names[-1] if len(names) > 1 else None
+
+	return first_name, middle_name, last_name
 
     return first_name, middle_name, last_name
