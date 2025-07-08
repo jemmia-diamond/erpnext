@@ -475,7 +475,7 @@ class Lead(SellingController, CRMNote):
 				WHERE tdl.link_name = %s
 					AND tdl.link_doctype = 'Lead'
 					AND tdl.parenttype = 'Contact'
-				ORDER BY tc.pancake_inserted_at ASC
+				ORDER BY tc.inserted_at ASC
 				LIMIT 1
 				''',
 				(self.name),
