@@ -9,3 +9,17 @@ def get_products_in_names(product_names):
 	)
 	
 	return products
+
+def get_lead_product(product_type):
+	return frappe.get_doc(
+		"Lead Product", {
+			"product_type": product_type
+		}
+	)
+
+def create_lead_product(product_type):
+	new_lead_product = frappe.new_doc("Lead Product")
+	new_lead_product.update({
+		"product_type": product_type
+	})
+	return new_lead_product.save()
