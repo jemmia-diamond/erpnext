@@ -449,7 +449,7 @@
    "fieldname": "qualification_status",
    "fieldtype": "Select",
    "label": "Qualification Status",
-   "options": "Unqualified\nIn Process\nQualified"
+   "options": "Unqualified\nQualified"
   },
   {
    "fieldname": "address_section",
@@ -790,7 +790,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2025-07-08 06:53:39.938611",
+ "modified": "2025-07-08 08:44:32.750431",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",

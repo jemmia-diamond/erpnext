@@ -80,7 +80,7 @@ class Lead(SellingController, CRMNote):
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
 		province: DF.Link | None
 		purpose_lead: DF.Link | None
-		qualification_status: DF.Literal["Unqualified", "In Process", "Qualified"]
+		qualification_status: DF.Literal["Unqualified", "Qualified"]
 		qualified_by: DF.Link | None
 		qualified_lead_date: DF.Datetime | None
 		qualified_on: DF.Datetime | None
@@ -644,12 +644,8 @@ class Lead(SellingController, CRMNote):
 		"""
 		if self.phone and self.province:
 			return "Qualified"
-		
-		# If already qualified, don't change back automatically
-		if self.qualification_status == "Qualified":
-			return "Qualified"
 			
-		return "Unqualified"
+		return self.qualification_status
 
 @frappe.whitelist()
 def make_customer(source_name, target_doc=None):
