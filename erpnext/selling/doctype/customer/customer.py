@@ -120,16 +120,14 @@ class Customer(TransactionBase):
 		withdraw_cashback: DF.Currency
 	# end: auto-generated types
 
-    def onload(self):
-        """
-        Load customer cumulative revenue and true cumulative revenue
-        """
-        self.cumulative_revenue = self.update_customer_cumulative_revenue()
-        self.true_cumulative_revenue = self.update_customer_true_cumulative_revenue()
+	def onload(self):
+		"""Load customer cumulative revenue and true cumulative revenue"""
+		self.cumulative_revenue = self.update_customer_cumulative_revenue()
+		self.true_cumulative_revenue = self.update_customer_true_cumulative_revenue()
 
-        # Load address and contacts in `__onload`
-        load_address_and_contact(self)
-        self.load_dashboard_info()
+		# Load address and contacts in `__onload`
+		load_address_and_contact(self)
+		self.load_dashboard_info()
 
 	def load_dashboard_info(self):
 		info = get_dashboard_info(self.doctype, self.name, self.loyalty_program)
@@ -406,31 +404,30 @@ class Customer(TransactionBase):
 				)
 			)
 
-    def update_customer_cumulative_revenue(self):
-        result = frappe.db.sql("""
-        SELECT SUM(grand_total)
-        FROM `tabSales Order`
-        WHERE customer = %s AND cancelled_status = 'Uncancelled'
-    """, (self.name,), as_list=True)
+	def update_customer_cumulative_revenue(self):
+		result = frappe.db.sql("""
+		SELECT SUM(grand_total)
+		FROM `tabSales Order`
+		WHERE customer = %s AND cancelled_status = 'Uncancelled'
+		""", (self.name,), as_list=True)
 
-        total_revenue = result[0][0] if result and result[0][0] else 0
-        # frappe.db.set_value("Customer", self.name, "cumulative_revenue", total_revenue)
-        return total_revenue
+		total_revenue = result[0][0] if result and result[0][0] else 0
+		# frappe.db.set_value("Customer", self.name, "cumulative_revenue", total_revenue)
+		return total_revenue
 
 
-    def update_customer_true_cumulative_revenue(self):
-        result = frappe.db.sql("""
-        SELECT SUM(grand_total)
-        FROM `tabSales Order`
-        WHERE customer = %s
-          AND cancelled_status = 'Uncancelled'
-          AND financial_status = 'Paid'
-          AND fulfillment_status = 'Fulfilled'
-        """, (self.name,), as_list=True)
-
-        total_real_revenue = result[0][0] if result and result[0][0] else 0
-        # frappe.db.set_value("Customer", self.name, "true_cumulative_revenue", total_real_revenue)
-        return total_real_revenue
+	def update_customer_true_cumulative_revenue(self):
+		result = frappe.db.sql("""
+		SELECT SUM(grand_total)
+		FROM `tabSales Order`
+		WHERE customer = %s
+		AND cancelled_status = 'Uncancelled'
+		AND financial_status = 'Paid'
+		AND fulfillment_status = 'Fulfilled'
+		""", (self.name,), as_list=True)
+		total_real_revenue = result[0][0] if result and result[0][0] else 0
+		# frappe.db.set_value("Customer", self.name, "true_cumulative_revenue", total_real_revenue)
+		return total_real_revenue
 
 
 @deprecated
