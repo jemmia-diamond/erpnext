@@ -121,7 +121,7 @@ class Customer(TransactionBase):
 	# end: auto-generated types
 
 	def onload(self):
-		"""Load customer cumulative revenue and true cumulative revenue"""
+		# Load customer cumulative revenue and true cumulative revenue
 		self.cumulative_revenue = self.update_customer_cumulative_revenue()
 		self.true_cumulative_revenue = self.update_customer_true_cumulative_revenue()
 
@@ -410,9 +410,7 @@ class Customer(TransactionBase):
 		FROM `tabSales Order`
 		WHERE customer = %s AND cancelled_status = 'Uncancelled'
 		""", (self.name,), as_list=True)
-
 		total_revenue = result[0][0] if result and result[0][0] else 0
-		# frappe.db.set_value("Customer", self.name, "cumulative_revenue", total_revenue)
 		return total_revenue
 
 
@@ -426,7 +424,6 @@ class Customer(TransactionBase):
 		AND fulfillment_status = 'Fulfilled'
 		""", (self.name,), as_list=True)
 		total_real_revenue = result[0][0] if result and result[0][0] else 0
-		# frappe.db.set_value("Customer", self.name, "true_cumulative_revenue", total_real_revenue)
 		return total_real_revenue
 
 
