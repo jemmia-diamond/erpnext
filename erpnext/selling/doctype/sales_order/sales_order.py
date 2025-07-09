@@ -783,6 +783,37 @@ class SalesOrder(SellingController):
 	def before_insert(self):
 		self.handle_order_cancellation()
 
+	def after_insert(self):
+		self.update_customer_revenue_fields()
+
+	def update_customer_revenue_fields(self):
+		cumulative = self.calculate_customer_cumulative_revenue()
+		true_cumulative = self.calculate_customer_true_cumulative_revenue()
+
+		frappe.db.set_value("Customer", self.customer, {
+			"cumulative_revenue": cumulative,
+			"true_cumulative_revenue": true_cumulative
+		})
+
+	def calculate_customer_cumulative_revenue(self):
+		result = frappe.db.sql("""
+			SELECT SUM(grand_total)
+			FROM `tabSales Order`
+			WHERE customer = %s AND cancelled_status = 'Uncancelled'
+		""", (self.customer,), as_list=True)
+		return result[0][0] if result and result[0][0] else 0
+
+	def calculate_customer_true_cumulative_revenue(self):
+		result = frappe.db.sql("""
+			SELECT SUM(grand_total)
+			FROM `tabSales Order`
+			WHERE customer = %s
+			AND cancelled_status = 'Uncancelled'
+			AND financial_status = 'Paid'
+			AND fulfillment_status = 'Fulfilled'
+		""", (self.customer,), as_list=True)
+		return result[0][0] if result and result[0][0] else 0
+
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:
 	"""Returns the unreserved quantity for the Sales Order Item."""
 
