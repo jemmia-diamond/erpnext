@@ -161,6 +161,15 @@ class Lead(SellingController, CRMNote):
 		self.update_first_reach_at()
 		self.upsert_lead_source()
 
+		# Update lead owner 
+		try:
+			if self.pancake_data:
+				pancake_user_id = frappe.parse_json(self.pancake_data).get("pancake_user_id", None)
+				if pancake_user_id and (not self.lead_owner or self.lead_owner == "tech@jemmia.vn"):
+					self.update_lead_owner(pancake_user_id)
+		except Exception as _:
+			pass
+
 	def update_lead_stage(self):
 
 		lead_stage = self.get_lead_stage()
