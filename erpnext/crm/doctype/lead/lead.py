@@ -160,8 +160,9 @@ class Lead(SellingController, CRMNote):
 		self.fetch_region_from_province()
 		self.update_first_reach_at()
 		self.upsert_lead_source()
-
-		# Update lead owner 
+		self.update_pancake_lead_owner()
+	
+	def update_pancake_lead_owner(self):
 		try:
 			if self.pancake_data:
 				pancake_user_id = frappe.parse_json(self.pancake_data).get("pancake_user_id", None)
