@@ -784,7 +784,6 @@ class SalesOrder(SellingController):
 		self.handle_order_cancellation()
 
 	def after_insert(self):
-		print("After Insert")
 		self.update_customer_revenue_fields()
 
 	def update_customer_revenue_fields(self):
