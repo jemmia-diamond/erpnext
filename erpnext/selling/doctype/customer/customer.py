@@ -21,7 +21,7 @@ from frappe.utils.user import get_users_with_role
 from erpnext.accounts.party import get_dashboard_info, validate_party_accounts
 from erpnext.controllers.website_list_for_contact import add_role_for_portal_user
 from erpnext.utilities.transaction_base import TransactionBase
-
+import requests
 
 class Customer(TransactionBase):
 	# begin: auto-generated types
@@ -831,3 +831,31 @@ def parse_full_name(full_name: str) -> tuple[str, str | None, str | None]:
 	last_name = names[-1] if len(names) > 1 else None
 
 	return first_name, middle_name, last_name
+
+def update_all_customers_revenue():
+    
+    payload = {}  # Add any required payload if needed
+    response = requests.get("https://priority-api.jemmia.vn/user/priority/get-all", json=payload)
+    
+    if response.status_code != 200:
+        frappe.throw("Failed to fetch data from priority API")
+
+    results = response.json().get("results", [])
+
+    for result in results:
+        haravan_id = result.get("haravanId")
+        referrals_revenue = result.get("totalReferAmount", 0)
+        cashback = result.get("totalCashBack", 0)
+        withdraw_cashback = result.get("withdrawAmount", 0)
+        pending_cashback = cashback - withdraw_cashback
+
+        # Update tabCustomer table based on haravanId
+        frappe.db.sql("""
+            UPDATE `tabCustomer`
+            SET
+                referrals_revenue = %s,
+                cashback = %s,
+                withdraw_cashback = %s,
+                pending_cashback = %s
+            WHERE haravan_id = %s
+        """, (referrals_revenue, cashback, withdraw_cashback, pending_cashback, str(haravan_id)))
