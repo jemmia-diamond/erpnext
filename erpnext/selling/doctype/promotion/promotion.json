@@ -54,6 +54,7 @@
    "reqd": 1
   },
   {
+   "depends_on": "eval:doc.is_expired == true",
    "fieldname": "end_date",
    "fieldtype": "Date",
    "label": "End Date",
@@ -101,7 +102,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-14 06:58:39.315568",
+ "modified": "2025-07-14 07:06:16.384326",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Promotion",
