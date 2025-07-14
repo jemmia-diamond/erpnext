@@ -8,6 +8,7 @@
  "field_order": [
   "title",
   "scope",
+  "is_active",
   "is_expired",
   "priority",
   "discount_type",
@@ -15,7 +16,8 @@
   "discount_percent",
   "start_date",
   "end_date",
-  "description"
+  "description",
+  "bizfly_id"
  ],
  "fields": [
   {
@@ -48,12 +50,15 @@
   {
    "fieldname": "start_date",
    "fieldtype": "Date",
-   "label": "Start Date"
+   "label": "Start Date",
+   "reqd": 1
   },
   {
+   "depends_on": "eval:doc.is_expired == true",
    "fieldname": "end_date",
    "fieldtype": "Date",
-   "label": "End Date"
+   "label": "End Date",
+   "mandatory_depends_on": "eval:doc.is_expired == true"
   },
   {
    "fieldname": "description",
@@ -80,12 +85,24 @@
    "label": "Discount Type",
    "options": "Percentage\nFix Amount\nGift",
    "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active"
+  },
+  {
+   "fieldname": "bizfly_id",
+   "fieldtype": "Data",
+   "label": "Bizfly ID",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-06-13 14:50:14.257825",
+ "modified": "2025-07-14 07:06:16.384326",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Promotion",
