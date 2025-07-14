@@ -14,6 +14,7 @@ class Promotion(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		bizfly_id: DF.Data | None
 		description: DF.LongText | None
 		discount_amount: DF.Currency
 		discount_percent: DF.Percent

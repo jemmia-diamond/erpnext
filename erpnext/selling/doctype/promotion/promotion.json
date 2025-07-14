@@ -16,7 +16,8 @@
   "discount_percent",
   "start_date",
   "end_date",
-  "description"
+  "description",
+  "bizfly_id"
  ],
  "fields": [
   {
@@ -89,12 +90,18 @@
    "fieldname": "is_active",
    "fieldtype": "Check",
    "label": "Is Active"
+  },
+  {
+   "fieldname": "bizfly_id",
+   "fieldtype": "Data",
+   "label": "Bizfly ID",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-14 06:53:24.653151",
+ "modified": "2025-07-14 06:58:39.315568",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Promotion",
