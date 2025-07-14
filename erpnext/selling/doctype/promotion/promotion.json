@@ -88,13 +88,13 @@
    "default": "1",
    "fieldname": "is_active",
    "fieldtype": "Check",
-   "label": "is_active"
+   "label": "Is Active"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-14 06:49:22.358221",
+ "modified": "2025-07-14 06:53:24.653151",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Promotion",
