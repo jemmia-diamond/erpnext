@@ -845,9 +845,9 @@ def update_all_customers_revenue():
     for result in results:
         haravan_id = result.get("haravanId")
         referrals_revenue = result.get("totalReferAmount", 0)
-        cashback = result.get("totalCashBack", 0)
         withdraw_cashback = result.get("withdrawAmount", 0)
-        pending_cashback = cashback - withdraw_cashback
+        pending_cashback = result.get("remainingCashBack", 0)
+        cashback = withdraw_cashback + pending_cashback
 
         # Update tabCustomer table based on haravanId
         frappe.db.sql("""
