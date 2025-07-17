@@ -60,6 +60,22 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "unique e.g. SAVE20  To be used to get discount",
+   "fieldname": "coupon_code",
+   "fieldtype": "Data",
+   "label": "Coupon Code",
+   "no_copy": 1,
+   "set_only_once": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "pricing_rule",
+   "fieldtype": "Link",
+   "label": "Pricing Rule",
+   "options": "Pricing Rule",
+   "reqd": 1
+  },
+  {
    "fieldname": "uses",
    "fieldtype": "Section Break",
    "label": "Validity and Usage"
