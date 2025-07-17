@@ -35,12 +35,6 @@ class CouponCode(Document):
 		valid_upto: DF.Date | None
 	# end: auto-generated types
 
-	def validate(self):
-		if self.coupon_type == "Partner":
-			self.maximum_use = 1
-			if not self.customer:
-				frappe.throw(_("Please select the customer."))
-
 	def autoname(self):
 		self.coupon_name = strip(self.coupon_name)
 		self.name = self.coupon_name
@@ -50,6 +44,13 @@ class CouponCode(Document):
 				self.coupon_code = "".join(i for i in self.coupon_name if not i.isdigit())[0:8].upper()
 			elif self.coupon_type == "Partner":
 				self.coupon_code = frappe.generate_hash()[:10].upper()
+
+	
+	def validate(self):
+		if self.coupon_type == "Partner":
+			self.maximum_use = 1
+			if not self.customer:
+				frappe.throw(_("Please select the customer."))
 
 
 def update_all_customers_coupon_code():
