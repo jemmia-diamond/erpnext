@@ -18,14 +18,18 @@ class CouponCode(Document):
 		from frappe.types import DF
 
 		amended_from: DF.Link | None
-		coupon_code: DF.Data | None
+		cashback_ref_amount: DF.Currency
+		coupon_haravanid: DF.Data
 		coupon_name: DF.Data
-		coupon_type: DF.Literal["Promotional", "Gift Card"]
-		customer: DF.Link | None
+		coupon_status: DF.Literal["Used", "Not Used"]
+		coupon_type: DF.Literal["Invite", "Partner"]
+		customer: DF.Link
 		description: DF.TextEditor | None
 		maximum_use: DF.Int
-		pricing_rule: DF.Link
+		order_status: DF.Literal["Pending", "Paid"]
+		total_price_amount: DF.Currency
 		used: DF.Int
+		user_name: DF.Data | None
 		valid_from: DF.Date | None
 		valid_upto: DF.Date | None
 	# end: auto-generated types

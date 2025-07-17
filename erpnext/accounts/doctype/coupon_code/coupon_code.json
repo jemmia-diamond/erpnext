@@ -1,4 +1,5 @@
 {
+ "actions": [],
  "allow_import": 1,
  "autoname": "field:coupon_name",
  "creation": "2018-01-22 14:34:39.701832",
@@ -7,12 +8,17 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "coupon_code_info_section",
   "coupon_name",
-  "coupon_type",
   "customer",
+  "total_price_amount",
+  "coupon_status",
+  "order_status",
   "column_break_4",
-  "coupon_code",
-  "pricing_rule",
+  "coupon_haravanid",
+  "user_name",
+  "cashback_ref_amount",
+  "coupon_type",
   "uses",
   "valid_from",
   "valid_upto",
@@ -36,35 +42,19 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Coupon Type",
-   "options": "Promotional\nGift Card",
-   "reqd": 1
+   "options": "Invite\nPartner"
   },
   {
    "depends_on": "eval: doc.coupon_type == \"Gift Card\"",
    "fieldname": "customer",
    "fieldtype": "Link",
-   "label": "Customer",
-   "options": "Customer"
+   "label": "Owner's Name",
+   "options": "Customer",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_4",
    "fieldtype": "Column Break"
-  },
-  {
-   "description": "unique e.g. SAVE20  To be used to get discount",
-   "fieldname": "coupon_code",
-   "fieldtype": "Data",
-   "label": "Coupon Code",
-   "no_copy": 1,
-   "set_only_once": 1,
-   "unique": 1
-  },
-  {
-   "fieldname": "pricing_rule",
-   "fieldtype": "Link",
-   "label": "Pricing Rule",
-   "options": "Pricing Rule",
-   "reqd": 1
   },
   {
    "fieldname": "uses",
@@ -113,12 +103,56 @@
    "options": "Coupon Code",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "description": "unique e.g. SAVE20  To be used to get discount",
+   "fieldname": "coupon_haravanid",
+   "fieldtype": "Data",
+   "label": "Coupon Haravan Code",
+   "no_copy": 1,
+   "reqd": 1,
+   "set_only_once": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "coupon_code_info_section",
+   "fieldtype": "Section Break",
+   "label": "Coupon Code Info"
+  },
+  {
+   "fieldname": "total_price_amount",
+   "fieldtype": "Currency",
+   "label": "Total Price Amount"
+  },
+  {
+   "fieldname": "cashback_ref_amount",
+   "fieldtype": "Currency",
+   "label": "Cashback Ref Amount"
+  },
+  {
+   "fieldname": "user_name",
+   "fieldtype": "Data",
+   "label": "User's Name"
+  },
+  {
+   "fieldname": "coupon_status",
+   "fieldtype": "Select",
+   "label": "Coupon Status",
+   "options": "Used\nNot Used"
+  },
+  {
+   "fieldname": "order_status",
+   "fieldtype": "Select",
+   "label": "Order Status",
+   "options": "Pending\nPaid"
   }
  ],
- "modified": "2019-10-19 14:48:14.602481",
+ "links": [],
+ "modified": "2025-07-17 05:14:38.585993",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Coupon Code",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -170,8 +204,10 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "coupon_name",
  "track_changes": 1
 }
