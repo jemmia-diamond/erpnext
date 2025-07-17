@@ -20,12 +20,12 @@ class CouponCode(Document):
 
 		amended_from: DF.Link | None
 		cashback_ref_amount: DF.Currency
-		coupon_haravanid: DF.Data | None
 		coupon_name: DF.Data
 		coupon_status: DF.Literal["Used", "Not Used"]
 		coupon_type: DF.Literal["Invite", "Partner"]
 		customer: DF.Link
 		description: DF.TextEditor | None
+		haravan_coupon_id: DF.Data | None
 		maximum_use: DF.Int
 		order_status: DF.Literal["Pending", "Paid"]
 		total_price_amount: DF.Currency
@@ -53,23 +53,26 @@ def update_all_customers_coupon_code():
 		for result in results:
 			haravan_id = result.get("haravanId")
 			owner_name = result.get("ownerName")
-			coupon_haravan_code = result.get("couponHaravanCode")
-			coupon_haravan_id = result.get("couponHaravanId")
+			haravan_coupon_code = result.get("couponHaravanCode")
+			haravan_coupon_id = result.get("couponHaravanId")
 			total_price = result.get("totalPrice", 0)
 			used_by_name = result.get("usedByName") or ""
 			cashback_ref = result.get("cashBackRef", 0)
-			order_status = result.get("paymentStatus", "").capitalize()  # 'paid' -> 'Paid'
+			order_status = result.get("paymentStatus", "").capitalize() 
 			coupon_status = result.get("couponStatus", "Used")
 			coupon_type = result.get("couponType", "Invite")
 
-			if not haravan_id or not owner_name or not coupon_haravan_code:
+			if not haravan_id or not owner_name or not haravan_coupon_code:
 				continue
 
 			customer = frappe.get_value("Customer", {"haravan_id": haravan_id}, "name")
 			if not customer:
 				continue
 
-			coupon_code_name = frappe.get_value("Coupon Code", {"coupon_haravanid": coupon_haravan_id}, "name")
+			coupon_name = frappe.get_value("Coupon Code", {"name": haravan_coupon_code}, "name")
+			if coupon_name:
+				continue
+			coupon_code_name = frappe.get_value("Coupon Code", {"haravan_coupon_id": haravan_coupon_code}, "name")
 
 			if not coupon_code_name:
 				coupon_code = frappe.new_doc("Coupon Code")
@@ -77,8 +80,8 @@ def update_all_customers_coupon_code():
 				coupon_code = frappe.get_doc("Coupon Code", coupon_code_name)
 
 			# Set common fields
-			coupon_code.coupon_haravanid = coupon_haravan_id
-			coupon_code.coupon_name = coupon_haravan_code
+			coupon_code.haravan_coupon_id = haravan_coupon_id
+			coupon_code.coupon_name = haravan_coupon_code
 			coupon_code.customer = customer
 			coupon_code.user_name = used_by_name
 			coupon_code.coupon_type = coupon_type
