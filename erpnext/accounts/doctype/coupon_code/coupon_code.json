@@ -10,11 +10,14 @@
  "field_order": [
   "coupon_code_info_section",
   "coupon_name",
+  "coupon_type",
   "customer",
   "total_price_amount",
   "coupon_status",
   "order_status",
   "column_break_4",
+  "coupon_code",
+  "pricing_rule",
   "haravan_coupon_id",
   "user_name",
   "cashback_ref_amount",
@@ -42,35 +45,19 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Coupon Type",
-   "options": "Invite\nPartner"
+   "options": "Invite\nPartner",
+   "reqd": 1
   },
   {
    "depends_on": "eval: doc.coupon_type == \"Gift Card\"",
    "fieldname": "customer",
    "fieldtype": "Link",
-   "label": "Owner's Name",
-   "options": "Customer",
-   "reqd": 1
+   "label": "Customer",
+   "options": "Customer"
   },
   {
    "fieldname": "column_break_4",
    "fieldtype": "Column Break"
-  },
-  {
-   "description": "unique e.g. SAVE20  To be used to get discount",
-   "fieldname": "coupon_code",
-   "fieldtype": "Data",
-   "label": "Coupon Code",
-   "no_copy": 1,
-   "set_only_once": 1,
-   "unique": 1
-  },
-  {
-   "fieldname": "pricing_rule",
-   "fieldtype": "Link",
-   "label": "Pricing Rule",
-   "options": "Pricing Rule",
-   "reqd": 1
   },
   {
    "fieldname": "uses",
@@ -161,10 +148,11 @@
   }
  ],
  "links": [],
- "modified": "2025-07-17 07:11:32.007436",
+ "modified": "2025-07-17 04:03:05.432683",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Coupon Code",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {

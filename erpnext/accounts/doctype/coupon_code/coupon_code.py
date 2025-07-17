@@ -19,6 +19,7 @@ class CouponCode(Document):
 		from frappe.types import DF
 
 		amended_from: DF.Link | None
+        coupon_code: DF.Data | None
 		cashback_ref_amount: DF.Currency
 		coupon_name: DF.Data
 		coupon_status: DF.Literal["Used", "Not Used"]
@@ -27,6 +28,7 @@ class CouponCode(Document):
 		description: DF.TextEditor | None
 		haravan_coupon_id: DF.Data | None
 		maximum_use: DF.Int
+        pricing_rule: DF.Link
 		order_status: DF.Literal["Pending", "Paid"]
 		total_price_amount: DF.Currency
 		used: DF.Int
