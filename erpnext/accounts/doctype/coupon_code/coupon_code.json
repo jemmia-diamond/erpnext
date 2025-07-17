@@ -109,9 +109,6 @@
    "fieldname": "coupon_haravanid",
    "fieldtype": "Data",
    "label": "Coupon Haravan Code",
-   "no_copy": 1,
-   "reqd": 1,
-   "set_only_once": 1,
    "unique": 1
   },
   {
@@ -148,7 +145,7 @@
   }
  ],
  "links": [],
- "modified": "2025-07-17 05:14:38.585993",
+ "modified": "2025-07-17 06:42:17.740141",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Coupon Code",
