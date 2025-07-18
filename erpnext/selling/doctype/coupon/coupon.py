@@ -28,8 +28,6 @@ def update_all_customers_coupon_code():
 			frappe.throw(_("Failed to fetch data from priority API"))
 
 		results = response.json()
-		updated_count = 0
-		skipped_count = 0
 
 		for result in results:
 			haravan_id = result.get("haravanId")
@@ -44,19 +42,16 @@ def update_all_customers_coupon_code():
 			coupon_type = result.get("couponType", "Invite")
 
 			if not haravan_id or not owner_name or not haravan_coupon_code:
-				skipped_count += 1
 				continue
 
 			customer = frappe.get_value("Customer", {"haravan_id": haravan_id}, "name")
 			if not customer:
 				frappe.logger().info(f"Skipped: Customer with haravan_id {haravan_id} not found.")
-				skipped_count += 1
 				continue
 
 			# Check if already exists by name
 			existing_coupon_by_name = frappe.get_value("Coupon", {"haravan_coupon_id": haravan_coupon_id}, "name")
 			if existing_coupon_by_name:
-				skipped_count += 1
 				continue
 
 			# Check by haravan_coupon_id
@@ -83,11 +78,8 @@ def update_all_customers_coupon_code():
 			else:
 				coupon_doc.save(ignore_permissions=True)
 
-			updated_count += 1
-
 		frappe.db.commit()
-		frappe.msgprint(_("{0} coupon codes updated, {1} skipped.").format(updated_count, skipped_count))
-
+		
 	except Exception as e:
 		frappe.db.rollback()
 		frappe.log_error(frappe.get_traceback(), "Error updating coupon codes")
