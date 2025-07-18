@@ -5,7 +5,6 @@ from frappe.utils import flt
 from frappe.model.document import Document
 
 class Coupon(Document):
-	# begin: auto-generated types
 	from typing import TYPE_CHECKING
 	if TYPE_CHECKING:
 		from frappe.types import DF
@@ -18,7 +17,6 @@ class Coupon(Document):
 		payment_status: DF.Literal["Paid", "Pending"]
 		total_price: DF.Currency
 		user: DF.Data | None
-	# end: auto-generated types
 
 def update_all_customers_coupon_code():
 	try:
@@ -49,12 +47,10 @@ def update_all_customers_coupon_code():
 				frappe.logger().info(f"Skipped: Customer with haravan_id {haravan_id} not found.")
 				continue
 
-			# Check if already exists by name
 			existing_coupon_by_name = frappe.get_value("Coupon", {"haravan_coupon_id": haravan_coupon_id}, "name")
 			if existing_coupon_by_name:
 				continue
 
-			# Check by haravan_coupon_id
 			existing_coupon = frappe.get_value("Coupon", {"coupon_name": haravan_coupon_code}, "name")
 
 			if existing_coupon:
@@ -62,17 +58,15 @@ def update_all_customers_coupon_code():
 			else:
 				coupon_doc = frappe.new_doc("Coupon")
 
-			# Set fields (must match field names in Doctype)
 			coupon_doc.haravan_coupon_id = haravan_coupon_id
 			coupon_doc.coupon_name = haravan_coupon_code
 			coupon_doc.customer = customer
-			coupon_doc.user = used_by_name  # fieldname is 'user' per your type hints
+			coupon_doc.user = used_by_name  
 			coupon_doc.coupon_type = coupon_type
 			coupon_doc.total_price = total_price
 			coupon_doc.cashback_ref = cashback_ref
-			coupon_doc.payment_status = payment_status  # fieldname is 'payment_status'
-			# Optional: if you have a custom field 'coupon_status', you must add it to type hints too
-
+			coupon_doc.payment_status = payment_status  
+			
 			if not existing_coupon:
 				coupon_doc.insert(ignore_permissions=True)
 			else:
