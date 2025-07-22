@@ -1854,7 +1854,7 @@ def larksuite_notification(sales_order_doc):
 	response = requests.post(
 		url=f"{config.FN_BASE_URL}/api/erp/sales_orders/{sales_order["name"]}/notifications",
 		headers={"Content-Type": "application/json", "Authorization": "Bearer " + config.FN_BEARER_TOKEN},
-		data=json.dumps(sales_order_doc),
+		data=sales_order_doc,
 	)
 	message = response.json()["message"]
 	return message
