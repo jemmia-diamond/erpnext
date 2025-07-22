@@ -1852,7 +1852,7 @@ def get_stock_reservation_status():
 def larksuite_notification(sales_order_doc):
 	sales_order = json.loads(sales_order_doc)
 	response = requests.post(
-		url=f"{config.FN_BASE_URL}/api/erp/orders/{sales_order["name"]}/notification",
+		url=f"{config.FN_BASE_URL}/api/erp/sales_orders/{sales_order["name"]}/notifications",
 		headers={"Content-Type": "application/json", "Authorization": "Bearer " + config.FN_BEARER_TOKEN},
 		data=json.dumps(sales_order_doc),
 	)
