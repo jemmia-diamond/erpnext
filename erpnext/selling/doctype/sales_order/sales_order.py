@@ -1856,4 +1856,5 @@ def larksuite_notification(sales_order_doc):
 		headers={"Content-Type": "application/json", "Authorization": "Bearer " + config.FN_BEARER_TOKEN},
 		data=json.dumps(sales_order_doc),
 	)
-	return response.text
+	message = response.json()["message"]
+	return message
