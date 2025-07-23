@@ -14,7 +14,7 @@ class Coupon(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
-		cashback_ref: DF.Data | None
+		cashback_ref: DF.Currency
 		coupon_name: DF.Data
 		coupon_type: DF.Literal["Invite", "Partner"]
 		customer: DF.Link
