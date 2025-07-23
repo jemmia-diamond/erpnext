@@ -43,7 +43,7 @@ def update_all_customers_coupon_code():
 	try:
 		priority_bearer_token: str = config.PRIORITY_BEARER_TOKEN
 		priority_base_url: str = config.PRIORITY_BASE_URL
-		response = requests.get(f"{priority_base_url}/coupon-ref/get-all", json={}, headers={"Authorization": f"Bearer {priority_bearer_token}"})
+		response = requests.get(f"{priority_base_url}/sync-crm/coupon-ref?updatedInCrm=true", json={}, headers={"Authorization": f"Bearer {priority_bearer_token}"})
 
 		if response.status_code != 200:
 			frappe.throw(_("Failed to fetch data from priority API"))
@@ -88,7 +88,10 @@ def update_all_customers_coupon_code():
 			coupon_doc.coupon_type = coupon_type
 			coupon_doc.total_price = total_price
 			coupon_doc.cashback_ref = cashback_ref
-			coupon_doc.payment_status = payment_status  
+			coupon_doc.payment_status = payment_status
+			coupon_doc.parent = customer
+			coupon_doc.parentfield = "coupon_table"
+			coupon_doc.parenttype = "Customer"  
 			
 			if not existing_coupon:
 				coupon_doc.insert(ignore_permissions=True)
