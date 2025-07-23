@@ -41,7 +41,8 @@ class Coupon(Document):
 def update_all_customers_coupon_code():
 	try:
 		priority_bearer_token: str = frappe.conf.get("priority_bench_token")
-		response = requests.get("https://priority-api.jemmia.vn/coupon-ref/get-all", json={}, headers={"Authorization": f"Bearer {priority_bearer_token}"})
+		priority_base_url: str = frappe.conf.get("priority_base_url")
+		response = requests.get(f"{priority_base_url}/coupon-ref/get-all", json={}, headers={"Authorization": f"Bearer {priority_bearer_token}"})
 
 		if response.status_code != 200:
 			frappe.throw(_("Failed to fetch data from priority API"))
