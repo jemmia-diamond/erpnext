@@ -5,6 +5,26 @@ from frappe.utils import flt
 from frappe.model.document import Document
 
 class Coupon(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		cashback_ref: DF.Data | None
+		coupon_name: DF.Data
+		coupon_type: DF.Literal["Invite", "Partner"]
+		customer: DF.Link
+		haravan_coupon_id: DF.Data | None
+		parent: DF.Data
+		parentfield: DF.Data
+		parenttype: DF.Data
+		payment_status: DF.Literal["Paid", "Pending"]
+		total_price: DF.Currency
+		user: DF.Data | None
+	# end: auto-generated types
 	from typing import TYPE_CHECKING
 	if TYPE_CHECKING:
 		from frappe.types import DF
@@ -20,7 +40,8 @@ class Coupon(Document):
 
 def update_all_customers_coupon_code():
 	try:
-		response = requests.get("https://priority-api.jemmia.vn/coupon-ref/get-all", json={})
+		priority_bearer_token: str = frappe.conf.get("priority_bench_token")
+		response = requests.get("https://priority-api.jemmia.vn/coupon-ref/get-all", json={}, headers={"Authorization": f"Bearer {priority_bearer_token}"})
 
 		if response.status_code != 200:
 			frappe.throw(_("Failed to fetch data from priority API"))
