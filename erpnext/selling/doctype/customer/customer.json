@@ -123,6 +123,8 @@
   "pending_cashback",
   "section_break_waiv",
   "priority_bank_account",
+  "section_break_dkbv",
+  "coupon_table",
   "sales_team_tab",
   "sales_team",
   "sales_team_section",
@@ -250,7 +252,6 @@
    "fieldtype": "Link",
    "hidden": 1,
    "in_list_view": 1,
-   "in_standard_filter": 0,
    "label": "Territory",
    "oldfieldname": "territory",
    "oldfieldtype": "Link",
@@ -728,9 +729,9 @@
    "default": "Silver",
    "fieldname": "customer_rank",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Customer Rank",
-   "in_list_view":1,
-   "in_standard_filter":1,
    "options": "No Rank\nSilver\nGold\nPlatinum"
   },
   {
@@ -961,6 +962,17 @@
    "fieldtype": "Link",
    "label": "First Source",
    "options": "Lead Source"
+  },
+  {
+   "fieldname": "section_break_dkbv",
+   "fieldtype": "Section Break",
+   "label": "Coupon Management"
+  },
+  {
+   "fieldname": "coupon_table",
+   "fieldtype": "Table",
+   "label": "Coupon List",
+   "options": "Coupon"
   }
  ],
  "icon": "fa fa-user",
@@ -974,7 +986,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2025-05-26 13:41:06.975779",
+ "modified": "2025-07-23 03:59:12.355598",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",

@@ -419,6 +419,7 @@ scheduler_events = {
 		"0/30 * * * *": [
 			"erpnext.utilities.doctype.video.video.update_youtube_data",
             "erpnext.selling.doctype.customer.customer.update_all_customers_revenue",
+            "erpnext.selling.doctype.coupon.coupon.update_all_customers_coupon_code",
 		],
 		# Hourly but offset by 30 minutes
 		"30 * * * *": [
