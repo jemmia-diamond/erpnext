@@ -41,7 +41,7 @@ class Coupon(Document):
 
 def update_all_customers_coupon_code():
 	try:
-		priority_bearer_token: str = config.PRIORITY_BENCH_TOKEN
+		priority_bearer_token: str = config.PRIORITY_BEARER_TOKEN
 		priority_base_url: str = config.PRIORITY_BASE_URL
 		response = requests.get(f"{priority_base_url}/coupon-ref/get-all", json={}, headers={"Authorization": f"Bearer {priority_bearer_token}"})
 
