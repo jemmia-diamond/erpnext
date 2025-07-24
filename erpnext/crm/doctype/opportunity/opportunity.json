@@ -20,11 +20,12 @@
   "customer_name",
   "column_break0",
   "opportunity_type",
+  "source",
   "sales_stage",
   "probability",
+  "opportunity_date",
   "column_break_10",
   "opportunity_owner",
-  "source",
   "status",
   "expected_closing",
   "customer_demand_sections",
@@ -34,6 +35,9 @@
   "budget_lead",
   "preferred_product_type",
   "column_break_rirs",
+  "province",
+  "region",
+  "opportunity_amount",
   "organization_details_section",
   "no_of_employees",
   "annual_revenue",
@@ -52,7 +56,6 @@
   "column_break_36",
   "conversion_rate",
   "column_break_17",
-  "opportunity_amount",
   "base_opportunity_amount",
   "more_info",
   "company",
@@ -173,7 +176,7 @@
    "options": "Opportunity Type"
   },
   {
-   "default": "Opportunity",
+   "default": "Open",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -182,7 +185,7 @@
    "no_copy": 1,
    "oldfieldname": "status",
    "oldfieldtype": "Select",
-   "options": "Opportunity\nHot Opportunity\nWarm Opportunity\nCold Opportunity",
+   "options": "Open\nQuotation\nConverted\nLost\nNegotiation\nClosed",
    "print_hide": 1,
    "reqd": 1
   },
@@ -227,6 +230,7 @@
    "default": "Prospecting",
    "fieldname": "sales_stage",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Sales Stage",
    "options": "Sales Stage"
   },
@@ -445,6 +449,7 @@
    "read_only": 1
   },
   {
+   "default": "1",
    "fieldname": "conversion_rate",
    "fieldtype": "Float",
    "label": "Exchange Rate"
@@ -652,13 +657,13 @@
   {
    "fieldname": "purpose_lead",
    "fieldtype": "Link",
-   "label": "Purpose Lead",
+   "label": "Lead Purpose",
    "options": "Lead Demand"
   },
   {
    "fieldname": "budget_lead",
    "fieldtype": "Link",
-   "label": "Budget Lead",
+   "label": "Lead Budget",
    "options": "Lead Budget"
   },
   {
@@ -689,12 +694,31 @@
    "fieldname": "opportunity_section",
    "fieldtype": "Section Break",
    "label": "Opportunity"
+  },
+  {
+   "fieldname": "province",
+   "fieldtype": "Link",
+   "label": "Province",
+   "options": "Province"
+  },
+  {
+   "fieldname": "region",
+   "fieldtype": "Link",
+   "label": "Region",
+   "options": "Region",
+   "read_only": 1
+  },
+  {
+   "fieldname": "opportunity_date",
+   "fieldtype": "Datetime",
+   "label": "Opportunity Date",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-info-sign",
  "idx": 195,
  "links": [],
- "modified": "2025-06-06 04:39:06.752536",
+ "modified": "2025-07-24 02:54:52.953341",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Opportunity",
