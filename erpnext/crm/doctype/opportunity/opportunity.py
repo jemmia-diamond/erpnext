@@ -129,6 +129,7 @@ class Opportunity(TransactionBase, CRMNote):
 			if frappe.db.get_single_value("CRM Settings", "carry_forward_communication_and_comments"):
 				copy_comments(self.opportunity_from, self.party_name, self)
 				link_communications(self.opportunity_from, self.party_name, self)
+		self.opportunity_date = self.creation
 
 	def validate(self):
 		self.make_new_lead_if_required()
@@ -154,10 +155,7 @@ class Opportunity(TransactionBase, CRMNote):
 					self.set(field, value)
 				except Exception:
 					continue
-
-	def before_save(self):
-		self.opportunity_date = self.creation
-		
+				
 	def set_exchange_rate(self):
 		company_currency = frappe.get_cached_value("Company", self.company, "default_currency")
 		if self.currency == company_currency:
