@@ -521,7 +521,8 @@
    "fieldtype": "Table",
    "label": "Notes",
    "no_copy": 1,
-   "options": "CRM Note"
+   "options": "CRM Note",
+   "read_only": 1
   },
   {
    "default": "0",
@@ -790,7 +791,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2025-07-08 08:44:32.750431",
+ "modified": "2025-07-24 09:47:40.440488",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
