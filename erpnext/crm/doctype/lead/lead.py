@@ -165,6 +165,11 @@ class Lead(SellingController, CRMNote):
 		self.update_first_reach_at()
 		self.upsert_lead_source()
 		self.update_pancake_lead_owner()
+		self.process_notes()
+
+	def process_notes(self):
+		for note in self.notes:
+			note.update_added_by()
 	
 	def update_pancake_lead_owner(self):
 		try:
