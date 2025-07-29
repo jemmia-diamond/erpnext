@@ -169,7 +169,7 @@ class Lead(SellingController, CRMNote):
 
 	def process_notes(self):
 		for note in self.notes:
-				note.update_added_by()
+			note.update_added_by()
 	
 	def update_pancake_lead_owner(self):
 		try:
