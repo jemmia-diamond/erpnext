@@ -665,13 +665,13 @@
   {
    "fieldname": "purpose_lead",
    "fieldtype": "Link",
-   "label": "Lead Purpose",
+   "label": "Purpose Lead ",
    "options": "Lead Demand"
   },
   {
    "fieldname": "budget_lead",
    "fieldtype": "Link",
-   "label": "Lead Budget",
+   "label": "Budget Lead",
    "options": "Lead Budget"
   },
   {
@@ -791,7 +791,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2025-07-24 09:47:40.440488",
+ "modified": "2025-07-29 11:25:42.656269",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
@@ -859,5 +859,6 @@
  "sort_order": "DESC",
  "states": [],
  "subject_field": "title",
- "title_field": "first_name"
+ "title_field": "first_name",
+ "track_changes": 1
 }
