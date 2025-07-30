@@ -1889,7 +1889,8 @@
   {
    "fieldname": "total_amount",
    "fieldtype": "Currency",
-   "label": "Total Amount"
+   "label": "Total Amount",
+   "read_only": 1
   },
   {
    "fieldname": "expected_payment_date",
@@ -1903,7 +1904,8 @@
   {
    "fieldname": "paid_amount",
    "fieldtype": "Currency",
-   "label": "Paid Amount"
+   "label": "Paid Amount",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_ptow",
@@ -1912,7 +1914,8 @@
   {
    "fieldname": "balance",
    "fieldtype": "Currency",
-   "label": "Balance"
+   "label": "Balance",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_ujjh",
@@ -1927,14 +1930,15 @@
   {
    "fieldname": "real_order_date",
    "fieldtype": "Date",
-   "label": "Real Order Date"
+   "label": "Real Order Date",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-30 10:38:13.386251",
+ "modified": "2025-07-22 02:38:02.862394",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
