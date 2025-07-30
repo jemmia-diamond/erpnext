@@ -5,25 +5,25 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "tittle",
+  "title",
   "bizfly_id"
  ],
  "fields": [
   {
-   "fieldname": "tittle",
-   "fieldtype": "Data",
-   "label": "Tittle"
-  },
-  {
    "fieldname": "bizfly_id",
    "fieldtype": "Data",
    "label": "Bizfly ID"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-30 08:54:29.359180",
+ "modified": "2025-07-30 09:39:56.018265",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Policy",
