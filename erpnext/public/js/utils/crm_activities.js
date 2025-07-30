@@ -39,41 +39,16 @@ erpnext.utils.CRMActivities = class CRMActivities {
 
 					$(activities_html).appendTo(me.open_activities_wrapper);
 
-					$(".open-tasks")
-						.find(".completion-checkbox")
-						.on("click", function () {
-							me.update_status(this, "ToDo");
-						});
-
 					$(".open-events")
 						.find(".completion-checkbox")
 						.on("click", function () {
 							me.update_status(this, "Event");
 						});
 
-					me.create_task();
 					me.create_event();
 				}
 			},
 		});
-	}
-
-	create_task() {
-		let me = this;
-		let _create_task = () => {
-			const args = {
-				doc: me.frm.doc,
-				frm: me.frm,
-				title: __("New Task"),
-			};
-			let composer = new frappe.views.InteractionComposer(args);
-			composer.dialog.get_field("interaction_type").set_value("ToDo");
-			// hide column having interaction type field
-			$(composer.dialog.get_field("interaction_type").wrapper).closest(".form-column").hide();
-			// hide summary field
-			$(composer.dialog.get_field("summary").wrapper).closest(".form-section").hide();
-		};
-		$(".new-task-btn").click(_create_task);
 	}
 
 	create_event() {
@@ -89,15 +64,6 @@ erpnext.utils.CRMActivities = class CRMActivities {
 			$(composer.dialog.get_field("interaction_type").wrapper).hide();
 		};
 		$(".new-event-btn").click(_create_event);
-	}
-
-	async update_status(input_field, doctype) {
-		let completed = $(input_field).prop("checked") ? 1 : 0;
-		let docname = $(input_field).attr("name");
-		if (completed) {
-			await frappe.db.set_value(doctype, docname, "status", "Closed");
-			this.refresh();
-		}
 	}
 };
 
