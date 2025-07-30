@@ -32,6 +32,7 @@
   "cancelled_status",
   "financial_status",
   "fulfillment_status",
+  "expected_delivery_date",
   "accounting_dimensions_section",
   "cost_center",
   "dimension_col_break",
@@ -124,6 +125,7 @@
   "column_break_xnxx",
   "customer",
   "gender",
+  "customer_type",
   "column_break_93",
   "customer_personal_id",
   "birth_date",
@@ -146,6 +148,8 @@
   "per_billed",
   "per_picked",
   "billing_status",
+  "section_break_jhtj",
+  "policies",
   "sales_team_section_break",
   "sales_partner",
   "column_break7",
@@ -1932,13 +1936,35 @@
    "fieldtype": "Date",
    "label": "Real Order Date",
    "read_only": 1
+  },
+  {
+   "fieldname": "expected_delivery_date",
+   "fieldtype": "Date",
+   "label": "Expected Delivery Date"
+  },
+  {
+   "fieldname": "customer_type",
+   "fieldtype": "Select",
+   "label": "Customer Type",
+   "options": "\nNew Customer\nReturning Customer"
+  },
+  {
+   "fieldname": "section_break_jhtj",
+   "fieldtype": "Section Break",
+   "label": "Order Policies"
+  },
+  {
+   "fieldname": "policies",
+   "fieldtype": "Table MultiSelect",
+   "label": "Policies",
+   "options": "Sales Order Policy"
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-07-22 02:38:02.862394",
+ "modified": "2025-07-30 09:02:07.779398",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
