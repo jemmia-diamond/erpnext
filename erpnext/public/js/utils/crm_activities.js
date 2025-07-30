@@ -39,19 +39,12 @@ erpnext.utils.CRMActivities = class CRMActivities {
 
 					$(activities_html).appendTo(me.open_activities_wrapper);
 
-					$(".open-tasks")
-						.find(".completion-checkbox")
-						.on("click", function () {
-							me.update_status(this, "ToDo");
-						});
-
 					$(".open-events")
 						.find(".completion-checkbox")
 						.on("click", function () {
 							me.update_status(this, "Event");
 						});
 
-					me.create_task();
 					me.create_event();
 				}
 			},
