@@ -595,6 +595,27 @@ frappe.ui.form.on("Sales Order Item", {
 					console.error(err);
 				});
 		}
+	},
+
+	promotion: function (frm, cdt, cdn) {
+		var row = locals[cdt][cdn];
+		if (row.promotion) {
+			var selected_promotions = [row.promotion_1, row.promotion_2, row.promotion_3, row.promotion_4];
+			if (!selected_promotions.includes(row.promotion)) {
+
+				if (!row.promotion_1) {
+					row.promotion_1 = row.promotion;
+				} else if (!row.promotion_2) {
+					row.promotion_2 = row.promotion;
+				} else if (!row.promotion_3) {
+					row.promotion_3 = row.promotion;
+				} else if (!row.promotion_4) {
+					row.promotion_4 = row.promotion;
+				}
+			}
+			row.promotion = null;
+			frm.refresh_field('items');
+		}
 	}
 });
 
