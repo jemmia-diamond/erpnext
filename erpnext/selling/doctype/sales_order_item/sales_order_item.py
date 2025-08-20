@@ -43,14 +43,6 @@ class SalesOrderItem(Document):
 		discount_percentage: DF.Percent
 		distributed_discount_amount: DF.Currency
 		ensure_delivery_based_on_produced_serial_no: DF.Check
-		g0: DF.Link | None
-		g1: DF.Link | None
-		g2: DF.Link | None
-		g3: DF.Link | None
-		g4: DF.Link | None
-		g5: DF.Link | None
-		g6: DF.Link | None
-		g7: DF.Link | None
 		grant_commission: DF.Check
 		gross_profit: DF.Currency
 		haravan_variant_id: DF.Int
@@ -83,6 +75,11 @@ class SalesOrderItem(Document):
 		production_plan_qty: DF.Float
 		project: DF.Link | None
 		projected_qty: DF.Float
+		promotion: DF.Link | None
+		promotion_1: DF.Link | None
+		promotion_2: DF.Link | None
+		promotion_3: DF.Link | None
+		promotion_4: DF.Link | None
 		purchase_order: DF.Link | None
 		purchase_order_item: DF.Data | None
 		qty: DF.Float
