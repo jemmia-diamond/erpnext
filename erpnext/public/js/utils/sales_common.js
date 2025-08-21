@@ -521,14 +521,6 @@ erpnext.pre_sales = {
 									: "Quotation Lost Reason Detail",
 							reqd: 1,
 						},
-						/* Temporarily hidden per request
-						{
-							fieldtype: "Table MultiSelect",
-							label: __("Competitors"),
-							fieldname: "competitors",
-							options: "Competitor Detail",
-						},
-						*/
 						{
 							fieldtype: "Small Text",
 							label: __("Detailed Reason"),
