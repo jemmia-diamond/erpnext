@@ -471,6 +471,7 @@
   {
    "fieldname": "competitors",
    "fieldtype": "Table MultiSelect",
+   "hidden": 1,
    "label": "Competitors",
    "options": "Competitor Detail",
    "read_only": 1
@@ -711,14 +712,13 @@
   {
    "fieldname": "opportunity_date",
    "fieldtype": "Datetime",
-   "label": "Opportunity Date",
-   "read_only": 1
+   "label": "Opportunity Date"
   }
  ],
  "icon": "fa fa-info-sign",
  "idx": 195,
  "links": [],
- "modified": "2025-07-25 09:05:37.671835",
+ "modified": "2025-08-21 09:42:13.007770",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Opportunity",
