@@ -53,11 +53,14 @@ frappe.ui.form.on("Sales Order", {
 		}
 
 		frm.add_custom_button(__('Send Order To Lark'), function() {
-			frappe.call({
-				method: 'erpnext.selling.doctype.sales_order.sales_order.larksuite_notification',
-				args: {sales_order_doc: frm.doc},
-				callback: function(r) {frappe.msgprint(r);}
-			})
+			frappe.db.get_doc("Sales Order", frm.doc.name)
+    		.then(doc => {
+    		    frappe.call({
+					method: 'erpnext.selling.doctype.sales_order.sales_order.larksuite_notification',
+					args: {sales_order_doc: doc},
+					callback: function(r) {frappe.msgprint(r);}
+				})
+    		})
        	});
 
 		if (frm.doc.docstatus === 1) {
