@@ -55,7 +55,6 @@ frappe.ui.form.on("Sales Order", {
 		frm.add_custom_button(__('Send Order To Lark'), function() {
 			frappe.db.get_doc("Sales Order", frm.doc.name)
     		.then(doc => {
-				console.log(doc);
     		    frappe.call({
 					method: 'erpnext.selling.doctype.sales_order.sales_order.larksuite_notification',
 					args: {sales_order_doc: frm.undo_manager.frm.doc},
