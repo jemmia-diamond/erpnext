@@ -57,7 +57,7 @@ frappe.ui.form.on("Sales Order", {
     		.then(doc => {
     		    frappe.call({
 					method: 'erpnext.selling.doctype.sales_order.sales_order.larksuite_notification',
-					args: {sales_order_doc: frm.undo_manager.frm.doc},
+					args: {sales_order_doc: doc},
 					callback: function(r) {frappe.msgprint(r);}
 				})
     		})
