@@ -784,7 +784,13 @@ class SalesOrder(SellingController):
 				self.docstatus = DocStatus.CANCELLED
 				self.flags.ignore_on_cancel = True
 
+	def validate_primary_sales_team(self):
+		if self.sales_team:
+			if len([t for t in self.sales_team if t.is_primarily_responsible == 1]) > 1:
+				frappe.throw(_("Only one Sales Team can be marked as Primary"))
+
 	def before_save(self):
+		self.validate_primary_sales_team()
 		self.handle_order_cancellation()
 		
 	def before_insert(self):
