@@ -19,7 +19,6 @@ class SalesTeam(Document):
 		commission_rate: DF.Data | None
 		contact_no: DF.Data | None
 		incentives: DF.Currency
-		is_primarily_responsible: DF.Check
 		parent: DF.Data
 		parentfield: DF.Data
 		parenttype: DF.Data
