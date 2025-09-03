@@ -11,6 +11,7 @@
   "item_name",
   "variant_title",
   "product_details",
+  "product_availability_status",
   "column_break_ggzz",
   "sku",
   "barcode",
@@ -1115,12 +1116,19 @@
    "label": "Find Promotion",
    "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Line Item\"]]",
    "options": "Promotion"
+  },
+  {
+   "default": "In Stock",
+   "fieldname": "product_availability_status",
+   "fieldtype": "Select",
+   "label": "Product Availability Status",
+   "options": "In Stock\nPre-order"
   }
  ],
  "idx": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-20 03:06:25.260430",
+ "modified": "2025-09-03 05:29:47.764860",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order Item",

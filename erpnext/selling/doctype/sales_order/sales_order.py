@@ -64,6 +64,7 @@ class SalesOrder(SellingController):
 		from erpnext.selling.doctype.sales_order_policy.sales_order_policy import SalesOrderPolicy
 		from erpnext.selling.doctype.sales_order_product_category.sales_order_product_category import SalesOrderProductCategory
 		from erpnext.selling.doctype.sales_order_promotion.sales_order_promotion import SalesOrderPromotion
+		from erpnext.selling.doctype.sales_order_purpose.sales_order_purpose import SalesOrderPurpose
 		from erpnext.selling.doctype.sales_order_reference.sales_order_reference import SalesOrderReference
 		from erpnext.selling.doctype.sales_team.sales_team import SalesTeam
 		from erpnext.stock.doctype.packed_item.packed_item import PackedItem
@@ -94,6 +95,7 @@ class SalesOrder(SellingController):
 		company_address: DF.Link | None
 		company_address_display: DF.SmallText | None
 		company_contact_person: DF.Link | None
+		consultation_date: DF.Date | None
 		contact_display: DF.SmallText | None
 		contact_email: DF.Data | None
 		contact_mobile: DF.SmallText | None
@@ -169,6 +171,7 @@ class SalesOrder(SellingController):
 		reserve_stock: DF.Check
 		rounded_total: DF.Currency
 		rounding_adjustment: DF.Currency
+		sales_order_purposes: DF.TableMultiSelect[SalesOrderPurpose]
 		sales_partner: DF.Link | None
 		sales_team: DF.Table[SalesTeam]
 		scan_barcode: DF.Data | None
