@@ -33,6 +33,7 @@
   "financial_status",
   "fulfillment_status",
   "expected_delivery_date",
+  "consultation_date",
   "accounting_dimensions_section",
   "cost_center",
   "dimension_col_break",
@@ -61,6 +62,7 @@
   "section_break_31",
   "column_break_33a",
   "promotions",
+  "sales_order_purposes",
   "product_categories",
   "policies",
   "column_break_bscz",
@@ -1978,13 +1980,24 @@
    "fieldtype": "Select",
    "label": "Delivery location ",
    "options": "\n209, \u0110 30 th\u00e1ng 4, Xu\u00e2n Kh\u00e1nh, Ninh Ki\u1ec1u, C\u1ea7n Th\u01a1\n63 Kim M\u00e3, Qu\u1eadn Ba \u0110\u00ecnh, H\u00e0 N\u1ed9i\n72 Nguy\u1ec5n C\u01b0 Trinh, Qu\u1eadn 1, Th\u00e0nh Ph\u1ed1 H\u1ed3 Ch\u00ed Minh\nGiao v\u1ec1 \u0111\u1ecba ch\u1ec9 kh\u00e1ch"
+  },
+  {
+   "fieldname": "consultation_date",
+   "fieldtype": "Date",
+   "label": "Consultation Date"
+  },
+  {
+   "fieldname": "sales_order_purposes",
+   "fieldtype": "Table MultiSelect",
+   "label": "Sales Order Purposes",
+   "options": "Sales Order Purpose"
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-04 07:04:58.227205",
+ "modified": "2025-09-03 07:43:37.327291",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",

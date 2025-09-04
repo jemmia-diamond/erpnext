@@ -256,13 +256,14 @@ class Lead(SellingController, CRMNote):
 	def update_first_reach_at(self):
 		if self.pancake_data:
 			parsed_pancake_data = frappe.parse_json(self.pancake_data)
-			inserted_at = parsed_pancake_data.get("inserted_at", None)
-			if inserted_at:
+			inserted_at_str = parsed_pancake_data.get("inserted_at", None)
+			if inserted_at_str:
+				inserted_at_dt = frappe.utils.get_datetime(inserted_at_str)
 				if not self.first_reach_at:
-					self.first_reach_at = inserted_at
+					self.first_reach_at = inserted_at_dt
 				else:
-					if inserted_at < self.first_reach_at:
-						self.first_reach_at = inserted_at
+					if inserted_at_dt < self.first_reach_at:
+						self.first_reach_at = inserted_at_dt
 						
 	def upsert_lead_source(self):
 		# Update source if source is None
