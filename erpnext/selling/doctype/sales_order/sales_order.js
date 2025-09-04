@@ -52,6 +52,11 @@ frappe.ui.form.on("Sales Order", {
 			$statusSpan.css("color", "tomato").css("background-color", "whitesmoke");
 		}
 
+		frm.add_custom_button(__('View On Haravan'), function() {
+			const haravanUrl = `https://jemmiavn.myharavan.com/admin/orders/${frm.doc.haravan_order_id}`;
+			window.open(haravanUrl, '_blank');
+		});
+
 		frm.add_custom_button(__('Send Order To Lark'), function() {
 			frappe.db.get_doc("Sales Order", frm.doc.name)
     		.then(doc => {
