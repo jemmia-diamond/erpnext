@@ -1957,7 +1957,7 @@
   {
    "fieldname": "policies",
    "fieldtype": "Table MultiSelect",
-   "label": "Policies",
+   "label": "Order Policies",
    "options": "Sales Order Policy"
   },
   {
@@ -2004,7 +2004,7 @@
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-05 03:44:13.958076",
+ "modified": "2025-09-05 03:46:26.616116",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
