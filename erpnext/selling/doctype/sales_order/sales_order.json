@@ -63,7 +63,6 @@
   "section_break_31",
   "column_break_33a",
   "promotions",
-  "sales_order_purposes",
   "product_categories",
   "policies",
   "column_break_bscz",
@@ -145,6 +144,7 @@
   "company_contact_person",
   "more_info",
   "deposit_location",
+  "sales_order_purposes",
   "column_break_cbgk",
   "delivery_location",
   "section_break_ctso",
@@ -1957,7 +1957,7 @@
   {
    "fieldname": "policies",
    "fieldtype": "Table MultiSelect",
-   "label": "Policies",
+   "label": "Order Policies",
    "options": "Sales Order Policy"
   },
   {
@@ -2004,7 +2004,7 @@
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-05 02:56:27.245568",
+ "modified": "2025-09-05 03:46:26.616116",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
