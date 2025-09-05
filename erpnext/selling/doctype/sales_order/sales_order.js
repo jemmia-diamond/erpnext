@@ -68,6 +68,9 @@ frappe.ui.form.on("Sales Order", {
     		})
        	});
 
+		// hide sales order item grid footer (buttons)
+		$('[data-fieldname="items"] .grid-footer').addClass('hidden');
+
 		if (frm.doc.docstatus === 1) {
 			if (
 				frm.doc.status !== "Closed" &&
@@ -830,42 +833,6 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 				}
 				this.frm.page.set_inner_btn_group_as_primary(__("Create"));
 			}
-		}
-
-		if (this.frm.doc.docstatus === 0 && frappe.model.can_read("Quotation")) {
-			this.frm.add_custom_button(
-				__("Quotation"),
-				function () {
-					let d = erpnext.utils.map_current_doc({
-						method: "erpnext.selling.doctype.quotation.quotation.make_sales_order",
-						source_doctype: "Quotation",
-						target: me.frm,
-						setters: [
-							{
-								label: __("Customer"),
-								fieldname: "party_name",
-								fieldtype: "Link",
-								options: "Customer",
-								default: me.frm.doc.customer || undefined,
-							},
-						],
-						get_query_filters: {
-							company: me.frm.doc.company,
-							docstatus: 1,
-							status: ["!=", "Lost"],
-						},
-					});
-
-					setTimeout(() => {
-						d.$parent.append(`
-							<span class='small text-muted'>
-								${__("Note: Please create Sales Orders from individual Quotations to select from among Alternative Items.")}
-							</span>
-					`);
-					}, 200);
-				},
-				__("Get Items From")
-			);
 		}
 
 		this.order_type(doc);
