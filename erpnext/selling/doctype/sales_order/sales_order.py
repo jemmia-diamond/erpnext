@@ -90,6 +90,7 @@ class SalesOrder(SellingController):
 		birth_date: DF.Date | None
 		campaign: DF.Link | None
 		cancelled_status: DF.Literal["", "Uncancelled", "Cancelled"]
+		carrier_status: DF.Literal["", "Not Delivered", "Ready To Pick", "Delivering", "Delivered"]
 		commission_rate: DF.Float
 		company: DF.Link
 		company_address: DF.Link | None
