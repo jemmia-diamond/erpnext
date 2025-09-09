@@ -38,14 +38,21 @@
   "ceo_name",
   "advanced_information_selection",
   "personal_document_type",
-  "birth_date",
-  "gender",
-  "column_break_bjiq",
-  "personal_id",
-  "place_of_issuance",
-  "column_break_akie",
   "person_name",
   "date_of_issuance",
+  "date_of_passport_issuance",
+  "column_break_bjiq",
+  "gender",
+  "personal_id",
+  "passport_id",
+  "place_of_issuance",
+  "place_of_passport_issuance",
+  "column_break_akie",
+  "birth_date",
+  "front_image",
+  "back_image",
+  "passport_expiry_date",
+  "doc_image",
   "orther_section",
   "first_source",
   "customer_website",
@@ -678,7 +685,7 @@
   {
    "fieldname": "advanced_information_selection",
    "fieldtype": "Section Break",
-   "label": "Billing Information"
+   "label": "Identity Document"
   },
   {
    "fieldname": "birth_date",
@@ -686,17 +693,20 @@
    "label": "Birth Date"
   },
   {
+   "depends_on": "eval:doc.personal_document_type==\"CCCD\"",
    "fieldname": "personal_id",
    "fieldtype": "Data",
    "label": "Personal ID"
   },
   {
+   "depends_on": "eval:doc.personal_document_type==\"CCCD\"",
    "fieldname": "place_of_issuance",
    "fieldtype": "Select",
    "label": "Place of Issuance",
    "options": "Ministry of Public Security\nDepartment of Police for Administrative Management of Social Order\nDepartment of Police for Registration, Residency Management, and National Population Data"
   },
   {
+   "depends_on": "eval:doc.personal_document_type==\"CCCD\"",
    "fieldname": "date_of_issuance",
    "fieldtype": "Date",
    "label": "Date of Issuance"
@@ -773,10 +783,11 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "CCCD",
    "fieldname": "personal_document_type",
    "fieldtype": "Select",
    "label": "Personal Document Type",
-   "options": "CCCD\nCMND\nPassport"
+   "options": "CCCD\nPassport"
   },
   {
    "fieldname": "column_break_akie",
@@ -973,6 +984,49 @@
    "fieldtype": "Table",
    "label": "Coupon List",
    "options": "Coupon"
+  },
+  {
+   "depends_on": "eval:doc.personal_document_type==\"CCCD\"",
+   "fieldname": "front_image",
+   "fieldtype": "Attach Image",
+   "label": "Front Image"
+  },
+  {
+   "depends_on": "eval:doc.personal_document_type==\"CCCD\"",
+   "fieldname": "back_image",
+   "fieldtype": "Attach Image",
+   "label": "Back Image"
+  },
+  {
+   "depends_on": "eval:doc.personal_document_type==\"Passport\"",
+   "fieldname": "passport_id",
+   "fieldtype": "Data",
+   "label": "Passport ID"
+  },
+  {
+   "depends_on": "eval:doc.personal_document_type==\"Passport\"",
+   "fieldname": "doc_image",
+   "fieldtype": "Attach Image",
+   "label": "Doc Image"
+  },
+  {
+   "depends_on": "eval:doc.personal_document_type==\"Passport\"",
+   "fieldname": "date_of_passport_issuance",
+   "fieldtype": "Date",
+   "label": "Date of Passport Issuance"
+  },
+  {
+   "depends_on": "eval:doc.personal_document_type==\"Passport\"",
+   "fieldname": "place_of_passport_issuance",
+   "fieldtype": "Link",
+   "label": "Place of Passport Issuance",
+   "options": "Country"
+  },
+  {
+   "depends_on": "eval:doc.personal_document_type==\"Passport\"",
+   "fieldname": "passport_expiry_date",
+   "fieldtype": "Date",
+   "label": "Passport Expiry Date"
   }
  ],
  "icon": "fa fa-user",
@@ -986,7 +1040,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2025-07-23 03:59:12.355598",
+ "modified": "2025-09-09 10:14:13.419222",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",
