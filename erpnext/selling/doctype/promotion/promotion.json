@@ -17,7 +17,9 @@
   "start_date",
   "end_date",
   "description",
-  "bizfly_id"
+  "bizfly_id",
+  "promotion_month",
+  "promotion_group"
  ],
  "fields": [
   {
@@ -97,12 +99,24 @@
    "fieldtype": "Data",
    "label": "Bizfly ID",
    "read_only": 1
+  },
+  {
+   "fieldname": "promotion_month",
+   "fieldtype": "Link",
+   "label": "Promotion Month",
+   "options": "Promotion Month"
+  },
+  {
+   "fieldname": "promotion_group",
+   "fieldtype": "Link",
+   "label": "Promotion Group",
+   "options": "Promotion Group"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-14 07:06:16.384326",
+ "modified": "2025-09-10 09:23:32.598145",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Promotion",
