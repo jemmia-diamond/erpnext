@@ -1,20 +1,23 @@
 import frappe
 
 def get_lead_name_by_conversation_id(conversation_id: str):
-	query = """
-    SELECT tdl.link_name
-    FROM tabContact tc
-    JOIN `tabDynamic Link` tdl
-        ON tc.name = tdl.parent
-        AND tdl.parenttype = 'Contact'
-    WHERE tc.pancake_conversation_id = %s
-	"""
-	result = frappe.db.sql(query, (conversation_id), as_dict=True)
-
-	if len(result) > 0:
-		link_name = result[0].link_name
-		return link_name
-	return None
+	contact_name = frappe.db.get_value(
+		"Contact",
+		{"pancake_conversation_id": conversation_id},
+		"name",
+	)
+	if not contact_name:
+		return None
+	link_name = frappe.db.get_value(
+		"Dynamic Link",
+		{
+			"parent": contact_name,
+			"parenttype": "Contact",
+			"link_doctype": "Lead",
+		},
+		"link_name",
+	)
+	return link_name
 
 def get_lead_by_name(lead_name: str):
 
