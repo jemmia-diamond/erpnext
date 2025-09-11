@@ -1,4 +1,5 @@
 import frappe
+from frappe.exceptions import TimestampMismatchError
 
 
 @frappe.whitelist()
@@ -98,3 +99,15 @@ def strip_number(number):
 	number = number.lstrip("+")
 	number = number.lstrip("0")
 	return number
+
+
+def retry_on_timestamp_conflict(func, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            return func()
+        except TimestampMismatchError:
+            if attempt < max_retries - 1:
+                frappe.db.rollback()
+                continue
+            else:
+                raise
