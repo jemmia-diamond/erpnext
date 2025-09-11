@@ -344,7 +344,7 @@ def update_lead_from_summary(data):
 	lead = get_lead_by_name(lead_name)
 	
 	if lead is None: 
-		contacts = get_contacts_by_conversation_id(conversation_id)
+		contacts = get_contacts_by_conversation_id(conversation_id) or []
 		for contact in contacts:
 			try: 
 				contact_doc = frappe.get_doc('Contact', {'name': contact.name})
@@ -390,7 +390,7 @@ def update_lead_from_summary(data):
 				products.append(new_lead_product)
 
 	for product in products:
-		existing_products = {item.product_type for item in lead.preferred_product_type}
+		existing_products = {item.product_type for item in (lead.preferred_product_type or [])}
 		if product.name not in existing_products:
 			lead.append("preferred_product_type", {
 				"product_type": product.name
@@ -400,7 +400,7 @@ def update_lead_from_summary(data):
 	lead.reload()
 
 	#update last summarize at 
-	contacts = get_contacts_by_conversation_id(conversation_id)
+	contacts = get_contacts_by_conversation_id(conversation_id) or []
 	for contact in contacts:
 		contact_doc = frappe.get_doc('Contact', {'name': contact.name})
 		contact_doc.last_summarize_time = frappe.utils.now_datetime()
