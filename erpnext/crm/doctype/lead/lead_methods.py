@@ -380,14 +380,15 @@ def update_lead_from_summary(data):
 		lead.province = lead_province.name
 
 	products = []
-	for product_name in product_names:
-		lead_product = get_lead_product(product_name)
-		if lead_product:
-			products.append(lead_product)
-		else:
-			new_lead_product = create_lead_product(product_name)
-			if new_lead_product:
-				products.append(new_lead_product)
+	if product_names:
+		for product_name in product_names:
+			lead_product = get_lead_product(product_name)
+			if lead_product:
+				products.append(lead_product)
+			else:
+				new_lead_product = create_lead_product(product_name)
+				if new_lead_product:
+					products.append(new_lead_product)
 
 	for product in products:
 		existing_products = {item.product_type for item in (lead.preferred_product_type or [])}
