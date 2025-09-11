@@ -350,6 +350,7 @@ def update_lead_from_summary(data):
 				contact_doc = frappe.get_doc('Contact', {'name': contact.name})
 				contact_doc.last_summarize_time = frappe.utils.now_datetime()
 				contact_doc.save()
+				frappe.db.commit()
 			except:
 				pass
 
@@ -397,6 +398,7 @@ def update_lead_from_summary(data):
 			})
 
 	lead.save()
+	frappe.db.commit()
 	lead.reload()
 
 	#update last summarize at 
@@ -405,5 +407,6 @@ def update_lead_from_summary(data):
 		contact_doc = frappe.get_doc('Contact', {'name': contact.name})
 		contact_doc.last_summarize_time = frappe.utils.now_datetime()
 		contact_doc.save()
+		frappe.db.commit()
 
 	return True

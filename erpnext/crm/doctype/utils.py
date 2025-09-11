@@ -101,13 +101,16 @@ def strip_number(number):
 	return number
 
 
-def retry_on_timestamp_conflict(func, max_retries=3):
+def retry_on_timestamp_conflict(func, max_retries: int = 3):
+    if max_retries < 1:
+        raise ValueError("max_retries must be >= 1")
+
     for attempt in range(max_retries):
+        savepoint = f"retry_attempt_{attempt}"
         try:
+            frappe.db.savepoint(savepoint)
             return func()
         except TimestampMismatchError:
-            if attempt < max_retries - 1:
-                frappe.db.rollback()
-                continue
-            else:
+            frappe.db.rollback(save_point=savepoint)
+            if attempt >= max_retries - 1:
                 raise
