@@ -809,8 +809,14 @@ class SalesOrder(SellingController):
 
 	def process_debt_history(self):
 		for row in self.get("debt_history"):
+			# Only process newly added child rows
+			is_new_row = (getattr(row, "is_new", None) and row.is_new()) or row.get("__islocal") or not row.name
+			if not is_new_row:
+				continue
 			if hasattr(row, "update_added_by"):
 				row.update_added_by()
+			if hasattr(row, "_notify_assigned_user"):
+				row._notify_assigned_user()
 
 	def after_insert(self):
 		self.update_customer_revenue_fields()

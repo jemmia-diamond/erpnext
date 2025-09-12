@@ -11,7 +11,8 @@
   "added_by",
   "notify_to",
   "status",
-  "note"
+  "note",
+  "amended_from"
  ],
  "fields": [
   {
@@ -53,13 +54,24 @@
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Date"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Order and Debt Tracking",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-11 08:11:33.767847",
+ "modified": "2025-09-11 10:58:17.899297",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Order and Debt Tracking",
