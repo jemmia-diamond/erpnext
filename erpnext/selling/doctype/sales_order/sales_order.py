@@ -59,6 +59,7 @@ class SalesOrder(SellingController):
 		from erpnext.accounts.doctype.payment_schedule.payment_schedule import PaymentSchedule
 		from erpnext.accounts.doctype.pricing_rule_detail.pricing_rule_detail import PricingRuleDetail
 		from erpnext.accounts.doctype.sales_taxes_and_charges.sales_taxes_and_charges import SalesTaxesandCharges
+		from erpnext.selling.doctype.order_and_debt_tracking.order_and_debt_tracking import OrderandDebtTracking
 		from erpnext.selling.doctype.sales_order_item.sales_order_item import SalesOrderItem
 		from erpnext.selling.doctype.sales_order_payment_record.sales_order_payment_record import SalesOrderPaymentRecord
 		from erpnext.selling.doctype.sales_order_policy.sales_order_policy import SalesOrderPolicy
@@ -113,6 +114,7 @@ class SalesOrder(SellingController):
 		customer_personal_id: DF.Data | None
 		customer_type: DF.Literal["", "New Customer", "Returning Customer"]
 		date_of_issuance: DF.Date | None
+		debt_history: DF.Table[OrderandDebtTracking]
 		delivery_date: DF.Date | None
 		delivery_location: DF.Literal["", "209, \u0110 30 th\u00e1ng 4, Xu\u00e2n Kh\u00e1nh, Ninh Ki\u1ec1u, C\u1ea7n Th\u01a1", "63 Kim M\u00e3, Qu\u1eadn Ba \u0110\u00ecnh, H\u00e0 N\u1ed9i", "72 Nguy\u1ec5n C\u01b0 Trinh, Qu\u1eadn 1, Th\u00e0nh Ph\u1ed1 H\u1ed3 Ch\u00ed Minh", "Giao v\u1ec1 \u0111\u1ecba ch\u1ec9 kh\u00e1ch"]
 		delivery_status: DF.Literal["Not Delivered", "Fully Delivered", "Partially Delivered", "Closed", "Not Applicable"]
@@ -799,9 +801,22 @@ class SalesOrder(SellingController):
 	def before_save(self):
 		self.validate_primary_sales_team()
 		self.handle_order_cancellation()
+		self.process_debt_history()
 		
 	def before_insert(self):
 		self.handle_order_cancellation()
+		self.process_debt_history()
+
+	def process_debt_history(self):
+		for row in self.get("debt_history"):
+			# Only process newly added child rows
+			is_new_row = (getattr(row, "is_new", None) and row.is_new()) or row.get("__islocal") or not row.name
+			if not is_new_row:
+				continue
+			if hasattr(row, "update_added_by"):
+				row.update_added_by()
+			if hasattr(row, "_notify_assigned_user"):
+				row._notify_assigned_user()
 
 	def after_insert(self):
 		self.update_customer_revenue_fields()
