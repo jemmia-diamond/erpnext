@@ -344,14 +344,15 @@ def update_lead_from_summary(data):
 	lead = get_lead_by_name(lead_name)
 	
 	if lead is None: 
-		contacts = get_contacts_by_conversation_id(conversation_id) or []
-		for contact in contacts:
-			try: 
-				contact_doc = frappe.get_doc('Contact', {'name': contact.name})
-				contact_doc.last_summarize_time = frappe.utils.now_datetime()
-				contact_doc.save()
-			except:
-				pass
+		contacts = get_contacts_by_conversation_id(conversation_id)
+		if contacts is not None:
+			for contact in contacts:
+				try: 
+					contact_doc = frappe.get_doc('Contact', {'name': contact.name})
+					contact_doc.last_summarize_time = frappe.utils.now_datetime()
+					contact_doc.save()
+				except:
+					pass
 
 		return
 	
@@ -380,7 +381,7 @@ def update_lead_from_summary(data):
 		lead.province = lead_province.name
 
 	products = []
-	if product_names:
+	if product_names is not None:
 		for product_name in product_names:
 			lead_product = get_lead_product(product_name)
 			if lead_product:
@@ -391,20 +392,22 @@ def update_lead_from_summary(data):
 					products.append(new_lead_product)
 
 	for product in products:
-		existing_products = {item.product_type for item in (lead.preferred_product_type or [])}
-		if product.name not in existing_products:
-			lead.append("preferred_product_type", {
-				"product_type": product.name
-			})
+		if lead.preferred_product_type is not None:
+			existing_products = {item.product_type for item in lead.preferred_product_type}
+			if product.name not in existing_products:
+				lead.append("preferred_product_type", {
+                    "product_type": product.name
+                })
 
 	lead.save()
 	lead.reload()
 
 	#update last summarize at 
-	contacts = get_contacts_by_conversation_id(conversation_id) or []
-	for contact in contacts:
-		contact_doc = frappe.get_doc('Contact', {'name': contact.name})
-		contact_doc.last_summarize_time = frappe.utils.now_datetime()
-		contact_doc.save()
+	contacts = get_contacts_by_conversation_id(conversation_id)
+	if contacts is not None:
+		for contact in contacts:
+			contact_doc = frappe.get_doc('Contact', {'name': contact.name})
+			contact_doc.last_summarize_time = frappe.utils.now_datetime()
+			contact_doc.save()
 
 	return True
