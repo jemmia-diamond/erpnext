@@ -376,22 +376,24 @@ def update_lead_from_summary(data):
     return True
 
 def update_contacts_summary_time(conversation_id):
-    contacts = get_contacts_by_conversation_id(conversation_id) or []
-    for contact in contacts:
-        try:
-            contact_doc = frappe.get_doc('Contact', {'name': contact.name})
-            contact_doc.last_summarize_time = now_datetime()
-            contact_doc.save()    
-        except frappe.PermissionError:
-            frappe.log_error("Permission denied for updating contact summary time.")
-        except Exception:
-            frappe.log_error("Error update contact summary time")
-            pass
+    contacts = get_contacts_by_conversation_id(conversation_id)
+    if contacts is not None:
+        for contact in contacts:
+            try:
+                contact_doc = frappe.get_doc('Contact', {'name': contact.name})
+                contact_doc.last_summarize_time = now_datetime()
+                contact_doc.save()    
+            except frappe.PermissionError:
+                frappe.log_error("Permission denied for updating contact summary time.")
+            except Exception:
+                frappe.log_error("Error update contact summary time")
+                pass
 
 def update_lead_products(lead_name, data):
     products = []
-    if data.get("interested_products", []) is not None:
-        for product_name in data.get("interested_products", []):
+    interested_products = data.get("interested_products", [])
+    if interested_products is not None:
+        for product_name in interested_products:
             lead_product = get_lead_product(product_name)
             if lead_product:
                 products.append(lead_product)
