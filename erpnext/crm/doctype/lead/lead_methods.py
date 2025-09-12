@@ -351,20 +351,20 @@ def update_lead_from_summary(data):
     if data.get("budget_to") is not None or data.get("budget_from") is not None:
         lead_budget = find_range_budget(data.get("budget_from"), data.get("budget_to"))
         if lead_budget:
-            frappe.db.set_value('Lead', lead.name, 'budget_lead', lead_budget.name, update_modified=False)
+            frappe.db.set_value('Lead', lead.name, 'budget_lead', lead_budget.name)
 
     if data.get("purpose"):
         lead_purpose = get_lead_purpose(data.get("purpose"))
         if lead_purpose:
-            frappe.db.set_value('Lead', lead.name, 'purpose_lead', lead_purpose.name, update_modified=False)
+            frappe.db.set_value('Lead', lead.name, 'purpose_lead', lead_purpose.name)
 
     if data.get("expected_receiving_date"):
-        frappe.db.set_value('Lead', lead.name, 'expected_delivery_date', data.get("expected_receiving_date"), update_modified=False)
+        frappe.db.set_value('Lead', lead.name, 'expected_delivery_date', data.get("expected_receiving_date"))
 
     if data.get("province"):
         lead_province = get_lead_province(data.get("province"))
         if lead_province:
-            frappe.db.set_value('Lead', lead.name, 'province', lead_province.name, update_modified=False)
+            frappe.db.set_value('Lead', lead.name, 'province', lead_province.name)
 
     lead.reload()
     update_lead_products(lead.name, data)
@@ -372,8 +372,6 @@ def update_lead_from_summary(data):
 	#update last summarize at 
     update_contacts_summary_time(conversation_id)
     
-    frappe.db.commit()
-
     return True
 
 def update_contacts_summary_time(conversation_id):
@@ -382,8 +380,11 @@ def update_contacts_summary_time(conversation_id):
         try:
             contact_doc = frappe.get_doc('Contact', {'name': contact.name})
             contact_doc.last_summarize_time = now_datetime()
-            contact_doc.save(ignore_permissions=True)
+            contact_doc.save()    
+        except frappe.PermissionError:
+            frappe.log_error("Permission denied for updating contact summary time.")
         except Exception:
+            frappe.log_error("Error update contact summary time")
             pass
 
 def update_lead_products(lead_name, data):
