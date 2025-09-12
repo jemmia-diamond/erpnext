@@ -367,22 +367,7 @@ def update_lead_from_summary(data):
             frappe.db.set_value('Lead', lead.name, 'province', lead_province.name, update_modified=False)
 
     lead.reload()
-    products = []
-    for product_name in data.get("interested_products", []):
-        lead_product = get_lead_product(product_name)
-        if lead_product:
-            products.append(lead_product)
-        else:
-            new_lead_product = create_lead_product(product_name)
-            if new_lead_product:
-                products.append(new_lead_product)
-
-    existing_products = {item.product_type for item in (lead.preferred_product_type or [])}
-    for product in products:
-        if product.name not in existing_products:
-            lead.append("preferred_product_type", {"product_type": product.name})
-
-    lead.save()
+    update_lead_products(lead.name, data)
     
 	#update last summarize at 
     update_contacts_summary_time(conversation_id)
@@ -397,6 +382,49 @@ def update_contacts_summary_time(conversation_id):
         try:
             contact_doc = frappe.get_doc('Contact', {'name': contact.name})
             contact_doc.last_summarize_time = now_datetime()
-            contact_doc.save(ignore_permissions=True) # Use ignore_permissions for automated scripts
+            contact_doc.save(ignore_permissions=True)
         except Exception:
             pass
+
+def update_lead_products(lead_name, data):
+    products = []
+    if data.get("interested_products", []) is not None:
+        for product_name in data.get("interested_products", []):
+            lead_product = get_lead_product(product_name)
+            if lead_product:
+                products.append(lead_product)
+            else:
+                new_lead_product = create_lead_product(product_name)
+                if new_lead_product:
+                    products.append(new_lead_product)
+	
+    if not products:
+        return
+
+    all_product_names_to_link = {p.name for p in products}
+	
+    existing_items = frappe.get_all(
+		"Lead Product Item",
+		filters={"parent": lead_name, "parenttype": "Lead"},
+		fields=["product_type"]
+	)
+    existing_product_names = {item.get("product_type") for item in existing_items}
+
+    product_names_to_insert = all_product_names_to_link.difference(existing_product_names)
+
+    if not product_names_to_insert:
+        return
+
+    for product_name in product_names_to_insert:
+        child_doc = frappe.get_doc({
+            "doctype": "Lead Product Item",
+            "parent": lead_name,
+            "parenttype": "Lead",
+            "parentfield": "preferred_product_type",
+            "product_type": product_name,
+        })
+
+        child_doc.insert(ignore_permissions=True)
+
+    frappe.db.set_value("Lead", lead_name, "modified", frappe.utils.now())
+    frappe.db.commit()
