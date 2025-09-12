@@ -1791,8 +1791,7 @@
    "fetch_if_empty": 1,
    "fieldname": "customer_personal_id",
    "fieldtype": "Data",
-   "label": "CMND/CCCD",
-   "read_only": 1
+   "label": "CMND/CCCD"
   },
   {
    "fetch_from": "customer.place_of_issuance",
@@ -2013,7 +2012,7 @@
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-11 09:12:32.021290",
+ "modified": "2025-09-12 04:00:48.871257",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
