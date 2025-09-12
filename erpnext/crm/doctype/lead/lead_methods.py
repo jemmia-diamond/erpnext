@@ -348,10 +348,11 @@ def update_lead_from_summary(data):
         update_contacts_summary_time(conversation_id)
         return
 
-    if data.get("budget_to") is not None or data.get("budget_from") is not None:
-        lead_budget = find_range_budget(data.get("budget_from"), data.get("budget_to"))
-        if lead_budget:
-            frappe.db.set_value('Lead', lead.name, 'budget_lead', lead_budget.name)
+    budget_to = data.get("budget_to", None)
+    budget_from =  None if budget_to else data.get("budget_from", None)
+    lead_budget = find_range_budget(budget_from, budget_to)
+    if lead_budget:
+        frappe.db.set_value('Lead', lead.name, 'budget_lead', lead_budget.name)
 
     if data.get("purpose"):
         lead_purpose = get_lead_purpose(data.get("purpose"))
