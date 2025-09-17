@@ -354,8 +354,6 @@ def update_lead_from_summary(data):
 
 		return
 	
-	lead.reload()
-
 	budget_to = data.get("budget_to", None)
 	budget_from =  None if budget_to else data.get("budget_from", None)
 	purpose = data.get("purpose", None)
@@ -363,20 +361,26 @@ def update_lead_from_summary(data):
 	province = data.get("province", None)
 	expected_receiving_date = data.get("expected_receiving_date", None)
 
+	lead_update_dict = {}
+
 	lead_budget = find_range_budget(budget_from, budget_to)
 	if lead_budget is not None:
-		lead.budget_lead = lead_budget.name
+		lead_update_dict["budget_lead"] = lead_budget.name
 
 	lead_purpose = get_lead_purpose(purpose)
 	if lead_purpose:
-		lead.purpose_lead = lead_purpose.name
+		lead_update_dict["purpose_lead"] = lead_purpose.name
 
 	if expected_receiving_date:
-		lead.expected_delivery_date	= expected_receiving_date
-	
+		lead_update_dict["expected_delivery_date"] = expected_receiving_date
+
 	lead_province = get_lead_province(province)
 	if lead_province:
-		lead.province = lead_province.name
+		lead_update_dict["lead_province"] = lead_province.name
+
+	if lead_update_dict:
+		frappe.db.set_value("Lead", lead.name, lead_update_dict)
+		lead.reload()
 
 	products = []
 	if product_names is not None:
