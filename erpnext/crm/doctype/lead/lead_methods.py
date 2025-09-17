@@ -407,5 +407,4 @@ def update_lead_from_summary(data):
 			contact_doc.last_summarize_time = frappe.utils.now_datetime()
 			contact_doc.save(ignore_versions=True)
 
-	frappe.db.commit()
 	return True
