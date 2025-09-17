@@ -332,82 +332,75 @@ def get_lead_province(province : str):
 
 @frappe.whitelist(methods=["POST"])
 def update_lead_from_summary(data):
-	if isinstance(data, str):
-		data = json.loads(data)
+    if isinstance(data, str):
+        data = json.loads(data)
 
-	conversation_id = data.get("conversation_id", None)
-	if conversation_id is None:
-		return 
-	lead_name = get_lead_name_by_conversation_id(conversation_id)
-	
-	# lead not found return not update
-	lead = get_lead_by_name(lead_name)
-	
-	if lead is None: 
-		contacts = get_contacts_by_conversation_id(conversation_id)
-		if contacts is not None:
-			for contact in contacts:
-				try: 
-					contact_doc = frappe.get_doc('Contact', {'name': contact.name})
-					contact_doc.last_summarize_time = frappe.utils.now_datetime()
-					contact_doc.save()
-				except:
-					pass
+    conversation_id = data.get("conversation_id", None)
+    if conversation_id is None:
+        return 
+    lead_name = get_lead_name_by_conversation_id(conversation_id)
+    
+    lead = get_lead_by_name(lead_name)
+    
+    if lead is None: 
+        contacts = get_contacts_by_conversation_id(conversation_id) or []
+        for contact in contacts:
+            try: 
+                contact_doc = frappe.get_doc('Contact', {'name': contact.name})
+                contact_doc.last_summarize_time = frappe.utils.now_datetime()
+                contact_doc.save(ignore_versions=True)
+            except:
+                pass
 
-		return
-	
-	lead.reload()
+        return
+    
+    budget_to = data.get("budget_to", None)
+    budget_from =  None if budget_to else data.get("budget_from", None)
+    purpose = data.get("purpose", None)
+    product_names = data.get("interested_products", [])
+    province = data.get("province", None)
+    expected_receiving_date = data.get("expected_receiving_date", None)
 
-	budget_to = data.get("budget_to", None)
-	budget_from =  None if budget_to else data.get("budget_from", None)
-	purpose = data.get("purpose", None)
-	product_names = data.get("interested_products", [])
-	province = data.get("province", None)
-	expected_receiving_date = data.get("expected_receiving_date", None)
+    lead_budget = find_range_budget(budget_from, budget_to)
+    if lead_budget is not None:
+        lead.budget_lead = lead_budget.name
 
-	lead_budget = find_range_budget(budget_from, budget_to)
-	if lead_budget is not None:
-		lead.budget_lead = lead_budget.name
+    lead_purpose = get_lead_purpose(purpose)
+    if lead_purpose:
+        lead.purpose_lead = lead_purpose.name
 
-	lead_purpose = get_lead_purpose(purpose)
-	if lead_purpose:
-		lead.purpose_lead = lead_purpose.name
+    if expected_receiving_date:
+        lead.expected_delivery_date = expected_receiving_date
+    
+    lead_province = get_lead_province(province)
+    if lead_province:
+        lead.province = lead_province.name
 
-	if expected_receiving_date:
-		lead.expected_delivery_date	= expected_receiving_date
-	
-	lead_province = get_lead_province(province)
-	if lead_province:
-		lead.province = lead_province.name
+    products = []
+    for product_name in product_names:
+        lead_product = get_lead_product(product_name)
+        if lead_product:
+            products.append(lead_product)
+        else:
+            new_lead_product = create_lead_product(product_name)
+            if new_lead_product:
+                products.append(new_lead_product)
 
-	products = []
-	if product_names is not None:
-		for product_name in product_names:
-			lead_product = get_lead_product(product_name)
-			if lead_product:
-				products.append(lead_product)
-			else:
-				new_lead_product = create_lead_product(product_name)
-				if new_lead_product:
-					products.append(new_lead_product)
+    for product in products:
+        existing_products = {item.product_type for item in (lead.preferred_product_type or [])}
+        if product.name not in existing_products:
+            lead.append("preferred_product_type", {
+                "product_type": product.name
+            })
 
-	for product in products:
-		if lead.preferred_product_type is not None:
-			existing_products = {item.product_type for item in lead.preferred_product_type}
-			if product.name not in existing_products:
-				lead.append("preferred_product_type", {
-                    "product_type": product.name
-                })
+    lead.save(ignore_versions=True)
 
-	lead.save()
-	lead.reload()
+    #update last summarize at 
+    contacts = get_contacts_by_conversation_id(conversation_id) or []
+    for contact in contacts:
+        contact_doc = frappe.get_doc('Contact', {'name': contact.name})
+        contact_doc.last_summarize_time = frappe.utils.now_datetime()
+        contact_doc.save(ignore_versions=True)
 
-	#update last summarize at 
-	contacts = get_contacts_by_conversation_id(conversation_id)
-	if contacts is not None:
-		for contact in contacts:
-			contact_doc = frappe.get_doc('Contact', {'name': contact.name})
-			contact_doc.last_summarize_time = frappe.utils.now_datetime()
-			contact_doc.save()
-
-	return True
+    frappe.db.commit()
+    return True
