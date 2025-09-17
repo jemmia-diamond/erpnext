@@ -387,8 +387,6 @@ def update_lead_from_summary(data):
 	max_retries = 3
 	for attempt in range(max_retries):
 		try:
-			lead.reload()
-
 			if new_lead_budget:
 				lead.budget_lead = new_lead_budget.name
 
@@ -424,8 +422,9 @@ def update_lead_from_summary(data):
 				)
 			if attempt < max_retries - 1:
 				time.sleep(1)
+				lead.reload()
 			else:
-				return
+				break
 	#update last summarize at 
 	contacts = get_contacts_by_conversation_id(conversation_id)
 	if contacts is not None:
