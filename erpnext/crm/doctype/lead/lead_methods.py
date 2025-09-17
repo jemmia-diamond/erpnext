@@ -348,12 +348,10 @@ def update_lead_from_summary(data):
 		if contacts is not None:
 			for contact in contacts:
 				try: 
-					contact_doc = frappe.get_doc('Contact', {'name': contact.name})
-					contact_doc.last_summarize_time = frappe.utils.now_datetime()
-					contact_doc.save(ignore_versions=True)
+					frappe.db.set_value("Contact", contact.name, "last_summarize_time", frappe.utils.now_datetime())
 				except:
 					pass
-
+		frappe.db.commit()
 		return
 	
 	budget_to = data.get("budget_to", None)
@@ -397,14 +395,13 @@ def update_lead_from_summary(data):
                     "product_type": product.name
                 })
 
-	lead.save(ignore_versions=True)
+	lead.save(ignore_version=True)
 
 	#update last summarize at 
 	contacts = get_contacts_by_conversation_id(conversation_id)
 	if contacts is not None:
 		for contact in contacts:
-			contact_doc = frappe.get_doc('Contact', {'name': contact.name})
-			contact_doc.last_summarize_time = frappe.utils.now_datetime()
-			contact_doc.save(ignore_versions=True)
+			frappe.db.set_value("Contact", contact.name, "last_summarize_time", frappe.utils.now_datetime())
 
+	frappe.db.commit()
 	return True
