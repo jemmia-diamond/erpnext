@@ -339,6 +339,9 @@ def update_lead_from_summary(data):
 	if conversation_id is None:
 		return 
 	lead_name = get_lead_name_by_conversation_id(conversation_id)
+
+	if lead_name is None:
+		return 
 	
 	# lead not found return not update
 	lead = get_lead_by_name(lead_name)
