@@ -351,9 +351,11 @@ def update_lead_from_summary(data):
 					frappe.db.set_value("Contact", contact.name, "last_summarize_time", frappe.utils.now_datetime())
 				except:
 					pass
-		frappe.db.commit()
+
 		return
 	
+	lead.reload()
+
 	budget_to = data.get("budget_to", None)
 	budget_from =  None if budget_to else data.get("budget_from", None)
 	purpose = data.get("purpose", None)
@@ -395,7 +397,7 @@ def update_lead_from_summary(data):
                     "product_type": product.name
                 })
 
-	lead.save(ignore_version=True)
+	lead.save()
 
 	#update last summarize at 
 	contacts = get_contacts_by_conversation_id(conversation_id)
@@ -403,5 +405,4 @@ def update_lead_from_summary(data):
 		for contact in contacts:
 			frappe.db.set_value("Contact", contact.name, "last_summarize_time", frappe.utils.now_datetime())
 
-	frappe.db.commit()
 	return True
