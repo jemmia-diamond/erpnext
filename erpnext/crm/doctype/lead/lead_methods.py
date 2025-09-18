@@ -359,8 +359,6 @@ def update_lead_from_summary(data):
 					pass
 
 		return
-	
-	lead.reload()
 
 	budget_to = data.get("budget_to", None)
 	budget_from =  None if budget_to else data.get("budget_from", None)
