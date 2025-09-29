@@ -5,6 +5,7 @@
 import json
 from typing import Literal
 import requests
+import copy
 
 import frappe
 import frappe.utils
@@ -820,6 +821,7 @@ class SalesOrder(SellingController):
 
 	def after_insert(self):
 		self.update_customer_revenue_fields()
+		self.copy_from_reference_order()
 
 	def before_submit(self):
 		frappe.throw(_("Sales Order Submission is not allowed."))
@@ -851,6 +853,74 @@ class SalesOrder(SellingController):
 			AND fulfillment_status = 'Fulfilled'
 		""", (self.customer,), as_list=True)
 		return result[0][0] if result and result[0][0] else 0
+
+	def copy_from_reference_order(self):
+		"""Copy manual fields from previous order when haravan_ref_order_id is set"""
+		if not self.haravan_ref_order_id:
+			return
+		try:			
+			# Get the reference order
+			ref_order_name = frappe.db.get_value("Sales Order", 
+				{"haravan_order_id": self.haravan_ref_order_id}, "name")
+			if not ref_order_name:
+				return	
+			# Define simple fields to copy (data types)
+			simple_fields = [
+				'consultation_date', 'primary_sales_person',
+				'deposit_location', 'delivery_location', 'expected_delivery_date',
+				'customer_type', 'expected_payment_date'
+			]
+					
+			# Copy simple fields
+			ref_data = frappe.db.get_value("Sales Order", ref_order_name, simple_fields, as_dict=True)			
+			if ref_data:
+				update_fields = {}
+				for field in simple_fields:
+					ref_value = getattr(ref_data, field, None)
+					current_value = getattr(self, field, None)
+					if ref_value and not current_value:
+						update_fields[field] = ref_value
+				
+				if update_fields:
+					for field, value in update_fields.items():
+						frappe.db.set_value("Sales Order", self.name, field, value)
+			
+			# Copy Table MultiSelect fields
+			ref_order_doc = frappe.get_doc("Sales Order", ref_order_name)
+			multiselect_fields = {
+				# parentfield: link_field
+				"policies": "policy",
+				"promotions": "promotion",
+				"product_categories": "product_category",
+				"sales_order_purposes": "purchase_purpose",
+			}
+
+			for parentfield, link_field in multiselect_fields.items():
+				current_rows = self.get(parentfield) or []
+				ref_rows = ref_order_doc.get(parentfield) or []
+
+				if not current_rows and ref_rows:
+					for ref_row in ref_rows:
+						child = self.append(parentfield, {link_field: getattr(ref_row, link_field)})
+						child.db_insert()
+
+			# Copy Table fields
+			table_fields = ["sales_team", "debt_history"]
+			for parentfield in table_fields:
+				current_rows = self.get(parentfield) or []
+				ref_rows = ref_order_doc.get(parentfield) or []
+				if not current_rows and ref_rows:
+					for ref_row in ref_rows:
+						row = copy.deepcopy(ref_row.as_dict())
+						# remove system fields
+						for k in ("name", "parent", "parenttype", "parentfield", "creation", "modified", "modified_by", "owner", "docstatus", "idx"):
+							row.pop(k, None)
+						child = self.append(parentfield, row)
+						child.db_insert()
+
+			
+		except Exception as e:
+			frappe.log_error(f"Error copying from reference order: {str(e)}")
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:
 	"""Returns the unreserved quantity for the Sales Order Item."""
