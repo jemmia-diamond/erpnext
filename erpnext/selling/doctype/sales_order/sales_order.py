@@ -918,9 +918,57 @@ class SalesOrder(SellingController):
 						child = self.append(parentfield, row)
 						child.db_insert()
 
+			# Copy Sales Order Items
+			self.copy_sales_order_items_from_reference(ref_order_doc)
 			
 		except Exception as e:
 			frappe.log_error(f"Error copying from reference order: {str(e)}")
+
+def copy_sales_order_items_from_reference(self, ref_order_doc):
+		"""Copy Sales Order Items from reference order based on haravan_variant_id mapping"""
+		try:
+			current_items = self.get("items") or []
+			ref_items = ref_order_doc.get("items") or []
+
+			if not current_items or not ref_items:
+				return
+
+			# Create mapping of haravan_variant_id to reference item data
+			ref_items_map = {}
+			for ref_item in ref_items:
+				if ref_item.haravan_variant_id:
+					ref_items_map[ref_item.haravan_variant_id] = ref_item
+
+			# Fields to copy from reference items (excluding system fields and quantity/price fields)
+			fields_to_copy = [
+				'product_details', 'diamond_details', 'product_availability_status', 'serial_numbers', 
+				'promotion_1', 'promotion_2', 'promotion_3', 'promotion_4',
+				'uom', 'weight_per_unit', 'weight_uom', 'image', 
+			]
+
+			# Update current items with reference data using frappe.db.set_value for child table
+			items_updated = False
+			for current_item in current_items:
+				if current_item.haravan_variant_id and current_item.haravan_variant_id in ref_items_map:
+					ref_item = ref_items_map[current_item.haravan_variant_id]
+
+					# Copy fields from reference item
+					for field in fields_to_copy:
+						ref_value = getattr(ref_item, field, None)
+						current_value = getattr(current_item, field, None)
+
+						# Only copy if reference has value and current item doesn't have value
+						if ref_value and not current_value:
+							# Update child table item directly in database
+							frappe.db.set_value("Sales Order Item", current_item.name, field, ref_value)
+							items_updated = True
+
+			if items_updated:
+				frappe.db.commit()
+				frappe.clear_document_cache("Sales Order", self.name)
+
+		except Exception as e:
+			frappe.log_error(f"Error copying SO items: {str(e)[:100]}"
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:
 	"""Returns the unreserved quantity for the Sales Order Item."""
