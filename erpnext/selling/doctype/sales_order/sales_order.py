@@ -925,21 +925,50 @@ class SalesOrder(SellingController):
 			frappe.log_error(f"Error copying from reference order: {str(e)}")
 
 	def _map_current_and_ref_items(self, current_items, ref_items):
-		"""Return list of (current_item, ref_item) pairs mapped only by haravan_variant_id."""
-		pairs = []
-		# Build reference index by variant only
-		ref_by_variant = {}
-		for ref_item in ref_items:
-			variant_id = getattr(ref_item, "haravan_variant_id", None)
-			if variant_id is not None:
-				ref_by_variant[str(variant_id).strip()] = ref_item
+		"""Return (current_item, ref_item) pairs.
+		Order: haravan_variant_id, then 10 chars sau 'GIA' trong sku.
+		"""
+		def norm(v):
+			return str(v).strip() if v is not None else None
 
-		# Map by variant id
-		for ci in current_items:
-			variant_id = getattr(ci, "haravan_variant_id", None)
-			key = str(variant_id).strip() if variant_id is not None else None
-			if key and key in ref_by_variant:
-				pairs.append((ci, ref_by_variant[key]))
+		def get_gia_from_sku(item):
+			sku = getattr(item, "sku", None)
+			if not sku:
+				return None
+			sku = str(sku)
+			pos = sku.find("GIA")
+			if pos < 0:
+				return None
+			start = pos + 3
+			end = start + 10
+			return sku[start:end] if end <= len(sku) else None
+
+		ref_by_variant = {}
+		ref_by_gia = {}
+		for ref in ref_items:
+			vid = norm(getattr(ref, "haravan_variant_id", None))
+			if vid:
+				ref_by_variant[vid] = ref
+			gia = get_gia_from_sku(ref)
+			if gia and gia not in ref_by_gia:
+				ref_by_gia[gia] = ref
+
+		pairs = []
+		matched = set()
+
+		for cur in current_items:
+			vid = norm(getattr(cur, "haravan_variant_id", None))
+			if vid and vid in ref_by_variant:
+				pairs.append((cur, ref_by_variant[vid]))
+				matched.add(cur.name)
+
+		for cur in current_items:
+			if cur.name in matched:
+				continue
+			gia = gia10_from_sku(cur)
+			if gia and gia in ref_by_gia:
+				pairs.append((cur, ref_by_gia[gia]))
+				matched.add(cur.name)
 
 		return pairs
 
@@ -952,7 +981,7 @@ class SalesOrder(SellingController):
 				if not current_items or not ref_items:
 					return
 
-				# Build mapping pairs: current_item - ref_item
+			# Build mapping pairs: current_item - ref_item
 				pairs = self._map_current_and_ref_items(current_items, ref_items)
 				if not pairs:
 					return
@@ -964,7 +993,7 @@ class SalesOrder(SellingController):
 					'uom', 'weight_per_unit', 'weight_uom', 'image', 
 				]
 
-				# Update current items with reference data using frappe.db.set_value for child table
+			# Update current items with reference data using frappe.db.set_value for child table
 				items_updated = False
 				for current_item, ref_item in pairs:
 					for field in fields_to_copy:
