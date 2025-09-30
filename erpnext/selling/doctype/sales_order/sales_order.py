@@ -925,9 +925,7 @@ class SalesOrder(SellingController):
 			frappe.log_error(f"Error copying from reference order: {str(e)}")
 
 	def _map_current_and_ref_items(self, current_items, ref_items):
-		"""Return (current_item, ref_item) pairs.
-		Order: haravan_variant_id, then 10 chars sau 'GIA' trong sku.
-		"""
+		"""Return (current_item, ref_item) pairs."""
 		def norm(v):
 			return str(v).strip() if v is not None else None
 
@@ -965,12 +963,29 @@ class SalesOrder(SellingController):
 		for cur in current_items:
 			if cur.name in matched:
 				continue
-			gia = gia10_from_sku(cur)
+			gia = get_gia_from_sku(cur)
 			if gia and gia in ref_by_gia:
 				pairs.append((cur, ref_by_gia[gia]))
 				matched.add(cur.name)
 
 		return pairs
+
+	def _get_item_fields_to_copy(self):
+		"""Central place to define manual fields to copy between items."""
+		return [
+			'product_details',
+			'diamond_details',
+			'product_availability_status',
+			'serial_numbers',
+			'promotion_1',
+			'promotion_2',
+			'promotion_3',
+			'promotion_4',
+			'uom',
+			'weight_per_unit',
+			'weight_uom',
+			'image',
+		]
 
 	def copy_sales_order_items_from_reference(self, ref_order_doc):
 			"""Copy Sales Order Items from reference order based on haravan_variant_id mapping"""
@@ -987,11 +1002,7 @@ class SalesOrder(SellingController):
 					return
 
 				# Fields to copy from reference items
-				fields_to_copy = [
-					'product_details', 'diamond_details', 'product_availability_status', 'serial_numbers', 
-					'promotion_1', 'promotion_2', 'promotion_3', 'promotion_4',
-					'uom', 'weight_per_unit', 'weight_uom', 'image', 
-				]
+				fields_to_copy = self._get_item_fields_to_copy()
 
 			# Update current items with reference data using frappe.db.set_value for child table
 				items_updated = False
