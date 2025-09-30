@@ -924,51 +924,63 @@ class SalesOrder(SellingController):
 		except Exception as e:
 			frappe.log_error(f"Error copying from reference order: {str(e)}")
 
-def copy_sales_order_items_from_reference(self, ref_order_doc):
-		"""Copy Sales Order Items from reference order based on haravan_variant_id mapping"""
-		try:
-			current_items = self.get("items") or []
-			ref_items = ref_order_doc.get("items") or []
+	def _map_current_and_ref_items(self, current_items, ref_items):
+		"""Return list of (current_item, ref_item) pairs mapped only by haravan_variant_id."""
+		pairs = []
+		# Build reference index by variant only
+		ref_by_variant = {}
+		for ref_item in ref_items:
+			variant_id = getattr(ref_item, "haravan_variant_id", None)
+			if variant_id is not None:
+				ref_by_variant[str(variant_id).strip()] = ref_item
 
-			if not current_items or not ref_items:
-				return
+		# Map by variant id
+		for ci in current_items:
+			variant_id = getattr(ci, "haravan_variant_id", None)
+			key = str(variant_id).strip() if variant_id is not None else None
+			if key and key in ref_by_variant:
+				pairs.append((ci, ref_by_variant[key]))
 
-			# Create mapping of haravan_variant_id to reference item data
-			ref_items_map = {}
-			for ref_item in ref_items:
-				if ref_item.haravan_variant_id:
-					ref_items_map[ref_item.haravan_variant_id] = ref_item
+		return pairs
 
-			# Fields to copy from reference items (excluding system fields and quantity/price fields)
-			fields_to_copy = [
-				'product_details', 'diamond_details', 'product_availability_status', 'serial_numbers', 
-				'promotion_1', 'promotion_2', 'promotion_3', 'promotion_4',
-				'uom', 'weight_per_unit', 'weight_uom', 'image', 
-			]
+	def copy_sales_order_items_from_reference(self, ref_order_doc):
+			"""Copy Sales Order Items from reference order based on haravan_variant_id mapping"""
+			try:
+				current_items = self.get("items") or []
+				ref_items = ref_order_doc.get("items") or []
 
-			# Update current items with reference data using frappe.db.set_value for child table
-			items_updated = False
-			for current_item in current_items:
-				if current_item.haravan_variant_id and current_item.haravan_variant_id in ref_items_map:
-					ref_item = ref_items_map[current_item.haravan_variant_id]
+				if not current_items or not ref_items:
+					return
 
-					# Copy fields from reference item
+				# Build mapping pairs: current_item - ref_item
+				pairs = self._map_current_and_ref_items(current_items, ref_items)
+				if not pairs:
+					return
+
+				# Fields to copy from reference items
+				fields_to_copy = [
+					'product_details', 'diamond_details', 'product_availability_status', 'serial_numbers', 
+					'promotion_1', 'promotion_2', 'promotion_3', 'promotion_4',
+					'uom', 'weight_per_unit', 'weight_uom', 'image', 
+				]
+
+				# Update current items with reference data using frappe.db.set_value for child table
+				items_updated = False
+				for current_item, ref_item in pairs:
 					for field in fields_to_copy:
 						ref_value = getattr(ref_item, field, None)
 						current_value = getattr(current_item, field, None)
-
 						# Only copy if reference has value and current item doesn't have value
 						if ref_value and not current_value:
-							# Update child table item directly in database
 							frappe.db.set_value("Sales Order Item", current_item.name, field, ref_value)
 							items_updated = True
 
-			if items_updated:
-				frappe.db.commit()
-				frappe.clear_document_cache("Sales Order", self.name)
+				if items_updated:
+					frappe.db.commit()
+					frappe.clear_document_cache("Sales Order", self.name)
 
-		except Exception as e:
-			frappe.log_error(f"Error copying SO items: {str(e)[:100]}"
+			except Exception as e:
+				frappe.log_error(f"Error copying SO items: {str(e)[:100]}")
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:
 	"""Returns the unreserved quantity for the Sales Order Item."""
