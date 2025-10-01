@@ -1010,8 +1010,12 @@ class SalesOrder(SellingController):
 					for field in fields_to_copy:
 						ref_value = getattr(ref_item, field, None)
 						current_value = getattr(current_item, field, None)
-						# Only copy if reference has value and current item doesn't have value
-						if ref_value and not current_value:
+						# Special handling for uom field - always copy if reference has value
+						if field == 'uom' and ref_value:
+							frappe.db.set_value("Sales Order Item", current_item.name, field, ref_value)
+							items_updated = True
+						# For other fields, only copy if reference has value and current item doesn't have value
+						elif ref_value and not current_value:
 							frappe.db.set_value("Sales Order Item", current_item.name, field, ref_value)
 							items_updated = True
 
