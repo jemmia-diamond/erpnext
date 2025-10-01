@@ -804,6 +804,10 @@ class SalesOrder(SellingController):
 		self.handle_order_cancellation()
 		self.process_debt_history()
 		
+		# Debug: Log when validate is called
+		print(f"[SERIAL_DEBUG] validate() called for SO: {self.name}, is_new: {self.is_new()}")
+		self.handle_serial_numbers_changes()
+		
 	def before_insert(self):
 		self.handle_order_cancellation()
 		self.process_debt_history()
@@ -923,6 +927,155 @@ class SalesOrder(SellingController):
 			
 		except Exception as e:
 			frappe.log_error(f"Error copying from reference order: {str(e)}")
+
+	def handle_serial_numbers_changes(self):
+		"""Handle serial_numbers changes and backfill from reference orders"""
+		try:
+			print(f"[SERIAL_DEBUG] Starting for SO: {self.name}")
+			
+			# Check if Sales Order has haravan_ref_order_id first (performance optimization)
+			print(f"[SERIAL_DEBUG] haravan_ref_order_id: {self.haravan_ref_order_id}")
+			if not self.haravan_ref_order_id:
+				print(f"[SERIAL_DEBUG] No haravan_ref_order_id, exiting")
+				return
+			
+			# Get current items with serial_numbers
+			current_items = self.get("items") or []
+			items_with_serial = [item for item in current_items if getattr(item, "serial_numbers", None)]
+			
+			print(f"[SERIAL_DEBUG] Found {len(items_with_serial)} items with serial_numbers")
+			if not items_with_serial:
+				print(f"[SERIAL_DEBUG] No items with serial_numbers, exiting")
+				return
+			
+			# Get previous serial_numbers from database for comparison
+			previous_serial_data = self._get_previous_serial_numbers()
+			print(f"[SERIAL_DEBUG] Previous serial data: {previous_serial_data}")
+			
+			# Process each item with serial_numbers that has changed
+			processed_count = 0
+			for current_item in items_with_serial:
+				# Check if serial_numbers changed
+				current_serial = getattr(current_item, "serial_numbers", None)
+				previous_serial = previous_serial_data.get(current_item.name)
+				
+				print(f"[SERIAL_DEBUG] Item {current_item.name}: current='{current_serial}', previous='{previous_serial}'")
+				
+				# Only process if serial_numbers changed
+				if current_serial != previous_serial and current_serial:
+					print(f"[SERIAL_DEBUG] Processing item {current_item.name} for backfill")
+					self._backfill_item_from_reference_by_serial(current_item)
+					processed_count += 1
+			
+			print(f"[SERIAL_DEBUG] Processed {processed_count} items for backfill")
+				
+		except Exception as e:
+			frappe.log_error(f"Error handling serial_numbers changes: {str(e)}")
+
+	def _get_previous_serial_numbers(self):
+		"""Get previous serial_numbers from database for comparison"""
+		try:
+			print(f"[SERIAL_DEBUG] Getting previous serial_numbers for SO: {self.name}")
+			
+			# Get current serial_numbers from database
+			serial_data = frappe.db.sql("""
+				SELECT name, serial_numbers 
+				FROM `tabSales Order Item` 
+				WHERE parent = %s
+			""", (self.name,), as_dict=True)
+			
+			print(f"[SERIAL_DEBUG] Found {len(serial_data)} items in database")
+			for item in serial_data:
+				print(f"[SERIAL_DEBUG] DB Item {item.name}: serial='{item.serial_numbers}'")
+			
+			result = {item.name: item.serial_numbers for item in serial_data}
+			print(f"[SERIAL_DEBUG] Previous serial data result: {result}")
+			return result
+		except Exception as e:
+			frappe.log_error(f"Error getting previous serial_numbers: {str(e)}")
+			return {}
+
+	def _backfill_item_from_reference_by_serial(self, current_item):
+		"""Backfill current item from reference item with matching serial_numbers"""
+		try:
+			print(f"[SERIAL_DEBUG] Starting backfill for item: {current_item.name}")
+			
+			current_serial = getattr(current_item, "serial_numbers", None)
+			print(f"[SERIAL_DEBUG] Current serial: '{current_serial}'")
+			
+			if not current_serial:
+				print(f"[SERIAL_DEBUG] No current serial, exiting")
+				return
+			
+			# Get reference order based on Sales Order's haravan_ref_order_id
+			print(f"[SERIAL_DEBUG] Looking for reference order with haravan_order_id: {self.haravan_ref_order_id}")
+			ref_order_name = frappe.db.get_value("Sales Order", 
+				{"haravan_order_id": self.haravan_ref_order_id}, "name")
+			print(f"[SERIAL_DEBUG] Found reference order: {ref_order_name}")
+			
+			if not ref_order_name:
+				print(f"[SERIAL_DEBUG] No reference order found, exiting")
+				return
+			
+			ref_order_doc = frappe.get_doc("Sales Order", ref_order_name)
+			ref_items = ref_order_doc.get("items") or []
+			print(f"[SERIAL_DEBUG] Reference order has {len(ref_items)} items")
+			
+			# Find reference item with matching serial_numbers
+			matching_ref_item = None
+			for ref_item in ref_items:
+				ref_serial = getattr(ref_item, "serial_numbers", None)
+				print(f"[SERIAL_DEBUG] Checking ref item {ref_item.name} with serial: '{ref_serial}'")
+				if ref_serial and ref_serial.strip() == current_serial.strip():
+					matching_ref_item = ref_item
+					print(f"[SERIAL_DEBUG] Found matching reference item: {ref_item.name}")
+					break
+			
+			if not matching_ref_item:
+				print(f"[SERIAL_DEBUG] No matching reference item found for serial: '{current_serial}'")
+				return
+			
+			# Fields to backfill from reference item
+			fields_to_backfill = [
+				'product_details',
+				'diamond_details', 
+				'product_availability_status',
+				'promotion_1',
+				'promotion_2',
+				'promotion_3',
+				'promotion_4',
+				'uom',
+				'weight_per_unit',
+				'weight_uom',
+				'image'
+			]
+			
+			# Backfill fields if current item doesn't have value
+			items_updated = False
+			updated_fields = []
+			for field in fields_to_backfill:
+				ref_value = getattr(matching_ref_item, field, None)
+				current_value = getattr(current_item, field, None)
+				
+				print(f"[SERIAL_DEBUG] Field {field}: ref='{ref_value}', current='{current_value}'")
+				
+				# Only backfill if reference has value and current doesn't
+				if ref_value and not current_value:
+					print(f"[SERIAL_DEBUG] Backfilling field {field} with value: '{ref_value}'")
+					# Update document object directly instead of database
+					setattr(current_item, field, ref_value)
+					items_updated = True
+					updated_fields.append(field)
+			
+			print(f"[SERIAL_DEBUG] Updated fields: {updated_fields}")
+			if items_updated:
+				# No need to commit - document will be saved automatically
+				print(f"[SERIAL_DEBUG] Successfully backfilled changes to document object")
+			else:
+				print(f"[SERIAL_DEBUG] No fields were updated")
+				
+		except Exception as e:
+			frappe.log_error(f"Error backfilling item {current_item.name}: {str(e)}")
 
 	def _map_current_and_ref_items(self, current_items, ref_items):
 		"""Return (current_item, ref_item) pairs."""
