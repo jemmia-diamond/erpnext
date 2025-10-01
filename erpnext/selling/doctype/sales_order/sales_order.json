@@ -108,6 +108,13 @@
   "packed_items",
   "pricing_rule_details",
   "pricing_rules",
+  "invoice_information",
+  "deposit_amount",
+  "order_currency",
+  "deposit_in_words",
+  "column_break_ybsp",
+  "deposit_method",
+  "billing_address",
   "contact_info",
   "address_contact_section",
   "contact_info_heading",
@@ -2006,13 +2013,54 @@
    "fieldtype": "Table",
    "label": "Debt History",
    "options": "Order and Debt Tracking"
+  },
+  {
+   "fieldname": "invoice_information",
+   "fieldtype": "Section Break",
+   "label": "Invoice information"
+  },
+  {
+   "fieldname": "deposit_amount",
+   "fieldtype": "Currency",
+   "label": "Deposit amount",
+   "options": "currency",
+   "precision": "0"
+  },
+  {
+   "fieldname": "deposit_in_words",
+   "fieldtype": "Small Text",
+   "label": "Deposit In Words",
+   "options": "\nCash\nBank Transfer\nCard"
+  },
+  {
+   "fieldname": "deposit_method",
+   "fieldtype": "Select",
+   "label": "Deposit Method",
+   "options": "\nCash\nBank Transfer\nCard"
+  },
+  {
+   "fieldname": "billing_address",
+   "fieldtype": "Select",
+   "label": "Billing Address",
+   "options": "\nH\u1ed3 Ch\u00ed Minh: 72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh\nH\u00e0 N\u1ed9i: 63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5\nC\u1ea7n Th\u01a1: 209 \u0110\u01b0\u1eddng 30 th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u"
+  },
+  {
+   "fieldname": "column_break_ybsp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "VND",
+   "fieldname": "order_currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-12 04:00:48.871257",
+ "modified": "2025-10-01 09:45:27.166519",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
