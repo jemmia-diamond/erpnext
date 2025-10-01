@@ -42,6 +42,7 @@ class SalesOrderItem(Document):
 		diamond_details: DF.Data | None
 		discount_amount: DF.Currency
 		discount_percentage: DF.Percent
+		discount_rate: DF.Data | None
 		distributed_discount_amount: DF.Currency
 		ensure_delivery_based_on_produced_serial_no: DF.Check
 		grant_commission: DF.Check

@@ -24,6 +24,7 @@
   "reserve_stock",
   "type",
   "haravan_variant_id",
+  "discount_rate",
   "section_break_eour",
   "serial_numbers",
   "column_break_lnqd",
@@ -1134,12 +1135,17 @@
    "fieldname": "diamond_details",
    "fieldtype": "Data",
    "label": "Diamond Details"
+  },
+  {
+   "fieldname": "discount_rate",
+   "fieldtype": "Data",
+   "label": "Discount Rate"
   }
  ],
  "idx": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-01 04:35:45.633144",
+ "modified": "2025-10-01 09:34:16.541141",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order Item",
