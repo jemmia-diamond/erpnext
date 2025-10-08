@@ -68,6 +68,18 @@ frappe.ui.form.on("Sales Order", {
     		})
        	});
 
+		frm.add_custom_button(__("Send Order To Lark"), frappe.utils.debounce(() => {
+			frappe.db.get_doc("Sales Order", frm.doc.name).then((doc) => {
+				frappe.call({
+					method: "erpnext.selling.doctype.sales_order.sales_order.larksuite_notification",
+					args: { sales_order_doc: doc },
+					callback: (r) => {
+						if (r.message) frappe.msgprint(r.message);
+					},
+				});
+			});
+		}, 2000));
+
 		// hide sales order item grid footer (buttons)
 		$('[data-fieldname="items"] .grid-footer').addClass('hidden');
 
