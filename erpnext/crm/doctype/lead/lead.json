@@ -116,8 +116,7 @@
   "column_break_bwya",
   "merge_lead_tab",
   "check_duplicate",
-  "dashboard_tab",
-  "amended_from"
+  "dashboard_tab"
  ],
  "fields": [
   {
@@ -791,16 +790,6 @@
    "label": "Lead Source Platform",
    "options": "Lead",
    "read_only": 1
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Lead",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
   }
  ],
  "icon": "fa fa-user",

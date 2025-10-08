@@ -30,7 +30,6 @@ class Lead(SellingController, CRMNote):
 
 		account_number: DF.Data | None
 		address: DF.Data | None
-		amended_from: DF.Link | None
 		annual_revenue: DF.Currency
 		bank_branch: DF.Literal[None]
 		bank_district: DF.Literal[None]
