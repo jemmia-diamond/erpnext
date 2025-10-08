@@ -855,7 +855,6 @@
    "role": "Sales User"
   }
  ],
- "queue_in_background": 1,
  "row_format": "Dynamic",
  "search_fields": "lead_name,lead_owner,status",
  "sender_field": "email_id",
