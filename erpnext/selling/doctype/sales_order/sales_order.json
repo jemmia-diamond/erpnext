@@ -2066,7 +2066,7 @@
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-08 02:46:18.231910",
+ "modified": "2025-10-07 21:32:18.549915",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
@@ -2144,5 +2144,6 @@
  "timeline_field": "customer",
  "title_field": "order_number",
  "track_changes": 1,
- "track_seen": 1
+ "track_seen": 1,
+ "custom": 1
 }
