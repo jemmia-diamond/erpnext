@@ -116,7 +116,8 @@
   "column_break_bwya",
   "merge_lead_tab",
   "check_duplicate",
-  "dashboard_tab"
+  "dashboard_tab",
+  "amended_from"
  ],
  "fields": [
   {
@@ -790,13 +791,23 @@
    "label": "Lead Source Platform",
    "options": "Lead",
    "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Lead",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "icon": "fa fa-user",
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2025-10-08 03:25:51.663785",
+ "modified": "2025-10-07 21:33:04.815868",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
@@ -855,6 +866,7 @@
    "role": "Sales User"
   }
  ],
+ "queue_in_background": 1,
  "row_format": "Dynamic",
  "search_fields": "lead_name,lead_owner,status",
  "sender_field": "email_id",
