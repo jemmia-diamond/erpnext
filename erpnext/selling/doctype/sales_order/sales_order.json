@@ -2042,7 +2042,7 @@
    "fieldname": "billing_address",
    "fieldtype": "Select",
    "label": "Billing Address",
-   "options": "\nH\u1ed3 Ch\u00ed Minh: 72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh\nH\u00e0 N\u1ed9i: 63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5\nC\u1ea7n Th\u01a1: 209 \u0110\u01b0\u1eddng 30 th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u"
+   "options": "\n72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh\n63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i\n209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1"
   },
   {
    "fieldname": "column_break_ybsp",
@@ -2060,7 +2060,7 @@
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-01 09:45:27.166519",
+ "modified": "2025-10-08 02:46:18.231910",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",

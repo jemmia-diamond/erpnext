@@ -172,6 +172,7 @@
    "oldfieldname": "lead_owner",
    "oldfieldtype": "Link",
    "options": "User",
+   "permlevel": 1,
    "search_index": 1
   },
   {
@@ -443,13 +444,15 @@
   {
    "fieldname": "qualified_on",
    "fieldtype": "Datetime",
-   "label": "Qualified on"
+   "label": "Qualified on",
+   "permlevel": 1
   },
   {
    "fieldname": "qualification_status",
    "fieldtype": "Select",
    "label": "Qualification Status",
-   "options": "Unqualified\nQualified"
+   "options": "Unqualified\nQualified",
+   "permlevel": 1
   },
   {
    "fieldname": "address_section",
@@ -749,7 +752,8 @@
    "fieldname": "province",
    "fieldtype": "Link",
    "label": "Province",
-   "options": "Province"
+   "options": "Province",
+   "permlevel": 1
   },
   {
    "fieldname": "qualified_lead_date",
@@ -768,7 +772,8 @@
    "fieldname": "first_reach_at",
    "fieldtype": "Datetime",
    "hidden": 1,
-   "label": "First Reach At"
+   "label": "First Reach At",
+   "permlevel": 1
   },
   {
    "fetch_from": "source.source_name",
@@ -791,7 +796,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2025-07-29 11:25:42.656269",
+ "modified": "2025-10-08 03:25:51.663785",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
