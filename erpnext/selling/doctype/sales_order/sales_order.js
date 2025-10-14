@@ -69,6 +69,8 @@ frappe.ui.form.on("Sales Order", {
 				const btn = frm.custom_buttons[__("Send Order To Lark")];
 				$(btn).prop("disabled", true);
 
+				doc.attachments = frm.attachments.get_attachments();
+
 				frappe.call({
 					method: "erpnext.selling.doctype.sales_order.sales_order.larksuite_notification",
 					args: { sales_order_doc: doc },
