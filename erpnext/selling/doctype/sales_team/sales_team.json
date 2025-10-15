@@ -47,6 +47,7 @@
    "label": "Contribution (%)",
    "oldfieldname": "allocated_percentage",
    "oldfieldtype": "Currency",
+   "precision": "5",
    "print_width": "100px",
    "width": "100px"
   },
@@ -85,7 +86,7 @@
  "idx": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-29 03:54:59.091737",
+ "modified": "2025-10-15 15:36:49.231466",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Team",
