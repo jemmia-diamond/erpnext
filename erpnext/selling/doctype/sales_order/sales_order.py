@@ -943,38 +943,19 @@ class SalesOrder(SellingController):
 					"attached_to_doctype": "Sales Order",
 					"attached_to_name": ref_order_name
 				},
-				fields=["name", "file_name", "file_url", "is_private"]
+				fields=["name"]
 			)
 			
 			if not attachments:
 				return
 			
+			# Update each attachment to point to the new order
 			for attachment in attachments:
-				try:
-					file_doc = frappe.get_doc("File", attachment.name)
-					
-					new_file = frappe.get_doc({
-						"doctype": "File",
-						"file_name": file_doc.file_name,
-						"file_url": file_doc.file_url,
-						"is_private": file_doc.is_private,
-						"attached_to_doctype": "Sales Order",
-						"attached_to_name": self.name,
-						"attached_to_field": file_doc.attached_to_field,
-						"folder": file_doc.folder,
-						"file_size": file_doc.file_size,
-						"content_hash": file_doc.content_hash
-					})
-					
-					if file_doc.content:
-						new_file.content = file_doc.content
-					
-					new_file.flags.ignore_permissions = True
-					new_file.insert()
-					
-				except Exception as e:
-					frappe.log_error(f"Error copying attachment {attachment.name}: {str(e)}")
-					continue
+				frappe.db.set_value("File", attachment.name, {
+					"attached_to_name": self.name
+				})
+			
+			frappe.db.commit()
 					
 		except Exception as e:
 			frappe.log_error(f"Error copying attachments from reference order: {str(e)}")
