@@ -874,7 +874,10 @@ class SalesOrder(SellingController):
 			simple_fields = [
 				'consultation_date', 'primary_sales_person',
 				'deposit_location', 'delivery_location', 'expected_delivery_date',
-				'customer_type', 'expected_payment_date'
+				'customer_type', 'expected_payment_date',
+				'deposit_amount', 'deposit_method',
+				'order_currency', 'billing_address',
+				'deposit_in_words'
 			]
 					
 			# Copy simple fields
