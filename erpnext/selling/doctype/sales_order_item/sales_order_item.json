@@ -814,6 +814,7 @@
   {
    "fieldname": "image_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Image"
   },
   {
@@ -1145,7 +1146,7 @@
  "idx": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-01 09:34:16.541141",
+ "modified": "2025-10-17 09:20:50.286866",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order Item",
