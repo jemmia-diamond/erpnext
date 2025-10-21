@@ -13,7 +13,7 @@
    "fieldname": "promotion",
    "fieldtype": "Link",
    "label": "Promotion",
-   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Order\"]]",
+   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Order\"],[\"Promotion\",\"is_active\",\"=\",1]]",
    "options": "Promotion"
   }
  ],
