@@ -13,7 +13,8 @@ Upload files directly to Cloudflare R2 (S3-compatible storage)
 import datetime
 import os
 import re
-import hashlib
+import random
+import string
 
 import boto3
 from botocore.client import Config
@@ -60,14 +61,31 @@ class R2FileManager:
 			"delete_local_after_upload": frappe.conf.get("r2_delete_local_after_upload", True),
 		}
 	
-	def generate_key(self, file_name, parent_doctype=None):
+	def generate_key(self, file_name, parent_doctype=None, content_hash=None):
 		"""
 		Generate S3 key with organized folder structure
-		Format: {folder}/{site}/{year}/{month}/{day}/{doctype}/{file_name}
 		"""
 		# Clean file name
 		file_name = file_name.replace(" ", "_")
 		file_name = re.sub(r"[^0-9a-zA-Z._-]", "", file_name)
+		
+		# Use content_hash if available (from Frappe), else generate random
+		if content_hash:
+			# Use last 8 chars of MD5 hash (already computed by Frappe)
+			hash_suffix = content_hash[-8:].upper()
+		else:
+			# Fallback: generate random 8-char key
+			hash_suffix = "".join(
+				random.choice(string.ascii_uppercase + string.digits) for _ in range(8)
+			)
+		
+		# Add hash as suffix (before extension)
+		# Example: "invoice.pdf" + "A1B2C3D4" → "invoice_A1B2C3D4.pdf"
+		name_parts = file_name.rsplit(".", 1)
+		if len(name_parts) == 2:
+			unique_file_name = f"{name_parts[0]}_{hash_suffix}.{name_parts[1]}"
+		else:
+			unique_file_name = f"{file_name}_{hash_suffix}"
 		
 		# Date-based path
 		today = datetime.datetime.now()
@@ -87,7 +105,7 @@ class R2FileManager:
 		if parent_doctype:
 			parts.append(parent_doctype)
 		
-		parts.append(file_name)
+		parts.append(unique_file_name)
 		
 		return "/".join(parts)
 	
@@ -95,7 +113,9 @@ class R2FileManager:
 		"""Upload file to R2 and return S3 key"""
 		try:
 			parent_doctype = file_doc.attached_to_doctype or "File"
-			s3_key = self.generate_key(file_doc.file_name, parent_doctype)
+			# Pass content_hash to generate_key for unique suffix
+			content_hash = getattr(file_doc, 'content_hash', None)
+			s3_key = self.generate_key(file_doc.file_name, parent_doctype, content_hash)
 			
 			# Determine content type
 			content_type = file_doc.get("content_type") or "application/octet-stream"
@@ -352,4 +372,3 @@ def extract_key_from_url(file_url):
 		if match:
 			return match.group(1)
 	return None
-
