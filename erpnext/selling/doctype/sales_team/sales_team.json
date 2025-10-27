@@ -87,6 +87,7 @@
   {
    "fieldname": "merator",
    "fieldtype": "Int",
+   "in_list_view": 1,
    "label": "Merator",
    "print_width": "100px",
    "width": "100px"
@@ -94,6 +95,7 @@
   {
    "fieldname": "denominator",
    "fieldtype": "Int",
+   "in_list_view": 1,
    "label": "Denominator",
    "print_width": "100px",
    "width": "100px"
