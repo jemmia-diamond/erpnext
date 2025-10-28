@@ -18,7 +18,9 @@ class SalesTeam(Document):
 		allocated_percentage: DF.Float
 		commission_rate: DF.Data | None
 		contact_no: DF.Data | None
+		denominator: DF.Int
 		incentives: DF.Currency
+		merator: DF.Int
 		parent: DF.Data
 		parentfield: DF.Data
 		parenttype: DF.Data
