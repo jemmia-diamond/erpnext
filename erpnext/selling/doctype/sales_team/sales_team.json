@@ -62,6 +62,7 @@
    "oldfieldname": "allocated_amount",
    "oldfieldtype": "Currency",
    "options": "Company:company:default_currency",
+   "precision": "7",
    "print_width": "120px",
    "read_only": 1,
    "width": "120px"
@@ -87,7 +88,6 @@
   {
    "fieldname": "merator",
    "fieldtype": "Int",
-   "in_list_view": 1,
    "label": "Merator",
    "print_width": "100px",
    "width": "100px"
@@ -95,7 +95,6 @@
   {
    "fieldname": "denominator",
    "fieldtype": "Int",
-   "in_list_view": 1,
    "label": "Denominator",
    "print_width": "100px",
    "width": "100px"
@@ -104,7 +103,7 @@
  "idx": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-24 09:33:35.952697",
+ "modified": "2025-10-30 10:53:20.690229",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Team",
