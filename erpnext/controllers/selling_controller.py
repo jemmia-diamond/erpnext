@@ -178,9 +178,8 @@ class SellingController(StockController):
 
 			if sales_person.merator and sales_person.denominator:
 				frac = Fraction(int(sales_person.merator), int(sales_person.denominator))
-				raw_amount = amt * frac  # chính xác dưới dạng Fraction
+				raw_amount = amt * frac
 				p = self.precision("allocated_amount", sales_person)
-				# chuyển về float chỉ một lần trước khi làm tròn/ghi vào hệ thống
 				sales_person.allocated_amount = flt(float(raw_amount), p)
 				allocated_percentage = flt(float(frac) * 100.0,
 										self.precision("allocated_percentage", sales_person))
