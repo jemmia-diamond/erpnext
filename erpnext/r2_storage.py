@@ -13,6 +13,7 @@ Upload files directly to Cloudflare R2 (S3-compatible storage)
 import datetime
 import os
 import re
+import unicodedata
 import random
 import string
 
@@ -23,6 +24,7 @@ from botocore.exceptions import ClientError
 import frappe
 from frappe import _
 from frappe.utils import get_site_path
+from urllib.parse import quote, unquote
 
 
 class R2FileManager:
@@ -67,7 +69,10 @@ class R2FileManager:
 		"""
 		# Clean file name
 		file_name = file_name.replace(" ", "_")
-		file_name = re.sub(r"[^0-9a-zA-Z._-]", "", file_name)
+		# Normalize to NFC so composed characters are consistent
+		file_name = unicodedata.normalize("NFC", file_name)
+		# Keep Unicode; remove only unsafe path/URL characters
+		file_name = re.sub(r'[<>:"/\\|?*\[\]{}%#]', "", file_name)
 		
 		# Use content_hash if available (from Frappe), else generate random
 		if content_hash:
@@ -120,19 +125,17 @@ class R2FileManager:
 			# Determine content type
 			content_type = file_doc.get("content_type") or "application/octet-stream"
 			
-			# Upload with appropriate ACL
+			# Upload with appropriate args
 			extra_args = {
 				"ContentType": content_type,
 				"Metadata": {
 					"site": frappe.local.site,
-					"original_name": file_doc.file_name,
+					# Metadata headers must be ASCII-only; strip accents
+					"original_name": unicodedata.normalize("NFKD", str(file_doc.file_name or "")).encode("ascii", "ignore").decode(),
 					"is_private": str(file_doc.is_private),
 				}
 			}
-			
-			# Public files get public-read ACL (if supported by R2)
-			if not file_doc.is_private:
-				extra_args["ACL"] = "public-read"
+			# Do NOT set ACL headers; R2 may reject ACLs
 			
 			self.client.upload_file(file_path, self.bucket, s3_key, ExtraArgs=extra_args)
 			
@@ -148,14 +151,18 @@ class R2FileManager:
 		if is_private:
 			# Private files: use API endpoint for streaming
 			method = "erpnext.r2_storage.stream_from_r2"
-			return f"/api/method/{method}?key={s3_key}&file_name={file_name}"
+			encoded_key = quote(s3_key, safe="/")
+			encoded_name = quote(file_name or "")
+			return f"/api/method/{method}?key={encoded_key}&file_name={encoded_name}"
 		else:
 			# Public files: use direct URL or custom domain
 			if self.settings.get("public_url"):
-				return f"{self.settings['public_url']}/{s3_key}"
+				encoded_key = quote(s3_key, safe="/")
+				return f"{self.settings['public_url']}/{encoded_key}"
 			else:
 				# Use R2 endpoint URL
-				return f"{self.settings['endpoint_url']}/{self.bucket}/{s3_key}"
+				encoded_key = quote(s3_key, safe="/")
+				return f"{self.settings['endpoint_url']}/{self.bucket}/{encoded_key}"
 	
 	def read_file(self, s3_key):
 		"""Read file from R2"""
@@ -301,8 +308,16 @@ def stream_from_r2(key=None, file_name=None):
 	if not manager.settings.get("enabled"):
 		frappe.throw(_("R2 not configured"))
 	
+	# Decode previously URL-encoded params to avoid double-encoding in presign
+	try:
+		decoded_key = unquote(key)
+		decoded_name = unquote(file_name) if file_name else None
+	except Exception:
+		decoded_key = key
+		decoded_name = file_name
+
 	# Generate presigned URL and redirect
-	signed_url = manager.generate_presigned_url(key, file_name)
+	signed_url = manager.generate_presigned_url(decoded_key, decoded_name)
 	
 	if signed_url:
 		frappe.local.response["type"] = "redirect"
