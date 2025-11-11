@@ -144,6 +144,7 @@ class SalesOrder(SellingController):
 		incoterm: DF.Link | None
 		inter_company_order_reference: DF.Link | None
 		is_internal_customer: DF.Check
+		is_split_order: DF.Check
 		items: DF.Table[SalesOrderItem]
 		language: DF.Data | None
 		letter_head: DF.Link | None
@@ -195,6 +196,8 @@ class SalesOrder(SellingController):
 		skip_delivery_note: DF.Check
 		source: DF.Link | None
 		source_name: DF.Data | None
+		split_order_group: DF.Data | None
+		split_reason: DF.Literal["", "Gold Regulation", "Customer Request", "Other"]
 		status: DF.Literal["", "Draft", "On Hold", "To Deliver and Bill", "To Bill", "To Deliver", "Completed", "Cancelled", "Closed"]
 		tax_category: DF.Link | None
 		tax_id: DF.Data | None
@@ -870,63 +873,19 @@ class SalesOrder(SellingController):
 				{"haravan_order_id": self.haravan_ref_order_id}, "name")
 			if not ref_order_name:
 				return	
-			# Define simple fields to copy (data types)
-			simple_fields = [
-				'consultation_date', 'primary_sales_person',
-				'deposit_location', 'delivery_location', 'expected_delivery_date',
-				'customer_type', 'expected_payment_date',
-				'deposit_amount', 'deposit_method',
-				'order_currency', 'billing_address',
-				'deposit_in_words'
-			]
-					
-			# Copy simple fields
-			ref_data = frappe.db.get_value("Sales Order", ref_order_name, simple_fields, as_dict=True)			
-			if ref_data:
-				update_fields = {}
-				for field in simple_fields:
-					ref_value = getattr(ref_data, field, None)
-					current_value = getattr(self, field, None)
-					if ref_value and not current_value:
-						update_fields[field] = ref_value
-				
-				if update_fields:
-					for field, value in update_fields.items():
-						frappe.db.set_value("Sales Order", self.name, field, value)
 			
-			# Copy Table MultiSelect fields
+			# Get ref order document
 			ref_order_doc = frappe.get_doc("Sales Order", ref_order_name)
-			multiselect_fields = {
-				# parentfield: link_field
-				"policies": "policy",
-				"promotions": "promotion",
-				"product_categories": "product_category",
-				"sales_order_purposes": "purchase_purpose",
-			}
-
-			for parentfield, link_field in multiselect_fields.items():
-				current_rows = self.get(parentfield) or []
-				ref_rows = ref_order_doc.get(parentfield) or []
-
-				if not current_rows and ref_rows:
-					for ref_row in ref_rows:
-						child = self.append(parentfield, {link_field: getattr(ref_row, link_field)})
-						child.db_insert()
-
-			# Copy Table fields
-			table_fields = ["sales_team", "debt_history"]
-			for parentfield in table_fields:
-				current_rows = self.get(parentfield) or []
-				ref_rows = ref_order_doc.get(parentfield) or []
-				if not current_rows and ref_rows:
-					for ref_row in ref_rows:
-						row = copy.deepcopy(ref_row.as_dict())
-						# remove system fields
-						for k in ("name", "parent", "parenttype", "parentfield", "creation", "modified", "modified_by", "owner", "docstatus", "idx"):
-							row.pop(k, None)
-						child = self.append(parentfield, row)
-						child.db_insert()
-
+			
+			# Detect if this is a split order or reorder
+			if self._is_split_order(ref_order_doc):
+				self._handle_split_order(ref_order_doc)
+			else:
+				self._handle_reorder(ref_order_doc)
+			
+			# Continue with common copy logic
+			self._copy_common_fields(ref_order_doc)
+			
 			# Copy Sales Order Items
 			self.copy_sales_order_items_from_reference(ref_order_doc)
 		
@@ -935,6 +894,134 @@ class SalesOrder(SellingController):
 		
 		except Exception as e:
 			frappe.log_error(f"Error copying from reference order: {str(e)}")
+	
+	def _is_split_order(self, ref_order):
+		"""
+		Detect if current order is split from reference order
+		
+		Criteria: Ref order is still active (not cancelled)
+		If ref order is cancelled, it's a reorder (replacement)
+		If ref order is active, it's a split (both orders coexist)
+		"""
+		return ref_order.cancelled_status == "Uncancelled"
+	
+	def _handle_split_order(self, ref_order):
+		"""Handle when this order is split from another order"""
+		
+		# Determine split group ID
+		if ref_order.split_order_group:
+			# Ref order already has group, use it
+			split_group_id = ref_order.split_order_group
+		elif ref_order.is_split_order:
+			# Ref is already a split order, use its haravan_order_id
+			split_group_id = ref_order.haravan_order_id
+		else:
+			# This is the first split, create new group using ref order's ID
+			split_group_id = ref_order.haravan_order_id or ref_order.order_number
+		
+		# Set this order as split order
+		self.split_order_group = split_group_id
+		self.is_split_order = 1
+		self.split_reason = "Gold Regulation"
+		
+		# Update ref order if not marked yet
+		if not ref_order.is_split_order:
+			frappe.db.set_value("Sales Order", ref_order.name, {
+				"split_order_group": split_group_id,
+				"is_split_order": 1,
+				"split_reason": "Gold Regulation"
+			}, update_modified=False)
+		
+		frappe.msgprint(
+			_("This order is part of split group: <b>{0}</b>").format(split_group_id),
+			indicator="blue",
+			title=_("Split Order Detected")
+		)
+	
+	def _handle_reorder(self, ref_order):
+		"""Handle reorder case (existing logic for ref_sales_orders)"""
+		# Add to ref_sales_orders table for tracking reorder history
+		if not any(r.sales_order == ref_order.name for r in self.get("ref_sales_orders", [])):
+			self.append("ref_sales_orders", {
+				"sales_order": ref_order.name
+			})
+		
+		# Check if ref order was part of a split group
+		# If yes, inherit the SAME split group (group name never changes)
+		if ref_order.is_split_order and ref_order.split_order_group:
+			# Inherit the same group name from ref order
+			# Group name is FIXED = haravan_order_id of the first order in group
+			self.split_order_group = ref_order.split_order_group
+			self.is_split_order = 1
+			self.split_reason = ref_order.split_reason or "Gold Regulation"
+			
+			frappe.msgprint(
+				_("This order replaces {0} in split group: <b>{1}</b>").format(
+					frappe.bold(ref_order.name), 
+					ref_order.split_order_group
+				),
+				indicator="blue",
+				title=_("Split Order Replacement")
+			)
+	
+	
+	def _copy_common_fields(self, ref_order_doc):
+		"""Copy common fields from reference order"""
+		# Define simple fields to copy (data types)
+		simple_fields = [
+			'consultation_date', 'primary_sales_person',
+			'deposit_location', 'delivery_location', 'expected_delivery_date',
+			'customer_type', 'expected_payment_date',
+			'deposit_amount', 'deposit_method',
+			'order_currency', 'billing_address',
+			'deposit_in_words'
+		]
+				
+		# Copy simple fields
+		ref_data = frappe.db.get_value("Sales Order", ref_order_doc.name, simple_fields, as_dict=True)			
+		if ref_data:
+			update_fields = {}
+			for field in simple_fields:
+				ref_value = getattr(ref_data, field, None)
+				current_value = getattr(self, field, None)
+				if ref_value and not current_value:
+					update_fields[field] = ref_value
+			
+			if update_fields:
+				for field, value in update_fields.items():
+					frappe.db.set_value("Sales Order", self.name, field, value)
+		
+		# Copy Table MultiSelect fields
+		multiselect_fields = {
+			# parentfield: link_field
+			"policies": "policy",
+			"promotions": "promotion",
+			"product_categories": "product_category",
+			"sales_order_purposes": "purchase_purpose",
+		}
+
+		for parentfield, link_field in multiselect_fields.items():
+			current_rows = self.get(parentfield) or []
+			ref_rows = ref_order_doc.get(parentfield) or []
+
+			if not current_rows and ref_rows:
+				for ref_row in ref_rows:
+					child = self.append(parentfield, {link_field: getattr(ref_row, link_field)})
+					child.db_insert()
+
+		# Copy Table fields
+		table_fields = ["sales_team", "debt_history"]
+		for parentfield in table_fields:
+			current_rows = self.get(parentfield) or []
+			ref_rows = ref_order_doc.get(parentfield) or []
+			if not current_rows and ref_rows:
+				for ref_row in ref_rows:
+					row = copy.deepcopy(ref_row.as_dict())
+					# remove system fields
+					for k in ("name", "parent", "parenttype", "parentfield", "creation", "modified", "modified_by", "owner", "docstatus", "idx"):
+						row.pop(k, None)
+					child = self.append(parentfield, row)
+					child.db_insert()
 
 	def copy_attachments_from_reference(self, ref_order_name):
 		"""Copy attachments from reference order to current order"""
@@ -2206,3 +2293,42 @@ def larksuite_notification(sales_order_doc):
 	)
 	message = response.json()["message"]
 	return message
+
+
+@frappe.whitelist()
+def get_split_orders_in_group(split_order_group, include_cancelled=False):
+	"""
+	Get all orders in a split order group
+	
+	Args:
+		split_order_group: The split order group ID
+		include_cancelled: Whether to include cancelled orders
+	
+	Returns:
+		List of orders in the group with details
+	"""
+	if not split_order_group:
+		return []
+	
+	filters = {
+		"split_order_group": split_order_group,
+		"is_split_order": 1
+	}
+	
+	if not include_cancelled:
+		filters["cancelled_status"] = "Uncancelled"
+	
+	orders = frappe.get_all("Sales Order",
+		filters=filters,
+		fields=[
+			"name", "order_number", "customer", "customer_name",
+			"grand_total", "currency", "haravan_order_id", 
+			"cancelled_status", "financial_status", "fulfillment_status",
+			"transaction_date", "modified"
+		],
+		order_by="transaction_date asc"
+	)
+	for order in orders:
+		order["is_original_order"] = (order.get("haravan_order_id") == split_order_group)
+	
+	return orders

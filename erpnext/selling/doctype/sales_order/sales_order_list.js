@@ -65,10 +65,7 @@ frappe.listview_settings["Sales Order"] = {
 				for (let i = 0; i < listview.data.length; i++) {
 					const row_data = listview.data[i];
 					if (row_data.is_split_order && row_data.split_order_group) {
-						const is_rep = row_data.haravan_order_id === row_data.split_order_group;
-						const badge_color = is_rep ? 'orange' : '#3498db';
-						const badge_text = is_rep ? 'GROUP REP' : 'SPLIT';
-						const badge = `<span style="background: ${badge_color}; color: white; padding: 2px 6px; border-radius: 3px; font-size: 9px; margin-left: 5px; font-weight: bold;">${badge_text}</span>`;
+						const badge = `<span style="background: #3498db; color: white; padding: 2px 6px; border-radius: 3px; font-size: 9px; margin-left: 5px; font-weight: bold;">SPLIT</span>`;
 						$(`.result .list-row-container:nth-child(${i + 3}) .list-row-col:nth-child(1)`).append(badge);
 					}
 				}

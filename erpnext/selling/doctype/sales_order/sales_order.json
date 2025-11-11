@@ -1786,6 +1786,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Split Order Group",
+   "permlevel": 1,
    "print_hide": 1
   },
   {
@@ -1794,6 +1795,7 @@
    "fieldname": "is_split_order",
    "fieldtype": "Check",
    "label": "Is Split Order",
+   "permlevel": 1,
    "print_hide": 1
   },
   {
@@ -2105,7 +2107,7 @@
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-11 07:49:18.325654",
+ "modified": "2025-11-11 09:35:10.835404",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",

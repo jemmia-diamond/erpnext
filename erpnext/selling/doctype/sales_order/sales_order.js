@@ -54,18 +54,21 @@ frappe.ui.form.on("Sales Order", {
 
 		// Show split order indicator and add button to view related orders
 		if (frm.doc.is_split_order && frm.doc.split_order_group) {
-			// Check if this is the group representative
-			const is_representative = frm.doc.haravan_order_id === frm.doc.split_order_group;
+			// Format split_order_group for display (add # prefix for readability)
+			const formatted_group = `#${frm.doc.split_order_group}`;
+			
+			// Check if this is the original order (group origin)
+			const is_original = frm.doc.haravan_order_id === frm.doc.split_order_group;
 			
 			// Add indicator
-			if (is_representative) {
+			if (is_original) {
 				frm.dashboard.add_indicator(
-					__('Split Order Group: {0} (Representative)', [frm.doc.split_order_group]), 
+					__('Split Order Group: {0} (Original Order)', [formatted_group]), 
 					'orange'
 				);
 			} else {
 				frm.dashboard.add_indicator(
-					__('Split Order Group: {0}', [frm.doc.split_order_group]), 
+					__('Split Order Group: {0}', [formatted_group]), 
 					'blue'
 				);
 			}
@@ -109,12 +112,12 @@ frappe.ui.form.on("Sales Order", {
 						html += '<ul style="margin: 0; padding-left: 20px;">';
 						
 						all_orders.forEach(function(order) {
-							const is_rep = order.haravan_order_id === frm.doc.split_order_group;
+							const is_original = order.haravan_order_id === frm.doc.split_order_group;
 							const is_current = order.name === frm.doc.name;
 							
 							let badge = '';
-							if (is_rep) {
-								badge = '<span style="background: orange; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 5px;">REP</span>';
+							if (is_original) {
+								badge = '<span style="background: #95a5a6; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 5px;">ORIGINAL</span>';
 							}
 							if (is_current) {
 								badge += '<span style="background: #27ae60; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 5px;">THIS</span>';
