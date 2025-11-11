@@ -52,6 +52,91 @@ frappe.ui.form.on("Sales Order", {
 			$statusSpan.css("color", "tomato").css("background-color", "whitesmoke");
 		}
 
+		// Show split order indicator and add button to view related orders
+		if (frm.doc.is_split_order && frm.doc.split_order_group) {
+			// Check if this is the group representative
+			const is_representative = frm.doc.haravan_order_id === frm.doc.split_order_group;
+			
+			// Add indicator
+			if (is_representative) {
+				frm.dashboard.add_indicator(
+					__('Split Order Group: {0} (Representative)', [frm.doc.split_order_group]), 
+					'orange'
+				);
+			} else {
+				frm.dashboard.add_indicator(
+					__('Split Order Group: {0}', [frm.doc.split_order_group]), 
+					'blue'
+				);
+			}
+			
+			// Add button to view related split orders
+			frm.add_custom_button(__('View Related Split Orders'), function() {
+				frappe.route_options = {
+					"split_order_group": frm.doc.split_order_group,
+					"is_split_order": 1,
+					"cancelled_status": "Uncancelled"
+				};
+				frappe.set_route("List", "Sales Order");
+			}, __("Actions"));
+			
+			// Load and display related split orders in the form
+			frappe.call({
+				method: 'frappe.client.get_list',
+				args: {
+					doctype: 'Sales Order',
+					filters: {
+						'split_order_group': frm.doc.split_order_group,
+						'is_split_order': 1,
+						'cancelled_status': 'Uncancelled'
+					},
+					fields: ['name', 'order_number', 'grand_total', 'haravan_order_id'],
+					order_by: 'transaction_date asc',
+					limit_page_length: 20
+				},
+				callback: function(r) {
+					if (r.message && r.message.length > 0) {
+						// Calculate total of all orders in group
+						let total_group_amount = 0;
+						let all_orders = r.message;
+						
+						all_orders.forEach(function(order) {
+							total_group_amount += order.grand_total || 0;
+						});
+						
+						let html = '<div class="split-orders-info" style="margin-top: 10px; padding: 10px; background-color: #f0f4f7; border-radius: 5px;">';
+						html += '<h6 style="margin-bottom: 10px; color: #3498db;"><i class="fa fa-link"></i> All Orders in Split Group:</h6>';
+						html += '<ul style="margin: 0; padding-left: 20px;">';
+						
+						all_orders.forEach(function(order) {
+							const is_rep = order.haravan_order_id === frm.doc.split_order_group;
+							const is_current = order.name === frm.doc.name;
+							
+							let badge = '';
+							if (is_rep) {
+								badge = '<span style="background: orange; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 5px;">REP</span>';
+							}
+							if (is_current) {
+								badge += '<span style="background: #27ae60; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 5px;">THIS</span>';
+							}
+							
+							const style = is_current ? 'font-weight: bold;' : '';
+							html += `<li style="${style}"><a href="/app/sales-order/${order.name}" target="_blank">${order.order_number}</a> - ${format_currency(order.grand_total, frm.doc.currency)}${badge}</li>`;
+						});
+						
+						html += '</ul>';
+						html += '<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #d1d8dd;">';
+						html += `<p style="margin: 5px 0; font-size: 12px; color: #666;">Orders in group: <b>${all_orders.length}</b></p>`;
+						html += `<p style="margin: 5px 0; font-size: 13px; color: #2c3e50;"><b>Total Amount (All Split Orders): ${format_currency(total_group_amount, frm.doc.currency)}</b></p>`;
+						html += '</div>';
+						html += '</div>';
+						
+						frm.set_df_property('split_order_group', 'description', html);
+					}
+				}
+			});
+		}
+
 		frm.add_custom_button(__('View On Haravan'), function() {
 			const haravanUrl = `https://jemmiavn.myharavan.com/admin/orders/${frm.doc.haravan_order_id}`;
 			window.open(haravanUrl, '_blank');
