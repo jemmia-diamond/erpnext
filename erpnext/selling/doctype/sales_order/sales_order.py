@@ -809,12 +809,10 @@ class SalesOrder(SellingController):
 
 	def before_save(self):
 		self.validate_primary_sales_team()
-		self.handle_order_cancellation()
 		self.process_debt_history()
 		self.handle_serial_numbers_changes()
 		
 	def before_insert(self):
-		self.handle_order_cancellation()
 		self.process_debt_history()
 
 	def process_debt_history(self):
