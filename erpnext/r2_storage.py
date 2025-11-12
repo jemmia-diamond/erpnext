@@ -148,21 +148,11 @@ class R2FileManager:
 	
 	def get_file_url(self, s3_key, file_name, is_private):
 		"""Generate appropriate URL for file"""
-		if is_private:
-			# Private files: use API endpoint for streaming
-			method = "erpnext.r2_storage.stream_from_r2"
-			encoded_key = quote(s3_key, safe="/")
-			encoded_name = quote(file_name or "")
-			return f"/api/method/{method}?key={encoded_key}&file_name={encoded_name}"
-		else:
-			# Public files: use direct URL or custom domain
-			if self.settings.get("public_url"):
-				encoded_key = quote(s3_key, safe="/")
-				return f"{self.settings['public_url']}/{encoded_key}"
-			else:
-				# Use R2 endpoint URL
-				encoded_key = quote(s3_key, safe="/")
-				return f"{self.settings['endpoint_url']}/{self.bucket}/{encoded_key}"
+		# Both public and private files use API endpoint
+		method = "erpnext.r2_storage.stream_from_r2"
+		encoded_key = quote(s3_key, safe="/")
+		encoded_name = quote(file_name or "")
+		return f"/api/method/{method}?key={encoded_key}&file_name={encoded_name}"
 	
 	def read_file(self, s3_key):
 		"""Read file from R2"""
@@ -231,9 +221,9 @@ def upload_to_r2(doc, method=None):
 		# Get file path on disk
 		site_path = get_site_path()
 		if not doc.is_private:
-			file_path = os.path.join(site_path, "public", doc.file_url.lstrip("/files/"))
+			file_path = os.path.join(site_path, "public", "files", doc.file_url.replace("/files/", ""))
 		else:
-			file_path = os.path.join(site_path, doc.file_url.lstrip("/"))
+			file_path = os.path.join(site_path, "private", "files", doc.file_url.replace("/private/files/", ""))
 		
 		# Check if file exists
 		if not os.path.exists(file_path):
