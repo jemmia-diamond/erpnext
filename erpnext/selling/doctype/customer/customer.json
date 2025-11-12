@@ -875,8 +875,9 @@
   },
   {
    "fieldname": "rank",
-   "fieldtype": "Data",
-   "label": "Rank"
+   "fieldtype": "Select",
+   "label": "Rank",
+   "options": "No Rank\nSilver\nGold\nPlatinum"
   },
   {
    "fieldname": "column_break_qwps",
@@ -1040,7 +1041,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2025-10-08 03:02:02.044920",
+ "modified": "2025-11-12 03:02:02.044920",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",

@@ -109,7 +109,7 @@ class Customer(TransactionBase):
 		priority_login_date: DF.Date | None
 		prospect_name: DF.Link | None
 		purchase_amount_last_12_months: DF.Currency
-		rank: DF.Data | None
+		rank: DF.Literal["No Rank", "Silver", "Gold", "Platinum"]
 		rank_expired_date: DF.Date | None
 		referrals_revenue: DF.Currency
 		represents_company: DF.Link | None
@@ -157,10 +157,11 @@ class Customer(TransactionBase):
 			data = response.json()
 
 			true_cumulative = data.get("trueCumulativeRevenue", 0)
+			referrals_revenue = data.get("referralsRevenue", 0)
 			cumulative = data.get("cumulativeRevenue", 0)
-
-			new_rank = self.calculate_rank(true_cumulative, cumulative)
+			new_rank = self.calculate_rank(true_cumulative, cumulative, referrals_revenue)
 			current_rank = self.rank
+
 			if current_rank != new_rank:
 				frappe.db.set_value("Customer", self.name, "rank", new_rank, update_modified=False)
 				frappe.db.commit()
@@ -181,23 +182,21 @@ class Customer(TransactionBase):
 				"Priority API Error"
 			)
 
-	def calculate_rank(self, true_cumulative, cumulative):
+	def calculate_rank(self, true_cumulative, cumulative, referrals_revenue):
 		"""Calculate customer rank based on revenue thresholds"""
-		revenue = cumulative if cumulative > 0 else true_cumulative
+		revenue = cumulative if referrals_revenue > 0 else true_cumulative
 
 		if revenue == 0:
 			return "No Rank"
 
-		if cumulative > 0:
+		if referrals_revenue > 0:
 			if revenue >= 2000000000:
 				return "Platinum"
-		else:
-			if revenue >= 1000000000:
-				return "Platinum"
-		if cumulative > 0:
 			if revenue >= 500000000:
 				return "Gold"
 		else:
+			if revenue >= 1000000000:
+				return "Platinum"
 			if revenue >= 300000000:
 				return "Gold"
 		return "Silver"
