@@ -197,6 +197,7 @@ class SalesOrder(SellingController):
 		source: DF.Link | None
 		source_name: DF.Data | None
 		split_order_group: DF.Data | None
+		split_order_group_name: DF.Data | None
 		split_reason: DF.Literal["", "Gold Regulation", "Customer Request", "Other"]
 		status: DF.Literal["", "Draft", "On Hold", "To Deliver and Bill", "To Bill", "To Deliver", "Completed", "Cancelled", "Closed"]
 		tax_category: DF.Link | None
@@ -879,7 +880,8 @@ class SalesOrder(SellingController):
 				'customer_type', 'expected_payment_date',
 				'deposit_amount', 'deposit_method',
 				'order_currency', 'billing_address',
-				'deposit_in_words', 'is_split_order', 'split_order_group',
+				'deposit_in_words', 'is_split_order',
+				'split_order_group', 'split_order_group_name',
 				'split_reason',
 			]
 					
@@ -1203,10 +1205,11 @@ class SalesOrder(SellingController):
 			frappe.db.sql("""
 				UPDATE `tabSales Order`
 				SET split_order_group = %s,
+					split_order_group_name = %s,
 					is_split_order = 0
 				WHERE name = %s
 				ORDER BY haravan_created_at ASC
-			""", (self.haravan_order_id, self.name))
+			""", (self.haravan_order_id, self.order_number, self.name))
 			
 			frappe.db.commit()
 			return
@@ -1216,15 +1219,17 @@ class SalesOrder(SellingController):
 		
 		# Get group ID from previous order
 		split_group_id = first_previous_order.split_order_group or first_previous_order.haravan_order_id
+		split_group_name = first_previous_order.split_order_group_name or first_previous_order.order_number
 		
 		# Set this order as split order
 		frappe.db.sql("""
 			UPDATE `tabSales Order`
 			SET split_order_group = %s,
+				split_order_group_name = %s,
 				is_split_order = 1,
 				split_reason = 'Gold Regulation'
 			WHERE name = %s
-		""", (split_group_id, self.name))
+		""", (split_group_id, split_group_name, self.name))
 		
 		# Update all previous orders to mark as split orders
 		for prev_order in previous_orders:
@@ -1232,10 +1237,11 @@ class SalesOrder(SellingController):
 			frappe.db.sql("""
 				UPDATE `tabSales Order`
 				SET split_order_group = %s,
+					split_order_group_name = %s,
 					is_split_order = 1,
 					split_reason = 'Gold Regulation'
 				WHERE name = %s
-			""", (split_group_id, prev_order.name))
+			""", (split_group_id, split_group_name, prev_order.name))
 		
 		frappe.db.commit()
 

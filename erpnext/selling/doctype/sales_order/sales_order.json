@@ -24,6 +24,7 @@
   "company",
   "amended_from",
   "group_order_section",
+  "split_order_group_name",
   "split_order_group",
   "column_break_wcaf",
   "is_split_order",
@@ -1780,12 +1781,10 @@
    "read_only": 1
   },
   {
-   "description": "Group ID for orders split due to gold regulations",
+   "description": "Group ID for orders splitt",
    "fieldname": "split_order_group",
    "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Split Order Group",
+   "label": "Split Order Group ID",
    "permlevel": 1,
    "print_hide": 1
   },
@@ -2101,13 +2100,21 @@
   {
    "fieldname": "column_break_wcaf",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "split_order_group_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Split Order Group Name",
+   "permlevel": 1
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-11 09:35:10.835404",
+ "modified": "2025-11-12 03:35:32.748323",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
