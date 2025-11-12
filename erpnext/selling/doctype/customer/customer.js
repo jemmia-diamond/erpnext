@@ -113,6 +113,17 @@ frappe.ui.form.on("Customer", {
 		}
 
 		if (!frm.doc.__islocal) {
+			if (frm.doc.__onload && frm.doc.__onload.priority_data) {
+				const data = frm.doc.__onload.priority_data;
+				frm.set_value("referrals_revenue", data.referrals_revenue);
+				frm.set_value("cumulative_revenue", data.cumulative_revenue);
+				frm.set_value("true_cumulative_revenue", data.true_cumulative_revenue);
+				frm.set_value("cashback", data.cashback);
+				frm.set_value("withdraw_cashback", data.withdraw_cashback);
+				frm.set_value("pending_cashback", data.pending_cashback);
+				frm.set_value("rank", data.rank);
+			}
+
 			frappe.contacts.render_address_and_contact(frm);
 
 			// custom buttons

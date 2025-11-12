@@ -133,10 +133,74 @@ class Customer(TransactionBase):
 		# Load address and contacts in `__onload`
 		load_address_and_contact(self)
 		self.load_dashboard_info()
+		self.fetch_priority_data()
 
 	def load_dashboard_info(self):
 		info = get_dashboard_info(self.doctype, self.name, self.loyalty_program)
 		self.set_onload("dashboard_info", info)
+
+	def fetch_priority_data(self):
+		if not self.haravan_id:
+			return
+
+		try:
+			url = f"https://priority-api.jemmia.vn/user/priority/{self.haravan_id}/haravan"
+			response = requests.get(url, timeout=10)
+
+			if response.status_code != 200:
+				frappe.log_error(
+					f"Priority API failed for customer {self.name} (haravan_id: {self.haravan_id})",
+					"Priority API Error"
+				)
+				return
+
+			data = response.json()
+
+			true_cumulative = data.get("trueCumulativeRevenue", 0)
+			cumulative = data.get("cumulativeRevenue", 0)
+
+			new_rank = self.calculate_rank(true_cumulative, cumulative)
+			current_rank = self.rank
+			if current_rank != new_rank:
+				frappe.db.set_value("Customer", self.name, "rank", new_rank, update_modified=False)
+				frappe.db.commit()
+
+			self.set_onload("priority_data", {
+				"referrals_revenue": data.get("referralsRevenue", 0),
+				"cumulative_revenue": cumulative,
+				"true_cumulative_revenue": true_cumulative,
+				"cashback": data.get("totalCashBack", 0),
+				"withdraw_cashback": data.get("withdrawAmount", 0),
+				"pending_cashback": data.get("pendingCashback", 0),
+				"rank": new_rank
+			})
+
+		except Exception as e:
+			frappe.log_error(
+				f"Error fetching priority data for {self.name}: {str(e)}",
+				"Priority API Error"
+			)
+
+	def calculate_rank(self, true_cumulative, cumulative):
+		"""Calculate customer rank based on revenue thresholds"""
+		revenue = cumulative if cumulative > 0 else true_cumulative
+
+		if revenue == 0:
+			return "No Rank"
+
+		if cumulative > 0:
+			if revenue >= 2000000000:
+				return "Platinum"
+		else:
+			if revenue >= 1000000000:
+				return "Platinum"
+		if cumulative > 0:
+			if revenue >= 500000000:
+				return "Gold"
+		else:
+			if revenue >= 300000000:
+				return "Gold"
+		return "Silver"
 
 	def get_customer_name(self):
 		if frappe.db.get_value("Customer", self.customer_name) and not frappe.flags.in_import:
@@ -842,10 +906,10 @@ def parse_full_name(full_name: str) -> tuple[str, str | None, str | None]:
 	return first_name, middle_name, last_name
 
 def update_all_customers_revenue():
-    
+
     payload = {}  # Add any required payload if needed
     response = requests.get("https://priority-api.jemmia.vn/user/priority/get-all", json=payload)
-    
+
     if response.status_code != 200:
         frappe.throw("Failed to fetch data from priority API")
 
