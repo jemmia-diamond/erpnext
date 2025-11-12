@@ -15,7 +15,7 @@ from frappe.desk.notifications import clear_doctype_notifications
 from frappe.model.mapper import get_mapped_doc
 from frappe.model.utils import get_fetch_values
 from frappe.query_builder.functions import Sum
-from frappe.utils import add_days, cint, cstr, flt, get_link_to_form, getdate, nowdate, strip_html
+from frappe.utils import add_days, cint, cstr, flt, get_link_to_form, getdate, nowdate, strip_html, add_to_date, get_datetime
 
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import (
 	unlink_inter_company_doc,
@@ -144,6 +144,7 @@ class SalesOrder(SellingController):
 		incoterm: DF.Link | None
 		inter_company_order_reference: DF.Link | None
 		is_internal_customer: DF.Check
+		is_split_order: DF.Check
 		items: DF.Table[SalesOrderItem]
 		language: DF.Data | None
 		letter_head: DF.Link | None
@@ -195,6 +196,9 @@ class SalesOrder(SellingController):
 		skip_delivery_note: DF.Check
 		source: DF.Link | None
 		source_name: DF.Data | None
+		split_order_group: DF.Data | None
+		split_order_group_name: DF.Data | None
+		split_reason: DF.Literal["", "Gold Regulation", "Customer Request", "Other"]
 		status: DF.Literal["", "Draft", "On Hold", "To Deliver and Bill", "To Bill", "To Deliver", "Completed", "Cancelled", "Closed"]
 		tax_category: DF.Link | None
 		tax_id: DF.Data | None
@@ -806,12 +810,10 @@ class SalesOrder(SellingController):
 
 	def before_save(self):
 		self.validate_primary_sales_team()
-		self.handle_order_cancellation()
 		self.process_debt_history()
 		self.handle_serial_numbers_changes()
 		
 	def before_insert(self):
-		self.handle_order_cancellation()
 		self.process_debt_history()
 
 	def process_debt_history(self):
@@ -828,7 +830,8 @@ class SalesOrder(SellingController):
 	def after_insert(self):
 		self.update_customer_revenue_fields()
 		self.copy_from_reference_order()
-
+		self.auto_detect_split_orders()
+		
 	def before_submit(self):
 		frappe.throw(_("Sales Order Submission is not allowed."))
 
@@ -877,7 +880,9 @@ class SalesOrder(SellingController):
 				'customer_type', 'expected_payment_date',
 				'deposit_amount', 'deposit_method',
 				'order_currency', 'billing_address',
-				'deposit_in_words'
+				'deposit_in_words', 'is_split_order',
+				'split_order_group', 'split_order_group_name',
+				'split_reason',
 			]
 					
 			# Copy simple fields
@@ -901,7 +906,7 @@ class SalesOrder(SellingController):
 				"policies": "policy",
 				"promotions": "promotion",
 				"product_categories": "product_category",
-				"sales_order_purposes": "purchase_purpose",
+				"sales_order_purposes": "purchase_purpose"
 			}
 
 			for parentfield, link_field in multiselect_fields.items():
@@ -1164,6 +1169,81 @@ class SalesOrder(SellingController):
 				items_updated = True
 		
 		return items_updated
+
+	def auto_detect_split_orders(self):
+		"""
+		Auto-detect split orders based on customer and order creation time
+		"""
+
+		# Skip if not is_split_order
+		if self.is_split_order:
+			return
+		# Skip if no haravan_created_at (cannot detect time-based)
+		if not self.haravan_created_at:
+			return
+		
+		# Calculate time window (30 minutes BEFORE current order time only)
+		order_time = get_datetime(self.haravan_created_at)
+		time_window_start = add_to_date(order_time, minutes=-30)
+		
+		# Find orders from same customer created within 30 minutes before
+		# Only look for new orders (not reorders) to avoid grouping unrelated orders
+		previous_orders = frappe.db.sql("""
+			SELECT 
+				name, haravan_order_id, haravan_created_at,
+				split_order_group, is_split_order
+			FROM `tabSales Order`
+			WHERE customer = %s
+				AND haravan_created_at >= %s
+				AND haravan_created_at < %s
+				AND name != %s
+				AND cancelled_status = 'Uncancelled'
+			LIMIT 10
+		""", (self.customer, time_window_start, order_time, self.name), as_dict=True)
+		
+		if not previous_orders:
+			frappe.db.sql("""
+				UPDATE `tabSales Order`
+				SET split_order_group = %s,
+					split_order_group_name = %s,
+					is_split_order = 0
+				WHERE name = %s
+				ORDER BY haravan_created_at ASC
+			""", (self.haravan_order_id, self.order_number, self.name))
+			
+			frappe.db.commit()
+			return
+		
+		# Found related order(s) → This is a split order
+		first_previous_order = previous_orders[0]
+		
+		# Get group ID from previous order
+		split_group_id = first_previous_order.split_order_group or first_previous_order.haravan_order_id
+		split_group_name = first_previous_order.split_order_group_name or first_previous_order.order_number
+		
+		# Set this order as split order
+		frappe.db.sql("""
+			UPDATE `tabSales Order`
+			SET split_order_group = %s,
+				split_order_group_name = %s,
+				is_split_order = 1,
+				split_reason = 'Gold Regulation'
+			WHERE name = %s
+		""", (split_group_id, split_group_name, self.name))
+		
+		# Update all previous orders to mark as split orders
+		for prev_order in previous_orders:
+			# Always update to ensure is_split_order = 1
+			frappe.db.sql("""
+				UPDATE `tabSales Order`
+				SET split_order_group = %s,
+					split_order_group_name = %s,
+					is_split_order = 1,
+					split_reason = 'Gold Regulation'
+				WHERE name = %s
+			""", (split_group_id, split_group_name, prev_order.name))
+		
+		frappe.db.commit()
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:
 	"""Returns the unreserved quantity for the Sales Order Item."""
@@ -2206,3 +2286,42 @@ def larksuite_notification(sales_order_doc):
 	)
 	message = response.json()["message"]
 	return message
+
+
+@frappe.whitelist()
+def get_split_orders_in_group(split_order_group, include_cancelled=False):
+	"""
+	Get all orders in a split order group
+	
+	Args:
+		split_order_group: The split order group ID
+		include_cancelled: Whether to include cancelled orders
+	
+	Returns:
+		List of orders in the group with details
+	"""
+	if not split_order_group:
+		return []
+	
+	filters = {
+		"split_order_group": split_order_group,
+		"is_split_order": 1
+	}
+	
+	if not include_cancelled:
+		filters["cancelled_status"] = "Uncancelled"
+	
+	orders = frappe.get_all("Sales Order",
+		filters=filters,
+		fields=[
+			"name", "order_number", "customer", "customer_name",
+			"grand_total", "currency", "haravan_order_id", 
+			"cancelled_status", "financial_status", "fulfillment_status",
+			"transaction_date", "modified"
+		],
+		order_by="transaction_date asc"
+	)
+	for order in orders:
+		order["is_original_order"] = (order.get("haravan_order_id") == split_order_group)
+	
+	return orders
