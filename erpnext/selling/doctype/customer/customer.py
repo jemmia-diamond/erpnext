@@ -143,44 +143,37 @@ class Customer(TransactionBase):
 		if not self.haravan_id:
 			return
 
-		try:
-			url = f"https://priority-api.jemmia.vn/user/priority/{self.haravan_id}/haravan"
-			response = requests.get(url, timeout=10)
+		url = f"https://priority-api.jemmia.vn/user/priority/{self.haravan_id}/haravan"
+		response = requests.get(url)
 
-			if response.status_code != 200:
-				frappe.log_error(
-					f"Priority API failed for customer {self.name} (haravan_id: {self.haravan_id})",
-					"Priority API Error"
-				)
-				return
-
-			data = response.json()
-
-			true_cumulative = data.get("trueCumulativeRevenue", 0)
-			referrals_revenue = data.get("referralsRevenue", 0)
-			cumulative = data.get("cumulativeRevenue", 0)
-			new_rank = self.calculate_rank(true_cumulative, cumulative, referrals_revenue)
-			current_rank = self.rank
-
-			if current_rank != new_rank:
-				frappe.db.set_value("Customer", self.name, "rank", new_rank, update_modified=False)
-				frappe.db.commit()
-
-			self.set_onload("priority_data", {
-				"referrals_revenue": data.get("referralsRevenue", 0),
-				"cumulative_revenue": cumulative,
-				"true_cumulative_revenue": true_cumulative,
-				"cashback": data.get("totalCashBack", 0),
-				"withdraw_cashback": data.get("withdrawAmount", 0),
-				"pending_cashback": data.get("pendingCashback", 0),
-				"rank": new_rank
-			})
-
-		except Exception as e:
+		if response.status_code != 200:
 			frappe.log_error(
-				f"Error fetching priority data for {self.name}: {str(e)}",
+				f"Priority API failed for customer {self.name} (haravan_id: {self.haravan_id})",
 				"Priority API Error"
 			)
+			return
+
+		data = response.json()
+
+		true_cumulative = data.get("trueCumulativeRevenue", 0)
+		referrals_revenue = data.get("referralsRevenue", 0)
+		cumulative = data.get("cumulativeRevenue", 0)
+		new_rank = self.calculate_rank(true_cumulative, cumulative, referrals_revenue)
+		current_rank = self.rank
+
+		if current_rank != new_rank:
+			frappe.db.set_value("Customer", self.name, "rank", new_rank, update_modified=False)
+			frappe.db.commit()
+
+		self.set_onload("priority_data", {
+			"referrals_revenue": data.get("referralsRevenue", 0),
+			"cumulative_revenue": cumulative,
+			"true_cumulative_revenue": true_cumulative,
+			"cashback": data.get("totalCashBack", 0),
+			"withdraw_cashback": data.get("withdrawAmount", 0),
+			"pending_cashback": data.get("pendingCashback", 0),
+			"rank": new_rank
+		})
 
 	def calculate_rank(self, true_cumulative, cumulative, referrals_revenue):
 		"""Calculate customer rank based on revenue thresholds"""
