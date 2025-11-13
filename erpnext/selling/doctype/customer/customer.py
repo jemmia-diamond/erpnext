@@ -148,65 +148,19 @@ class Customer(TransactionBase):
 		# Load address and contacts in `__onload`
 		load_address_and_contact(self)
 		self.load_dashboard_info()
-		self.fetch_priority_data()
+
+		if self.haravan_id:
+			frappe.enqueue(
+				"erpnext.selling.doctype.customer.customer.update_customer_priority_data",
+				customer_name=self.name,
+				haravan_id=self.haravan_id,
+				queue="short",
+				timeout=30
+			)
 
 	def load_dashboard_info(self):
 		info = get_dashboard_info(self.doctype, self.name, self.loyalty_program)
 		self.set_onload("dashboard_info", info)
-
-	def fetch_priority_data(self):
-		if not self.haravan_id:
-			return
-
-		url = f"https://priority-api.jemmia.vn/user/priority/{self.haravan_id}/haravan"
-		response = requests.get(url)
-
-		if response.status_code != 200:
-			frappe.log_error(
-				f"Priority API failed for customer {self.name} (haravan_id: {self.haravan_id})",
-				"Priority API Error"
-			)
-			return
-
-		data = response.json()
-
-		true_cumulative = data.get("trueCumulativeRevenue", 0)
-		referrals_revenue = data.get("referralsRevenue", 0)
-		cumulative = data.get("cumulativeRevenue", 0)
-		new_rank = self.calculate_rank(true_cumulative, cumulative, referrals_revenue)
-
-		if self.rank != new_rank:
-			frappe.db.set_value("Customer", self.name, "rank", new_rank, update_modified=False)
-			frappe.db.commit()
-
-		self.set_onload("priority_data", {
-			"referrals_revenue": data.get("referralsRevenue", 0),
-			"cumulative_revenue": cumulative,
-			"true_cumulative_revenue": true_cumulative,
-			"cashback": data.get("totalCashBack", 0),
-			"withdraw_cashback": data.get("withdrawAmount", 0),
-			"pending_cashback": data.get("pendingCashback", 0),
-			"rank": new_rank
-		})
-
-	def calculate_rank(self, true_cumulative, cumulative, referrals_revenue):
-		"""Calculate customer rank based on revenue thresholds"""
-		revenue = cumulative if referrals_revenue > RankThreshold.NO_REVENUE else true_cumulative
-
-		if revenue == RankThreshold.NO_REVENUE:
-			return CustomerRank.NO_RANK
-
-		if referrals_revenue > RankThreshold.NO_REVENUE:
-			if revenue >= RankThreshold.PLATINUM_WITH_REFERRAL:
-				return CustomerRank.PLATINUM
-			if revenue >= RankThreshold.GOLD_WITH_REFERRAL:
-				return CustomerRank.GOLD
-		else:
-			if revenue >= RankThreshold.PLATINUM_PURCHASE:
-				return CustomerRank.PLATINUM
-			if revenue >= RankThreshold.GOLD_PURCHASE:
-				return CustomerRank.GOLD
-		return CustomerRank.SILVER
 
 	def get_customer_name(self):
 		if frappe.db.get_value("Customer", self.customer_name) and not frappe.flags.in_import:
@@ -910,6 +864,63 @@ def parse_full_name(full_name: str) -> tuple[str, str | None, str | None]:
 	last_name = names[-1] if len(names) > 1 else None
 
 	return first_name, middle_name, last_name
+
+
+def update_customer_priority_data(customer_name, haravan_id):
+	"""Background job: Fetch and update priority data for a single customer"""
+	url = f"https://priority-api.jemmia.vn/user/priority/{haravan_id}/haravan"
+	response = requests.get(url, timeout=10)
+
+	if response.status_code != 200:
+		frappe.log_error(
+			f"Priority API failed for customer {customer_name} (haravan_id: {haravan_id})",
+			"Priority API Error"
+		)
+		return
+
+	data = response.json()
+
+	referrals_revenue = data.get("referralsRevenue", 0)
+	true_cumulative = data.get("trueCumulativeRevenue", 0)
+	cumulative = data.get("cumulativeRevenue", 0)
+	cashback = data.get("totalCashBack", 0)
+	withdraw_cashback = data.get("withdrawAmount", 0)
+	pending_cashback = data.get("pendingCashback", 0)
+	new_rank = calculate_customer_rank(true_cumulative, cumulative, referrals_revenue)
+
+	frappe.db.sql("""
+		UPDATE `tabCustomer`
+		SET
+			referrals_revenue = %s,
+			cumulative_revenue = %s,
+			true_cumulative_revenue = %s,
+			cashback = %s,
+			withdraw_cashback = %s,
+			pending_cashback = %s,
+			rank = %s
+		WHERE haravan_id = %s
+	""", (referrals_revenue, cumulative, true_cumulative, cashback, withdraw_cashback, pending_cashback, new_rank, haravan_id))
+
+	frappe.db.commit()
+
+def calculate_customer_rank(true_cumulative, cumulative, referrals_revenue):
+	"""Calculate customer rank based on revenue thresholds (standalone function for background jobs)"""
+	revenue = cumulative if referrals_revenue > RankThreshold.NO_REVENUE else true_cumulative
+
+	if revenue == RankThreshold.NO_REVENUE:
+		return CustomerRank.NO_RANK
+
+	if referrals_revenue > RankThreshold.NO_REVENUE:
+		if revenue >= RankThreshold.PLATINUM_WITH_REFERRAL:
+			return CustomerRank.PLATINUM
+		if revenue >= RankThreshold.GOLD_WITH_REFERRAL:
+			return CustomerRank.GOLD
+	else:
+		if revenue >= RankThreshold.PLATINUM_PURCHASE:
+			return CustomerRank.PLATINUM
+		if revenue >= RankThreshold.GOLD_PURCHASE:
+			return CustomerRank.GOLD
+	return CustomerRank.SILVER
 
 def update_all_customers_revenue():
 
