@@ -23,6 +23,21 @@ from erpnext.controllers.website_list_for_contact import add_role_for_portal_use
 from erpnext.utilities.transaction_base import TransactionBase
 import requests
 
+class CustomerRank:
+	NO_RANK = "No Rank"
+	SILVER = "Silver"
+	GOLD = "Gold"
+	PLATINUM = "Platinum"
+
+class RankThreshold:
+	# All revenue are in VND
+
+	NO_REVENUE = 0
+	PLATINUM_PURCHASE = 1_000_000_000
+	GOLD_PURCHASE = 300_000_000
+	PLATINUM_WITH_REFERRAL = 2_000_000_000
+	GOLD_WITH_REFERRAL = 500_000_000
+
 class Customer(TransactionBase):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
@@ -159,9 +174,8 @@ class Customer(TransactionBase):
 		referrals_revenue = data.get("referralsRevenue", 0)
 		cumulative = data.get("cumulativeRevenue", 0)
 		new_rank = self.calculate_rank(true_cumulative, cumulative, referrals_revenue)
-		current_rank = self.rank
 
-		if current_rank != new_rank:
+		if self.rank != new_rank:
 			frappe.db.set_value("Customer", self.name, "rank", new_rank, update_modified=False)
 			frappe.db.commit()
 
@@ -177,22 +191,22 @@ class Customer(TransactionBase):
 
 	def calculate_rank(self, true_cumulative, cumulative, referrals_revenue):
 		"""Calculate customer rank based on revenue thresholds"""
-		revenue = cumulative if referrals_revenue > 0 else true_cumulative
+		revenue = cumulative if referrals_revenue > RankThreshold.NO_REVENUE else true_cumulative
 
-		if revenue == 0:
-			return "No Rank"
+		if revenue == RankThreshold.NO_REVENUE:
+			return CustomerRank.NO_RANK
 
-		if referrals_revenue > 0:
-			if revenue >= 2000000000:
-				return "Platinum"
-			if revenue >= 500000000:
-				return "Gold"
+		if referrals_revenue > RankThreshold.NO_REVENUE:
+			if revenue >= RankThreshold.PLATINUM_WITH_REFERRAL:
+				return CustomerRank.PLATINUM
+			if revenue >= RankThreshold.GOLD_WITH_REFERRAL:
+				return CustomerRank.GOLD
 		else:
-			if revenue >= 1000000000:
-				return "Platinum"
-			if revenue >= 300000000:
-				return "Gold"
-		return "Silver"
+			if revenue >= RankThreshold.PLATINUM_PURCHASE:
+				return CustomerRank.PLATINUM
+			if revenue >= RankThreshold.GOLD_PURCHASE:
+				return CustomerRank.GOLD
+		return CustomerRank.SILVER
 
 	def get_customer_name(self):
 		if frappe.db.get_value("Customer", self.customer_name) and not frappe.flags.in_import:
