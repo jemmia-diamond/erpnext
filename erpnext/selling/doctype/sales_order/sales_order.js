@@ -161,6 +161,7 @@ frappe.ui.form.on("Sales Order", {
 				attachments = attachments.map(att => {
 					return {
 						file_url: frappe.urllib.get_full_url(frm.attachments.get_file_url(att)),
+						is_private: att.is_private
 					}
 				})
 
