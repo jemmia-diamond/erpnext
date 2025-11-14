@@ -1794,7 +1794,7 @@
    "fieldname": "is_split_order",
    "fieldtype": "Check",
    "label": "Is Split Order",
-   "permlevel": 1,
+   "permlevel": 2,
    "print_hide": 1
   },
   {
@@ -1803,6 +1803,7 @@
    "fieldtype": "Select",
    "label": "Split Reason",
    "options": "\nGold Regulation\nCustomer Request\nOther",
+   "permlevel": 2,
    "print_hide": 1
   },
   {
@@ -2114,7 +2115,7 @@
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-12 03:35:32.748323",
+ "modified": "2025-11-14 08:15:33.295281",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
