@@ -254,8 +254,6 @@ class SalesOrder(SellingController):
 			return
 
 		for pe_ref in payment_references:
-			print(pe_ref)
-			pe = frappe.get_doc("Payment Entry", pe_ref.parent)
 			row = self.append("payment_entries", {})
 			row.update({
 					"name": pe_ref.name ,
