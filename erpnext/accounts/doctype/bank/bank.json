@@ -12,6 +12,8 @@
   "bank_details_section",
   "bank_name",
   "swift_number",
+  "bank_code",
+  "bank_bin",
   "column_break_1",
   "website",
   "address_and_contact",
@@ -44,6 +46,16 @@
    "in_standard_filter": 1,
    "label": "SWIFT number",
    "unique": 1
+  },
+  {
+   "fieldname": "bank_code",
+   "fieldtype": "Data",
+   "label": "Bank Code"
+  },
+  {
+   "fieldname": "bank_bin",
+   "fieldtype": "Data",
+   "label": "Bank BIN"
   },
   {
    "fieldname": "column_break_1",
