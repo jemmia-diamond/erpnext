@@ -57,6 +57,7 @@ class SalesOrder(SellingController):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
+		from erpnext.accounts.doctype.payment_entry_reference.payment_entry_reference import PaymentEntryReference
 		from erpnext.accounts.doctype.payment_schedule.payment_schedule import PaymentSchedule
 		from erpnext.accounts.doctype.pricing_rule_detail.pricing_rule_detail import PricingRuleDetail
 		from erpnext.accounts.doctype.sales_taxes_and_charges.sales_taxes_and_charges import SalesTaxesandCharges
@@ -160,6 +161,7 @@ class SalesOrder(SellingController):
 		packed_items: DF.Table[PackedItem]
 		paid_amount: DF.Currency
 		party_account_currency: DF.Link | None
+		payment_entries: DF.Table[PaymentEntryReference]
 		payment_records: DF.Table[SalesOrderPaymentRecord]
 		payment_schedule: DF.Table[PaymentSchedule]
 		payment_terms_template: DF.Link | None
@@ -223,6 +225,7 @@ class SalesOrder(SellingController):
 
 	def onload(self) -> None:
 		super().onload()
+		self.set_payment_entries()
 
 		if frappe.db.get_single_value("Stock Settings", "enable_stock_reservation"):
 			if self.has_unreserved_stock():
@@ -231,6 +234,43 @@ class SalesOrder(SellingController):
 		if has_reserved_stock(self.doctype, self.name):
 			self.set_onload("has_reserved_stock", True)
 
+	def set_payment_entries(self):
+		"""Fetch and set the payment entries linked to this sales order."""
+		if self.docstatus == 2 or not self.name:
+			return
+		
+		self.set("payment_entries", [])
+
+		# Get payment entries linked to this sales order
+		payment_references = frappe.get_all("Payment Entry Reference",
+			filters={
+				"reference_doctype": "Sales Order",
+				"reference_name": self.name
+			},
+			fields="*"
+		)
+
+		if not payment_references:
+			return
+
+		for pe_ref in payment_references:
+			row = self.append("payment_entries", {})
+			row.update({
+					"name": pe_ref.name ,
+					"owner": "Administrator",
+					"modified_by": "Administrator",
+					"docstatus": 0,
+					"reference_doctype": pe_ref.parenttype,
+					"reference_name": pe_ref.parent,
+					"total_amount": pe_ref.total_amount,
+					"outstanding_amount": pe_ref.outstanding_amount,
+					"allocated_amount": pe_ref.allocated_amount,
+					"parent": pe_ref.reference_name,
+					"parentfield": "payment_entries",
+					"parenttype": pe_ref.reference_doctype,
+					"doctype": "Payment Entry Reference"
+			})
+			
 	def validate(self):
 		super().validate()
 		self.validate_delivery_date()
