@@ -262,7 +262,6 @@ class SalesOrder(SellingController):
 					"owner": "Administrator",
 					"modified_by": "Administrator",
 					"docstatus": 0,
-					"idx": 1,
 					"reference_doctype": pe_ref.parenttype,
 					"reference_name": pe_ref.parent,
 					"total_amount": pe_ref.total_amount,
