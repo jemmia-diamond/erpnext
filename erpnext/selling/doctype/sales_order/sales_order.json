@@ -228,7 +228,10 @@
   "column_break_phue",
   "haravan_created_at",
   "source_name",
-  "connections_tab"
+  "connections_tab",
+  "payment_entries_tab",
+  "payment_entries_section",
+  "payment_entries"
  ],
  "fields": [
   {
@@ -2108,13 +2111,29 @@
    "in_standard_filter": 1,
    "label": "Split Order Group Name",
    "permlevel": 1
+  },
+  {
+   "fieldname": "payment_entries",
+   "fieldtype": "Table",
+   "label": "Payment Entries",
+   "options": "Payment Entry Reference"
+  },
+  {
+   "fieldname": "payment_entries_section",
+   "fieldtype": "Section Break",
+   "label": "Payment Entries"
+  },
+  {
+   "fieldname": "payment_entries_tab",
+   "fieldtype": "Tab Break",
+   "label": "Payment Entries"
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-12 03:35:32.748323",
+ "modified": "2025-11-13 23:56:52.793498",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
