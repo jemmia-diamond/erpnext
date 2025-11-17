@@ -27,6 +27,8 @@ class Bank(Document):
 		plaid_access_token: DF.Data | None
 		swift_number: DF.Data | None
 		website: DF.Data | None
+		bank_code: DF.Data | None
+		bank_bin: DF.Data | None
 	# end: auto-generated types
 
 	def onload(self):

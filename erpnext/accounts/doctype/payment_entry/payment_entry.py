@@ -62,6 +62,18 @@ class InvalidPaymentEntry(ValidationError):
 
 
 class PaymentEntry(AccountsController):
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		custom_transaction_id: DF.Data | None
+		custom_transfer_note: DF.SmallText | None
+		custom_transfer_status: DF.Literal["", "pending", "success", "cancel"]
+		qr_url: DF.Data | None
+
+	# end: auto-generated types
+
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		if not self.is_new():
