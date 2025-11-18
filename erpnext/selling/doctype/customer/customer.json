@@ -154,7 +154,20 @@
   "tax_id",
   "column_break_21",
   "tax_category",
-  "tax_withholding_category"
+  "tax_withholding_category",
+  "rank_updated_at",
+  "rank_score_12m",
+  "actual_cumulative_revenue",
+  "referral_cumulative_revenue",
+  "buyback_revenue",
+  "total_cumulative_revenue",
+  "point_cashback_section",
+  "total_referral_point",
+  "withdraw_point",
+  "pending_point",
+  "available_point_amount",
+  "withdraw_cash_amount",
+  "withdraw_cash_amount_pending"
  ],
  "fields": [
   {
@@ -1028,6 +1041,84 @@
    "fieldname": "passport_expiry_date",
    "fieldtype": "Date",
    "label": "Passport Expiry Date"
+  },
+  {
+   "description": "Date when customer rank was last updated",
+   "fieldname": "rank_updated_at",
+   "fieldtype": "Date",
+   "label": "Rank Updated At"
+  },
+  {
+   "description": "Total revenue in 12 months from rank_updated_at (used for rank evaluation)",
+   "fieldname": "rank_score_12m",
+   "fieldtype": "Currency",
+   "label": "Rank Score (12 Months)"
+  },
+  {
+   "description": "Total revenue from customer's own purchases",
+   "fieldname": "actual_cumulative_revenue",
+   "fieldtype": "Currency",
+   "label": "Actual Cumulative Revenue (Self Purchase)"
+  },
+  {
+   "description": "Total revenue from referrals",
+   "fieldname": "referral_cumulative_revenue",
+   "fieldtype": "Currency",
+   "label": "Referral Cumulative Revenue"
+  },
+  {
+   "description": "Total buyback/exchange revenue (deducted from cumulative)",
+   "fieldname": "buyback_revenue",
+   "fieldtype": "Currency",
+   "label": "Buyback Revenue"
+  },
+  {
+   "description": "Calculated: actual + referral - buyback",
+   "fieldname": "total_cumulative_revenue",
+   "fieldtype": "Currency",
+   "label": "Total Cumulative Revenue",
+   "read_only": 1
+  },
+  {
+   "fieldname": "point_cashback_section",
+   "fieldtype": "Section Break",
+   "label": "Point & Cashback"
+  },
+  {
+   "description": "Total points earned",
+   "fieldname": "total_referral_point",
+   "fieldtype": "Float",
+   "label": "Total Referral Point"
+  },
+  {
+   "description": "Total points withdrawn",
+   "fieldname": "withdraw_point",
+   "fieldtype": "Float",
+   "label": "Withdrawn Point"
+  },
+  {
+   "description": "Points pending approval",
+   "fieldname": "pending_point",
+   "fieldtype": "Float",
+   "label": "Pending Point"
+  },
+  {
+   "description": "Points available for withdrawal",
+   "fieldname": "available_point_amount",
+   "fieldtype": "Float",
+   "label": "Available Point Amount"
+  },
+  {
+   "description": "Total cash withdrawn",
+   "fieldname": "withdraw_cash_amount",
+   "fieldtype": "Currency",
+   "label": "Total Withdrawn Cash Amount"
+  },
+  {
+   "description": "Cash withdrawal pending approval",
+   "fieldname": "withdraw_cash_amount_pending",
+   "fieldtype": "Currency",
+   "label": "Pending Withdraw Cash Amount"
   }
  ],
  "icon": "fa fa-user",
@@ -1041,7 +1132,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2025-11-12 03:02:02.044920",
+ "modified": "2025-11-17 12:24:33.883694",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",
