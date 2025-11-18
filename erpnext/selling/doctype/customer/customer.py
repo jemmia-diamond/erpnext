@@ -168,19 +168,6 @@ class Customer(TransactionBase):
 		# Load address and contacts in `__onload`
 		load_address_and_contact(self)
 		self.load_dashboard_info()
-		self.load_buyback_records()
-
-		# Initialize rank if not set (one-time calculation for new customers)
-		if not self.rank or self.rank == CustomerRank.NO_RANK:
-			try:
-				evaluate_and_update_customer_rank(self.name)
-				# Reload to show updated rank
-				self.reload()
-			except Exception as e:
-				frappe.log_error(
-					f"Error initializing rank for {self.name}: {str(e)}",
-					"Customer Rank Initialization Error"
-				)
 
 		if self.haravan_id:
 			frappe.enqueue(
@@ -932,7 +919,7 @@ def parse_full_name(full_name: str) -> tuple[str, str | None, str | None]:
 
 	return first_name, middle_name, last_name
 
-
+@frappe.whitelist()
 def update_customer_priority_data(customer_name, haravan_id):
 	"""Background job: Fetch and update priority data for a single customer"""
 	url = f"https://priority-api.jemmia.vn/user/priority/{haravan_id}/haravan"
@@ -979,11 +966,7 @@ def update_customer_priority_data(customer_name, haravan_id):
 
 	frappe.db.commit()
 
-	# Only evaluate rank if rank_updated_at is not set (first time initialization)
-	# Otherwise, let the scheduled job handle periodic evaluations
-	rank_updated_at = frappe.db.get_value("Customer", customer_name, "rank_updated_at")
-	if not rank_updated_at:
-		evaluate_and_update_customer_rank(customer_name)
+	evaluate_and_update_customer_rank(customer_name)
 
 def calculate_customer_rank(true_cumulative, cumulative, referrals_revenue):
 	"""Calculate customer rank based on revenue thresholds (standalone function for background jobs)"""
@@ -1192,7 +1175,7 @@ def _get_buyback_revenue_in_period(customer_name, start_date, end_date):
 			if data.get("sucess"):  # Note: API has typo "sucess"
 				records = data.get("data", [])
 				# Sum up all buyback amounts in the period
-				total_buyback = sum(flt(record.get("amount", 0)) for record in records)
+				total_buyback = sum(flt(record.get("refund_amount", 0)) for record in records)
 				return total_buyback
 
 		return 0
@@ -1249,3 +1232,34 @@ def update_all_customers_revenue():
                 pending_cashback = %s
             WHERE haravan_id = %s
         """, (referrals_revenue, cashback, withdraw_cashback, pending_cashback, str(haravan_id)))
+
+@frappe.whitelist()
+def load_buyback_records_async(customer):
+	"""Async method to load buyback records after page load"""
+	customer_doc = frappe.get_doc("Customer", customer)
+	if not customer_doc.phone:
+		return []
+
+	try:
+		response = requests.get(
+			url=f"{config.FN_BASE_URL}/api/larksuites/buyback-exchanges",
+			params={"phone_number": customer_doc.phone},
+			headers={"Authorization": f"Bearer {config.FN_BEARER_TOKEN}"},
+			timeout=3
+		)
+
+		if response.status_code == 200:
+			data = response.json()
+			if data.get("sucess"):  # Note: API has typo "sucess"
+				records = data.get("data", [])
+				# Calculate total buyback revenue and save it (only if different from current)
+				total_buyback = sum(flt(record.get("refund_amount", 0)) for record in records)
+				current_buyback = flt(customer_doc.buyback_revenue or 0)
+				if total_buyback != current_buyback:
+					frappe.db.set_value("Customer", customer, "buyback_revenue", total_buyback)
+					frappe.db.commit()
+				return records
+	except:
+		pass  # Silently fail
+
+	return []
