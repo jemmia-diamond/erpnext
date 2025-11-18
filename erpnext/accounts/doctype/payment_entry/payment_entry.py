@@ -62,6 +62,18 @@ class InvalidPaymentEntry(ValidationError):
 
 
 class PaymentEntry(AccountsController):
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		custom_transaction_id: DF.Data | None
+		custom_transfer_note: DF.SmallText | None
+		custom_transfer_status: DF.Literal["", "pending", "success", "cancel"]
+		qr_url: DF.Data | None
+
+	# end: auto-generated types
+
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		if not self.is_new():
@@ -632,7 +644,7 @@ class PaymentEntry(AccountsController):
 							title=_("Invalid Purchase Invoice"),
 						)
 
-				if ref_doc.docstatus != 1:
+				if ref_doc.docstatus != 1 and d.reference_doctype not in ("Sales Order", "Purchase Order"):
 					frappe.throw(
 						_("{0} {1} must be submitted").format(_(d.reference_doctype), d.reference_name)
 					)
@@ -2592,7 +2604,7 @@ def get_orders_to_be_billed(
 			`tab{voucher_type}`
 		where
 			{party_type} = %s
-			and docstatus = 1
+			and docstatus in (0, 1)
 			and company = %s
 			and status != "Closed"
 			and if({rounded_total_field}, {rounded_total_field}, {grand_total_field}) > advance_paid

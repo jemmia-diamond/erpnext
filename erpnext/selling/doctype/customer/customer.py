@@ -280,9 +280,7 @@ class Customer(TransactionBase):
 		self.validate_name_with_customer_group()
 		self.create_primary_contact()
 		self.create_primary_address()
-
-		if self.flags.old_lead != self.lead_name:
-			self.update_lead_status()
+		self.update_lead_status()
 
 		if self.flags.is_new_doc:
 			self.link_lead_address_and_contact()
@@ -323,7 +321,9 @@ class Customer(TransactionBase):
 		"""If Customer created from Lead, update lead status to "Converted"
 		update Customer link in Quotation, Opportunity"""
 		if self.lead_name:
-			frappe.db.set_value("Lead", self.lead_name, "status", "Converted")
+			update_values = {"status": "Converted"}
+			update_values["lead_stage"] = "Customer"
+			frappe.db.set_value("Lead", self.lead_name, update_values)
 
 	def link_lead_address_and_contact(self):
 		if self.lead_name:
