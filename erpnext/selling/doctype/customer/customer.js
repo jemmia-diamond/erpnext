@@ -271,7 +271,6 @@ frappe.ui.form.on("Customer", {
 											<th style="${tabledHeadStyle}">Order Date</th>
 											<th style="${tabledHeadStyle}">Cancelled Status</th>
 											<th style="${tabledHeadStyle}">Financial Status</th>
-											<th style="${tabledHeadStyle}">Fulfillment Status</th>
 											<th style="${tabledHeadStyle} text-align: right;">Grand Total</th>
 										</tr>
 									</thead>
@@ -299,14 +298,6 @@ frappe.ui.form.on("Customer", {
 						} else {
 							financial_status_badge = `<span class="indicator-pill blue no-indicator-dot filterable">${order.financial_status}</span>`;
 						}
-
-						// Dynamic fulfillment status based on order status
-						let order_status_badge = '';
-						if (order.status === 'Completed') {
-							order_status_badge = '<span class="indicator-pill green no-indicator-dot filterable">Completed</span>';
-						} else {
-							order_status_badge = `<span class="indicator-pill yellow no-indicator-dot filterable">${order.status}</span>`;
-						}
 						const display_order_number = order.order_number || order.name;
 
 						html += `
@@ -322,9 +313,6 @@ frappe.ui.form.on("Customer", {
 								</td>
 								<td style="${tableDataStyle}">
 									${financial_status_badge}
-								</td>
-								<td style="${tableDataStyle}">
-									${order_status_badge}
 								</td>
 								<td style="${tableDataStyle} text-align: right; font-weight: 500; color: #495057;">
 									${format_currency(order.grand_total, order.currency)}
