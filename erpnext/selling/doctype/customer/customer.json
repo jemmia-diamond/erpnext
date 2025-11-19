@@ -877,7 +877,6 @@
    "label": "Priority"
   },
   {
-   "description": "Calculated: actual + referral - buyback",
    "fieldname": "total_cumulative_revenue",
    "fieldtype": "Currency",
    "label": "Total Cumulative Revenue",
@@ -908,7 +907,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "Total revenue in 12 months from Rank updated at",
    "fieldname": "rank_score_12m",
    "fieldtype": "Currency",
    "label": "Rank Score (12 Months)"
@@ -963,13 +961,11 @@
    "label": "Point & Cashback"
   },
   {
-   "description": "Total points earned",
    "fieldname": "total_referral_point",
    "fieldtype": "Float",
    "label": "Total Referral Point"
   },
   {
-   "description": "Points available for withdrawal",
    "fieldname": "available_point_amount",
    "fieldtype": "Float",
    "label": "Available Point Amount"
@@ -979,13 +975,11 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "Total points withdrawn",
    "fieldname": "withdraw_point",
    "fieldtype": "Float",
    "label": "Withdraw points"
   },
   {
-   "description": "Total cash withdrawn",
    "fieldname": "withdraw_cash_amount",
    "fieldtype": "Currency",
    "label": "Total Withdrawn Cash Amount"
@@ -995,7 +989,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "Cash withdrawal pending approval",
    "fieldname": "withdraw_cash_amount_pending",
    "fieldtype": "Currency",
    "label": "Pending Withdraw Cash Amount"

@@ -1036,7 +1036,7 @@ def _calculate_12_month_score(customer_name, rank_updated_at):
 	referral_revenue = flt(customer.get("referral_cumulative_revenue", 0))
 
 	# For rank evaluation, only count purchasing activity (no buyback subtraction)
-	return actual_revenue + referral_revenue
+	return actual_revenue
 
 def _get_buyback_revenue_in_period(customer_name, start_date, end_date):
 	"""
