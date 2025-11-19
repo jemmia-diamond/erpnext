@@ -906,6 +906,7 @@ def update_customer_priority_data(customer_name, haravan_id):
 	available_point = data.get("pointAvailable", 0)
 	withdraw_cash_amount = data.get("withdrawCashAmount", 0)
 	withdraw_cash_pending = data.get("pendingCashback", 0)
+	total_referral_point = data.get("totalPoint", 0)
 
 	# Update customer fields
 	frappe.db.sql("""
@@ -916,10 +917,11 @@ def update_customer_priority_data(customer_name, haravan_id):
 			withdraw_point = %s,
 			available_point_amount = %s,
 			withdraw_cash_amount = %s,
-			withdraw_cash_amount_pending = %s
+			withdraw_cash_amount_pending = %s,
+			total_referral_point = %s
 		WHERE name = %s
 	""", (actual_revenue, referral_revenue, withdraw_point, available_point,
-	      withdraw_cash_amount, withdraw_cash_pending, customer_name))
+	      withdraw_cash_amount, withdraw_cash_pending, total_referral_point, customer_name))
 
 	frappe.db.commit()
 
