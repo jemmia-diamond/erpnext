@@ -877,6 +877,16 @@
    "label": "Priority"
   },
   {
+   "fieldname": "sales_order_tab",
+   "fieldtype": "Tab Break",
+   "label": "Orders"
+  },
+  {
+   "fieldname": "sales_order_html",
+   "fieldtype": "HTML",
+   "label": "Orders"
+  },
+  {
    "fieldname": "total_cumulative_revenue",
    "fieldtype": "Currency",
    "label": "Total Cumulative Revenue",
