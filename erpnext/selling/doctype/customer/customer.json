@@ -115,25 +115,31 @@
   "priority_tab",
   "rank_management_section",
   "rank",
-  "purchase_amount_last_12_months",
+  "total_cumulative_revenue",
   "column_break_qwps",
-  "rank_expired_date",
+  "rank_updated_at",
   "priority_login_date",
+  "column_break_rm_1",
+  "rank_score_12m",
   "cumulative_revenue_management_section",
-  "cumulative_revenue",
-  "cashback",
+  "actual_cumulative_revenue",
   "column_break_ebsn",
-  "true_cumulative_revenue",
-  "withdraw_cashback",
+  "referral_cumulative_revenue",
   "column_break_qgzr",
-  "referrals_revenue",
-  "pending_cashback",
+  "buyback_revenue",
+  "section_break_pnc",
+  "column_break_pnc1",
+  "total_referral_point",
+  "available_point_amount",
+  "column_break_pnc2",
+  "withdraw_point",
+  "withdraw_cash_amount",
+  "column_break_pnc3",
+  "withdraw_cash_amount_pending",
   "section_break_waiv",
   "priority_bank_account",
   "section_break_dkbv",
   "coupon_table",
-  "sales_order_tab",
-  "sales_order_html",
   "sales_team_tab",
   "sales_team",
   "sales_team_section",
@@ -881,28 +887,39 @@
    "label": "Orders"
   },
   {
-   "fieldname": "purchase_amount_last_12_months",
+   "fieldname": "total_cumulative_revenue",
    "fieldtype": "Currency",
-   "label": "Purchase Amount Last 12 Months"
+   "label": "Total Cumulative Revenue",
+   "read_only": 1
   },
   {
    "fieldname": "rank",
-   "fieldtype": "Data",
-   "label": "Rank"
+   "fieldtype": "Select",
+   "label": "Rank",
+   "options": "No Rank\nSilver\nGold\nPlatinum"
   },
   {
    "fieldname": "column_break_qwps",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "rank_expired_date",
-   "fieldtype": "Date",
-   "label": "Rank Expired Date"
-  },
-  {
    "fieldname": "priority_login_date",
    "fieldtype": "Date",
    "label": "Priority Login Date"
+  },
+  {
+   "fieldname": "rank_updated_at",
+   "fieldtype": "Date",
+   "label": "Rank Updated At"
+  },
+  {
+   "fieldname": "column_break_rm_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rank_score_12m",
+   "fieldtype": "Currency",
+   "label": "Rank Score (12 Months)"
   },
   {
    "fieldname": "rank_management_section",
@@ -915,42 +932,27 @@
    "label": "Cumulative Revenue Management"
   },
   {
-   "fieldname": "cumulative_revenue",
+   "fieldname": "actual_cumulative_revenue",
    "fieldtype": "Currency",
-   "label": "Cumulative Revenue"
+   "label": "Actual Cumulative Revenue"
   },
   {
    "fieldname": "column_break_ebsn",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "true_cumulative_revenue",
+   "fieldname": "referral_cumulative_revenue",
    "fieldtype": "Currency",
-   "label": "True Cumulative Revenue"
+   "label": "Referral Cumulative Revenue"
   },
   {
    "fieldname": "column_break_qgzr",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "referrals_revenue",
+   "fieldname": "buyback_revenue",
    "fieldtype": "Currency",
-   "label": "Referrals Revenue"
-  },
-  {
-   "fieldname": "cashback",
-   "fieldtype": "Currency",
-   "label": "Cashback"
-  },
-  {
-   "fieldname": "withdraw_cashback",
-   "fieldtype": "Currency",
-   "label": "Withdraw Cashback"
-  },
-  {
-   "fieldname": "pending_cashback",
-   "fieldtype": "Currency",
-   "label": "Pending Cashback"
+   "label": "Buyback Revenue"
   },
   {
    "fieldname": "bizfly_customer_number",
@@ -962,6 +964,48 @@
    "fieldname": "primary_contact",
    "fieldtype": "Small Text",
    "label": "Primary Contact"
+  },
+  {
+   "fieldname": "section_break_pnc",
+   "fieldtype": "Section Break",
+   "label": "Point & Cashback"
+  },
+  {
+   "fieldname": "total_referral_point",
+   "fieldtype": "Float",
+   "label": "Total Referral Point"
+  },
+  {
+   "fieldname": "available_point_amount",
+   "fieldtype": "Float",
+   "label": "Available Point Amount"
+  },
+  {
+   "fieldname": "column_break_pnc1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "withdraw_point",
+   "fieldtype": "Float",
+   "label": "Withdraw points"
+  },
+  {
+   "fieldname": "withdraw_cash_amount",
+   "fieldtype": "Currency",
+   "label": "Total Withdrawn Cash Amount"
+  },
+  {
+   "fieldname": "column_break_pnc2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "withdraw_cash_amount_pending",
+   "fieldtype": "Currency",
+   "label": "Pending Withdraw Cash Amount"
+  },
+  {
+   "fieldname": "column_break_pnc3",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "section_break_waiv",
@@ -1052,7 +1096,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2025-10-08 03:02:02.044920",
+ "modified": "2025-11-17 12:24:33.883694",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",
