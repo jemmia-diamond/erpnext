@@ -291,9 +291,7 @@ class Customer(TransactionBase):
 		self.validate_name_with_customer_group()
 		self.create_primary_contact()
 		self.create_primary_address()
-
-		if self.flags.old_lead != self.lead_name:
-			self.update_lead_status()
+		self.update_lead_status()
 
 		if self.flags.is_new_doc:
 			self.link_lead_address_and_contact()
@@ -314,10 +312,10 @@ class Customer(TransactionBase):
 
 	def create_primary_contact(self):
 		if not self.customer_primary_contact and not self.lead_name:
-			if self.phone or self.email_id:
+			if self.mobile_no or self.email_id:
 				contact = make_contact(self)
 				self.db_set("customer_primary_contact", contact.name)
-				self.db_set("phone", self.phone)
+				self.db_set("mobile_no", self.mobile_no)
 				self.db_set("email_id", self.email_id)
 
 	def create_primary_address(self):
@@ -334,7 +332,9 @@ class Customer(TransactionBase):
 		"""If Customer created from Lead, update lead status to "Converted"
 		update Customer link in Quotation, Opportunity"""
 		if self.lead_name:
-			frappe.db.set_value("Lead", self.lead_name, "status", "Converted")
+			update_values = {"status": "Converted"}
+			update_values["lead_stage"] = "Customer"
+			frappe.db.set_value("Lead", self.lead_name, update_values)
 
 	def link_lead_address_and_contact(self):
 		if self.lead_name:
@@ -799,8 +799,8 @@ def make_contact(args, is_primary_contact=1):
 
 	if args.get("email_id"):
 		contact.add_email(args.get("email_id"), is_primary=True)
-	if args.get("phone"):
-		contact.add_phone(args.get("phone"), is_primary_mobile_no=True)
+	if args.get("mobile_no"):
+		contact.add_phone(args.get("mobile_no"), is_primary_mobile_no=True)
 
 	if flags := args.get("flags"):
 		contact.insert(ignore_permissions=flags.get("ignore_permissions"))
