@@ -879,7 +879,7 @@ def parse_full_name(full_name: str) -> tuple[str, str | None, str | None]:
 @frappe.whitelist()
 def update_customer_priority_data(customer_name, haravan_id):
 	"""Background job: Fetch and update priority data for a single customer"""
-	url = f"https://priority-api.jemmia.vn/user/priority/{haravan_id}/haravan"
+	url = f"{config.PRIORITY_BASE_URL}/user/priority/{haravan_id}/haravan"
 	response = requests.get(url, timeout=10)
 
 	if response.status_code != 200:
@@ -1098,7 +1098,7 @@ def _downgrade_one_level(current_rank):
 def update_all_customers_revenue():
 
     payload = {}  # Add any required payload if needed
-    response = requests.get("https://priority-api.jemmia.vn/user/priority/get-all", json=payload)
+    response = requests.get(f"{config.PRIORITY_BASE_URL}/user/priority/get-all", json=payload)
 
     if response.status_code != 200:
         frappe.throw("Failed to fetch data from priority API")
