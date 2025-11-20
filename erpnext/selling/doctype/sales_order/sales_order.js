@@ -145,7 +145,7 @@ frappe.ui.form.on("Sales Order", {
 			frappe.db.get_doc("Sales Order", frm.doc.name).then((doc) => {
 
 				// Show warning requiring user to input personal ID 
-				if (!doc.customer_personal_id) {
+				if (!doc.customer_personal_id && !doc.custom_passport_id) {
 					frappe.msgprint(__("Vui lòng nhập số CMND/CCCD/Hộ chiếu của khách hàng trước khi gửi đơn hàng đến Lark."));
 					return;
 				}
