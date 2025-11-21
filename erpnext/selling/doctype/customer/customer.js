@@ -144,6 +144,22 @@ frappe.ui.form.on("Customer", {
 				}, 1500);
 			}
 
+			if (frm.doc.haravan_id && !frm._coupons_loaded) {
+				frm._coupons_loaded = true;
+				setTimeout(() => {
+					frappe.call({
+						method: "erpnext.selling.doctype.coupon.coupon.update_customers_coupons",
+						args: {
+							customer_name: frm.doc.name,
+							customer_haravan_id: parseInt(frm.doc.haravan_id)
+						},
+						callback: function (r) {
+							frm.reload_doc();
+						}
+					});
+				}, 2000);
+			}
+
 			frappe.contacts.render_address_and_contact(frm);
 
 			// Load customer orders
