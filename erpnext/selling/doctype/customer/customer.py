@@ -906,6 +906,7 @@ def update_customer_priority_data(customer_name, haravan_id):
 	withdraw_cash_amount = data.get("withdrawCashAmount", 0)
 	withdraw_cash_pending = data.get("pendingCashback", 0)
 	total_referral_point = data.get("totalPoint", 0)
+	partner_role = data.get("role", "")  # Get role from Priority API (staff, partnerA, partnerB, etc.)
 
 	# Update customer fields (referral_cumulative_revenue removed - now calculated from coupons)
 	frappe.db.sql("""
@@ -916,10 +917,11 @@ def update_customer_priority_data(customer_name, haravan_id):
 			available_point_amount = %s,
 			withdraw_cash_amount = %s,
 			withdraw_cash_amount_pending = %s,
-			total_referral_point = %s
+			total_referral_point = %s,
+			partner_role = %s
 		WHERE name = %s
 	""", (actual_revenue, withdraw_point, available_point, withdraw_cash_amount,
-			withdraw_cash_pending, total_referral_point, customer_name))
+			withdraw_cash_pending, total_referral_point, partner_role, customer_name))
 
 	frappe.db.commit()
 
@@ -1242,21 +1244,22 @@ def _check_12_month_downgrades(customer_name, auto_commit=True):
 	"""Phase 3: Check if 12-month downgrade evaluation is needed"""
 	from frappe.utils import add_months, getdate, nowdate
 
-	# after finish implementing phase 3, if role either staff, partnerA, partnerB, return do not downgrade
-
 	customer = frappe.get_doc("Customer", customer_name)
 	rank_updated_at = customer.rank_updated_at
 	current_rank = customer.rank
 
-	if not rank_updated_at or current_rank == CustomerRank.SILVER:
-		return  # No downgrade needed for Silver
+	if not rank_updated_at:
+		return
+
+	partner_role = (getattr(customer, 'partner_role', '') or '').lower()
+	is_protected = partner_role in ["staff", "partnera", "partnerb"]
 
 	# Check if 12 months have passed (handle multiple periods if stuck)
 	today = getdate(nowdate())
 	next_evaluation_date = add_months(rank_updated_at, 12)
 
 	# Handle users stuck at old dates - evaluate one period at a time
-	while today >= next_evaluation_date and current_rank != CustomerRank.SILVER:
+	while today >= next_evaluation_date:
 		# Calculate 12-month score (orders + referral in the 12-month window)
 		orders_12m = _calculate_12_month_score(customer_name, rank_updated_at)
 		referral_12m = _get_referral_revenue_in_12_month_period(customer_name, rank_updated_at)
@@ -1268,17 +1271,23 @@ def _check_12_month_downgrades(customer_name, auto_commit=True):
 		# Check if downgrade is needed
 		if _is_rank_lower(qualified_rank, current_rank):
 			downgraded_rank = _downgrade_one_level(current_rank)
-			customer.db_set("rank", downgraded_rank, update_modified=True)
+
+			if not is_protected and current_rank != CustomerRank.SILVER:
+				customer.db_set("rank", downgraded_rank, update_modified=True)
+				frappe.logger().info(f"Downgraded {customer_name} from {current_rank} to {downgraded_rank} (12m score: {rank_score_12m})")
+				current_rank = downgraded_rank
+			elif is_protected:
+				frappe.logger().info(f"Protected role {partner_role}: Skipped downgrade for {customer_name} (12m score: {rank_score_12m})")
+			else:
+				frappe.logger().info(f"Already at Silver: No downgrade for {customer_name} (12m score: {rank_score_12m})")
+
+			# Always update dates and score (even for protected roles and Silver)
 			customer.db_set("rank_updated_at", next_evaluation_date, update_modified=True)
 			customer.db_set("rank_score_12m", rank_score_12m, update_modified=True)
 
 			if auto_commit:
 				frappe.db.commit()
 
-			frappe.logger().info(f"Downgraded {customer_name} from {current_rank} to {downgraded_rank} (12m score: {rank_score_12m})")
-
-			# Update for next iteration
-			current_rank = downgraded_rank
 			rank_updated_at = next_evaluation_date
 			next_evaluation_date = add_months(rank_updated_at, 12)
 		else:
