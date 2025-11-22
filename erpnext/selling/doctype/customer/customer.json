@@ -897,7 +897,7 @@
    "fieldname": "rank",
    "fieldtype": "Select",
    "label": "Rank",
-   "options": "No Rank\nSilver\nGold\nPlatinum\nStaff",
+   "options": "No Rank\nSilver\nGold\nPlatinum",
    "read_only": 1
   },
   {
