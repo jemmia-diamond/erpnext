@@ -938,6 +938,7 @@ class SalesOrder(SellingController):
 				if update_fields:
 					for field, value in update_fields.items():
 						frappe.db.set_value("Sales Order", self.name, field, value)
+						setattr(self, field, value)
 			
 			# Copy Table MultiSelect fields
 			ref_order_doc = frappe.get_doc("Sales Order", ref_order_name)
@@ -1256,6 +1257,11 @@ class SalesOrder(SellingController):
 				ORDER BY haravan_created_at ASC
 			""", (self.haravan_order_id, self.order_number, self.name))
 			
+			# Sync with self object
+			self.split_order_group = self.haravan_order_id
+			self.split_order_group_name = self.order_number
+			self.is_split_order = 0
+			
 			frappe.db.commit()
 			return
 		
@@ -1275,6 +1281,12 @@ class SalesOrder(SellingController):
 				split_reason = 'Gold Regulation'
 			WHERE name = %s
 		""", (split_group_id, split_group_name, self.name))
+		
+		# Sync with self object
+		self.split_order_group = split_group_id
+		self.split_order_group_name = split_group_name
+		self.is_split_order = 1
+		self.split_reason = 'Gold Regulation'
 		
 		# Update all previous orders to mark as split orders
 		for prev_order in previous_orders:
