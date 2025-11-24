@@ -900,28 +900,28 @@ def update_customer_priority_data(customer_name, haravan_id):
 		AND cancelled_status = 'Uncancelled'
 	""", (customer_name,), as_dict=True)[0].total or 0
 
-	# Extract referral and point data from Priority API
-	referral_revenue = data.get("referralsRevenue", 0)
+	# Extract point data from Priority API (referral revenue now comes from coupons)
 	withdraw_point = data.get("withdrawPoint", 0)
 	available_point = data.get("pointAvailable", 0)
 	withdraw_cash_amount = data.get("withdrawCashAmount", 0)
 	withdraw_cash_pending = data.get("pendingCashback", 0)
 	total_referral_point = data.get("totalPoint", 0)
+	partner_role = data.get("role", "")  # Get role from Priority API (staff, partnerA, partnerB, etc.)
 
-	# Update customer fields
+	# Update customer fields (referral_cumulative_revenue removed - now calculated from coupons)
 	frappe.db.sql("""
 		UPDATE `tabCustomer`
 		SET
 			actual_cumulative_revenue = %s,
-			referral_cumulative_revenue = %s,
 			withdraw_point = %s,
 			available_point_amount = %s,
 			withdraw_cash_amount = %s,
 			withdraw_cash_amount_pending = %s,
-			total_referral_point = %s
+			total_referral_point = %s,
+			partner_role = %s
 		WHERE name = %s
-	""", (actual_revenue, referral_revenue, withdraw_point, available_point,
-	      withdraw_cash_amount, withdraw_cash_pending, total_referral_point, customer_name))
+	""", (actual_revenue, withdraw_point, available_point, withdraw_cash_amount,
+			withdraw_cash_pending, total_referral_point, partner_role, customer_name))
 
 	frappe.db.commit()
 
@@ -1032,11 +1032,28 @@ def _calculate_12_month_score(customer_name, rank_updated_at):
 
 	actual_revenue = flt(sales_orders[0].total if sales_orders else 0)
 
-	customer = frappe.get_doc("Customer", customer_name)
-	referral_revenue = flt(customer.get("referral_cumulative_revenue", 0))
-
 	# For rank evaluation, only count purchasing activity (no buyback subtraction)
 	return actual_revenue
+
+def _get_referral_revenue_in_12_month_period(customer_name, rank_updated_at):
+	"""Get referral revenue earned in the 12-month period after rank_updated_at
+	Uses coupon end_date to determine when referral was earned"""
+	from frappe.utils import add_months, getdate
+
+	start_date = getdate(rank_updated_at)
+	end_date = add_months(start_date, 12)
+
+	referral_revenue = frappe.db.sql("""
+		SELECT SUM(total_price) as total
+		FROM `tabCoupon`
+		WHERE customer = %s
+		AND end_date IS NOT NULL
+		AND end_date > %s
+		AND end_date < %s
+		AND payment_status IN ('Paid', 'Pending')
+	""", (customer_name, start_date, end_date), as_dict=True)
+
+	return flt(referral_revenue[0].total if referral_revenue else 0)
 
 def _get_buyback_revenue_in_period(customer_name, start_date, end_date):
 	"""
@@ -1170,9 +1187,9 @@ def _initialize_customer_rank(customer_name, auto_commit=True):
 	# Calculate cumulative revenue at first order date
 	cumulative_at_first_order = _get_cumulative_revenue_at_date(customer_name, first_order_date)
 
-	# Determine initial rank
-	referral_revenue = flt(customer.get("referral_cumulative_revenue", 0))
-	initial_rank = _determine_rank_from_cumulative(cumulative_at_first_order, referral_revenue)
+	# Get referral revenue at first order date (for threshold logic only)
+	referral_at_first_order = _get_referral_revenue_up_to_date(customer_name, first_order_date)
+	initial_rank = _determine_rank_from_cumulative(cumulative_at_first_order, referral_at_first_order)
 
 	customer.db_set("rank", initial_rank, update_modified=True)
 
@@ -1200,7 +1217,6 @@ def _replay_rank_upgrades(customer_name, auto_commit=True):
 	if not orders:
 		return
 
-	referral_revenue = flt(customer.get("referral_cumulative_revenue", 0))
 	current_rank = customer.rank
 
 	for order in orders:
@@ -1209,8 +1225,9 @@ def _replay_rank_upgrades(customer_name, auto_commit=True):
 		# Calculate cumulative revenue up to this order date
 		cumulative_at_date = _get_cumulative_revenue_at_date(customer_name, order_date)
 
-		# Check if this qualifies for an upgrade
-		qualified_rank = _determine_rank_from_cumulative(cumulative_at_date, referral_revenue)
+		# Get referral revenue at this date (for threshold logic only)
+		referral_at_date = _get_referral_revenue_up_to_date(customer_name, order_date)
+		qualified_rank = _determine_rank_from_cumulative(cumulative_at_date, referral_at_date)
 
 		if _is_rank_higher(qualified_rank, current_rank):
 			# Upgrade found! Update rank and rank_updated_at
@@ -1229,42 +1246,63 @@ def _check_12_month_downgrades(customer_name, auto_commit=True):
 
 	customer = frappe.get_doc("Customer", customer_name)
 	rank_updated_at = customer.rank_updated_at
-	rank_updated_at = customer.rank_updated_at
 	current_rank = customer.rank
 
-	if not rank_updated_at or current_rank == CustomerRank.SILVER:
-		return  # No downgrade needed for Silver
+	if not rank_updated_at:
+		return
 
-	# Check if 12 months have passed
+	partner_role = (getattr(customer, 'partner_role', '') or '').lower()
+	is_protected = partner_role in ["staff", "partnera", "partnerb"]
+
+	# Check if 12 months have passed (handle multiple periods if stuck)
 	today = getdate(nowdate())
 	next_evaluation_date = add_months(rank_updated_at, 12)
 
-	if today >= next_evaluation_date:
-		# Calculate 12-month score (purchasing activity only)
-		rank_score_12m = _calculate_12_month_score(customer_name, rank_updated_at)
+	# Handle users stuck at old dates - evaluate one period at a time
+	while today >= next_evaluation_date:
+		# Calculate 12-month score (orders + referral in the 12-month window)
+		orders_12m = _calculate_12_month_score(customer_name, rank_updated_at)
+		referral_12m = _get_referral_revenue_in_12_month_period(customer_name, rank_updated_at)
+		rank_score_12m = orders_12m + referral_12m
 
 		# Determine what rank the 12-month score qualifies for
-		referral_revenue = flt(customer.get("referral_cumulative_revenue", 0))
-		qualified_rank = _determine_rank_from_cumulative(rank_score_12m, referral_revenue)
+		qualified_rank = _determine_rank_from_cumulative(rank_score_12m, referral_12m)
 
 		# Check if downgrade is needed
 		if _is_rank_lower(qualified_rank, current_rank):
 			downgraded_rank = _downgrade_one_level(current_rank)
-			customer.db_set("rank", downgraded_rank, update_modified=True)
+
+			if not is_protected and current_rank != CustomerRank.SILVER:
+				customer.db_set("rank", downgraded_rank, update_modified=True)
+				frappe.logger().info(f"Downgraded {customer_name} from {current_rank} to {downgraded_rank} (12m score: {rank_score_12m})")
+				current_rank = downgraded_rank
+			elif is_protected:
+				frappe.logger().info(f"Protected role {partner_role}: Skipped downgrade for {customer_name} (12m score: {rank_score_12m})")
+			else:
+				frappe.logger().info(f"Already at Silver: No downgrade for {customer_name} (12m score: {rank_score_12m})")
+
+			# Always update dates and score (even for protected roles and Silver)
 			customer.db_set("rank_updated_at", next_evaluation_date, update_modified=True)
 			customer.db_set("rank_score_12m", rank_score_12m, update_modified=True)
 
 			if auto_commit:
 				frappe.db.commit()
 
-			frappe.logger().info(f"Downgraded {customer_name} from {current_rank} to {downgraded_rank} (12m score: {rank_score_12m})")
+			rank_updated_at = next_evaluation_date
+			next_evaluation_date = add_months(rank_updated_at, 12)
 		else:
-			# Update evaluation date even if no downgrade
+			# No downgrade, but still advance evaluation date
 			customer.db_set("rank_updated_at", next_evaluation_date, update_modified=True)
 			customer.db_set("rank_score_12m", rank_score_12m, update_modified=True)
 
 			if auto_commit:
 				frappe.db.commit()
+
+			frappe.logger().info(f"Maintained {customer_name} at {current_rank} (12m score: {rank_score_12m})")
+
+			# Update for next iteration
+			rank_updated_at = next_evaluation_date
+			next_evaluation_date = add_months(rank_updated_at, 12)
 
 def _get_cumulative_revenue_at_date(customer_name, target_date):
 	"""Calculate cumulative revenue up to a specific date (including that date)"""
@@ -1278,13 +1316,25 @@ def _get_cumulative_revenue_at_date(customer_name, target_date):
 		AND transaction_date <= %s
 	""", (customer_name, target_date), as_dict=True)[0].total or 0
 
-	# Get referral revenue (constant - we can't get historical breakdown)
-	customer = frappe.get_doc("Customer", customer_name)
-	referral_revenue = flt(customer.get("referral_cumulative_revenue", 0))
+	# Get referral revenue from coupons up to target_date (using end_date)
+	referral_revenue = _get_referral_revenue_up_to_date(customer_name, target_date)
 
 	# For historical replay, use gross revenue (no buyback subtraction)
 	# Buybacks are only considered in 12-month evaluations, not for upgrade qualifications
 	return flt(actual_revenue) + flt(referral_revenue)
+
+def _get_referral_revenue_up_to_date(customer_name, target_date):
+	"""Get referral revenue from coupons up to a specific date (using end_date)"""
+	referral_revenue = frappe.db.sql("""
+		SELECT SUM(total_price) as total
+		FROM `tabCoupon`
+		WHERE customer = %s
+		AND end_date IS NOT NULL
+		AND end_date <= %s
+		AND payment_status IN ('Paid', 'Pending')
+	""", (customer_name, target_date), as_dict=True)
+
+	return flt(referral_revenue[0].total if referral_revenue else 0)
 
 def _get_buyback_revenue_up_to_date(customer_name, target_date):
 	"""Get total buyback revenue up to a specific date"""
@@ -1322,7 +1372,9 @@ def _get_buyback_revenue_up_to_date(customer_name, target_date):
 		return 0
 
 def _update_total_cumulative_revenue(customer_name, auto_commit=True):
-	"""Update the total_cumulative_revenue field"""
+	"""Update the total_cumulative_revenue field
+	"""
+	_update_referral_revenue_from_coupons(customer_name)
 	customer = frappe.get_doc("Customer", customer_name)
 
 	actual_revenue = flt(customer.get("actual_cumulative_revenue", 0))
@@ -1334,3 +1386,16 @@ def _update_total_cumulative_revenue(customer_name, auto_commit=True):
 
 	if auto_commit:
 		frappe.db.commit()
+
+
+def _update_referral_revenue_from_coupons(customer_name):
+	"""Calculate referral_cumulative_revenue from sum of coupon total_price"""
+	total_referral = frappe.db.sql("""
+		SELECT SUM(total_price) as total
+		FROM `tabCoupon`
+		WHERE customer = %s
+		AND payment_status in ('Paid', 'Pending')
+	""", (customer_name,), as_dict=True)[0].total or 0
+
+	frappe.db.set_value("Customer", customer_name, "referral_cumulative_revenue", total_referral)
+	frappe.db.commit()

@@ -121,6 +121,7 @@
   "priority_login_date",
   "column_break_rm_1",
   "rank_score_12m",
+  "partner_role",
   "cumulative_revenue_management_section",
   "actual_cumulative_revenue",
   "column_break_ebsn",
@@ -896,7 +897,8 @@
    "fieldname": "rank",
    "fieldtype": "Select",
    "label": "Rank",
-   "options": "No Rank\nSilver\nGold\nPlatinum"
+   "options": "No Rank\nSilver\nGold\nPlatinum",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_qwps",
@@ -910,7 +912,8 @@
   {
    "fieldname": "rank_updated_at",
    "fieldtype": "Date",
-   "label": "Rank Updated At"
+   "label": "Rank Updated At",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_rm_1",
@@ -919,7 +922,14 @@
   {
    "fieldname": "rank_score_12m",
    "fieldtype": "Currency",
-   "label": "Rank Score (12 Months)"
+   "label": "Rank Score (12 Months)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "partner_role",
+   "fieldtype": "Data",
+   "label": "Partner Role",
+   "read_only": 1
   },
   {
    "fieldname": "rank_management_section",
@@ -934,7 +944,8 @@
   {
    "fieldname": "actual_cumulative_revenue",
    "fieldtype": "Currency",
-   "label": "Actual Cumulative Revenue"
+   "label": "Actual Cumulative Revenue",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_ebsn",
@@ -943,7 +954,8 @@
   {
    "fieldname": "referral_cumulative_revenue",
    "fieldtype": "Currency",
-   "label": "Referral Cumulative Revenue"
+   "label": "Referral Cumulative Revenue",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_qgzr",
@@ -952,7 +964,8 @@
   {
    "fieldname": "buyback_revenue",
    "fieldtype": "Currency",
-   "label": "Buyback Revenue"
+   "label": "Buyback Revenue",
+   "read_only": 1
   },
   {
    "fieldname": "bizfly_customer_number",
@@ -973,12 +986,14 @@
   {
    "fieldname": "total_referral_point",
    "fieldtype": "Float",
-   "label": "Total Referral Point"
+   "label": "Total Referral Point",
+   "read_only": 1
   },
   {
    "fieldname": "available_point_amount",
    "fieldtype": "Float",
-   "label": "Available Point Amount"
+   "label": "Available Point Amount",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_pnc1",
@@ -987,12 +1002,14 @@
   {
    "fieldname": "withdraw_point",
    "fieldtype": "Float",
-   "label": "Withdraw points"
+   "label": "Withdraw points",
+   "read_only": 1
   },
   {
    "fieldname": "withdraw_cash_amount",
    "fieldtype": "Currency",
-   "label": "Total Withdrawn Cash Amount"
+   "label": "Total Withdrawn Cash Amount",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_pnc2",
@@ -1001,7 +1018,8 @@
   {
    "fieldname": "withdraw_cash_amount_pending",
    "fieldtype": "Currency",
-   "label": "Pending Withdraw Cash Amount"
+   "label": "Pending Withdraw Cash Amount",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_pnc3",

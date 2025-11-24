@@ -16,7 +16,10 @@
   "coupon_type",
   "payment_status",
   "haravan_coupon_id",
-  "cashback_ref"
+  "cashback_ref",
+  "section_break_dates",
+  "start_date",
+  "end_date"
  ],
  "fields": [
   {
@@ -76,6 +79,23 @@
    "fieldname": "haravan_coupon_id",
    "fieldtype": "Data",
    "label": "Haravan Coupon ID"
+  },
+  {
+   "fieldname": "section_break_dates",
+   "fieldtype": "Section Break",
+   "label": "Dates"
+  },
+  {
+   "description": "When coupon became active",
+   "fieldname": "start_date",
+   "fieldtype": "Datetime",
+   "label": "Start Date"
+  },
+  {
+   "description": "When coupon was used by another customer",
+   "fieldname": "end_date",
+   "fieldtype": "Datetime",
+   "label": "End Date"
   }
  ],
  "index_web_pages_for_search": 1,
