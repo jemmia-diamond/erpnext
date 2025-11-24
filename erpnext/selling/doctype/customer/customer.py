@@ -22,6 +22,7 @@ from erpnext.accounts.party import get_dashboard_info, validate_party_accounts
 from erpnext.controllers.website_list_for_contact import add_role_for_portal_user
 from erpnext.utilities.transaction_base import TransactionBase
 from erpnext.config.config import config
+from erpnext.selling.doctype.coupon.coupon import update_customers_coupons
 import requests
 
 class CustomerRank:
@@ -968,6 +969,46 @@ def evaluate_and_update_customer_rank(customer_name, auto_commit=True):
 
 	# Update total_cumulative_revenue
 	_update_total_cumulative_revenue(customer_name, auto_commit)
+
+def evaluate_all_customer_ranks():
+	"""
+	Scheduled job: Evaluate and update ranks for all customers
+	Runs every 2 hours via cron
+	"""
+
+	customers = frappe.db.sql("""
+		SELECT c.name, c.haravan_id, c.rank_updated_at
+		FROM `tabCustomer` c
+		WHERE c.haravan_id IS NOT NULL
+		AND (
+			EXISTS (
+				SELECT 1 FROM `tabSales Order` so
+				WHERE so.customer = c.name
+			)
+			OR EXISTS (
+				SELECT 1 FROM `tabCoupon` cp
+				WHERE cp.customer = c.name
+			)
+		)
+		ORDER BY
+			CASE WHEN c.rank_updated_at IS NULL THEN 0 ELSE 1 END,
+			c.name
+		LIMIT 1000
+	""", as_dict=True)
+
+	for customer in customers:
+		try:
+			if customer.rank_updated_at:
+				continue
+
+			update_customers_coupons(customer.name, customer.haravan_id)
+			load_buyback_records_async(customer.name)
+			update_customer_priority_data(customer.name, customer.haravan_id)
+		except Exception as e:
+			frappe.log_error(
+				f"Error updating priority data for {customer.name}: {str(e)}",
+				"Priority Data Update Error"
+			)
 
 def _get_first_paid_order_date(customer_name):
 	"""
