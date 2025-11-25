@@ -139,6 +139,8 @@
   "withdraw_cash_amount_pending",
   "section_break_waiv",
   "priority_bank_account",
+  "section_break_orders",
+  "sales_order_html",
   "section_break_dkbv",
   "coupon_table",
   "sales_team_tab",
@@ -748,8 +750,6 @@
    "default": "Silver",
    "fieldname": "customer_rank",
    "fieldtype": "Select",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
    "label": "Customer Rank",
    "options": "No Rank\nSilver\nGold\nPlatinum"
   },
@@ -878,16 +878,6 @@
    "label": "Priority"
   },
   {
-   "fieldname": "sales_order_tab",
-   "fieldtype": "Tab Break",
-   "label": "Orders"
-  },
-  {
-   "fieldname": "sales_order_html",
-   "fieldtype": "HTML",
-   "label": "Orders"
-  },
-  {
    "fieldname": "total_cumulative_revenue",
    "fieldtype": "Currency",
    "label": "Total Cumulative Revenue",
@@ -896,6 +886,8 @@
   {
    "fieldname": "rank",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Rank",
    "options": "No Rank\nSilver\nGold\nPlatinum",
    "read_only": 1
@@ -1047,6 +1039,17 @@
    "fieldtype": "Link",
    "label": "First Source",
    "options": "Lead Source"
+  },
+  {
+   "fieldname": "section_break_orders",
+   "fieldtype": "Section Break",
+   "label": "Orders Management"
+  },
+  {
+   "fieldname": "sales_order_html",
+   "fieldtype": "HTML",
+   "label": "Orders List",
+   "options": "Orders"
   },
   {
    "fieldname": "section_break_dkbv",
