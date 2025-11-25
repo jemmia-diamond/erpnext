@@ -135,9 +135,9 @@ def update_customers_coupons(customer_name, customer_haravan_id):
 			return
 
 		# Early return if coupon count matches
-		current_coupon_count = frappe.db.count("Coupon", {"customer": customer_name})
-		if len(customer_coupons) == current_coupon_count:
-			return
+		# current_coupon_count = frappe.db.count("Coupon", {"customer": customer_name})
+		# if len(customer_coupons) == current_coupon_count:
+		# 	return
 
 		for result in customer_coupons:
 			if not result.get("couponHaravanCode"):
