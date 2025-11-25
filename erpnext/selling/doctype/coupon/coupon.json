@@ -8,13 +8,13 @@
  "engine": "InnoDB",
  "field_order": [
   "coupon_info_section",
+  "sales_order",
   "coupon_name",
-  "customer",
   "user",
+  "payment_status",
   "total_price",
   "column_break_mknb",
   "coupon_type",
-  "payment_status",
   "haravan_coupon_id",
   "cashback_ref",
   "section_break_dates",
@@ -27,19 +27,19 @@
    "fieldtype": "Section Break",
    "label": "Coupon Info"
   },
+ {
+   "fieldname": "sales_order",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Sales Order",
+   "options": "Sales Order"
+  },
   {
+   "columns": 1,
    "fieldname": "coupon_name",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Coupon Name",
-   "reqd": 1
-  },
-  {
-   "fieldname": "customer",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Coupon Owner",
-   "options": "Customer",
    "reqd": 1
   },
   {
@@ -52,6 +52,7 @@
   {
    "fieldname": "total_price",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Total Price"
   },
   {
@@ -65,14 +66,17 @@
    "options": "Invite\nPartner"
   },
   {
+   "columns": "1",
    "fieldname": "payment_status",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Payment Status",
    "options": "Paid\nPending"
   },
   {
    "fieldname": "cashback_ref",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Cashback Reference Amount"
   },
   {
