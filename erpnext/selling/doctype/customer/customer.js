@@ -304,7 +304,7 @@ frappe.ui.form.on("Customer", {
 				sales_order_wrapper.empty();
 
 				if (r.message && r.message.length > 0) {
-					let tabledHeadStyle = "padding: 12px 15px; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6c757d; border: none;";
+					let tabledHeadStyle = "padding: 12px 15px; font-size: 13px; font-weight: 600; color: #6c757d; border: none;";
 					let tableDataStyle = "padding: 12px 15px; border: none; vertical-align: middle;";
 					let html = `
 						<div style="margin-bottom: 10px;">
