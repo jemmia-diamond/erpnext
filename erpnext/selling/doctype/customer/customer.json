@@ -884,6 +884,7 @@
    "read_only": 1
   },
   {
+   "default": "No Rank",
    "fieldname": "rank",
    "fieldtype": "Select",
    "in_list_view": 1,
