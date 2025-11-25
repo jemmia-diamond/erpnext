@@ -1214,12 +1214,18 @@ def load_buyback_records_async(customer):
 
 def _initialize_customer_rank(customer_name, auto_commit=True):
 	"""Phase 1: Initialize rank_updated_at and initial rank"""
-	customer = frappe.get_doc("Customer", customer_name)
+	from frappe.utils import getdate
 
-	# Find first paid order date
+	customer = frappe.get_doc("Customer", customer_name)
 	first_order_date = _get_first_paid_order_date(customer_name)
+
 	if not first_order_date:
-		frappe.logger().info(f"No paid orders found for {customer_name}")
+		creation_date = getdate(customer.creation)
+		customer.db_set("rank", CustomerRank.NO_RANK, update_modified=True)
+		customer.db_set("rank_updated_at", creation_date, update_modified=True)
+
+		if auto_commit:
+			frappe.db.commit()
 		return
 
 	# Set rank_updated_at to first order date
