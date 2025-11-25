@@ -20,7 +20,6 @@
   "column_break_eofp",
   "is_internal_customer",
   "customer_type",
-  "customer_rank",
   "column_break0",
   "account_manager",
   "lead_name",
@@ -747,13 +746,6 @@
    "label": "Customer Journey"
   },
   {
-   "default": "Silver",
-   "fieldname": "customer_rank",
-   "fieldtype": "Select",
-   "label": "Customer Rank",
-   "options": "No Rank\nSilver\nGold\nPlatinum"
-  },
-  {
    "depends_on": "eval:doc.customer_type==\"Company\"",
    "fieldname": "organization_section",
    "fieldtype": "Section Break",
@@ -786,6 +778,12 @@
    "fieldname": "ceo_name",
    "fieldtype": "Data",
    "label": "CEO"
+  },
+  {
+   "fieldname": "bizfly_customer_number",
+   "fieldtype": "Data",
+   "label": "Bizfly Customer Number",
+   "unique": 1
   },
   {
    "fieldname": "column_break_eofp",
@@ -959,12 +957,6 @@
    "fieldtype": "Currency",
    "label": "Buyback Revenue",
    "read_only": 1
-  },
-  {
-   "fieldname": "bizfly_customer_number",
-   "fieldtype": "Data",
-   "label": "Bizfly Customer Number",
-   "unique": 1
   },
   {
    "fieldname": "primary_contact",
