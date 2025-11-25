@@ -14,7 +14,7 @@ from frappe.contacts.address_and_contact import (
 from frappe.model.mapper import get_mapped_doc
 from frappe.model.naming import set_name_by_naming_series, set_name_from_naming_options
 from frappe.model.utils.rename_doc import update_linked_doctypes
-from frappe.utils import cint, cstr, flt, get_formatted_email, today
+from frappe.utils import cint, cstr, flt, get_formatted_email, today, getdate, add_months, nowdate
 from frappe.utils.deprecations import deprecated
 from frappe.utils.user import get_users_with_role
 
@@ -954,8 +954,6 @@ def evaluate_and_update_customer_rank(customer_name, auto_commit=True):
 	- Phase 2: Replay all orders chronologically for upgrades
 	- Phase 3: Check 12-month downgrades
 	"""
-	from frappe.utils import getdate, nowdate
-
 	customer = frappe.get_doc("Customer", customer_name)
 
 	if not customer.rank_updated_at:
@@ -1017,8 +1015,6 @@ def _get_first_paid_order_date(customer_name):
 	Criteria: financial_status IN ('Paid', 'Partially Paid') AND cancelled_status = 'Uncancelled'
 	Excludes: Pending, Refunded, Partially Refunded
 	"""
-	from frappe.utils import getdate
-
 	first_order = frappe.db.sql("""
 		SELECT transaction_date
 		FROM `tabSales Order`
@@ -1056,8 +1052,6 @@ def _determine_rank_from_cumulative(revenue, referral_revenue):
 def _calculate_12_month_score(customer_name, rank_updated_at):
 	"""Calculate purchasing activity in the 12 months since rank_updated_at
 	Only counts orders (grand_total), no buyback subtraction"""
-	from frappe.utils import add_months, getdate
-
 	start_date = getdate(rank_updated_at)
 	end_date = add_months(start_date, 12)
 
@@ -1079,8 +1073,6 @@ def _calculate_12_month_score(customer_name, rank_updated_at):
 def _get_referral_revenue_in_12_month_period(customer_name, rank_updated_at):
 	"""Get referral revenue earned in the 12-month period after rank_updated_at
 	Uses coupon end_date to determine when referral was earned"""
-	from frappe.utils import add_months, getdate
-
 	start_date = getdate(rank_updated_at)
 	end_date = add_months(start_date, 12)
 
@@ -1214,8 +1206,6 @@ def load_buyback_records_async(customer):
 
 def _initialize_customer_rank(customer_name, auto_commit=True):
 	"""Phase 1: Initialize rank_updated_at and initial rank"""
-	from frappe.utils import getdate
-
 	customer = frappe.get_doc("Customer", customer_name)
 	first_order_date = _get_first_paid_order_date(customer_name)
 
@@ -1288,8 +1278,6 @@ def _replay_rank_upgrades(customer_name, auto_commit=True):
 
 def _check_12_month_downgrades(customer_name, auto_commit=True):
 	"""Phase 3: Check if 12-month downgrade evaluation is needed"""
-	from frappe.utils import add_months, getdate, nowdate
-
 	customer = frappe.get_doc("Customer", customer_name)
 	rank_updated_at = customer.rank_updated_at
 	current_rank = customer.rank
