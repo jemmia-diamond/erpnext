@@ -4,7 +4,7 @@
  "autoname": "hash",
  "creation": "2025-07-18 01:42:34.956452",
  "doctype": "DocType",
- "editable_grid": 1,
+ "editable_grid": 0,
  "engine": "InnoDB",
  "field_order": [
   "coupon_info_section",
@@ -32,7 +32,8 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Sales Order",
-   "options": "Sales Order"
+   "options": "Sales Order",
+   "read_only": 1
   },
   {
    "columns": 1,
@@ -40,20 +41,23 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Coupon Name",
-   "reqd": 1
+   "reqd": 1,
+   "read_only": 1
   },
   {
    "fieldname": "user",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Coupon User",
-   "options": "Customer"
+   "options": "Customer",
+   "read_only": 1
   },
   {
    "fieldname": "total_price",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Total Price"
+   "label": "Total Price",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_mknb",
@@ -63,7 +67,8 @@
    "fieldname": "coupon_type",
    "fieldtype": "Select",
    "label": "Coupon Type",
-   "options": "Invite\nPartner"
+   "options": "Invite\nPartner",
+   "read_only": 1
   },
   {
    "columns": "1",
@@ -71,18 +76,21 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Payment Status",
-   "options": "Paid\nPending"
+   "options": "Paid\nPending",
+   "read_only": 1
   },
   {
    "fieldname": "cashback_ref",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Cashback Reference Amount"
+   "label": "Cashback Reference Amount",
+   "read_only": 1
   },
   {
    "fieldname": "haravan_coupon_id",
    "fieldtype": "Data",
-   "label": "Haravan Coupon ID"
+   "label": "Haravan Coupon ID",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_dates",
@@ -93,13 +101,15 @@
    "description": "When coupon became active",
    "fieldname": "start_date",
    "fieldtype": "Datetime",
-   "label": "Start Date"
+   "label": "Start Date",
+   "read_only": 1
   },
   {
    "description": "When coupon was used by another customer",
    "fieldname": "end_date",
    "fieldtype": "Datetime",
-   "label": "End Date"
+   "label": "End Date",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
