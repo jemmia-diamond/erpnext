@@ -66,6 +66,10 @@ frappe.ui.form.on("Customer", {
 				},
 			};
 		});
+
+    frm.set_df_property("coupon_table", "cannot_add_rows", true);
+    frm.set_df_property("coupon_table", "cannot_delete_rows", true);
+	frm.get_field("coupon_table").grid.only_sortable();
 	},
 	customer_primary_address: function (frm) {
 		if (frm.doc.customer_primary_address) {
@@ -121,9 +125,6 @@ frappe.ui.form.on("Customer", {
 						args: {
 							customer_name: frm.doc.name,
 							haravan_id: frm.doc.haravan_id
-						},
-						callback: function(r) {
-							frm.reload_doc();
 						}
 					});
 				}, 1000);
@@ -134,12 +135,7 @@ frappe.ui.form.on("Customer", {
 				setTimeout(() => {
 					frappe.call({
 						method: "erpnext.selling.doctype.customer.customer.load_buyback_records_async",
-						args: { customer: frm.doc.name },
-						callback: function(r) {
-							if (r.message && r.message.length > 0) {
-								frm.doc.__onload.buyback_records = r.message;
-							}
-						}
+						args: { customer: frm.doc.name }
 					});
 				}, 1500);
 			}
@@ -153,7 +149,7 @@ frappe.ui.form.on("Customer", {
 							customer_name: frm.doc.name,
 							customer_haravan_id: parseInt(frm.doc.haravan_id)
 						},
-						callback: function (r) {
+						callback: function(r) {
 							frm.reload_doc();
 						}
 					});
@@ -216,6 +212,24 @@ frappe.ui.form.on("Customer", {
 
 			// indicator
 			erpnext.utils.set_party_dashboard_indicators(frm);
+
+			var coupon_grid = frm.get_field("coupon_table").grid;
+			coupon_grid.cannot_add_rows = true;
+			coupon_grid.cannot_delete_rows = true;
+			coupon_grid.only_sortable = false;
+
+			frm.fields_dict["coupon_table"].grid.wrapper.find('.grid-remove-rows').hide();
+			frm.fields_dict["coupon_table"].grid.wrapper.find('.grid-add-multiple-rows').hide();
+			frm.fields_dict["coupon_table"].grid.wrapper.find('.grid-add-row').hide();
+			frm.fields_dict("coupon_table").grid.wrapper.find('.grid-move-row').hide();
+			frm.fields_dict["coupon_table"].grid.grid_rows.forEach(function (row) {
+				row.wrapper.find('.grid-delete-row').hide();
+				row.wrapper.find('.grid-duplicate-row').hide();
+				row.wrapper.find('.grid-insert-row').hide();
+				row.wrapper.find('.grid-insert-row-below').hide();
+				row.wrapper.find('.grid-append-row').hide();
+			});
+			frm.fields_dict["coupon_table"].grid.wrapper.off('click', '.grid-row');
 		} else {
 			frappe.contacts.clear_address_and_contact(frm);
 		}
@@ -223,6 +237,10 @@ frappe.ui.form.on("Customer", {
 		var grid = cur_frm.get_field("sales_team").grid;
 		grid.set_column_disp("allocated_amount", false);
 		grid.set_column_disp("incentives", false);
+
+    frm.set_df_property("coupon_table", "cannot_add_rows", true);
+    frm.set_df_property("coupon_table", "cannot_delete_rows", true);
+	frm.get_field("coupon_table").grid.only_sortable();
 	},
 	validate: function (frm) {
 		if (frm.doc.lead_name) frappe.model.clear_doc("Lead", frm.doc.lead_name);
@@ -293,9 +311,10 @@ frappe.ui.form.on("Customer", {
 			args: {
 				doctype: 'Sales Order',
 				filters: {
-					'customer': frm.doc.name
+					'customer': frm.doc.name,
+					'cancelled_status': 'Uncancelled'
 				},
-				fields: ['name', 'order_number', 'transaction_date', 'status', 'grand_total', 'currency', 'haravan_order_id', 'cancelled_status'],
+				fields: ['name', 'order_number', 'transaction_date', 'status', 'grand_total', 'currency', 'haravan_order_id', 'cancelled_status', 'financial_status'],
 				order_by: 'transaction_date desc',
 				limit_page_length: 20
 			},
@@ -303,7 +322,7 @@ frappe.ui.form.on("Customer", {
 				sales_order_wrapper.empty();
 
 				if (r.message && r.message.length > 0) {
-					let tabledHeadStyle = "padding: 12px 15px; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6c757d; border: none;";
+					let tabledHeadStyle = "padding: 12px 15px; font-size: 13px; font-weight: 600; color: #6c757d; border: none;";
 					let tableDataStyle = "padding: 12px 15px; border: none; vertical-align: middle;";
 					let html = `
 						<div style="margin-bottom: 10px;">
@@ -316,7 +335,6 @@ frappe.ui.form.on("Customer", {
 										<tr style="border-bottom: 1px solid #dee2e6;">
 											<th style="${tabledHeadStyle}">Order Number</th>
 											<th style="${tabledHeadStyle}">Order Date</th>
-											<th style="${tabledHeadStyle}">Cancelled Status</th>
 											<th style="${tabledHeadStyle}">Financial Status</th>
 											<th style="${tabledHeadStyle} text-align: right;">Grand Total</th>
 										</tr>
@@ -325,26 +343,17 @@ frappe.ui.form.on("Customer", {
 					`;
 
 					r.message.forEach(function(order) {
-						// Dynamic cancelled status badge
-						let cancelled_status_badge = '';
-						if (order.cancelled_status === 'Cancelled') {
-							cancelled_status_badge = '<span class="indicator-pill red no-indicator-dot filterable">Cancelled</span>';
-						} else {
-							cancelled_status_badge = '<span class="indicator-pill green no-indicator-dot filterable">Uncancelled</span>';
-						}
-
-						// Order number color based on cancelled status
 						let order_color = order.cancelled_status === 'Cancelled' ? 'rgb(219, 48, 48)' : 'rgb(35, 98, 235)';
-
-						// Dynamic financial status based on order status
 						let financial_status_badge = '';
-						if (order.financial_status = 'Paid') {
+
+						if (order.financial_status === 'Paid') {
 							financial_status_badge = '<span class="indicator-pill green no-indicator-dot filterable">Paid</span>';
-						} else if (order.financial_status = 'Partially Paid') {
+						} else if (order.financial_status === 'Partially Paid') {
 							financial_status_badge = '<span class="indicator-pill gray no-indicator-dot filterable">Partially Paid</span>';
-						} else {
+						} else if (order.financial_status) {
 							financial_status_badge = `<span class="indicator-pill blue no-indicator-dot filterable">${order.financial_status}</span>`;
 						}
+
 						const display_order_number = order.order_number || order.name;
 
 						html += `
@@ -354,9 +363,6 @@ frappe.ui.form.on("Customer", {
 								</td>
 								<td style="${tableDataStyle} color: #6c757d;">
 									${frappe.datetime.str_to_user(order.transaction_date)}
-								</td>
-								<td style="${tableDataStyle}">
-									${cancelled_status_badge}
 								</td>
 								<td style="${tableDataStyle}">
 									${financial_status_badge}
@@ -372,9 +378,9 @@ frappe.ui.form.on("Customer", {
 							</tbody>
 								</table>
 							</div>
-							<div class="frappe-card-footer text-right">
+							<div class="frappe-card-footer text-left mt-3">
 								<a href="/app/sales-order?customer=${encodeURIComponent(frm.doc.name)}" class="btn btn-primary btn-sm">
-									${__("View This Customer's Orders")}
+									${__("View All Orders")}
 								</a>
 							</div>
 						</div>
