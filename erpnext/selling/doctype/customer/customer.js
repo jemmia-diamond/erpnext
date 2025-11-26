@@ -125,9 +125,6 @@ frappe.ui.form.on("Customer", {
 						args: {
 							customer_name: frm.doc.name,
 							haravan_id: frm.doc.haravan_id
-						},
-						callback: function(r) {
-							frm.reload_doc();
 						}
 					});
 				}, 1000);
@@ -138,12 +135,7 @@ frappe.ui.form.on("Customer", {
 				setTimeout(() => {
 					frappe.call({
 						method: "erpnext.selling.doctype.customer.customer.load_buyback_records_async",
-						args: { customer: frm.doc.name },
-						callback: function(r) {
-							if (r.message && r.message.length > 0) {
-								frm.doc.__onload.buyback_records = r.message;
-							}
-						}
+						args: { customer: frm.doc.name }
 					});
 				}, 1500);
 			}
@@ -157,7 +149,7 @@ frappe.ui.form.on("Customer", {
 							customer_name: frm.doc.name,
 							customer_haravan_id: parseInt(frm.doc.haravan_id)
 						},
-						callback: function (r) {
+						callback: function(r) {
 							frm.reload_doc();
 						}
 					});
