@@ -28,6 +28,7 @@
    "label": "Coupon Info"
   },
  {
+   "columns": 1,
    "fieldname": "sales_order",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -105,9 +106,11 @@
    "read_only": 1
   },
   {
+   "columns": 1,
    "description": "When coupon was used by another customer",
    "fieldname": "end_date",
    "fieldtype": "Datetime",
+   "in_list_view": 1,
    "label": "End Date",
    "read_only": 1
   }
