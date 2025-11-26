@@ -418,8 +418,7 @@ auto_cancel_exempted_doctypes = [
 scheduler_events = {
 	"cron": {
 		"0/15 * * * *": [
-			"erpnext.manufacturing.doctype.bom_update_log.bom_update_log.resume_bom_cost_update_jobs",
-			"erpnext.selling.doctype.customer.customer.evaluate_all_customer_ranks",
+			"erpnext.manufacturing.doctype.bom_update_log.bom_update_log.resume_bom_cost_update_jobs"
 		],
 		"0/30 * * * *": [
 			"erpnext.utilities.doctype.video.video.update_youtube_data",
