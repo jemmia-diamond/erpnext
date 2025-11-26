@@ -216,6 +216,23 @@ frappe.ui.form.on("Customer", {
 
 			// indicator
 			erpnext.utils.set_party_dashboard_indicators(frm);
+
+			var coupon_grid = frm.get_field("coupon_table").grid;
+			coupon_grid.cannot_add_rows = true;
+			coupon_grid.cannot_delete_rows = true;
+			coupon_grid.only_sortable = false;
+
+			frm.fields_dict["coupon_table"].grid.wrapper.find('.grid-remove-rows').hide();
+			frm.fields_dict["coupon_table"].grid.wrapper.find('.grid-add-multiple-rows').hide();
+			frm.fields_dict["coupon_table"].grid.wrapper.find('.grid-add-row').hide();
+			frm.fields_dict["coupon_table"].grid.grid_rows.forEach(function (row) {
+				row.wrapper.find('.grid-delete-row').hide();
+				row.wrapper.find('.grid-duplicate-row').hide();
+				row.wrapper.find('.grid-insert-row').hide();
+				row.wrapper.find('.grid-insert-row-below').hide();
+				row.wrapper.find('.grid-append-row').hide();
+			});
+			frm.fields_dict["coupon_table"].grid.wrapper.off('click', '.grid-row');
 		} else {
 			frappe.contacts.clear_address_and_contact(frm);
 		}
