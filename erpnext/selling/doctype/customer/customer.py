@@ -928,24 +928,33 @@ def update_customer_priority_data(customer_name, haravan_id):
 
 	evaluate_and_update_customer_rank(customer_name)
 
-def calculate_customer_rank(true_cumulative, cumulative, referrals_revenue):
-	"""Calculate customer rank based on revenue thresholds (standalone function for background jobs)"""
-	revenue = cumulative if referrals_revenue > RankThreshold.NO_REVENUE else true_cumulative
+@frappe.whitelist()
+def reevaluate_customer_rank(customer_name):
+	try:
+		customer = frappe.get_doc("Customer", customer_name)
 
-	if revenue == RankThreshold.NO_REVENUE:
-		return CustomerRank.NO_RANK
+		if not customer.haravan_id:
+			frappe.throw("Customer must have a Haravan ID to evaluate rank")
 
-	if referrals_revenue > RankThreshold.NO_REVENUE:
-		if revenue >= RankThreshold.PLATINUM_WITH_REFERRAL:
-			return CustomerRank.PLATINUM
-		if revenue >= RankThreshold.GOLD_WITH_REFERRAL:
-			return CustomerRank.GOLD
-	else:
-		if revenue >= RankThreshold.PLATINUM_PURCHASE:
-			return CustomerRank.PLATINUM
-		if revenue >= RankThreshold.GOLD_PURCHASE:
-			return CustomerRank.GOLD
-	return CustomerRank.SILVER
+		frappe.db.set_value("Customer", customer_name, {
+			"rank": None,
+			"rank_updated_at": None
+		})
+		frappe.db.commit()
+
+		update_customers_coupons(customer.name, customer.haravan_id)
+		load_buyback_records_async(customer.name)
+		update_customer_priority_data(customer.name, customer.haravan_id)
+
+		frappe.msgprint(f"Successfully reevaluated rank for {customer.customer_name}")
+
+	except Exception as e:
+		frappe.log_error(
+			f"Error reevaluating rank for {customer_name}: {str(e)}",
+			"Customer Rank Re-evaluation Error"
+		)
+		frappe.throw(f"Failed to reevaluate customer rank: {str(e)}")
+
 
 def evaluate_and_update_customer_rank(customer_name, auto_commit=True):
 	"""
