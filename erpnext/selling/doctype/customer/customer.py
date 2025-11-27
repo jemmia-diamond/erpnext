@@ -1038,6 +1038,25 @@ def _get_first_paid_order_date(customer_name):
 		return getdate(first_order[0].transaction_date)
 	return None
 
+def _get_first_coupon_date(customer_name):
+	"""
+	Get the date of the first coupon for a customer
+	Returns the end_date of the first coupon (when referral was earned)
+	"""
+	first_coupon = frappe.db.sql("""
+		SELECT end_date
+		FROM `tabCoupon`
+		WHERE customer = %s
+		AND end_date IS NOT NULL
+		AND payment_status IN ('Paid', 'Pending')
+		ORDER BY end_date ASC
+		LIMIT 1
+	""", (customer_name,), as_dict=True)
+
+	if first_coupon:
+		return getdate(first_coupon[0].end_date)
+	return None
+
 def _determine_rank_from_cumulative(revenue, referral_revenue):
 	"""Determine rank based on cumulative revenue"""
 	if revenue == 0:
@@ -1220,8 +1239,19 @@ def _initialize_customer_rank(customer_name, auto_commit=True):
 
 	if not first_order_date:
 		creation_date = getdate(customer.creation)
-		customer.db_set("rank", CustomerRank.NO_RANK, update_modified=True)
-		customer.db_set("rank_updated_at", creation_date, update_modified=True)
+		referral_revenue = _get_referral_revenue_up_to_date(customer_name, nowdate())
+
+		if referral_revenue > 0:
+			first_coupon_date = _get_first_coupon_date(customer_name)
+			rank_date = first_coupon_date if first_coupon_date else creation_date
+
+			initial_rank = _determine_rank_from_cumulative(referral_revenue, referral_revenue)
+			customer.db_set("rank", initial_rank, update_modified=True)
+			customer.db_set("rank_updated_at", rank_date, update_modified=True)
+			frappe.logger().info(f"Initialized {customer_name} (coupon-only): rank={initial_rank}, referral_revenue={referral_revenue}, rank_updated_at={rank_date}")
+		else:
+			customer.db_set("rank", CustomerRank.NO_RANK, update_modified=True)
+			customer.db_set("rank_updated_at", creation_date, update_modified=True)
 
 		if auto_commit:
 			frappe.db.commit()
