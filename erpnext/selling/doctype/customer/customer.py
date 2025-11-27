@@ -984,7 +984,7 @@ def evaluate_all_customer_ranks():
 	"""
 
 	customers = frappe.db.sql("""
-		SELECT c.name, c.haravan_id, c.rank_updated_at
+		SELECT c.name, c.haravan_id, c.rank_updated_at, c.rank, c.total_cumulative_revenue
 		FROM `tabCustomer` c
 		WHERE c.haravan_id IS NOT NULL
 		AND (
@@ -1005,7 +1005,7 @@ def evaluate_all_customer_ranks():
 
 	for customer in customers:
 		try:
-			if customer.rank_updated_at:
+			if customer.rank_updated_at and customer.rank != "No Rank" and customer.total_cumulative_revenue > 0:
 				continue
 
 			update_customers_coupons(customer.name, customer.haravan_id)
