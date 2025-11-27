@@ -2335,14 +2335,30 @@ def get_stock_reservation_status():
 
 @frappe.whitelist()
 def larksuite_notification(sales_order_doc):
-	sales_order = json.loads(sales_order_doc)
-	response = requests.post(
-		url=f"{config.FN_BASE_URL}/api/erp/sales_orders/{sales_order["name"]}/notifications",
-		headers={"Content-Type": "application/json", "Authorization": "Bearer " + config.FN_BEARER_TOKEN},
-		data=sales_order_doc,
-	)
-	message = response.json()["message"]
-	return message
+	sales_order = sales_order_doc
+
+	url = f"{config.FN_BASE_URL}/api/erp/sales_orders/{sales_order.get('name')}/notifications"
+	headers = {
+		"Content-Type": "application/json",
+		"Authorization": f"Bearer {config.FN_BEARER_TOKEN}",
+	}
+
+	try:
+		response = requests.post(url=url, headers=headers, data=json.dumps(sales_order_doc))
+
+		response.raise_for_status()
+
+		try:
+			return response.json().get("message", "Success")
+		except json.JSONDecodeError:
+			return response.text
+
+	except requests.exceptions.HTTPError as e:
+		error_message = f"Error ({response.status_code}): {response.text}"
+		return error_message
+
+	except Exception as e:
+		return str(e)
 
 
 @frappe.whitelist()
