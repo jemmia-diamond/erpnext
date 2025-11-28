@@ -955,6 +955,48 @@ def reevaluate_customer_rank(customer_name):
 		)
 		frappe.throw(f"Failed to reevaluate customer rank: {str(e)}")
 
+@frappe.whitelist()
+def bulk_reevaluate_customer_rank(customer_names):
+	"""Bulk re-evaluate rank for multiple customers from list view"""
+	import json
+
+	if isinstance(customer_names, str):
+		customer_names = json.loads(customer_names)
+	success_count = 0
+	failed_count = 0
+
+	for customer_name in customer_names:
+		try:
+			customer = frappe.get_doc("Customer", customer_name)
+
+			if not customer.haravan_id:
+				failed_count += 1
+				continue
+
+			frappe.db.set_value("Customer", customer_name, {
+				"rank": None,
+				"rank_updated_at": None
+			})
+			frappe.db.commit()
+
+			update_customers_coupons(customer.name, customer.haravan_id)
+			load_buyback_records_async(customer.name)
+			update_customer_priority_data(customer.name, customer.haravan_id)
+
+			success_count += 1
+
+		except Exception as e:
+			frappe.log_error(
+				f"Error re-evaluating rank for {customer_name}: {str(e)}",
+				"Bulk Rank Re-evaluation Error"
+			)
+			failed_count += 1
+
+	return {
+		"success": success_count,
+		"failed": failed_count
+	}
+
 
 def evaluate_and_update_customer_rank(customer_name, auto_commit=True):
 	"""
@@ -983,7 +1025,7 @@ def evaluate_and_update_customer_rank(customer_name, auto_commit=True):
 def evaluate_all_customer_ranks():
 	"""
 	Scheduled job: Evaluate and update ranks for all customers
-	Runs every 2 hours via cron
+	Runs every 15 minute via cron
 	"""
 
 	customers = frappe.db.sql("""
