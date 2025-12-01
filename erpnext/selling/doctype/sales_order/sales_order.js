@@ -56,23 +56,23 @@ frappe.ui.form.on("Sales Order", {
 		if (frm.doc.is_split_order && frm.doc.split_order_group) {
 			// Format split_order_group for display (add # prefix for readability)
 			const formatted_group = `#${frm.doc.split_order_group}`;
-			
+
 			// Check if this is the original order (group origin)
 			const is_original = frm.doc.haravan_order_id === frm.doc.split_order_group;
-			
+
 			// Add indicator
 			if (is_original) {
 				frm.dashboard.add_indicator(
-					__('Split Order Group: {0} (Original Order)', [formatted_group]), 
+					__('Split Order Group: {0} (Original Order)', [formatted_group]),
 					'orange'
 				);
 			} else {
 				frm.dashboard.add_indicator(
-					__('Split Order Group: {0}', [formatted_group]), 
+					__('Split Order Group: {0}', [formatted_group]),
 					'blue'
 				);
 			}
-			
+
 			// Add button to view related split orders
 			frm.add_custom_button(__('View Related Split Orders'), function() {
 				frappe.route_options = {
@@ -82,7 +82,7 @@ frappe.ui.form.on("Sales Order", {
 				};
 				frappe.set_route("List", "Sales Order");
 			}, __("Actions"));
-			
+
 			// Load and display related split orders in the form
 			frappe.call({
 				method: 'frappe.client.get_list',
@@ -102,34 +102,34 @@ frappe.ui.form.on("Sales Order", {
 						// Calculate total of all orders in group
 						let total_group_amount = 0;
 						let all_orders = r.message;
-						
+
 						all_orders.forEach(function(order) {
 							total_group_amount += order.grand_total || 0;
 						});
-						
+
 						let html = '<div class="split-orders-info" style="margin-top: 10px; padding: 10px; background-color: #f0f4f7; border-radius: 5px;">';
 						html += `<h6 style="margin-bottom: 10px; color: #3498db; font-size: 13px;"><i class="fa fa-link"></i> All Orders in Split Group: <b>${all_orders.length}</b></h6>`;
 						html += '<ul style="margin: 0; padding-left: 20px;">';
-						
+
 						all_orders.forEach(function(order) {
 							const is_original = order.haravan_order_id === frm.doc.split_order_group;
 							const is_current = order.name === frm.doc.name;
-							
+
 							let badge = '';
 							if (is_original) {
 								badge = '<span style="background: #95a5a6; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 5px;">ORIGINAL</span>';
 							}
-							
+
 							const style = is_current ? 'font-weight: bold;' : '';
 							html += `<li style="${style}"><a href="/app/sales-order/${order.name}" target="_blank">${order.order_number}</a> - ${format_currency(order.grand_total, frm.doc.currency)}${badge}</li>`;
 						});
-						
+
 						html += '</ul>';
 						html += '<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #d1d8dd;">';
 						html += `<p style="margin: 5px 0; font-size: 13px; color: #2c3e50;"><b>Total Amount (All Split Orders): ${format_currency(total_group_amount, frm.doc.currency)}</b></p>`;
 						html += '</div>';
 						html += '</div>';
-						
+
 						frm.set_df_property('split_order_group', 'description', html);
 					}
 				}
@@ -144,7 +144,7 @@ frappe.ui.form.on("Sales Order", {
 		frm.add_custom_button(__("Send Order To Lark"), frappe.utils.debounce(() => {
 			frappe.db.get_doc("Sales Order", frm.doc.name).then((doc) => {
 
-				// Show warning requiring user to input personal ID 
+				// Show warning requiring user to input personal ID
 				if (!doc.customer_personal_id && !doc.custom_passport_id) {
 					frappe.msgprint(__("Vui lòng nhập số CMND/CCCD/Hộ chiếu của khách hàng trước khi gửi đơn hàng đến Lark."));
 					return;
@@ -721,7 +721,7 @@ frappe.ui.form.on("Sales Order Item", {
 			erpnext.utils.copy_value_in_all_rows(frm.doc, cdt, cdn, "items", "delivery_date");
 		}
 	},
-	
+
 	serial: function (frm, cdt, cdn) {
 		// When serial is selected, append serial number to serial_numbers field
 		var row = locals[cdt][cdn];
@@ -756,7 +756,7 @@ frappe.ui.form.on("Sales Order Item", {
 	promotion: function (frm, cdt, cdn) {
 		var row = locals[cdt][cdn];
 		if (row.promotion) {
-			var selected_promotions = [row.promotion_1, row.promotion_2, row.promotion_3, row.promotion_4];
+			var selected_promotions = [row.promotion_1, row.promotion_2, row.promotion_3, row.promotion_4, row.promotion_5];
 			if (!selected_promotions.includes(row.promotion)) {
 
 				if (!row.promotion_1) {
@@ -767,6 +767,8 @@ frappe.ui.form.on("Sales Order Item", {
 					row.promotion_3 = row.promotion;
 				} else if (!row.promotion_4) {
 					row.promotion_4 = row.promotion;
+				} else if (!row.promotion_5) {
+					row.promotion_5 = row.promotion;
 				}
 			}
 			row.promotion = null;
@@ -1566,7 +1568,7 @@ frappe.ui.form.on("Sales Team", {
 
 function calculate_allocated_percentage(frm, cdt, cdn) {
 	var row = locals[cdt][cdn];
-	
+
 	if (row.merator && row.denominator && row.denominator > 0) {
 		// Calculate percentage from merator/denominator
 		var percentage = (row.merator / row.denominator) * 100;
