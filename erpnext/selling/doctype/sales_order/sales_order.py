@@ -238,7 +238,7 @@ class SalesOrder(SellingController):
 		"""Fetch and set the payment entries linked to this sales order."""
 		if self.docstatus == 2 or not self.name:
 			return
-		
+
 		self.set("payment_entries", [])
 
 		# Get payment entries linked to this sales order
@@ -270,7 +270,7 @@ class SalesOrder(SellingController):
 					"parenttype": pe_ref.reference_doctype,
 					"doctype": "Payment Entry Reference"
 			})
-			
+
 	def validate(self):
 		super().validate()
 		self.validate_delivery_date()
@@ -852,7 +852,7 @@ class SalesOrder(SellingController):
 		self.validate_primary_sales_team()
 		self.process_debt_history()
 		self.handle_serial_numbers_changes()
-		
+
 	def before_insert(self):
 		self.process_debt_history()
 
@@ -871,7 +871,7 @@ class SalesOrder(SellingController):
 		self.update_customer_revenue_fields()
 		self.copy_from_reference_order()
 		self.auto_detect_split_orders()
-		
+
 	def before_submit(self):
 		frappe.throw(_("Sales Order Submission is not allowed."))
 
@@ -907,12 +907,12 @@ class SalesOrder(SellingController):
 		"""Copy manual fields from previous order when haravan_ref_order_id is set"""
 		if not self.haravan_ref_order_id:
 			return
-		try:			
+		try:
 			# Get the reference order
-			ref_order_name = frappe.db.get_value("Sales Order", 
+			ref_order_name = frappe.db.get_value("Sales Order",
 				{"haravan_order_id": self.haravan_ref_order_id}, "name")
 			if not ref_order_name:
-				return	
+				return
 			# Define simple fields to copy (data types)
 			simple_fields = [
 				'consultation_date', 'primary_sales_person',
@@ -924,9 +924,9 @@ class SalesOrder(SellingController):
 				'split_order_group', 'split_order_group_name',
 				'split_reason',
 			]
-					
+
 			# Copy simple fields
-			ref_data = frappe.db.get_value("Sales Order", ref_order_name, simple_fields, as_dict=True)			
+			ref_data = frappe.db.get_value("Sales Order", ref_order_name, simple_fields, as_dict=True)
 			if ref_data:
 				update_fields = {}
 				for field in simple_fields:
@@ -934,12 +934,12 @@ class SalesOrder(SellingController):
 					current_value = getattr(self, field, None)
 					if ref_value and not current_value:
 						update_fields[field] = ref_value
-				
+
 				if update_fields:
 					for field, value in update_fields.items():
 						frappe.db.set_value("Sales Order", self.name, field, value)
 						setattr(self, field, value)
-			
+
 			# Copy Table MultiSelect fields
 			ref_order_doc = frappe.get_doc("Sales Order", ref_order_name)
 			multiselect_fields = {
@@ -975,10 +975,10 @@ class SalesOrder(SellingController):
 
 			# Copy Sales Order Items
 			self.copy_sales_order_items_from_reference(ref_order_doc)
-		
+
 			# Copy Attachments
 			self.copy_attachments_from_reference(ref_order_name)
-		
+
 		except Exception as e:
 			frappe.log_error(f"Error copying from reference order: {str(e)}")
 
@@ -994,18 +994,18 @@ class SalesOrder(SellingController):
 				},
 				fields=["name"]
 			)
-			
+
 			if not attachments:
 				return
-			
+
 			# Update each attachment to point to the new order
 			for attachment in attachments:
 				frappe.db.set_value("File", attachment.name, {
 					"attached_to_name": self.name
 				})
-			
+
 			frappe.db.commit()
-					
+
 		except Exception as e:
 			frappe.log_error(f"Error copying attachments from reference order: {str(e)}")
 
@@ -1017,23 +1017,23 @@ class SalesOrder(SellingController):
 			# Get current items with serial_numbers
 			current_items = self.get("items") or []
 			items_with_serial = [item for item in current_items if getattr(item, "serial_numbers", None)]
-			
+
 			if not items_with_serial:
 				return
-			
+
 			# Get previous serial_number data
 			previous_serial_data = self._get_previous_serial_numbers()
-			
+
 			# Process each item with serial_numbers that has changed
 			for current_item in items_with_serial:
 				# Check if serial_numbers changed
 				current_serial = getattr(current_item, "serial_numbers", None)
 				previous_serial = previous_serial_data.get(current_item.name)
-				
+
 				# Only process if serial_numbers changed
 				if current_serial != previous_serial and current_serial:
 					self._backfill_item_from_reference_by_serial(current_item)
-				
+
 		except Exception as e:
 			frappe.log_error(f"Error handling serial_numbers changes: {str(e)}")
 
@@ -1042,8 +1042,8 @@ class SalesOrder(SellingController):
 		try:
 			# Get current serial_numbers from database
 			serial_data = frappe.db.sql("""
-				SELECT name, serial_numbers 
-				FROM `tabSales Order Item` 
+				SELECT name, serial_numbers
+				FROM `tabSales Order Item`
 				WHERE parent = %s
 			""", (self.name,), as_dict=True)
 			return {item.name: item.serial_numbers for item in serial_data}
@@ -1057,26 +1057,26 @@ class SalesOrder(SellingController):
 			current_serial = getattr(current_item, "serial_numbers", None)
 			if not current_serial:
 				return
-			
+
 			# Get reference order based on Sales Order's haravan_ref_order_id
-			ref_order_name = frappe.db.get_value("Sales Order", 
+			ref_order_name = frappe.db.get_value("Sales Order",
 				{"haravan_order_id": self.haravan_ref_order_id}, "name")
-			
+
 			if not ref_order_name:
 				return
-			
+
 			ref_order_doc = frappe.get_doc("Sales Order", ref_order_name)
 			ref_items = ref_order_doc.get("items") or []
-			
+
 			# Find reference item with matching serial_numbers
 			matching_ref_item = self._find_matching_ref_item_by_serial(ref_items, current_serial)
-			
+
 			if not matching_ref_item:
 				return
-			
+
 			# Copy fields from reference item to current item
 			self._copy_item_fields(matching_ref_item, current_item)
-				
+
 		except Exception as e:
 			frappe.log_error(f"Error backfilling item {current_item.name}: {str(e)}")
 
@@ -1091,11 +1091,11 @@ class SalesOrder(SellingController):
 	def _copy_item_fields(self, ref_item, current_item):
 		"""Copy fields from reference item to current item"""
 		fields_to_copy = self._get_item_fields_to_copy()
-		
+
 		for field in fields_to_copy:
 			ref_value = getattr(ref_item, field, None)
 			current_value = getattr(current_item, field, None)
-			
+
 			# Only copy if reference has value and current doesn't
 			if ref_value and not current_value:
 				setattr(current_item, field, ref_value)
@@ -1157,6 +1157,7 @@ class SalesOrder(SellingController):
 			'promotion_2',
 			'promotion_3',
 			'promotion_4',
+			'promotion_5',
 			'uom',
 			'weight_per_unit',
 			'weight_uom',
@@ -1184,7 +1185,7 @@ class SalesOrder(SellingController):
 				# Copy fields using common method
 				items_updated = self._copy_item_fields_with_db_update(ref_item, current_item) or items_updated
 
-			if items_updated:       
+			if items_updated:
 				frappe.db.commit()
 				frappe.clear_document_cache("Sales Order", self.name)
 
@@ -1195,11 +1196,11 @@ class SalesOrder(SellingController):
 		"""Copy fields from reference item to current item using frappe.db.set_value"""
 		fields_to_copy = self._get_item_fields_to_copy()
 		items_updated = False
-		
+
 		for field in fields_to_copy:
 			ref_value = getattr(ref_item, field, None)
 			current_value = getattr(current_item, field, None)
-			
+
 			# Special handling for uom field - always copy if reference has value
 			if field == 'uom' and ref_value:
 				frappe.db.set_value("Sales Order Item", current_item.name, field, ref_value)
@@ -1208,7 +1209,7 @@ class SalesOrder(SellingController):
 			elif ref_value and not current_value:
 				frappe.db.set_value("Sales Order Item", current_item.name, field, ref_value)
 				items_updated = True
-		
+
 		return items_updated
 
 	def auto_detect_split_orders(self):
@@ -1222,15 +1223,15 @@ class SalesOrder(SellingController):
 		# Skip if no haravan_created_at (cannot detect time-based)
 		if not self.haravan_created_at:
 			return
-		
+
 		# Calculate time window (30 minutes BEFORE current order time only)
 		order_time = get_datetime(self.haravan_created_at)
 		time_window_start = add_to_date(order_time, minutes=-30)
-		
+
 		# Find orders from same customer created within 30 minutes before
 		# Only look for new orders (not reorders) to avoid grouping unrelated orders
 		previous_orders = frappe.db.sql("""
-			SELECT 
+			SELECT
 				name,
 				haravan_order_id,
 				haravan_created_at,
@@ -1246,7 +1247,7 @@ class SalesOrder(SellingController):
 				AND cancelled_status = 'Uncancelled'
 			LIMIT 10
 		""", (self.customer, time_window_start, order_time, self.name), as_dict=True)
-		
+
 		if not previous_orders:
 			frappe.db.sql("""
 				UPDATE `tabSales Order`
@@ -1256,22 +1257,22 @@ class SalesOrder(SellingController):
 				WHERE name = %s
 				ORDER BY haravan_created_at ASC
 			""", (self.haravan_order_id, self.order_number, self.name))
-			
+
 			# Sync with self object
 			self.split_order_group = self.haravan_order_id
 			self.split_order_group_name = self.order_number
 			self.is_split_order = 0
-			
+
 			frappe.db.commit()
 			return
-		
+
 		# Found related order(s) → This is a split order
 		first_previous_order = previous_orders[0]
-		
+
 		# Get group ID from previous order
 		split_group_id = first_previous_order.split_order_group or first_previous_order.haravan_order_id
 		split_group_name = first_previous_order.split_order_group_name or first_previous_order.order_number
-		
+
 		# Set this order as split order
 		frappe.db.sql("""
 			UPDATE `tabSales Order`
@@ -1281,13 +1282,13 @@ class SalesOrder(SellingController):
 				split_reason = 'Gold Regulation'
 			WHERE name = %s
 		""", (split_group_id, split_group_name, self.name))
-		
+
 		# Sync with self object
 		self.split_order_group = split_group_id
 		self.split_order_group_name = split_group_name
 		self.is_split_order = 1
 		self.split_reason = 'Gold Regulation'
-		
+
 		# Update all previous orders to mark as split orders
 		for prev_order in previous_orders:
 			# Always update to ensure is_split_order = 1
@@ -1299,7 +1300,7 @@ class SalesOrder(SellingController):
 					split_reason = 'Gold Regulation'
 				WHERE name = %s
 			""", (split_group_id, split_group_name, prev_order.name))
-		
+
 		frappe.db.commit()
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:
@@ -2365,30 +2366,30 @@ def larksuite_notification(sales_order_doc):
 def get_split_orders_in_group(split_order_group, include_cancelled=False):
 	"""
 	Get all orders in a split order group
-	
+
 	Args:
 		split_order_group: The split order group ID
 		include_cancelled: Whether to include cancelled orders
-	
+
 	Returns:
 		List of orders in the group with details
 	"""
 	if not split_order_group:
 		return []
-	
+
 	filters = {
 		"split_order_group": split_order_group,
 		"is_split_order": 1
 	}
-	
+
 	if not include_cancelled:
 		filters["cancelled_status"] = "Uncancelled"
-	
+
 	orders = frappe.get_all("Sales Order",
 		filters=filters,
 		fields=[
 			"name", "order_number", "customer", "customer_name",
-			"grand_total", "currency", "haravan_order_id", 
+			"grand_total", "currency", "haravan_order_id",
 			"cancelled_status", "financial_status", "fulfillment_status",
 			"transaction_date", "modified"
 		],
@@ -2396,5 +2397,5 @@ def get_split_orders_in_group(split_order_group, include_cancelled=False):
 	)
 	for order in orders:
 		order["is_original_order"] = (order.get("haravan_order_id") == split_order_group)
-	
+
 	return orders

@@ -34,6 +34,7 @@
   "promotion_2",
   "promotion_3",
   "promotion_4",
+  "promotion_5",
   "column_break_klcw",
   "promotion",
   "section_break_5",
@@ -1141,12 +1142,19 @@
    "fieldname": "discount_rate",
    "fieldtype": "Data",
    "label": "Discount Rate"
+  },
+  {
+   "fieldname": "promotion_5",
+   "fieldtype": "Link",
+   "label": "Promotion 5",
+   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"NONE\"]]",
+   "options": "Promotion"
   }
  ],
  "idx": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-17 09:20:50.286866",
+ "modified": "2025-12-01 14:27:00.666782",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order Item",
