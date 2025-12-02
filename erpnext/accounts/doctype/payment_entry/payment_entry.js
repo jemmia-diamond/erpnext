@@ -40,6 +40,7 @@ frappe.ui.form.on("Payment Entry", {
 		});
 
 		if (frm.is_new()) {
+			frm.set_value("created_by_display", frappe.session.user);
 			set_default_party_type(frm);
 		}
 	},

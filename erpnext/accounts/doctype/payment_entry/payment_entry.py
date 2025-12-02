@@ -62,6 +62,98 @@ class InvalidPaymentEntry(ValidationError):
 
 
 class PaymentEntry(AccountsController):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from erpnext.accounts.doctype.advance_taxes_and_charges.advance_taxes_and_charges import AdvanceTaxesandCharges
+		from erpnext.accounts.doctype.payment_entry_bank_transaction.payment_entry_bank_transaction import PaymentEntryBankTransaction
+		from erpnext.accounts.doctype.payment_entry_deduction.payment_entry_deduction import PaymentEntryDeduction
+		from erpnext.accounts.doctype.payment_entry_reference.payment_entry_reference import PaymentEntryReference
+		from frappe.types import DF
+
+		amended_from: DF.Link | None
+		apply_tax_withholding_amount: DF.Check
+		auto_repeat: DF.Link | None
+		bank: DF.ReadOnly | None
+		bank_account: DF.Link | None
+		bank_account_branch: DF.ReadOnly | None
+		bank_account_no: DF.ReadOnly | None
+		bank_transactions: DF.Table[PaymentEntryBankTransaction]
+		base_in_words: DF.SmallText | None
+		base_paid_amount: DF.Currency
+		base_paid_amount_after_tax: DF.Currency
+		base_received_amount: DF.Currency
+		base_received_amount_after_tax: DF.Currency
+		base_total_allocated_amount: DF.Currency
+		base_total_taxes_and_charges: DF.Currency
+		book_advance_payments_in_separate_party_account: DF.Check
+		clearance_date: DF.Date | None
+		company: DF.Link | None
+		contact_email: DF.Data | None
+		contact_person: DF.Link | None
+		cost_center: DF.Link | None
+		created_by_display: DF.Link | None
+		custom_remarks: DF.Check
+		custom_transaction_id: DF.Data | None
+		custom_transfer_note: DF.SmallText | None
+		custom_transfer_status: DF.Literal["", "pending", "success", "cancel"]
+		deductions: DF.Table[PaymentEntryDeduction]
+		difference_amount: DF.Currency
+		in_words: DF.SmallText | None
+		is_opening: DF.Literal["No", "Yes"]
+		letter_head: DF.Link | None
+		misa_sync_error_msg: DF.Data | None
+		misa_sync_guid: DF.Data | None
+		misa_synced: DF.Check
+		misa_synced_at: DF.Datetime | None
+		mode_of_payment: DF.Link | None
+		name_display: DF.Data | None
+		naming_series: DF.Literal["ACC-PAY-.YYYY.-"]
+		paid_amount: DF.Currency
+		paid_amount_after_tax: DF.Currency
+		paid_from: DF.Link | None
+		paid_from_account_balance: DF.Currency
+		paid_from_account_currency: DF.Link | None
+		paid_from_account_type: DF.Data | None
+		paid_to: DF.Link | None
+		paid_to_account_balance: DF.Currency
+		paid_to_account_currency: DF.Link | None
+		paid_to_account_type: DF.Data | None
+		party: DF.DynamicLink | None
+		party_balance: DF.Currency
+		party_bank_account: DF.Link | None
+		party_name: DF.Data | None
+		party_type: DF.Link | None
+		payment_order: DF.Link | None
+		payment_order_status: DF.Literal["Pending", "Success", "Cancel"]
+		payment_type: DF.Literal["Receive", "Pay", "Internal Transfer"]
+		posting_date: DF.Date
+		print_heading: DF.Link | None
+		project: DF.Link | None
+		purchase_taxes_and_charges_template: DF.Link | None
+		qr_url: DF.Data | None
+		received_amount: DF.Currency
+		received_amount_after_tax: DF.Currency
+		reconcile_on_advance_payment_date: DF.Check
+		reference_date: DF.Date | None
+		reference_no: DF.Data | None
+		references: DF.Table[PaymentEntryReference]
+		remarks: DF.SmallText | None
+		sales_taxes_and_charges_template: DF.Link | None
+		source_exchange_rate: DF.Float
+		status: DF.Literal["", "Draft", "Submitted", "Cancelled"]
+		target_exchange_rate: DF.Float
+		tax_withholding_category: DF.Link | None
+		taxes: DF.Table[AdvanceTaxesandCharges]
+		title: DF.Data | None
+		total_allocated_amount: DF.Currency
+		total_order_amount: DF.Currency
+		total_taxes_and_charges: DF.Currency
+		unallocated_amount: DF.Currency
+	# end: auto-generated types
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
@@ -95,6 +187,8 @@ class PaymentEntry(AccountsController):
 			self.party_account_currency = self.paid_to_account_currency
 
 	def validate(self):
+		self.set_created_by_display()
+		self.set_total_order_amount()
 		self.setup_party_account_field()
 		self.set_missing_values()
 		self.set_liability_account()
@@ -120,6 +214,55 @@ class PaymentEntry(AccountsController):
 		self.set_tax_withholding()
 		self.set_status()
 		self.set_total_in_words()
+
+	def onload(self):
+		self.set_created_by_display()
+		self.set_total_order_amount()
+		self.load_bank_transactions()
+		if self.name:
+			self.name_display = self.name
+
+	def load_bank_transactions(self):
+		"""Fetch and populate linked Bank Transactions"""
+		if not self.name:
+			return
+
+		self.bank_transactions = []
+		linked_transactions = frappe.db.sql("""
+			SELECT
+				btp.parent as bank_transaction,
+				bt.date,
+				btp.allocated_amount,
+				btp.clearance_date
+			FROM `tabBank Transaction Payments` btp
+			INNER JOIN `tabBank Transaction` bt ON bt.name = btp.parent
+			WHERE btp.payment_entry = %s
+			ORDER BY bt.date DESC
+		""", (self.name,), as_dict=True)
+
+		for row in linked_transactions:
+			self.append("bank_transactions", row)
+
+	def set_created_by_display(self):
+		if self.owner:
+			self.created_by_display = self.owner
+
+	def set_total_order_amount(self):
+		"""Fetch grand_total from linked Sales Order if exists"""
+		self.total_order_amount = 0
+
+		if not self.references:
+			return
+
+		for ref in self.references:
+			if ref.reference_doctype == "Sales Order" and ref.reference_name:
+				try:
+					grand_total = frappe.db.get_value("Sales Order", ref.reference_name, "grand_total")
+					if grand_total:
+						self.total_order_amount = grand_total
+						break
+				except Exception:
+					pass
 
 	def before_save(self):
 		self.set_matched_unset_payment_requests_to_response()
