@@ -528,9 +528,10 @@ class PaymentEntry(AccountsController):
 			latest = latest.get(d.payment_term) or latest.get(None)
 			# The reference has already been fully paid
 			if not latest:
-				frappe.throw(
-					_("{0} {1} has already been fully paid.").format(_(d.reference_doctype), d.reference_name)
-				)
+				return
+				# frappe.throw(
+				# 	_("{0} {1} has already been fully paid.").format(_(d.reference_doctype), d.reference_name)
+				# )
 			# The reference has already been partly paid
 			elif (
 				latest.outstanding_amount < latest.invoice_amount
@@ -1369,12 +1370,13 @@ class PaymentEntry(AccountsController):
 			self.title = self.paid_from + " - " + self.paid_to
 
 	def validate_transaction_reference(self):
-		bank_account = self.paid_to if self.payment_type == "Receive" else self.paid_from
-		bank_account_type = frappe.get_cached_value("Account", bank_account, "account_type")
-
-		if bank_account_type == "Bank":
-			if not self.reference_no or not self.reference_date:
-				frappe.throw(_("Reference No and Reference Date is mandatory for Bank transaction"))
+		# Removed Bank-only validation - reference_no and reference_date are now always optional
+		pass
+		# bank_account = self.paid_to if self.payment_type == "Receive" else self.paid_from
+		# bank_account_type = frappe.get_cached_value("Account", bank_account, "account_type")
+		# if bank_account_type == "Bank":
+		# 	if not self.reference_no or not self.reference_date:
+		# 		frappe.throw(_("Reference No and Reference Date is mandatory for Bank transaction"))
 
 	def set_remarks(self):
 		if self.custom_remarks:
