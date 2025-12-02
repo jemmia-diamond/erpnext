@@ -15,10 +15,10 @@
   "created_by_display",
   "column_break_5",
   "posting_date",
+  "mode_of_payment",
   "company",
   "bank_account",
   "bank_account_branch",
-  "mode_of_payment",
   "qr_section_break",
   "custom_transaction_id",
   "custom_transfer_status",
@@ -629,7 +629,6 @@
    "read_only": 1
   },
   {
-   "depends_on": "party",
    "fieldname": "bank_account",
    "fieldtype": "Link",
    "label": "Company Bank Account",
@@ -921,11 +920,10 @@
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "bank_account.account_type",
-   "fetch_if_empty": 1,
    "fieldname": "bank_account_branch",
-   "fieldtype": "Read Only",
-   "label": "Branch"
+   "fieldtype": "Select",
+   "label": "Branch",
+   "options": "C\u1eeda h\u00e0ng HCM\nC\u1eeda h\u00e0ng C\u1ea7n Th\u01a1\nC\u1eeda h\u00e0ng H\u00e0 N\u1ed9i"
   },
   {
    "fieldname": "name_display",
@@ -946,7 +944,7 @@
    "table_fieldname": "payment_entries"
   }
  ],
- "modified": "2025-12-02 12:03:14.708762",
+ "modified": "2025-12-02 13:58:43.023686",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Payment Entry",

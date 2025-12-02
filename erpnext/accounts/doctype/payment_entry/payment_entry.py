@@ -79,7 +79,7 @@ class PaymentEntry(AccountsController):
 		auto_repeat: DF.Link | None
 		bank: DF.ReadOnly | None
 		bank_account: DF.Link | None
-		bank_account_branch: DF.ReadOnly | None
+		bank_account_branch: DF.Literal["C\u1eeda h\u00e0ng HCM", "C\u1eeda h\u00e0ng C\u1ea7n Th\u01a1", "C\u1eeda h\u00e0ng H\u00e0 N\u1ed9i"]
 		bank_account_no: DF.ReadOnly | None
 		bank_transactions: DF.Table[PaymentEntryBankTransaction]
 		base_in_words: DF.SmallText | None

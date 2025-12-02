@@ -232,7 +232,31 @@ frappe.ui.form.on("Payment Entry", {
 		);
 	},
 
+	update_bank_branch_logic: function (frm) {
+		if (["Wire Transfer", "QR"].includes(frm.doc.mode_of_payment)) {
+			frm.set_df_property("bank_account_branch", "read_only", 1);
+			if (frm.doc.bank_account) {
+				frappe.db.get_value("Bank Account", frm.doc.bank_account, "account_type", (r) => {
+					if (r && r.account_type) {
+						frm.set_df_property("bank_account_branch", "options", [r.account_type]);
+						frm.set_value("bank_account_branch", r.account_type);
+					}
+				});
+			} else {
+				frm.set_value("bank_account_branch", "");
+			}
+		} else {
+			frm.set_df_property("bank_account_branch", "options", [
+				"Cửa hàng HCM",
+				"Cửa hàng Cần Thơ",
+				"Cửa hàng Hà Nội",
+			]);
+			frm.set_df_property("bank_account_branch", "read_only", 0);
+		}
+	},
+
 	refresh: function (frm) {
+		frm.events.update_bank_branch_logic(frm);
 		erpnext.hide_company(frm);
 		frm.events.hide_unhide_fields(frm);
 		frm.events.set_dynamic_labels(frm);
@@ -470,6 +494,7 @@ frappe.ui.form.on("Payment Entry", {
 		erpnext.accounts.pos.get_payment_mode_account(frm, frm.doc.mode_of_payment, function (account) {
 			let payment_account_field = frm.doc.payment_type == "Receive" ? "paid_to" : "paid_from";
 			frm.set_value(payment_account_field, account);
+			frm.events.update_bank_branch_logic(frm);
 		});
 	},
 
@@ -1397,6 +1422,7 @@ frappe.ui.form.on("Payment Entry", {
 						}
 						frm.set_value("bank", r.message.bank);
 						frm.set_value("bank_account_no", r.message.bank_account_no);
+						frm.events.update_bank_branch_logic(frm);
 					}
 				},
 			});
