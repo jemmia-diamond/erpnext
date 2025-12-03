@@ -153,6 +153,7 @@ class PaymentEntry(AccountsController):
 		total_order_amount: DF.Currency
 		total_taxes_and_charges: DF.Currency
 		unallocated_amount: DF.Currency
+		verified_by: DF.Link | None
 	# end: auto-generated types
 	from typing import TYPE_CHECKING
 
@@ -2045,6 +2046,25 @@ class PaymentEntry(AccountsController):
 			return
 
 		frappe.response["matched_payment_requests"] = matched_payment_requests
+
+	@frappe.whitelist()
+	def verify_payment(self):
+		"""Verify payment entry after bank transaction matching"""
+		if not self.bank_transactions or len(self.bank_transactions) == 0:
+			frappe.throw(_("Cannot verify: Payment Entry must have at least one Bank Transaction"))
+		has_sales_order = any(ref.reference_doctype == "Sales Order" for ref in self.references)
+		if not has_sales_order:
+			frappe.throw(_("Cannot verify: Payment Entry must have at least one Sales Order reference"))
+
+		if self.payment_order_status == "Success":
+			frappe.throw(_("Cannot verify: Payment has already been marked as Success"))
+
+		if self.payment_order_status == "Pending":
+			self.payment_order_status = "Success"
+		self.verified_by = frappe.session.user
+		self.save()
+
+		frappe.msgprint(_("Payment Entry verified successfully"))
 
 	@frappe.whitelist()
 	def allocate_amount_to_references(self, paid_amount, paid_amount_change, allocate_payment_amount):

@@ -3,16 +3,19 @@
  "allow_auto_repeat": 1,
  "allow_import": 1,
  "autoname": "naming_series:",
- "creation": "2016-06-01 14:38:51.012597",
+ "creation": "2025-12-03 14:08:40.555886",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "bank_transactions_section",
+  "bank_transactions",
   "type_of_payment",
   "naming_series",
   "name_display",
   "payment_type",
   "payment_order_status",
   "created_by_display",
+  "verified_by",
   "column_break_5",
   "posting_date",
   "mode_of_payment",
@@ -89,8 +92,6 @@
   "column_break_23",
   "reference_date",
   "clearance_date",
-  "bank_transactions_section",
-  "bank_transactions",
   "accounting_dimensions_section",
   "dimension_col_break_2",
   "misa_synced",
@@ -520,7 +521,6 @@
    "read_only": 1
   },
   {
-   "collapsible": 1,
    "fieldname": "bank_transactions_section",
    "fieldtype": "Section Break",
    "label": "Bank Transactions"
@@ -873,6 +873,14 @@
    "read_only_depends_on": "doc.owner"
   },
   {
+   "depends_on": "eval:doc.verified_by",
+   "fieldname": "verified_by",
+   "fieldtype": "Link",
+   "label": "Verified By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
    "depends_on": "eval:doc.mode_of_payment == 'Wire Transfer' || doc.mode_of_payment == 'QR'",
    "fieldname": "qr_section_break",
    "fieldtype": "Section Break",
@@ -944,7 +952,7 @@
    "table_fieldname": "payment_entries"
   }
  ],
- "modified": "2025-12-02 13:58:43.023686",
+ "modified": "2025-12-03 14:26:59.234983",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Payment Entry",

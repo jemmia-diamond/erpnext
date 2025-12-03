@@ -296,6 +296,43 @@ frappe.ui.form.on("Payment Entry", {
 				window.open(frm.doc.qr_url);
 			}, qr_group);
 		}
+
+		// Add Verify button
+		if (
+			!frm.doc.verified_by &&
+			frm.doc.payment_order_status !== "Success" &&
+			frm.doc.payment_order_status !== "Cancel"
+		) {
+			frm.add_custom_button(__("Verify"), () => {
+				if (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0) {
+					frappe.msgprint({
+						title: __("Cannot Verify"),
+						indicator: "red",
+						message: __("Payment Entry must have at least one Bank Transaction to verify.")
+					});
+					return;
+				}
+
+				if (!frm.doc.references || !frm.doc.references.some(r => r.reference_doctype === "Sales Order")) {
+					frappe.msgprint({
+						title: __("Cannot Verify"),
+						indicator: "red",
+						message: __("Payment Entry must have at least one Sales Order reference to verify.")
+					});
+					return;
+				}
+
+				frappe.call({
+					method: "verify_payment",
+					doc: frm.doc,
+					callback: function(r) {
+						if (!r.exc) {
+							frm.reload_doc();
+						}
+					}
+				});
+			});
+		}
 	},
 
 	validate: async function (frm) {
