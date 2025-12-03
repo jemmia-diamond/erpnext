@@ -230,6 +230,15 @@ frappe.ui.form.on("Payment Entry", {
 			"payment_request_outstanding",
 			"Payment Entry Reference"
 		);
+
+		frm.set_query("bank_transaction", "bank_transactions", function() {
+			return {
+				query: "erpnext.accounts.doctype.payment_entry.payment_entry.get_bank_transactions",
+				filters: {
+					company: frm.doc.company
+				}
+			};
+		});
 	},
 
 	update_bank_branch_logic: function (frm) {
@@ -304,11 +313,12 @@ frappe.ui.form.on("Payment Entry", {
 			frm.doc.payment_order_status !== "Cancel"
 		) {
 			frm.add_custom_button(__("Verify"), () => {
-				if (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0) {
+				let skip_bank_check = ["Cash", "COD"].includes(frm.doc.mode_of_payment);
+				if (!skip_bank_check && (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0)) {
 					frappe.msgprint({
 						title: __("Cannot Verify"),
 						indicator: "red",
-						message: __("Payment Entry must have at least one Bank Transaction to verify.")
+						message: __("Payment Entry must have at least one Bank Transaction to verify (unless Mode of Payment is Cash or COD).")
 					});
 					return;
 				}
@@ -1984,3 +1994,19 @@ function prompt_for_missing_account(frm, account) {
 function get_deduction_amount_precision() {
 	return frappe.meta.get_field_precision(frappe.meta.get_field("Payment Entry Deduction", "amount"));
 }
+
+frappe.ui.form.on("Payment Entry Bank Transaction", {
+	bank_transaction: function(frm, cdt, cdn) {
+		let row = locals[cdt][cdn];
+		if (row.bank_transaction) {
+			frappe.db.get_value("Bank Transaction", row.bank_transaction, ["date", "deposit", "sepay_transaction_content"], (r) => {
+				if (r) {
+					frappe.model.set_value(cdt, cdn, "date", r.date);
+					let amount = r.deposit || r.withdrawal || 0;
+					frappe.model.set_value(cdt, cdn, "allocated_amount", amount);
+					frappe.model.set_value(cdt, cdn, "sepay_transaction_content", r.sepay_transaction_content);
+				}
+			});
+		}
+	}
+});

@@ -523,14 +523,14 @@
   {
    "fieldname": "bank_transactions_section",
    "fieldtype": "Section Break",
-   "label": "Bank Transactions"
+   "label": "Bank Transactions",
+   "depends_on": "eval:!doc.__islocal"
   },
   {
    "fieldname": "bank_transactions",
    "fieldtype": "Table",
    "label": "Bank Transactions",
-   "options": "Payment Entry Bank Transaction",
-   "read_only": 1
+   "options": "Payment Entry Bank Transaction"
   },
   {
    "collapsible": 1,
@@ -952,7 +952,7 @@
    "table_fieldname": "payment_entries"
   }
  ],
- "modified": "2025-12-03 14:26:59.234983",
+ "modified": "2025-12-03 14:31:30.538490",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Payment Entry",

@@ -228,7 +228,10 @@ class PaymentEntry(AccountsController):
 		if not self.name:
 			return
 
-		self.bank_transactions = []
+
+		if self.bank_transactions:
+			return
+
 		linked_transactions = frappe.db.sql("""
 			SELECT
 				btp.parent as bank_transaction,
@@ -2050,8 +2053,9 @@ class PaymentEntry(AccountsController):
 	@frappe.whitelist()
 	def verify_payment(self):
 		"""Verify payment entry after bank transaction matching"""
-		if not self.bank_transactions or len(self.bank_transactions) == 0:
-			frappe.throw(_("Cannot verify: Payment Entry must have at least one Bank Transaction"))
+		skip_bank_check = self.mode_of_payment in ["Cash", "COD"]
+		if not skip_bank_check and (not self.bank_transactions or len(self.bank_transactions) == 0):
+			frappe.throw(_("Cannot verify: Payment Entry must have at least one Bank Transaction (unless Mode of Payment is Cash or COD)"))
 		has_sales_order = any(ref.reference_doctype == "Sales Order" for ref in self.references)
 		if not has_sales_order:
 			frappe.throw(_("Cannot verify: Payment Entry must have at least one Sales Order reference"))
@@ -3768,6 +3772,37 @@ def make_payment_order(source_name, target_doc=None):
 	return doclist
 
 
+
 @erpnext.allow_regional
 def add_regional_gl_entries(gl_entries, doc):
 	return
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_bank_transactions(doctype, txt, searchfield, start, page_len, filters):
+	"""Custom query to search Bank Transactions by name, bank_account, and sepay_transaction_content"""
+	return frappe.db.sql(
+		"""
+		SELECT name, bank_account, sepay_transaction_content
+		FROM `tabBank Transaction`
+		WHERE (
+			name LIKE %(txt)s
+			OR bank_account LIKE %(txt)s
+			OR sepay_transaction_content LIKE %(txt)s
+		)
+		{conditions}
+		ORDER BY
+			CASE WHEN name LIKE %(txt)s THEN 0 ELSE 1 END,
+			modified DESC
+		LIMIT %(page_len)s OFFSET %(start)s
+		""".format(
+			conditions=("AND company = %(company)s" if filters.get("company") else "Jemmia Diamond")
+		),
+		{
+			"txt": f"%{txt}%",
+			"company": filters.get("company"),
+			"start": start,
+			"page_len": page_len,
+		},
+	)
