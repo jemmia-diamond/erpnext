@@ -3051,6 +3051,14 @@ def get_reference_details(
 			"payment_type": payment_type,
 		}
 	)
+
+	if reference_doctype == "Sales Order":
+		res.update({
+			"balance": flt(ref_doc.get("balance")),
+			"order_number": ref_doc.get("order_number")
+		})
+
+
 	if account:
 		res.update({"account": account})
 	return res
@@ -3806,3 +3814,37 @@ def get_bank_transactions(doctype, txt, searchfield, start, page_len, filters):
 			"page_len": page_len,
 		},
 	)
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, filters):
+	"""Custom query to search Sales Orders by name and order_number"""
+	return frappe.db.sql(
+		"""
+		SELECT name, order_number, customer_name
+		FROM `tabSales Order`
+		WHERE (
+			name LIKE %(txt)s
+			OR order_number LIKE %(txt)s
+			OR customer_name Like %(txt)s
+		)
+		AND company = %(company)s
+		ORDER BY
+			CASE
+				WHEN name LIKE %(txt)s THEN 0
+				WHEN order_number LIKE %(txt)s THEN 1
+				ELSE 2
+			END,
+			modified DESC
+		LIMIT %(page_len)s OFFSET %(start)s
+		""",
+		{
+			"txt": f"%{txt}%",
+			"company": filters.get("company"),
+			"start": start,
+			"page_len": page_len,
+		},
+	)
+
+

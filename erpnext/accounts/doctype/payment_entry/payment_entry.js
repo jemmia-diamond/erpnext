@@ -239,6 +239,18 @@ frappe.ui.form.on("Payment Entry", {
 				}
 			};
 		});
+
+		frm.set_query("reference_name", "references", function(doc, cdt, cdn) {
+			let row = locals[cdt][cdn];
+			if (row.reference_doctype === "Sales Order") {
+				return {
+					query: "erpnext.accounts.doctype.payment_entry.payment_entry.get_sales_orders_for_payment",
+					filters: {
+						company: frm.doc.company
+					}
+				};
+			}
+		});
 	},
 
 	update_bank_branch_logic: function (frm) {
@@ -1837,6 +1849,13 @@ frappe.ui.form.on("Payment Entry", {
 });
 
 frappe.ui.form.on("Payment Entry Reference", {
+	references_add: function(frm, cdt, cdn) {
+		let row = locals[cdt][cdn];
+		if (!row.reference_doctype) {
+			frappe.model.set_value(cdt, cdn, "reference_doctype", "Sales Order");
+		}
+	},
+
 	reference_doctype: function (frm, cdt, cdn) {
 		var row = locals[cdt][cdn];
 		frm.events.validate_reference_document(frm, row);
