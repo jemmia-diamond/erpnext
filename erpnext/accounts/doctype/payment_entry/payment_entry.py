@@ -271,6 +271,27 @@ class PaymentEntry(AccountsController):
 	def before_save(self):
 		self.set_matched_unset_payment_requests_to_response()
 
+	def on_update(self):
+		self.sync_bank_transaction_payments()
+
+	def sync_bank_transaction_payments(self):
+		for bt_row in self.bank_transactions:
+			if bt_row.bank_transaction:
+				bank_transaction = frappe.get_doc("Bank Transaction", bt_row.bank_transaction)
+				existing = any(
+					pe.payment_document == "Payment Entry" and pe.payment_entry == self.name
+					for pe in bank_transaction.payment_entries
+				)
+
+				if not existing:
+					bank_transaction.append("payment_entries", {
+						"payment_document": "Payment Entry",
+						"payment_entry": self.name,
+						"allocated_amount": bt_row.allocated_amount
+					})
+					bank_transaction.save(ignore_permissions=True)
+
+
 	def on_submit(self):
 		if self.difference_amount:
 			frappe.throw(_("Difference Amount must be zero"))
