@@ -2011,12 +2011,15 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 	bank_transaction: function(frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
 		if (row.bank_transaction) {
-			frappe.db.get_value("Bank Transaction", row.bank_transaction, ["date", "deposit", "sepay_transaction_content"], (r) => {
+			frappe.db.get_value("Bank Transaction", row.bank_transaction, ["date", "deposit", "withdrawal", "sepay_transaction_content", "sepay_transaction_date"], (r) => {
 				if (r) {
 					frappe.model.set_value(cdt, cdn, "date", r.date);
 					let amount = r.deposit || r.withdrawal || 0;
 					frappe.model.set_value(cdt, cdn, "allocated_amount", amount);
 					frappe.model.set_value(cdt, cdn, "sepay_transaction_content", r.sepay_transaction_content);
+					if (r.sepay_transaction_date) {
+						frm.set_value("payment_date", r.sepay_transaction_date);
+					}
 				}
 			});
 		}
