@@ -211,7 +211,8 @@
    "in_list_view": 1,
    "label": "Transfer Status",
    "options": "\npending\nsuccess\ncancel",
-   "read_only": 1
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "fieldname": "qr_url",
