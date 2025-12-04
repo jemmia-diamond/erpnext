@@ -325,7 +325,8 @@ frappe.ui.form.on("Payment Entry", {
 		if (
 			!frm.is_new() &&
 			!frm.doc.verified_by &&
-			(frm.doc.payment_order_status === "Draft" || frm.doc.payment_order_status === "Pending" || !frm.doc.payment_order_status)
+			(frm.doc.payment_order_status === "Draft" || frm.doc.payment_order_status === "Pending") &&
+			(frappe.user.has_role("Accounts User") || frappe.user.has_role("Accounts Manager"))
 		) {
 			frm.add_custom_button(__("Verify"), () => {
 				let skip_bank_check = ["Cash", "COD"].includes(frm.doc.mode_of_payment);
