@@ -246,7 +246,8 @@ frappe.ui.form.on("Payment Entry", {
 				return {
 					query: "erpnext.accounts.doctype.payment_entry.payment_entry.get_sales_orders_for_payment",
 					filters: {
-						company: frm.doc.company
+						company: frm.doc.company,
+						customer: frm.doc.party
 					}
 				};
 			}

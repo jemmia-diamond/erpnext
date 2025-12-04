@@ -3792,12 +3792,16 @@ def get_bank_transactions(doctype, txt, searchfield, start, page_len, filters):
 	"""Custom query to search Bank Transactions by name, bank_account, and sepay_transaction_content"""
 	return frappe.db.sql(
 		"""
-		SELECT name, bank_account, sepay_transaction_content
+		SELECT name, sepay_amount_in, bank_account, sepay_transaction_content
 		FROM `tabBank Transaction`
 		WHERE (
 			name LIKE %(txt)s
 			OR bank_account LIKE %(txt)s
 			OR sepay_transaction_content LIKE %(txt)s
+			OR sepay_reference_number LIKE %(txt)s
+			OR sepay_order_description LIKE %(txt)s
+			OR sepay_order_number LIKE %(txt)s
+			OR sepay_amount_in LIKE %(txt)s
 		)
 		{conditions}
 		ORDER BY
@@ -3830,6 +3834,7 @@ def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, fil
 			OR customer_name Like %(txt)s
 		)
 		AND company = %(company)s
+		AND customer = %(customer)s
 		ORDER BY
 			CASE
 				WHEN name LIKE %(txt)s THEN 0
@@ -3842,9 +3847,11 @@ def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, fil
 		{
 			"txt": f"%{txt}%",
 			"company": filters.get("company"),
+			"customer": filters.get("customer"),
 			"start": start,
 			"page_len": page_len,
 		},
 	)
+
 
 
