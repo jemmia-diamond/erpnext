@@ -248,8 +248,8 @@ class PaymentEntry(AccountsController):
 			self.append("bank_transactions", row)
 
 	def set_created_by_display(self):
-		if self.owner:
-			self.created_by_display = self.owner
+		if not self.created_by_display:
+			self.created_by_display = frappe.session.user
 
 	def set_total_order_amount(self):
 		"""Fetch grand_total from linked Sales Order if exists"""
@@ -3055,7 +3055,8 @@ def get_reference_details(
 	if reference_doctype == "Sales Order":
 		res.update({
 			"balance": flt(ref_doc.get("balance")),
-			"order_number": ref_doc.get("order_number")
+			"order_number": ref_doc.get("order_number"),
+			"split_order_group_name": ref_doc.get("split_order_group_name")
 		})
 
 

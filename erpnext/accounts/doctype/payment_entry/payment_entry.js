@@ -40,7 +40,9 @@ frappe.ui.form.on("Payment Entry", {
 		});
 
 		if (frm.is_new()) {
-			frm.set_value("created_by_display", frappe.session.user);
+			if (!frm.doc.created_by_display) {
+				frm.set_value("created_by_display", frappe.session.user);
+			}
 			set_default_party_type(frm);
 		}
 	},
@@ -321,9 +323,9 @@ frappe.ui.form.on("Payment Entry", {
 
 		// Add Verify button
 		if (
+			!frm.is_new() &&
 			!frm.doc.verified_by &&
-			frm.doc.payment_order_status !== "Success" &&
-			frm.doc.payment_order_status !== "Cancel"
+			(frm.doc.payment_order_status === "Draft" || frm.doc.payment_order_status === "Pending" || !frm.doc.payment_order_status)
 		) {
 			frm.add_custom_button(__("Verify"), () => {
 				let skip_bank_check = ["Cash", "COD"].includes(frm.doc.mode_of_payment);
