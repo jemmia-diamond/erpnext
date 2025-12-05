@@ -275,6 +275,9 @@ class PaymentEntry(AccountsController):
 		self.sync_bank_transaction_payments()
 
 	def sync_bank_transaction_payments(self):
+		if self.flags.get("updating_from_bank_transaction"):
+			return
+
 		for bt_row in self.bank_transactions:
 			if bt_row.bank_transaction:
 				bank_transaction = frappe.get_doc("Bank Transaction", bt_row.bank_transaction)
@@ -284,6 +287,7 @@ class PaymentEntry(AccountsController):
 				)
 
 				if not existing:
+					bank_transaction.flags.updating_linked_bank_transaction = True
 					bank_transaction.append("payment_entries", {
 						"payment_document": "Payment Entry",
 						"payment_entry": self.name,
