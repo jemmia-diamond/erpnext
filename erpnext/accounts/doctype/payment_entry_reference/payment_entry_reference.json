@@ -8,6 +8,7 @@
   "reference_doctype",
   "reference_name",
   "order_number",
+  "split_order_group_name",
   "due_date",
   "bill_no",
   "payment_term",
@@ -37,7 +38,7 @@
    "search_index": 1
   },
   {
-   "columns": 2,
+   "columns": 1,
    "fieldname": "reference_name",
    "fieldtype": "Dynamic Link",
    "in_global_search": 1,
@@ -55,6 +56,16 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Order Number",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "depends_on": "eval:doc.reference_doctype=='Sales Order'",
+   "fetch_from": "reference_name.split_order_group_name",
+   "fieldname": "split_order_group_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Group Order",
    "read_only": 1
   },
   {
@@ -91,7 +102,7 @@
    "read_only": 1
   },
   {
-   "columns": 2,
+   "columns": 1,
    "depends_on": "eval:doc.reference_doctype=='Sales Order'",
    "fieldname": "balance",
    "fieldtype": "Currency",
@@ -100,7 +111,7 @@
    "read_only": 1
   },
   {
-   "columns": 2,
+   "columns": 1,
    "fieldname": "allocated_amount",
    "fieldtype": "Float",
    "in_list_view": 1,

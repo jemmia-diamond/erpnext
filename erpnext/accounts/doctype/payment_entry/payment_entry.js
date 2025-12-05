@@ -40,7 +40,9 @@ frappe.ui.form.on("Payment Entry", {
 		});
 
 		if (frm.is_new()) {
-			frm.set_value("created_by_display", frappe.session.user);
+			if (!frm.doc.created_by_display) {
+				frm.set_value("created_by_display", frappe.session.user);
+			}
 			set_default_party_type(frm);
 		}
 	},
@@ -246,7 +248,8 @@ frappe.ui.form.on("Payment Entry", {
 				return {
 					query: "erpnext.accounts.doctype.payment_entry.payment_entry.get_sales_orders_for_payment",
 					filters: {
-						company: frm.doc.company
+						company: frm.doc.company,
+						customer: frm.doc.party
 					}
 				};
 			}
@@ -320,9 +323,10 @@ frappe.ui.form.on("Payment Entry", {
 
 		// Add Verify button
 		if (
+			!frm.is_new() &&
 			!frm.doc.verified_by &&
-			frm.doc.payment_order_status !== "Success" &&
-			frm.doc.payment_order_status !== "Cancel"
+			(frm.doc.payment_order_status === "Draft" || frm.doc.payment_order_status === "Pending") &&
+			(frappe.user.has_role("Accounts User") || frappe.user.has_role("Accounts Manager"))
 		) {
 			frm.add_custom_button(__("Verify"), () => {
 				let skip_bank_check = ["Cash", "COD"].includes(frm.doc.mode_of_payment);
@@ -2007,12 +2011,15 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 	bank_transaction: function(frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
 		if (row.bank_transaction) {
-			frappe.db.get_value("Bank Transaction", row.bank_transaction, ["date", "deposit", "sepay_transaction_content"], (r) => {
+			frappe.db.get_value("Bank Transaction", row.bank_transaction, ["date", "deposit", "withdrawal", "sepay_transaction_content", "sepay_transaction_date"], (r) => {
 				if (r) {
 					frappe.model.set_value(cdt, cdn, "date", r.date);
 					let amount = r.deposit || r.withdrawal || 0;
 					frappe.model.set_value(cdt, cdn, "allocated_amount", amount);
 					frappe.model.set_value(cdt, cdn, "sepay_transaction_content", r.sepay_transaction_content);
+					if (r.sepay_transaction_date) {
+						frm.set_value("payment_date", r.sepay_transaction_date);
+					}
 				}
 			});
 		}
