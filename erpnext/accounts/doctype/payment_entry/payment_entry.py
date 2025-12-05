@@ -3874,6 +3874,3 @@ def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, fil
 			"page_len": page_len,
 		},
 	)
-
-
-
