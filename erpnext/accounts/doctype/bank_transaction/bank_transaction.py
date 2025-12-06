@@ -142,7 +142,9 @@ class BankTransaction(Document):
 							"sepay_transaction_content": self.sepay_transaction_content,
 							"sepay_order_number": self.sepay_order_number,
 							"sepay_order_description": self.sepay_order_description,
-							"sepay_reference_number": self.sepay_reference_number
+							"sepay_reference_number": self.sepay_reference_number,
+							"sepay_id": self.sepay_id,
+							"auto_updated": 1
 						})
 						if self.sepay_transaction_date:
 							payment_entry.payment_date = self.sepay_transaction_date

@@ -2019,7 +2019,8 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 				"sepay_transaction_date",
 				"sepay_order_number",
 				"sepay_order_description",
-				"sepay_reference_number"
+				"sepay_reference_number",
+				"sepay_id",
 			], (r) => {
 				if (r) {
 					frappe.model.set_value(cdt, cdn, "date", r.date);
@@ -2029,6 +2030,7 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 					frappe.model.set_value(cdt, cdn, "sepay_order_number", r.sepay_order_number);
 					frappe.model.set_value(cdt, cdn, "sepay_order_description", r.sepay_order_description);
 					frappe.model.set_value(cdt, cdn, "sepay_reference_number", r.sepay_reference_number);
+					frappe.model.set_value(cdt, cdn, "sepay_id", r.sepay_id);
 					if (r.sepay_transaction_date) {
 						frm.set_value("payment_date", r.sepay_transaction_date);
 					}
