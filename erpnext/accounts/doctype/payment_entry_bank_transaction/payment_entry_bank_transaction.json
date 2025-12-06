@@ -11,7 +11,9 @@
   "sepay_transaction_content",
   "sepay_order_number",
   "sepay_order_description",
-  "sepay_reference_number"
+  "sepay_reference_number",
+  "sepay_id",
+  "auto_updated"
  ],
  "fields": [
   {
@@ -56,6 +58,20 @@
    "fieldtype": "Data",
    "label": "Reference Number",
    "read_only": 1
+  },
+  {
+   "fieldname": "sepay_id",
+   "fieldtype": "Data",
+   "label": "Sepay ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "auto_updated",
+   "fieldtype": "Check",
+   "label": "Auto Updated",
+   "read_only": 1,
+   "hidden": 1,
+   "default": "0"
   }
 
  ],
