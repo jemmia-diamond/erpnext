@@ -256,8 +256,21 @@ frappe.ui.form.on("Payment Entry", {
 		});
 	},
 
+	update_gateway_options: function(frm) {
+		if (frm.doc.mode_of_payment === "POS") {
+			frm.set_df_property("gateway", "options", ["Payoo", "Vietcombank"]);
+			frm.set_value("gateway", "Payoo");
+		} else if (frm.doc.mode_of_payment === "Payment Link") {
+			frm.set_df_property("gateway", "options", ["Payoo", "ZaloPay"]);
+			frm.set_value("gateway", "Payoo");
+		} else {
+			frm.set_df_property("gateway", "options", [""]);
+			frm.set_value("gateway", "");
+		}
+	},
+
 	update_bank_branch_logic: function (frm) {
-		if (["Wire Transfer", "QR"].includes(frm.doc.mode_of_payment)) {
+		if (["Wire Transfer", "QR", "Payment Link", "POS", "Cash On Delivery"].includes(frm.doc.mode_of_payment)) {
 			frm.set_df_property("bank_account_branch", "read_only", 1);
 			if (frm.doc.bank_account) {
 				frappe.db.get_value("Bank Account", frm.doc.bank_account, "account_type", (r) => {
@@ -280,6 +293,7 @@ frappe.ui.form.on("Payment Entry", {
 	},
 
 	refresh: function (frm) {
+		frm.events.update_gateway_options(frm);
 		frm.events.update_bank_branch_logic(frm);
 		erpnext.hide_company(frm);
 		frm.events.hide_unhide_fields(frm);
@@ -554,6 +568,8 @@ frappe.ui.form.on("Payment Entry", {
 	},
 
 	mode_of_payment: function (frm) {
+		frm.set_value("gateway", "");
+		frm.events.update_gateway_options(frm);
 		erpnext.accounts.pos.get_payment_mode_account(frm, frm.doc.mode_of_payment, function (account) {
 			let payment_account_field = frm.doc.payment_type == "Receive" ? "paid_to" : "paid_from";
 			frm.set_value(payment_account_field, account);
@@ -1442,6 +1458,7 @@ frappe.ui.form.on("Payment Entry", {
 	},
 
 	bank_account: function (frm) {
+		frm.events.update_bank_branch_logic(frm);
 		const field = frm.doc.payment_type == "Pay" ? "paid_from" : "paid_to";
 		if (frm.doc.bank_account && ["Pay", "Receive"].includes(frm.doc.payment_type)) {
 			frappe.call({

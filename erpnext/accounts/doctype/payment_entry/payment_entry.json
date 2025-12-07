@@ -3,7 +3,7 @@
  "allow_auto_repeat": 1,
  "allow_import": 1,
  "autoname": "naming_series:",
- "creation": "2025-12-03 14:08:40.555886",
+ "creation": "2025-12-07 19:16:48.513741",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -12,17 +12,19 @@
   "type_of_payment",
   "naming_series",
   "name_display",
-  "payment_type",
-  "payment_order_status",
-  "created_by_display",
-  "verified_by",
-  "column_break_5",
-  "posting_date",
-  "payment_date",
   "mode_of_payment",
-  "company",
+  "payment_type",
+  "gateway",
   "bank_account",
   "bank_account_branch",
+  "verified_by",
+  "column_break_5",
+  "created_by_display",
+  "payment_date",
+  "posting_date",
+  "company",
+  "payment_order_status",
+  "party",
   "qr_section_break",
   "custom_transaction_id",
   "custom_transfer_status",
@@ -35,7 +37,6 @@
   "book_advance_payments_in_separate_party_account",
   "reconcile_on_advance_payment_date",
   "column_break_11",
-  "party",
   "party_bank_account",
   "contact_person",
   "contact_email",
@@ -138,8 +139,10 @@
   },
   {
    "bold": 1,
+   "default": "Receive",
    "fieldname": "payment_type",
    "fieldtype": "Select",
+   "hidden": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Payment Type",
@@ -156,14 +159,14 @@
    "default": "Today",
    "fieldname": "posting_date",
    "fieldtype": "Date",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Posting Date",
    "reqd": 1
   },
   {
-   "depends_on": "eval:!doc.__islocal",
    "fieldname": "payment_date",
-   "fieldtype": "Date",
+   "fieldtype": "Datetime",
    "label": "Payment Date"
   },
   {
@@ -192,6 +195,12 @@
    "options": "Mode of Payment"
   },
   {
+   "depends_on": "eval:in_list([\"Payment Link\", \"POS\"], doc.mode_of_payment)",
+   "fieldname": "gateway",
+   "fieldtype": "Select",
+   "label": "Gateway"
+  },
+  {
    "fieldname": "custom_transaction_id",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -208,11 +217,11 @@
   {
    "fieldname": "custom_transfer_status",
    "fieldtype": "Select",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Transfer Status",
    "options": "\npending\nsuccess\ncancel",
-   "read_only": 1,
-   "hidden": 1
+   "read_only": 1
   },
   {
    "fieldname": "qr_url",
@@ -222,15 +231,17 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval:in_list([\"Receive\", \"Pay\"], doc.payment_type)",
    "fieldname": "party_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Payment From / To"
   },
   {
    "bold": 1,
+   "default": "Customer",
    "fieldname": "party_type",
    "fieldtype": "Link",
+   "hidden": 1,
    "in_standard_filter": 1,
    "label": "Party Type",
    "options": "DocType",
@@ -238,7 +249,6 @@
   },
   {
    "bold": 1,
-   "depends_on": "eval:in_list([\"Receive\", \"Pay\"], doc.payment_type) && doc.party_type",
    "fieldname": "party",
    "fieldtype": "Dynamic Link",
    "in_standard_filter": 1,
@@ -529,10 +539,10 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval:!doc.__islocal",
    "fieldname": "bank_transactions_section",
    "fieldtype": "Section Break",
-   "label": "Bank Transactions",
-   "depends_on": "eval:!doc.__islocal"
+   "label": "Bank Transactions"
   },
   {
    "fieldname": "bank_transactions",
@@ -637,6 +647,7 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval:doc.mode_of_payment && doc.mode_of_payment !== \"Cash\"",
    "fieldname": "bank_account",
    "fieldtype": "Link",
    "label": "Company Bank Account",
@@ -654,6 +665,7 @@
   {
    "bold": 1,
    "default": "Pending",
+   "depends_on": "eval:!doc.__islocal",
    "fieldname": "payment_order_status",
    "fieldtype": "Select",
    "label": "Payment Status",
@@ -663,6 +675,7 @@
   },
   {
    "collapsible": 1,
+   "depends_on": "eval:!doc.__islocal",
    "fieldname": "accounting_dimensions_section",
    "fieldtype": "Section Break",
    "label": "Accounting Dimensions"
@@ -936,6 +949,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval:doc.mode_of_payment",
    "fieldname": "bank_account_branch",
    "fieldtype": "Select",
    "label": "Branch",
@@ -960,7 +974,7 @@
    "table_fieldname": "payment_entries"
   }
  ],
- "modified": "2025-12-03 14:31:30.538490",
+ "modified": "2025-12-07 20:15:10.432879",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Payment Entry",
