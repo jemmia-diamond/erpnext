@@ -830,6 +830,7 @@ def make_address(args, is_primary_address=1, is_shipping_address=1):
 		{
 			"doctype": "Address",
 			"address_title": args.get(party_name_key),
+			"address_name": args.get(party_name_key),
 			"address_line1": args.get("address_line1"),
 			"address_line2": args.get("address_line2"),
 			"city": args.get("city"),
