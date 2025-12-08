@@ -377,6 +377,7 @@
    "fieldtype": "Currency",
    "label": "Paid Amount",
    "options": "paid_from_account_currency",
+   "precision": "0",
    "reqd": 1
   },
   {
@@ -915,6 +916,7 @@
    "fieldname": "total_order_amount",
    "fieldtype": "Currency",
    "label": "Total Order Amount",
+   "precision": "0",
    "read_only": 1
   },
   {
