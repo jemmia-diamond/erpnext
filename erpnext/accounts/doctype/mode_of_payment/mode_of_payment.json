@@ -9,6 +9,7 @@
  "engine": "InnoDB",
  "field_order": [
   "mode_of_payment",
+  "payment_code",
   "enabled",
   "type",
   "accounts"
@@ -42,13 +43,20 @@
    "fieldname": "enabled",
    "fieldtype": "Check",
    "label": "Enabled"
+  },
+  {
+   "fieldname": "payment_code",
+   "fieldtype": "Data",
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "label": "Payment Code"
   }
  ],
  "icon": "fa fa-credit-card",
  "idx": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2020-09-18 17:57:23.835236",
+ "modified": "2025-12-09 09:25:56.703147",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Mode of Payment",
@@ -71,7 +79,9 @@
   }
  ],
  "quick_entry": 1,
+ "row_format": "Dynamic",
  "show_name_in_global_search": 1,
  "sort_field": "modified",
- "sort_order": "ASC"
+ "sort_order": "ASC",
+ "states": []
 }

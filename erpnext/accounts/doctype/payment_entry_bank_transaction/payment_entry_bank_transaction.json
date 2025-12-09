@@ -8,7 +8,12 @@
   "bank_transaction",
   "date",
   "allocated_amount",
-  "sepay_transaction_content"
+  "sepay_transaction_content",
+  "sepay_order_number",
+  "sepay_order_description",
+  "sepay_reference_number",
+  "sepay_id",
+  "auto_updated"
  ],
  "fields": [
   {
@@ -35,6 +40,38 @@
    "fieldtype": "Small Text",
    "label": "Transaction Content",
    "read_only": 1
+  },
+  {
+   "fieldname": "sepay_order_number",
+   "fieldtype": "Data",
+   "label": "Order Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sepay_order_description",
+   "fieldtype": "Data",
+   "label": "Order Description",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sepay_reference_number",
+   "fieldtype": "Data",
+   "label": "Reference Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sepay_id",
+   "fieldtype": "Data",
+   "label": "Sepay ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "auto_updated",
+   "fieldtype": "Check",
+   "label": "Auto Updated",
+   "read_only": 1,
+   "hidden": 1,
+   "default": "0"
   }
 
  ],

@@ -117,6 +117,42 @@ class BankTransaction(Document):
 
 			self.delink_payment_entry(old_pe)
 
+	def on_update(self):
+		self.sync_payment_entry_bank_transactions()
+
+	def sync_payment_entry_bank_transactions(self):
+		if self.flags.get("updating_linked_bank_transaction"):
+			return
+
+		for pe_row in self.payment_entries:
+			if pe_row.payment_document == "Payment Entry" and pe_row.payment_entry:
+				try:
+					payment_entry = frappe.get_doc("Payment Entry", pe_row.payment_entry)
+					existing = any(
+						bt.bank_transaction == self.name
+						for bt in payment_entry.bank_transactions
+					)
+
+					if not existing:
+						payment_entry.flags.updating_from_bank_transaction = True
+						payment_entry.append("bank_transactions", {
+							"bank_transaction": self.name,
+							"allocated_amount": pe_row.allocated_amount,
+							"date": self.date,
+							"sepay_transaction_content": self.sepay_transaction_content,
+							"sepay_order_number": self.sepay_order_number,
+							"sepay_order_description": self.sepay_order_description,
+							"sepay_reference_number": self.sepay_reference_number,
+							"sepay_id": self.sepay_id,
+							"auto_updated": 1
+						})
+						if self.sepay_transaction_date:
+							payment_entry.payment_date = self.sepay_transaction_date
+
+						payment_entry.save(ignore_permissions=True)
+				except Exception as e:
+					frappe.log_error(f"Error syncing Bank Transaction to Payment Entry: {str(e)}")
+
 	def before_submit(self):
 		self.allocate_payment_entries()
 		self.set_status()

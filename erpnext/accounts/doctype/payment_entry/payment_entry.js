@@ -256,8 +256,21 @@ frappe.ui.form.on("Payment Entry", {
 		});
 	},
 
+	update_gateway_options: function(frm) {
+		if (frm.doc.mode_of_payment === "POS") {
+			frm.set_df_property("gateway", "options", ["Payoo", "Vietcombank"]);
+			frm.set_value("gateway", "Payoo");
+		} else if (frm.doc.mode_of_payment === "Payment Link") {
+			frm.set_df_property("gateway", "options", ["Payoo", "ZaloPay"]);
+			frm.set_value("gateway", "Payoo");
+		} else {
+			frm.set_df_property("gateway", "options", [""]);
+			frm.set_value("gateway", "");
+		}
+	},
+
 	update_bank_branch_logic: function (frm) {
-		if (["Wire Transfer", "QR"].includes(frm.doc.mode_of_payment)) {
+		if (["Wire Transfer", "QR", "Payment Link", "POS", "Cash On Delivery"].includes(frm.doc.mode_of_payment)) {
 			frm.set_df_property("bank_account_branch", "read_only", 1);
 			if (frm.doc.bank_account) {
 				frappe.db.get_value("Bank Account", frm.doc.bank_account, "account_type", (r) => {
@@ -280,6 +293,7 @@ frappe.ui.form.on("Payment Entry", {
 	},
 
 	refresh: function (frm) {
+		frm.events.update_gateway_options(frm);
 		frm.events.update_bank_branch_logic(frm);
 		erpnext.hide_company(frm);
 		frm.events.hide_unhide_fields(frm);
@@ -554,6 +568,8 @@ frappe.ui.form.on("Payment Entry", {
 	},
 
 	mode_of_payment: function (frm) {
+		frm.set_value("gateway", "");
+		frm.events.update_gateway_options(frm);
 		erpnext.accounts.pos.get_payment_mode_account(frm, frm.doc.mode_of_payment, function (account) {
 			let payment_account_field = frm.doc.payment_type == "Receive" ? "paid_to" : "paid_from";
 			frm.set_value(payment_account_field, account);
@@ -1442,6 +1458,7 @@ frappe.ui.form.on("Payment Entry", {
 	},
 
 	bank_account: function (frm) {
+		frm.events.update_bank_branch_logic(frm);
 		const field = frm.doc.payment_type == "Pay" ? "paid_from" : "paid_to";
 		if (frm.doc.bank_account && ["Pay", "Receive"].includes(frm.doc.payment_type)) {
 			frappe.call({
@@ -2011,12 +2028,26 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 	bank_transaction: function(frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
 		if (row.bank_transaction) {
-			frappe.db.get_value("Bank Transaction", row.bank_transaction, ["date", "deposit", "withdrawal", "sepay_transaction_content", "sepay_transaction_date"], (r) => {
+			frappe.db.get_value("Bank Transaction", row.bank_transaction, [
+				"date",
+				"deposit",
+				"withdrawal",
+				"sepay_transaction_content",
+				"sepay_transaction_date",
+				"sepay_order_number",
+				"sepay_order_description",
+				"sepay_reference_number",
+				"sepay_id",
+			], (r) => {
 				if (r) {
 					frappe.model.set_value(cdt, cdn, "date", r.date);
 					let amount = r.deposit || r.withdrawal || 0;
 					frappe.model.set_value(cdt, cdn, "allocated_amount", amount);
 					frappe.model.set_value(cdt, cdn, "sepay_transaction_content", r.sepay_transaction_content);
+					frappe.model.set_value(cdt, cdn, "sepay_order_number", r.sepay_order_number);
+					frappe.model.set_value(cdt, cdn, "sepay_order_description", r.sepay_order_description);
+					frappe.model.set_value(cdt, cdn, "sepay_reference_number", r.sepay_reference_number);
+					frappe.model.set_value(cdt, cdn, "sepay_id", r.sepay_id);
 					if (r.sepay_transaction_date) {
 						frm.set_value("payment_date", r.sepay_transaction_date);
 					}
