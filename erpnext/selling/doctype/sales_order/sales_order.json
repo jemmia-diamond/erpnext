@@ -144,6 +144,7 @@
   "gender",
   "column_break_93",
   "customer_personal_id",
+  "customer_passport_id",
   "birth_date",
   "dispatch_address",
   "column_break_ujjh",
@@ -1835,6 +1836,13 @@
    "fieldname": "customer_personal_id",
    "fieldtype": "Data",
    "label": "CMND/CCCD"
+  },
+  {
+   "fetch_from": "customer.passport_id",
+   "fetch_if_empty": 1,
+   "fieldname": "customer_passport_id",
+   "fieldtype": "Data",
+   "label": "Passport ID"
   },
   {
    "fetch_from": "customer.place_of_issuance",
