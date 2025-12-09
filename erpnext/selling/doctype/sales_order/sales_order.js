@@ -189,6 +189,7 @@ frappe.ui.form.on("Sales Order", {
 			frm.set_value("place_of_issuance", doc.place_of_issuance);
 			frm.set_value("date_of_issuance", doc.date_of_issuance);
 			frm.set_value("customer_personal_id", doc.personal_id);
+			frm.set_value("customer_passport_id", doc.passport_id);
 			frm.set_value("gender", doc.gender);
 		})
 
