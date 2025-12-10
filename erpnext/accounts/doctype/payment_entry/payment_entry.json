@@ -143,7 +143,7 @@
    "fieldname": "payment_type",
    "fieldtype": "Select",
    "hidden": 1,
-   "in_list_view": 1,
+   "in_list_view": 0,
    "in_standard_filter": 1,
    "label": "Payment Type",
    "options": "Receive\nPay\nInternal Transfer",
@@ -160,13 +160,14 @@
    "fieldname": "posting_date",
    "fieldtype": "Date",
    "hidden": 1,
-   "in_list_view": 1,
+   "in_list_view": 0,
    "label": "Posting Date",
    "reqd": 1
   },
   {
    "fieldname": "payment_date",
    "fieldtype": "Datetime",
+   "in_list_view": 1,
    "label": "Payment Date"
   },
   {
@@ -195,6 +196,18 @@
    "options": "Mode of Payment"
   },
   {
+   "bold": 1,
+   "default": "Pending",
+   "depends_on": "eval:!doc.__islocal",
+   "fieldname": "payment_order_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Payment Status",
+   "no_copy": 1,
+   "options": "Pending\nSuccess\nCancel",
+   "read_only": 1
+  },
+  {
    "depends_on": "eval:in_list([\"Payment Link\", \"POS\"], doc.mode_of_payment)",
    "fieldname": "gateway",
    "fieldtype": "Select",
@@ -203,22 +216,21 @@
   {
    "fieldname": "custom_transaction_id",
    "fieldtype": "Data",
-   "in_list_view": 1,
+   "in_list_view": 0,
    "label": "QR Transaction ID",
    "read_only": 1
   },
   {
    "fieldname": "custom_transfer_note",
    "fieldtype": "Small Text",
-   "in_list_view": 1,
+   "in_list_view": 0,
    "label": "Transfer Note",
    "read_only": 1
   },
   {
    "fieldname": "custom_transfer_status",
    "fieldtype": "Select",
-   "hidden": 1,
-   "in_list_view": 1,
+   "in_list_view": 0,
    "label": "Transfer Status",
    "options": "\npending\nsuccess\ncancel",
    "read_only": 1
@@ -226,7 +238,8 @@
   {
    "fieldname": "qr_url",
    "fieldtype": "Data",
-   "in_list_view": 1,
+   "hidden": 1,
+   "in_list_view": 0,
    "label": "QR URL",
    "read_only": 1
   },
@@ -242,7 +255,6 @@
    "fieldname": "party_type",
    "fieldtype": "Link",
    "hidden": 1,
-   "in_standard_filter": 1,
    "label": "Party Type",
    "options": "DocType",
    "search_index": 1
@@ -251,7 +263,6 @@
    "bold": 1,
    "fieldname": "party",
    "fieldtype": "Dynamic Link",
-   "in_standard_filter": 1,
    "label": "Party",
    "options": "party_type"
   },
@@ -260,6 +271,8 @@
    "depends_on": "eval:in_list([\"Receive\", \"Pay\"], doc.payment_type) && doc.party_type",
    "fieldname": "party_name",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "in_list_view": 1,
    "hidden": 1,
    "in_global_search": 1,
    "label": "Party Name"
@@ -664,17 +677,6 @@
    "options": "Bank Account"
   },
   {
-   "bold": 1,
-   "default": "Pending",
-   "depends_on": "eval:!doc.__islocal",
-   "fieldname": "payment_order_status",
-   "fieldtype": "Select",
-   "label": "Payment Status",
-   "no_copy": 1,
-   "options": "Pending\nSuccess\nCancel",
-   "read_only": 1
-  },
-  {
    "collapsible": 1,
    "depends_on": "eval:!doc.__islocal",
    "fieldname": "accounting_dimensions_section",
@@ -689,6 +691,7 @@
    "default": "Draft",
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_list_view": 0,
    "label": "Status",
    "no_copy": 1,
    "options": "\nDraft\nSubmitted\nCancelled",
@@ -889,6 +892,7 @@
    "depends_on": "eval: doc.owner",
    "fieldname": "created_by_display",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Created By",
    "options": "User",
@@ -924,6 +928,7 @@
    "default": "0",
    "fieldname": "misa_synced",
    "fieldtype": "Check",
+   "in_list_view": 1,
    "label": "Misa Synced",
    "options": "Project",
    "print_hide": 1,
@@ -961,6 +966,7 @@
   {
    "fieldname": "name_display",
    "fieldtype": "Data",
+   "in_list_view": 0,
    "label": "ID",
    "read_only": 1
   }
@@ -977,7 +983,7 @@
    "table_fieldname": "payment_entries"
   }
  ],
- "modified": "2025-12-08 16:56:44.971558",
+ "modified": "2025-12-09 16:58:42.933784",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Payment Entry",
@@ -1022,6 +1028,6 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "title_field": "title",
+ "title_field": "mode_of_payment",
  "track_changes": 1
 }
