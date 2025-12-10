@@ -377,6 +377,30 @@ frappe.ui.form.on("Payment Entry", {
 
 	validate: async function (frm) {
 		await frm.events.set_exchange_gain_loss_deduction(frm);
+		frm.events.validate_bank_transactions(frm);
+	},
+
+	before_save: function(frm) {
+		frm.events.validate_bank_transactions(frm);
+	},
+
+	validate_bank_transactions: function(frm) {
+		if (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0) {
+			return;
+		}
+
+		if (frm.doc.bank_transactions.length > 1) {
+			frappe.throw(__("Chỉ được phép có một giao dịch ngân hàng cho mỗi phiếu thanh toán"));
+		}
+
+		for (let bt of frm.doc.bank_transactions) {
+			if (bt.allocated_amount && frm.doc.paid_amount) {
+				if (Math.abs(flt(bt.allocated_amount) - flt(frm.doc.paid_amount)) > 0.01) {
+					frappe.throw(__("Số tiền phân bổ của giao dịch ngân hàng ({0}) phải khớp với số tiền thanh toán của phiếu ({1}).", 
+						[bt.allocated_amount, frm.doc.paid_amount]));
+				}
+			}
+		}
 	},
 
 	validate_company: (frm) => {
@@ -2053,6 +2077,43 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 					}
 				}
 			});
+		}
+	},
+
+	allocated_amount: function(frm, cdt, cdn) {
+		let row = locals[cdt][cdn];		
+		if (row.allocated_amount && frm.doc.paid_amount) {
+			if (Math.abs(flt(row.allocated_amount) - flt(frm.doc.paid_amount)) > 0.01) {
+				frappe.msgprint({
+					title: __("Sai số tiền"),
+					message: __("Không khớp số tiền. Số tiền phân bổ trong Giao dịch Ngân hàng phải bằng số tiền thanh toán trong Payment Entry. Hệ thống sẽ xóa dòng này", [frm.doc.paid_amount]),
+					indicator: 'red'
+				});
+				
+				frappe.model.clear_doc(cdt, cdn);
+				frm.refresh_field("bank_transactions");
+			}
+		}
+	},
+
+	bank_transactions_add: function(frm, cdt, cdn) {
+		if (frm.doc.bank_transactions && frm.doc.bank_transactions.length > 1) {
+			frappe.msgprint({
+				title: __("Lỗi xác thực"),
+				indicator: "red",
+				message: __("Chỉ được phép có một Giao dịch Ngân hàng cho mỗi Phiếu Thanh toán. Đang xóa hàng dư...")
+			});
+			
+			setTimeout(() => {
+				frappe.model.clear_doc(cdt, cdn);
+				frm.refresh_field("bank_transactions");
+			}, 100);
+			return;
+		}
+		
+		let row = locals[cdt][cdn];
+		if (frm.doc.paid_amount) {
+			frappe.model.set_value(cdt, cdn, "allocated_amount", frm.doc.paid_amount);
 		}
 	}
 });

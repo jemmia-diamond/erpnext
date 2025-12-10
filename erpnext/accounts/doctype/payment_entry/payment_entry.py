@@ -207,6 +207,7 @@ class PaymentEntry(AccountsController):
 		self.set_amounts_after_tax()
 		self.clear_unallocated_reference_document_rows()
 		self.validate_transaction_reference()
+		self.validate_bank_transactions()
 		self.set_title()
 		self.set_remarks()
 		self.validate_duplicate_entry()
@@ -890,6 +891,28 @@ class PaymentEntry(AccountsController):
 								d.reference_name, _(dr_or_cr)
 							)
 						)
+
+	def validate_bank_transactions(self):
+		"""
+		Validate bank transactions:
+		1. Only allow 1 bank transaction per payment entry
+		2. Allocated amount must match payment entry's paid amount
+		"""
+		if not self.bank_transactions:
+			return
+
+		if len(self.bank_transactions) > 1:
+			frappe.throw(_("Only one Bank Transaction is allowed per Payment Entry"))
+
+		for bt in self.bank_transactions:
+			if bt.allocated_amount and self.paid_amount:
+				if abs(flt(bt.allocated_amount) - flt(self.paid_amount)) > 0.01:
+					frappe.throw(
+						_("Bank Transaction allocated amount {0} must match Payment Entry paid amount {1}").format(
+							frappe.bold(bt.allocated_amount),
+							frappe.bold(self.paid_amount)
+						)
+					)
 
 	def update_payment_schedule(self, cancel=0):
 		invoice_payment_amount_map = {}
