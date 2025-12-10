@@ -3888,12 +3888,17 @@ def cancel_pending_transfers():
 	# Calculate threshold time (24 hours ago)
 	threshold_time = add_to_date(now_datetime(), hours=-24)
 
+	allowed_modes = frappe.get_all("Mode of Payment", filters={"payment_code": "banking"}, pluck="name")
+
+	if not allowed_modes:
+		return
+
 	payment_entries = frappe.get_all(
 		"Payment Entry",
 		filters={
 			"custom_transfer_status": "pending",
 			"creation": ("<", threshold_time),
-			"mode_of_payment": "Chuyển khoản (QR)"
+			"mode_of_payment": ["in", allowed_modes]
 		},
 		fields=["name"]
 	)
