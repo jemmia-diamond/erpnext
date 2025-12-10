@@ -51,11 +51,11 @@ frappe.ui.form.ContactAddressQuickEntryForm = class ContactAddressQuickEntryForm
 				label: __("Mobile Number"),
 				fieldname: "mobile_number",
 				fieldtype: "Data",
+				reqd: 1
 			},
 			{
 				fieldtype: "Section Break",
 				label: __("Primary Address Details"),
-				collapsible: 1,
 			},
 			{
 				label: __("Address Line 1"),
