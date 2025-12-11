@@ -2142,7 +2142,7 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 			if (Math.abs(flt(row.allocated_amount) - flt(frm.doc.paid_amount)) > 0.01) {
 				frappe.msgprint({
 					title: __("Sai số tiền"),
-					message: __("Không khớp số tiền. Số tiền phân bổ trong Giao dịch Ngân hàng phải bằng số tiền thanh toán trong Payment Entry. Hệ thống sẽ xóa dòng này", [frm.doc.paid_amount]),
+					message: __("Vui lòng kiểm tra và nhập <b>đúng số tiền thanh toán trước</b> khi tiếp tục.", [frm.doc.paid_amount]),
 					indicator: 'red'
 				});
 				
@@ -2157,7 +2157,7 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 			frappe.msgprint({
 				title: __("Lỗi xác thực"),
 				indicator: "red",
-				message: __("Chỉ được phép có một Giao dịch Ngân hàng cho mỗi Phiếu Thanh toán. Đang xóa hàng dư...")
+				message: __("Mỗi phiếu thanh toán chỉ được phép gắn <b>một giao dịch duy nhất</b>.")
 			});
 			
 			setTimeout(() => {
