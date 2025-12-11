@@ -2100,10 +2100,18 @@ class PaymentEntry(AccountsController):
 
 		frappe.response["matched_payment_requests"] = matched_payment_requests
 
+	def get_payment_code(self):
+		"""Get payment code from mode of payment"""
+		if not self.mode_of_payment:
+			return None
+		
+		return frappe.db.get_value("Mode of Payment", self.mode_of_payment, "payment_code")
+
 	@frappe.whitelist()
 	def verify_payment(self):
 		"""Verify payment entry after bank transaction matching"""
-		skip_bank_check = self.mode_of_payment in ["Cash", "COD"]
+		payment_code = self.get_payment_code()
+		skip_bank_check = payment_code in ["cash", "cash_on_delivery"]
 		if not skip_bank_check and (not self.bank_transactions or len(self.bank_transactions) == 0):
 			frappe.throw(_("Cannot verify: Payment Entry must have at least one Bank Transaction (unless Mode of Payment is Cash or COD)"))
 		has_sales_order = any(ref.reference_doctype == "Sales Order" for ref in self.references)

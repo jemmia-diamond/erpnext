@@ -209,7 +209,6 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval:in_list([\"Payment Link\", \"POS\"], doc.mode_of_payment)",
    "fieldname": "gateway",
    "fieldtype": "Select",
    "label": "Gateway"
@@ -662,7 +661,6 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval:doc.mode_of_payment && doc.mode_of_payment !== \"Cash\"",
    "fieldname": "bank_account",
    "fieldtype": "Link",
    "label": "Company Bank Account",
@@ -908,7 +906,6 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval:doc.mode_of_payment == 'Wire Transfer' || doc.mode_of_payment == 'QR'",
    "fieldname": "qr_section_break",
    "fieldtype": "Section Break",
    "label": "QR Section"
