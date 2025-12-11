@@ -324,10 +324,12 @@ frappe.ui.form.on("Payment Entry", {
 
 		frm.events.get_payment_code(frm, (payment_code) => {
 			frm.toggle_display("gateway", ["payment_link", "pos", "cash", "cash_on_delivery"].includes(payment_code));
-			const show_bank_account = payment_code && payment_code !== "cash";
-			
+			const show_bank_account = payment_code && !["cash", "pos"].includes(payment_code);
 			frm.toggle_display("bank_account", show_bank_account);
-			frm.set_df_property("bank_account", "reqd", show_bank_account ? 1 : 0);
+			
+			const is_new_or_has_bank = frm.is_new() || frm.doc.bank_account;
+			const make_required = show_bank_account && frm.doc.docstatus === 0 && is_new_or_has_bank;
+			frm.set_df_property("bank_account", "reqd", make_required ? 1 : 0);
 			frm.toggle_display("qr_section_break", payment_code === "banking");
 		});
 	},
