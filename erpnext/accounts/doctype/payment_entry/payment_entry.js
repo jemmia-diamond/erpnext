@@ -256,45 +256,96 @@ frappe.ui.form.on("Payment Entry", {
 		});
 	},
 
-	update_gateway_options: function(frm) {
-		if (frm.doc.mode_of_payment === "POS") {
-			frm.set_df_property("gateway", "options", ["Payoo", "Vietcombank"]);
-			frm.set_value("gateway", "Payoo");
-		} else if (frm.doc.mode_of_payment === "Payment Link") {
-			frm.set_df_property("gateway", "options", ["Payoo", "ZaloPay"]);
-			frm.set_value("gateway", "Payoo");
-		} else {
-			frm.set_df_property("gateway", "options", [""]);
-			frm.set_value("gateway", "");
+	get_payment_code: function(frm, callback) {
+		if (!frm.doc.mode_of_payment) {
+			callback(null);
+			return;
 		}
+		
+		frappe.db.get_value("Mode of Payment", frm.doc.mode_of_payment, "payment_code", (r) => {
+			callback(r ? r.payment_code : null);
+		});
+	},
+
+	update_gateway_options: function(frm) {
+		frm.events.get_payment_code(frm, (payment_code) => {
+			if (payment_code === "pos") {
+				frm.set_df_property("gateway", "options", ["Payoo", "Vietcombank"]);
+				frm.set_value("gateway", "Payoo");
+			} else if (payment_code === "payment_link") {
+				frm.set_df_property("gateway", "options", ["Payoo", "ZaloPay"]);
+				frm.set_value("gateway", "Payoo");
+			} else if (payment_code === "cash") {
+				frm.set_df_property("gateway", "options", ["Thu Ngân"]);
+				frm.set_value("gateway", "Thu Ngân");
+			} else if (payment_code === "cash_on_delivery") {
+				frm.set_df_property("gateway", "options", ["HTC", "Nhất Tín"]);
+				frm.set_value("gateway", "HTC");
+			} else {
+				frm.set_df_property("gateway", "options", [""]);
+				frm.set_value("gateway", "");
+			}
+		});
 	},
 
 	update_bank_branch_logic: function (frm) {
-		if (["Wire Transfer", "QR", "Payment Link", "POS", "Cash On Delivery"].includes(frm.doc.mode_of_payment)) {
-			frm.set_df_property("bank_account_branch", "read_only", 1);
-			if (frm.doc.bank_account) {
-				frappe.db.get_value("Bank Account", frm.doc.bank_account, "account_type", (r) => {
-					if (r && r.account_type) {
-						frm.set_df_property("bank_account_branch", "options", [r.account_type]);
-						frm.set_value("bank_account_branch", r.account_type);
-					}
-				});
+		frm.events.get_payment_code(frm, (payment_code) => {
+			if (["banking", "payment_link", "pos", "cash_on_delivery"].includes(payment_code)) {
+				frm.set_df_property("bank_account_branch", "read_only", 1);
+				if (frm.doc.bank_account) {
+					frappe.db.get_value("Bank Account", frm.doc.bank_account, "account_type", (r) => {
+						if (r && r.account_type) {
+							frm.set_df_property("bank_account_branch", "options", [r.account_type]);
+							frm.set_value("bank_account_branch", r.account_type);
+						}
+					});
+				} else {
+					frm.set_value("bank_account_branch", "");
+				}
 			} else {
-				frm.set_value("bank_account_branch", "");
+				frm.set_df_property("bank_account_branch", "options", [
+					"Cửa hàng HCM",
+					"Cửa hàng Cần Thơ",
+					"Cửa hàng Hà Nội",
+				]);
+				frm.set_df_property("bank_account_branch", "read_only", 0);
 			}
-		} else {
-			frm.set_df_property("bank_account_branch", "options", [
-				"Cửa hàng HCM",
-				"Cửa hàng Cần Thơ",
-				"Cửa hàng Hà Nội",
-			]);
-			frm.set_df_property("bank_account_branch", "read_only", 0);
+		});
+	},
+
+	update_field_visibility: function(frm) {
+		if (!frm.doc.mode_of_payment) {
+			frm.toggle_display("gateway", false);
+			frm.toggle_display("bank_account", false);
+			frm.toggle_display("qr_section_break", false);
+			frm.set_df_property("bank_account", "reqd", 0);
+			return;
+		}
+
+		frm.events.get_payment_code(frm, (payment_code) => {
+			frm.toggle_display("gateway", ["payment_link", "pos", "cash", "cash_on_delivery"].includes(payment_code));
+			const show_bank_account = payment_code && payment_code !== "cash";
+			
+			frm.toggle_display("bank_account", show_bank_account);
+			frm.set_df_property("bank_account", "reqd", show_bank_account ? 1 : 0);
+			frm.toggle_display("qr_section_break", payment_code === "banking");
+		});
+	},
+
+	update_button_visibility: function(frm) {
+		if (frm.doc.docstatus === 0) {
+			if (frm.page.btn_primary) {
+				frm.page.btn_primary.hide();
+			}			
+			frm.page.remove_inner_button(__("Submit"));
 		}
 	},
 
 	refresh: function (frm) {
 		frm.events.update_gateway_options(frm);
 		frm.events.update_bank_branch_logic(frm);
+		frm.events.update_field_visibility(frm);
+		frm.events.update_button_visibility(frm);
 		erpnext.hide_company(frm);
 		frm.events.hide_unhide_fields(frm);
 		frm.events.set_dynamic_labels(frm);
@@ -343,33 +394,35 @@ frappe.ui.form.on("Payment Entry", {
 			(frappe.user.has_role("Accounts User") || frappe.user.has_role("Accounts Manager"))
 		) {
 			frm.add_custom_button(__("Verify"), () => {
-				let skip_bank_check = ["Cash", "COD"].includes(frm.doc.mode_of_payment);
-				if (!skip_bank_check && (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0)) {
-					frappe.msgprint({
-						title: __("Cannot Verify"),
-						indicator: "red",
-						message: __("Payment Entry must have at least one Bank Transaction to verify (unless Mode of Payment is Cash or COD).")
-					});
-					return;
-				}
-
-				if (!frm.doc.references || !frm.doc.references.some(r => r.reference_doctype === "Sales Order")) {
-					frappe.msgprint({
-						title: __("Cannot Verify"),
-						indicator: "red",
-						message: __("Payment Entry must have at least one Sales Order reference to verify.")
-					});
-					return;
-				}
-
-				frappe.call({
-					method: "verify_payment",
-					doc: frm.doc,
-					callback: function(r) {
-						if (!r.exc) {
-							frm.reload_doc();
-						}
+				frm.events.get_payment_code(frm, (payment_code) => {
+					let skip_bank_check = ["cash", "cash_on_delivery"].includes(payment_code);
+					if (!skip_bank_check && (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0)) {
+						frappe.msgprint({
+							title: __("Cannot Verify"),
+							indicator: "red",
+							message: __("Payment Entry must have at least one Bank Transaction to verify (unless Mode of Payment is Cash or COD).")
+						});
+						return;
 					}
+
+					if (!frm.doc.references || !frm.doc.references.some(r => r.reference_doctype === "Sales Order")) {
+						frappe.msgprint({
+							title: __("Cannot Verify"),
+							indicator: "red",
+							message: __("Payment Entry must have at least one Sales Order reference to verify.")
+						});
+						return;
+					}
+
+					frappe.call({
+						method: "verify_payment",
+						doc: frm.doc,
+						callback: function(r) {
+							if (!r.exc) {
+								frm.reload_doc();
+							}
+						}
+					});
 				});
 			});
 		}
@@ -377,6 +430,30 @@ frappe.ui.form.on("Payment Entry", {
 
 	validate: async function (frm) {
 		await frm.events.set_exchange_gain_loss_deduction(frm);
+		frm.events.validate_bank_transactions(frm);
+	},
+
+	before_save: function(frm) {
+		frm.events.validate_bank_transactions(frm);
+	},
+
+	validate_bank_transactions: function(frm) {
+		if (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0) {
+			return;
+		}
+
+		if (frm.doc.bank_transactions.length > 1) {
+			frappe.throw(__("Chỉ được phép có một giao dịch ngân hàng cho mỗi phiếu thanh toán"));
+		}
+
+		for (let bt of frm.doc.bank_transactions) {
+			if (bt.allocated_amount && frm.doc.paid_amount) {
+				if (Math.abs(flt(bt.allocated_amount) - flt(frm.doc.paid_amount)) > 0.01) {
+					frappe.throw(__("Số tiền phân bổ của giao dịch ngân hàng ({0}) phải khớp với số tiền thanh toán của phiếu ({1}).", 
+						[bt.allocated_amount, frm.doc.paid_amount]));
+				}
+			}
+		}
 	},
 
 	validate_company: (frm) => {
@@ -570,6 +647,7 @@ frappe.ui.form.on("Payment Entry", {
 	mode_of_payment: function (frm) {
 		frm.set_value("gateway", "");
 		frm.events.update_gateway_options(frm);
+		frm.events.update_field_visibility(frm);
 		erpnext.accounts.pos.get_payment_mode_account(frm, frm.doc.mode_of_payment, function (account) {
 			let payment_account_field = frm.doc.payment_type == "Receive" ? "paid_to" : "paid_from";
 			frm.set_value(payment_account_field, account);
@@ -2053,6 +2131,43 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 					}
 				}
 			});
+		}
+	},
+
+	allocated_amount: function(frm, cdt, cdn) {
+		let row = locals[cdt][cdn];		
+		if (row.allocated_amount && frm.doc.paid_amount) {
+			if (Math.abs(flt(row.allocated_amount) - flt(frm.doc.paid_amount)) > 0.01) {
+				frappe.msgprint({
+					title: __("Sai số tiền"),
+					message: __("Không khớp số tiền. Số tiền phân bổ trong Giao dịch Ngân hàng phải bằng số tiền thanh toán trong Payment Entry. Hệ thống sẽ xóa dòng này", [frm.doc.paid_amount]),
+					indicator: 'red'
+				});
+				
+				frappe.model.clear_doc(cdt, cdn);
+				frm.refresh_field("bank_transactions");
+			}
+		}
+	},
+
+	bank_transactions_add: function(frm, cdt, cdn) {
+		if (frm.doc.bank_transactions && frm.doc.bank_transactions.length > 1) {
+			frappe.msgprint({
+				title: __("Lỗi xác thực"),
+				indicator: "red",
+				message: __("Chỉ được phép có một Giao dịch Ngân hàng cho mỗi Phiếu Thanh toán. Đang xóa hàng dư...")
+			});
+			
+			setTimeout(() => {
+				frappe.model.clear_doc(cdt, cdn);
+				frm.refresh_field("bank_transactions");
+			}, 100);
+			return;
+		}
+		
+		let row = locals[cdt][cdn];
+		if (frm.doc.paid_amount) {
+			frappe.model.set_value(cdt, cdn, "allocated_amount", frm.doc.paid_amount);
 		}
 	}
 });

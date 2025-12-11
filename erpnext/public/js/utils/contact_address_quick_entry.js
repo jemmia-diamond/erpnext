@@ -21,6 +21,7 @@ frappe.ui.form.ContactAddressQuickEntryForm = class ContactAddressQuickEntryForm
 		const map_field_names = {
 			email_address: "email_id",
 			mobile_number: "mobile_no",
+			gender: "gender"
 		};
 
 		Object.entries(map_field_names).forEach(([fieldname, new_fieldname]) => {
@@ -36,7 +37,6 @@ frappe.ui.form.ContactAddressQuickEntryForm = class ContactAddressQuickEntryForm
 			{
 				fieldtype: "Section Break",
 				label: __("Primary Contact Details"),
-				collapsible: 1,
 			},
 			{
 				label: __("Email Id"),
@@ -54,8 +54,16 @@ frappe.ui.form.ContactAddressQuickEntryForm = class ContactAddressQuickEntryForm
 				reqd: 1
 			},
 			{
+				label: __("Gender"),
+				fieldname: "gender",
+				fieldtype: "Link",
+				options: "Gender"
+			},
+			{
 				fieldtype: "Section Break",
 				label: __("Primary Address Details"),
+				collapsible: 1,
+				hidden: 1
 			},
 			{
 				label: __("Address Line 1"),
