@@ -40,6 +40,7 @@
   "financial_status",
   "payment_completion_date",
   "fulfillment_status",
+  "fulfillment_completion_date",
   "carrier_status",
   "expected_delivery_date",
   "accounting_dimensions_section",
@@ -2144,13 +2145,20 @@
    "in_standard_filter": 1,
    "label": "Payment Completion Date",
    "read_only": 1
+  },
+  {
+   "fieldname": "fulfillment_completion_date",
+   "fieldtype": "Datetime",
+   "in_standard_filter": 1,
+   "label": "Fulfillment Completion Date",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-11 08:38:21.260402",
+ "modified": "2025-12-11 09:37:43.126461",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",

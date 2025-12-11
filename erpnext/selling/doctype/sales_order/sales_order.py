@@ -114,6 +114,7 @@ class SalesOrder(SellingController):
 		customer_address: DF.Link | None
 		customer_group: DF.Link | None
 		customer_name: DF.Data | None
+		customer_passport_id: DF.Data | None
 		customer_personal_id: DF.Data | None
 		customer_type: DF.Literal["", "New Customer", "Returning Customer"]
 		date_of_issuance: DF.Date | None
@@ -133,6 +134,7 @@ class SalesOrder(SellingController):
 		expected_payment_date: DF.Date | None
 		financial_status: DF.Literal["", "Paid", "Partially Paid", "Partially Refunded", "Refunded", "Pending"]
 		from_date: DF.Date | None
+		fulfillment_completion_date: DF.Datetime | None
 		fulfillment_status: DF.Literal["", "Fulfilled", "Not Fulfilled"]
 		gender: DF.Data | None
 		grand_total: DF.Currency
