@@ -38,6 +38,7 @@
   "column_break_dqxa",
   "cancelled_status",
   "financial_status",
+  "payment_completion_date",
   "fulfillment_status",
   "carrier_status",
   "expected_delivery_date",
@@ -2136,13 +2137,20 @@
    "fieldname": "payment_entries_tab",
    "fieldtype": "Tab Break",
    "label": "Payment Entries"
+  },
+  {
+   "fieldname": "payment_completion_date",
+   "fieldtype": "Datetime",
+   "in_standard_filter": 1,
+   "label": "Payment Completion Date",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-14 08:15:33.295281",
+ "modified": "2025-12-11 08:38:21.260402",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",

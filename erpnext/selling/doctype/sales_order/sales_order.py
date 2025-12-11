@@ -114,6 +114,7 @@ class SalesOrder(SellingController):
 		customer_address: DF.Link | None
 		customer_group: DF.Link | None
 		customer_name: DF.Data | None
+		customer_passport_id: DF.Data | None
 		customer_personal_id: DF.Data | None
 		customer_type: DF.Literal["", "New Customer", "Returning Customer"]
 		date_of_issuance: DF.Date | None
@@ -161,6 +162,7 @@ class SalesOrder(SellingController):
 		packed_items: DF.Table[PackedItem]
 		paid_amount: DF.Currency
 		party_account_currency: DF.Link | None
+		payment_completion_date: DF.Datetime | None
 		payment_entries: DF.Table[PaymentEntryReference]
 		payment_records: DF.Table[SalesOrderPaymentRecord]
 		payment_schedule: DF.Table[PaymentSchedule]
