@@ -332,10 +332,20 @@ frappe.ui.form.on("Payment Entry", {
 		});
 	},
 
+	update_button_visibility: function(frm) {
+		if (frm.doc.docstatus === 0) {
+			if (frm.page.btn_primary) {
+				frm.page.btn_primary.hide();
+			}			
+			frm.page.remove_inner_button(__("Submit"));
+		}
+	},
+
 	refresh: function (frm) {
 		frm.events.update_gateway_options(frm);
 		frm.events.update_bank_branch_logic(frm);
 		frm.events.update_field_visibility(frm);
+		frm.events.update_button_visibility(frm);
 		erpnext.hide_company(frm);
 		frm.events.hide_unhide_fields(frm);
 		frm.events.set_dynamic_labels(frm);
