@@ -133,6 +133,7 @@ class SalesOrder(SellingController):
 		expected_payment_date: DF.Date | None
 		financial_status: DF.Literal["", "Paid", "Partially Paid", "Partially Refunded", "Refunded", "Pending"]
 		from_date: DF.Date | None
+		fulfillment_completion_date: DF.Datetime | None
 		fulfillment_status: DF.Literal["", "Fulfilled", "Not Fulfilled"]
 		gender: DF.Data | None
 		grand_total: DF.Currency
@@ -161,6 +162,7 @@ class SalesOrder(SellingController):
 		packed_items: DF.Table[PackedItem]
 		paid_amount: DF.Currency
 		party_account_currency: DF.Link | None
+		payment_completion_date: DF.Datetime | None
 		payment_entries: DF.Table[PaymentEntryReference]
 		payment_records: DF.Table[SalesOrderPaymentRecord]
 		payment_schedule: DF.Table[PaymentSchedule]

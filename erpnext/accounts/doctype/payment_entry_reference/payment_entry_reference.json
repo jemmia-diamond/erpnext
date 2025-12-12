@@ -8,6 +8,11 @@
   "reference_doctype",
   "reference_name",
   "order_number",
+  "mode_of_payment",
+  "gateway",
+  "paid_amount",
+  "payment_date",
+  "payment_order_status",
   "split_order_group_name",
   "due_date",
   "bill_no",
@@ -38,7 +43,7 @@
    "search_index": 1
   },
   {
-   "columns": 1,
+   "columns": 2,
    "fieldname": "reference_name",
    "fieldtype": "Dynamic Link",
    "in_global_search": 1,
@@ -54,6 +59,53 @@
    "fieldtype": "Data",
    "label": "Order Number",
    "read_only": 1
+  },
+  {
+   "fieldname": "mode_of_payment",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Mode of Payment",
+   "columns": 2,
+   "options": "Mode of Payment",
+   "read_only": 1,
+   "fetch_from": "reference_name.mode_of_payment"
+  },
+  {
+   "fieldname": "gateway",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Gateway",
+   "columns": 2,
+   "read_only": 1,
+   "fetch_from": "reference_name.gateway"
+  },
+  {
+   "fieldname": "paid_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Paid Amount",
+   "columns": 2,
+   "read_only": 1,
+   "fetch_from": "reference_name.paid_amount",
+   "options": "currency"
+  },
+  {
+   "fieldname": "payment_date",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Payment Date",
+   "columns": 2,
+   "read_only": 1,
+   "fetch_from": "reference_name.payment_date"
+  },
+  {
+   "fieldname": "payment_order_status",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Payment Status",
+   "columns": 2,
+   "read_only": 1,
+   "fetch_from": "reference_name.payment_order_status"
   },
   {
    "depends_on": "eval:doc.reference_doctype=='Sales Order'",
