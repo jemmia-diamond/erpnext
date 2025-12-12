@@ -245,13 +245,16 @@ class SalesOrder(SellingController):
 		self.set("payment_entries", [])
 
 		# Get payment entries linked to this sales order
-		payment_references = frappe.get_all("Payment Entry Reference",
-			filters={
-				"reference_doctype": "Sales Order",
-				"reference_name": self.name
-			},
-			fields="*"
-		)
+		payment_references = frappe.db.sql("""
+			SELECT 
+				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name, 
+				pr.total_amount, pr.outstanding_amount, pr.allocated_amount,
+				pe.mode_of_payment, pe.gateway, pe.paid_amount, pe.payment_date, pe.payment_order_status
+			FROM `tabPayment Entry Reference` pr
+			INNER JOIN `tabPayment Entry` pe ON pr.parent = pe.name
+			WHERE pr.reference_doctype = 'Sales Order' AND pr.reference_name = %s
+			AND pe.docstatus < 2
+		""", self.name, as_dict=True)
 
 		if not payment_references:
 			return
@@ -259,7 +262,7 @@ class SalesOrder(SellingController):
 		for pe_ref in payment_references:
 			row = self.append("payment_entries", {})
 			row.update({
-					"name": pe_ref.name ,
+					"name": pe_ref.name,
 					"owner": "Administrator",
 					"modified_by": "Administrator",
 					"docstatus": 0,
@@ -271,7 +274,12 @@ class SalesOrder(SellingController):
 					"parent": pe_ref.reference_name,
 					"parentfield": "payment_entries",
 					"parenttype": pe_ref.reference_doctype,
-					"doctype": "Payment Entry Reference"
+					"doctype": "Payment Entry Reference",
+					"mode_of_payment": pe_ref.mode_of_payment,
+					"gateway": pe_ref.gateway,
+					"paid_amount": pe_ref.paid_amount,
+					"payment_date": pe_ref.payment_date,
+					"payment_order_status": pe_ref.payment_order_status
 			})
 
 	def validate(self):
