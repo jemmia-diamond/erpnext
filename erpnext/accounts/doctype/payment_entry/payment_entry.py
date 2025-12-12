@@ -2115,20 +2115,22 @@ class PaymentEntry(AccountsController):
 	@frappe.whitelist()
 	def verify_payment(self):
 		"""Verify payment entry after bank transaction matching"""
-		payment_code = self.get_payment_code()
-		skip_bank_check = payment_code in ["cash", "cash_on_delivery"]
-		if not skip_bank_check and (not self.bank_transactions or len(self.bank_transactions) == 0):
-			frappe.throw(_("Cannot verify: Payment Entry must have at least one Bank Transaction (unless Mode of Payment is Cash or COD)"))
+		payment_code = self.get_payment_code()		
+		requires_bank_transaction = payment_code == "banking"
+		
+		if requires_bank_transaction and (not self.bank_transactions or len(self.bank_transactions) == 0):
+			frappe.throw(_("Cannot verify: Banking payment must have at least one Bank Transaction"))
+		
 		has_sales_order = any(ref.reference_doctype == "Sales Order" for ref in self.references)
 		if not has_sales_order:
 			frappe.throw(_("Cannot verify: Payment Entry must have at least one Sales Order reference"))
 
-		if self.payment_order_status == "Success":
-			frappe.throw(_("Cannot verify: Payment has already been marked as Success"))
-
 		if self.payment_order_status == "Pending":
 			self.payment_order_status = "Success"
-		self.verified_by = frappe.session.user
+
+		if not self.verified_by:
+			self.verified_by = frappe.session.user
+		
 		self.save()
 
 		frappe.msgprint(_("Payment Entry verified successfully"))

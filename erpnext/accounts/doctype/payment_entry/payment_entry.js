@@ -397,21 +397,21 @@ frappe.ui.form.on("Payment Entry", {
 		) {
 			frm.add_custom_button(__("Verify"), () => {
 				frm.events.get_payment_code(frm, (payment_code) => {
-					let skip_bank_check = ["cash", "cash_on_delivery"].includes(payment_code);
-					if (!skip_bank_check && (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0)) {
+					let requires_bank_transaction = payment_code === "banking";
+					if (requires_bank_transaction && (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0)) {
 						frappe.msgprint({
-							title: __("Cannot Verify"),
+							title: __("Không thể xác minh"),
 							indicator: "red",
-							message: __("Payment Entry must have at least one Bank Transaction to verify (unless Mode of Payment is Cash or COD).")
+							message: __("Thanh toán chuyển khoản phải có ít nhất một giao dịch ngân hàng để xác minh.")
 						});
 						return;
 					}
 
 					if (!frm.doc.references || !frm.doc.references.some(r => r.reference_doctype === "Sales Order")) {
 						frappe.msgprint({
-							title: __("Cannot Verify"),
+							title: __("Không thể xác minh"),
 							indicator: "red",
-							message: __("Payment Entry must have at least one Sales Order reference to verify.")
+							message: __("Phiếu thanh toán phải có ít nhất một đơn hàng để xác minh.")
 						});
 						return;
 					}
