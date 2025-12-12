@@ -650,6 +650,15 @@ frappe.ui.form.on("Payment Entry", {
 		frm.set_value("gateway", "");
 		frm.events.update_gateway_options(frm);
 		frm.events.update_field_visibility(frm);
+		
+		if (frm.doc.mode_of_payment) {
+			frappe.db.get_value("Mode of Payment", frm.doc.mode_of_payment, "payment_code", (r) => {
+				if (r && r.payment_code) {
+					frm.set_value("payment_code", r.payment_code);
+				}
+			});
+		}
+		
 		erpnext.accounts.pos.get_payment_mode_account(frm, frm.doc.mode_of_payment, function (account) {
 			let payment_account_field = frm.doc.payment_type == "Receive" ? "paid_to" : "paid_from";
 			frm.set_value(payment_account_field, account);

@@ -608,6 +608,7 @@ class PaymentEntry(AccountsController):
 				doc.delink_advance_entries(self.name)
 
 	def set_missing_values(self):
+		self.set_payment_code()
 		if self.payment_type == "Internal Transfer":
 			for field in (
 				"party",
@@ -2106,6 +2107,10 @@ class PaymentEntry(AccountsController):
 			return None
 		
 		return frappe.db.get_value("Mode of Payment", self.mode_of_payment, "payment_code")
+	
+	def set_payment_code(self):
+		if self.mode_of_payment:
+			self.payment_code = self.get_payment_code()
 
 	@frappe.whitelist()
 	def verify_payment(self):
