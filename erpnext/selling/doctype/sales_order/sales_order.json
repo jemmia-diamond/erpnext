@@ -1562,11 +1562,12 @@
    "label": "Update Auto Repeat Reference"
   },
   {
+   "fetch_from": "contact_person.phone",
    "fieldname": "contact_phone",
    "fieldtype": "Data",
-   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
+   "in_standard_filter": 1,
    "label": "Phone",
    "options": "Phone",
    "read_only": 1
@@ -2158,7 +2159,7 @@
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-11 09:37:43.126461",
+ "modified": "2025-12-12 02:28:20.542876",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
