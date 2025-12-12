@@ -1987,6 +1987,25 @@ frappe.ui.form.on("Payment Entry Reference", {
 								: frm.doc.unallocated_amount;
 
 						frappe.model.set_value(cdt, cdn, "allocated_amount", allocated_amount);
+						
+						frappe.model.set_value(cdt, cdn, "mode_of_payment", frm.doc.mode_of_payment);
+						frappe.model.set_value(cdt, cdn, "gateway", frm.doc.gateway);
+						frappe.model.set_value(cdt, cdn, "paid_amount", frm.doc.paid_amount);
+						frappe.model.set_value(cdt, cdn, "payment_date", frm.doc.posting_date);
+						frappe.model.set_value(cdt, cdn, "payment_order_status", frm.doc.payment_order_status);
+						
+						if (row.reference_doctype === "Sales Order") {
+							frappe.db.get_value("Sales Order", row.reference_name, [
+								"order_number",
+								"split_order_group_name"
+							], (so_data) => {
+								if (so_data) {
+									frappe.model.set_value(cdt, cdn, "order_number", so_data.order_number);
+									frappe.model.set_value(cdt, cdn, "split_order_group_name", so_data.split_order_group_name);
+								}
+							});
+						}
+						
 						frm.refresh_fields();
 					}
 				},

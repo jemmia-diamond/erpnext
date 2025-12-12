@@ -67,8 +67,7 @@
    "label": "Mode of Payment",
    "columns": 2,
    "options": "Mode of Payment",
-   "read_only": 1,
-   "fetch_from": "reference_name.mode_of_payment"
+   "read_only": 1
   },
   {
    "fieldname": "gateway",
@@ -76,8 +75,7 @@
    "in_list_view": 1,
    "label": "Gateway",
    "columns": 2,
-   "read_only": 1,
-   "fetch_from": "reference_name.gateway"
+   "read_only": 1
   },
   {
    "fieldname": "paid_amount",
@@ -86,7 +84,6 @@
    "label": "Paid Amount",
    "columns": 2,
    "read_only": 1,
-   "fetch_from": "reference_name.paid_amount",
    "options": "currency"
   },
   {
@@ -95,8 +92,7 @@
    "in_list_view": 1,
    "label": "Payment Date",
    "columns": 2,
-   "read_only": 1,
-   "fetch_from": "reference_name.payment_date"
+   "read_only": 1
   },
   {
    "fieldname": "payment_order_status",
@@ -104,8 +100,7 @@
    "in_list_view": 1,
    "label": "Payment Status",
    "columns": 2,
-   "read_only": 1,
-   "fetch_from": "reference_name.payment_order_status"
+   "read_only": 1
   },
   {
    "depends_on": "eval:doc.reference_doctype=='Sales Order'",
