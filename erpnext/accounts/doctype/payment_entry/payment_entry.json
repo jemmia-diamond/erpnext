@@ -13,6 +13,7 @@
   "naming_series",
   "name_display",
   "mode_of_payment",
+  "payment_code",
   "payment_type",
   "gateway",
   "bank_account",
@@ -28,6 +29,7 @@
   "qr_section_break",
   "custom_transaction_id",
   "custom_transfer_status",
+  "custom_webhook_processed",
   "column_break_redx",
   "custom_transfer_note",
   "qr_url",
@@ -143,8 +145,6 @@
    "fieldname": "payment_type",
    "fieldtype": "Select",
    "hidden": 1,
-   "in_list_view": 0,
-   "in_standard_filter": 1,
    "label": "Payment Type",
    "options": "Receive\nPay\nInternal Transfer",
    "print_hide": 1,
@@ -160,7 +160,6 @@
    "fieldname": "posting_date",
    "fieldtype": "Date",
    "hidden": 1,
-   "in_list_view": 0,
    "label": "Posting Date",
    "reqd": 1
   },
@@ -169,7 +168,8 @@
    "fieldtype": "Datetime",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Payment Date"
+   "label": "Payment Date",
+   "reqd": 1
   },
   {
    "fieldname": "company",
@@ -198,6 +198,13 @@
    "reqd": 1
   },
   {
+   "fieldname": "payment_code",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Payment Code",
+   "read_only": 1
+  },
+  {
    "bold": 1,
    "default": "Pending",
    "depends_on": "eval:!doc.__islocal",
@@ -217,21 +224,18 @@
   {
    "fieldname": "custom_transaction_id",
    "fieldtype": "Data",
-   "in_list_view": 0,
    "label": "QR Transaction ID",
    "read_only": 1
   },
   {
    "fieldname": "custom_transfer_note",
    "fieldtype": "Small Text",
-   "in_list_view": 0,
    "label": "Transfer Note",
    "read_only": 1
   },
   {
    "fieldname": "custom_transfer_status",
    "fieldtype": "Select",
-   "in_list_view": 0,
    "label": "Transfer Status",
    "options": "\npending\nsuccess\ncancel",
    "read_only": 1
@@ -240,7 +244,6 @@
    "fieldname": "qr_url",
    "fieldtype": "Data",
    "hidden": 1,
-   "in_list_view": 0,
    "label": "QR URL",
    "read_only": 1
   },
@@ -272,10 +275,10 @@
    "depends_on": "eval:in_list([\"Receive\", \"Pay\"], doc.payment_type) && doc.party_type",
    "fieldname": "party_name",
    "fieldtype": "Data",
-   "in_standard_filter": 1,
-   "in_list_view": 1,
    "hidden": 1,
    "in_global_search": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Party Name"
   },
   {
@@ -691,7 +694,6 @@
    "default": "Draft",
    "fieldname": "status",
    "fieldtype": "Select",
-   "in_list_view": 0,
    "label": "Status",
    "no_copy": 1,
    "options": "\nDraft\nSubmitted\nCancelled",
@@ -966,9 +968,15 @@
   {
    "fieldname": "name_display",
    "fieldtype": "Data",
-   "in_list_view": 0,
    "label": "ID",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "custom_webhook_processed",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Webhook Process"
   }
  ],
  "grid_page_length": 50,
@@ -983,7 +991,7 @@
    "table_fieldname": "payment_entries"
   }
  ],
- "modified": "2025-12-09 16:58:42.933784",
+ "modified": "2025-12-12 09:42:11.806026",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Payment Entry",
