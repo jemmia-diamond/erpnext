@@ -100,6 +100,7 @@ class PaymentEntry(AccountsController):
 		custom_transaction_id: DF.Data | None
 		custom_transfer_note: DF.SmallText | None
 		custom_transfer_status: DF.Literal["", "pending", "success", "cancel"]
+		custom_webhook_processed: DF.Check
 		deductions: DF.Table[PaymentEntryDeduction]
 		difference_amount: DF.Currency
 		gateway: DF.Literal[None]
@@ -110,7 +111,7 @@ class PaymentEntry(AccountsController):
 		misa_sync_guid: DF.Data | None
 		misa_synced: DF.Check
 		misa_synced_at: DF.Datetime | None
-		mode_of_payment: DF.Link | None
+		mode_of_payment: DF.Link
 		name_display: DF.Data | None
 		naming_series: DF.Literal["ACC-PAY-.YYYY.-"]
 		paid_amount: DF.Currency
@@ -128,7 +129,8 @@ class PaymentEntry(AccountsController):
 		party_bank_account: DF.Link | None
 		party_name: DF.Data | None
 		party_type: DF.Link | None
-		payment_date: DF.Datetime | None
+		payment_code: DF.Data | None
+		payment_date: DF.Datetime
 		payment_order: DF.Link | None
 		payment_order_status: DF.Literal["Pending", "Success", "Cancel"]
 		payment_type: DF.Literal["Receive", "Pay", "Internal Transfer"]
