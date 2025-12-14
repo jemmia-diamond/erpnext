@@ -2127,9 +2127,6 @@ class PaymentEntry(AccountsController):
 		if not has_sales_order:
 			frappe.throw(_("Cannot verify: Payment Entry must have at least one Sales Order reference"))
 
-		if self.payment_order_status == "Pending":
-			self.payment_order_status = "Success"
-
 		if not self.verified_by:
 			self.verified_by = frappe.session.user
 		
