@@ -149,6 +149,8 @@ class BankTransaction(Document):
 						if self.sepay_transaction_date:
 							payment_entry.payment_date = self.sepay_transaction_date
 
+						payment_entry.custom_webhook_processed = 0
+						payment_entry.modified_by = payment_entry.owner
 						payment_entry.save(ignore_permissions=True)
 				except Exception as e:
 					frappe.log_error(f"Error syncing Bank Transaction to Payment Entry: {str(e)}")
