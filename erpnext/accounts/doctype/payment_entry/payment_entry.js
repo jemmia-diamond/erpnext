@@ -290,7 +290,7 @@ frappe.ui.form.on("Payment Entry", {
 
 	update_bank_branch_logic: function (frm) {
 		frm.events.get_payment_code(frm, (payment_code) => {
-			if (["banking", "payment_link", "pos", "cash_on_delivery"].includes(payment_code)) {
+			if (payment_code === "banking") {
 				frm.set_df_property("bank_account_branch", "read_only", 1);
 				if (frm.doc.bank_account) {
 					frappe.db.get_value("Bank Account", frm.doc.bank_account, "account_type", (r) => {
@@ -324,7 +324,8 @@ frappe.ui.form.on("Payment Entry", {
 
 		frm.events.get_payment_code(frm, (payment_code) => {
 			frm.toggle_display("gateway", ["payment_link", "pos", "cash", "cash_on_delivery"].includes(payment_code));
-			const show_bank_account = payment_code && !["cash", "pos"].includes(payment_code);
+			
+			const show_bank_account = payment_code && !["cash", "pos", "payment_link", "cash_on_delivery"].includes(payment_code);
 			frm.toggle_display("bank_account", show_bank_account);
 			
 			const is_new_or_has_bank = frm.is_new() || frm.doc.bank_account;
