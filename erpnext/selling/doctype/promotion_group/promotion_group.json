@@ -27,10 +27,12 @@
    "label": "End Date"
   },
   {
-   "default": "0",
+   "default": "G0",
    "fieldname": "priority",
-   "fieldtype": "Int",
-   "label": "Priority"
+   "fieldtype": "Select",
+   "label": "Priority",
+   "options": "\nG0\nG1\nG2\nG3\nG4\nG5\nG6\nG7",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
