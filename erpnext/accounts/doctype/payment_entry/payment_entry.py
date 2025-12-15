@@ -760,6 +760,9 @@ class PaymentEntry(AccountsController):
 		for field in ("paid_amount", "received_amount", "source_exchange_rate", "target_exchange_rate"):
 			if not self.get(field):
 				frappe.throw(_("{0} is mandatory").format(self.meta.get_label(field)))
+		
+		if not self.payment_date and self.payment_code != "cash_on_delivery":
+			frappe.throw(_("Payment Date is mandatory"))
 
 	def validate_reference_documents(self):
 		valid_reference_doctypes = self.get_valid_reference_doctypes()
@@ -3849,6 +3852,37 @@ def make_payment_order(source_name, target_doc=None):
 @erpnext.allow_regional
 def add_regional_gl_entries(gl_entries, doc):
 	return
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_customer_with_phone(doctype, txt, searchfield, start, page_len, filters):
+	"""Custom query to search Customer by name or mobile_no"""
+	return frappe.db.sql(
+		"""
+		SELECT name, customer_name, mobile_no, phone
+		FROM `tabCustomer`
+		WHERE (
+			name LIKE %(txt)s
+			OR customer_name LIKE %(txt)s
+			OR mobile_no LIKE %(txt)s
+			OR phone LIKE %(txt)s
+		)
+		ORDER BY
+			CASE 
+				WHEN name LIKE %(txt)s THEN 0
+				WHEN customer_name LIKE %(txt)s THEN 1
+				ELSE 2
+			END,
+			modified DESC
+		LIMIT %(page_len)s OFFSET %(start)s
+		""",
+		{
+			"txt": f"%{txt}%",
+			"start": start,
+			"page_len": page_len,
+		},
+	)
 
 
 @frappe.whitelist()

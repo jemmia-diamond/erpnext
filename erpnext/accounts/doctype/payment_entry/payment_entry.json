@@ -168,8 +168,7 @@
    "fieldtype": "Datetime",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Payment Date",
-   "reqd": 1
+   "label": "Payment Date"
   },
   {
    "fieldname": "company",
