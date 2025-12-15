@@ -271,16 +271,24 @@ frappe.ui.form.on("Payment Entry", {
 		frm.events.get_payment_code(frm, (payment_code) => {
 			if (payment_code === "pos") {
 				frm.set_df_property("gateway", "options", ["Payoo", "Vietcombank"]);
-				frm.set_value("gateway", "Payoo");
+				if (!frm.doc.gateway || !["Payoo", "Vietcombank"].includes(frm.doc.gateway)) {
+					frm.set_value("gateway", "Payoo");
+				}
 			} else if (payment_code === "payment_link") {
 				frm.set_df_property("gateway", "options", ["Payoo", "ZaloPay"]);
-				frm.set_value("gateway", "Payoo");
+				if (!frm.doc.gateway || !["Payoo", "ZaloPay"].includes(frm.doc.gateway)) {
+					frm.set_value("gateway", "Payoo");
+				}
 			} else if (payment_code === "cash") {
 				frm.set_df_property("gateway", "options", ["Thu Ngân"]);
-				frm.set_value("gateway", "Thu Ngân");
+				if (!frm.doc.gateway || frm.doc.gateway !== "Thu Ngân") {
+					frm.set_value("gateway", "Thu Ngân");
+				}
 			} else if (payment_code === "cash_on_delivery") {
 				frm.set_df_property("gateway", "options", ["HTC", "Nhất Tín"]);
-				frm.set_value("gateway", "HTC");
+				if (!frm.doc.gateway || !["HTC", "Nhất Tín"].includes(frm.doc.gateway)) {
+					frm.set_value("gateway", "HTC");
+				}
 			} else {
 				frm.set_df_property("gateway", "options", [""]);
 				frm.set_value("gateway", "");
@@ -669,6 +677,17 @@ frappe.ui.form.on("Payment Entry", {
 			frm.set_value(payment_account_field, account);
 			frm.events.update_bank_branch_logic(frm);
 		});
+	},
+
+	gateway: function(frm) {
+		if (frm.doc.references && frm.doc.references.length > 0) {
+			frm.doc.references.forEach(function(row) {
+				if (row.reference_doctype === "Sales Order") {
+					frappe.model.set_value(row.doctype, row.name, "gateway", frm.doc.gateway);
+				}
+			});
+			frm.refresh_field("references");
+		}
 	},
 
 	party_type: function (frm) {
@@ -1962,6 +1981,10 @@ frappe.ui.form.on("Payment Entry Reference", {
 		if (!row.reference_doctype) {
 			frappe.model.set_value(cdt, cdn, "reference_doctype", "Sales Order");
 		}
+		// // Set default payment_date if not set in parent
+		// if (!frm.doc.payment_date) {
+		// 	frm.set_value("payment_date", frappe.datetime.now_datetime());
+		// }
 	},
 
 	reference_doctype: function (frm, cdt, cdn) {
@@ -1997,13 +2020,12 @@ frappe.ui.form.on("Payment Entry Reference", {
 
 						frappe.model.set_value(cdt, cdn, "allocated_amount", allocated_amount);
 						
-						frappe.model.set_value(cdt, cdn, "mode_of_payment", frm.doc.mode_of_payment);
-						frappe.model.set_value(cdt, cdn, "gateway", frm.doc.gateway);
-						frappe.model.set_value(cdt, cdn, "paid_amount", frm.doc.paid_amount);
-						frappe.model.set_value(cdt, cdn, "payment_date", frm.doc.posting_date);
-						frappe.model.set_value(cdt, cdn, "payment_order_status", frm.doc.payment_order_status);
-						
 						if (row.reference_doctype === "Sales Order") {
+							frappe.model.set_value(cdt, cdn, "mode_of_payment", frm.doc.mode_of_payment);
+							frappe.model.set_value(cdt, cdn, "gateway", frm.doc.gateway);
+							frappe.model.set_value(cdt, cdn, "paid_amount", frm.doc.paid_amount);
+							frappe.model.set_value(cdt, cdn, "payment_date", frm.doc.posting_date);
+							frappe.model.set_value(cdt, cdn, "payment_order_status", frm.doc.payment_order_status);
 							frappe.db.get_value("Sales Order", row.reference_name, [
 								"order_number",
 								"split_order_group_name"
