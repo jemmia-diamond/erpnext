@@ -40,6 +40,7 @@ from erpnext.stock.doctype.stock_reservation_entry.stock_reservation_entry impor
 from erpnext.stock.get_item_details import get_bin_details, get_default_bom, get_price_list_rate
 from erpnext.stock.stock_balance import get_reserved_qty, update_bin_qty
 from frappe.model.docstatus import DocStatus
+from erpnext.selling.doctype.customer.customer import reevaluate_customer_rank
 
 from erpnext.config.config import config
 
@@ -626,12 +627,17 @@ class SalesOrder(SellingController):
 		self.calculate_commission()
 		self.calculate_contribution()
 		self.check_credit_limit()
+		self.check_cancelled_status_change()
 
 	def before_update_after_submit(self):
 		self.validate_po()
 		self.validate_drop_ship()
 		self.validate_supplier_after_submit()
 		self.validate_delivery_date()
+
+	def check_cancelled_status_change(self):
+		if self.has_value_changed("cancelled_status"):
+			reevaluate_customer_rank(self.customer)
 
 	def validate_supplier_after_submit(self):
 		"""Check that supplier is the same after submit if PO is already made"""
