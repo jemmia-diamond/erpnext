@@ -1521,6 +1521,9 @@ def _update_total_cumulative_revenue(customer_name, auto_commit=True):
 	buyback_revenue = flt(customer.get("buyback_revenue", 0))
 
 	total_cumulative = actual_revenue + referral_revenue - buyback_revenue
+	if total_cumulative < 0:
+		total_cumulative = 0
+
 	customer.db_set("total_cumulative_revenue", total_cumulative, update_modified=True)
 
 	if auto_commit:
