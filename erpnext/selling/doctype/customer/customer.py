@@ -1037,23 +1037,21 @@ def evaluate_all_customer_ranks():
 			EXISTS (
 				SELECT 1 FROM `tabSales Order` so
 				WHERE so.customer = c.name
+				AND so.cancelled_status = 'Uncancelled'
+				AND so.financial_status in ('Paid', 'Partially Paid')
+				AND so.total_amount != 0
 			)
 			OR EXISTS (
 				SELECT 1 FROM `tabCoupon` cp
 				WHERE cp.parent = c.name
 			)
 		)
-		ORDER BY
-			CASE WHEN c.rank_updated_at IS NULL THEN 0 ELSE 1 END,
-			c.name
-		LIMIT 1000
+		ORDER BY c.rank_updated_at DESC
+		LIMIT 200
 	""", as_dict=True)
 
 	for customer in customers:
 		try:
-			if customer.rank_updated_at and customer.rank != "No Rank" and customer.total_cumulative_revenue > 0:
-				continue
-
 			update_customers_coupons(customer.name, customer.haravan_id)
 			load_buyback_records_async(customer.name)
 			update_customer_priority_data(customer.name, customer.haravan_id)
@@ -1168,14 +1166,15 @@ def _get_buyback_revenue_in_period(customer_name, start_date, end_date):
 	from frappe.utils import formatdate
 
 	customer = frappe.get_doc("Customer", customer_name)
-	if not customer.phone:
+	phone_number = customer.phone or customer.mobile_no
+	if not phone_number:
 		return 0
 
 	try:
 		response = requests.get(
 			url=f"{config.FN_BASE_URL}/api/larksuites/buyback-exchanges",
 			params={
-				"phone_number": customer.phone,
+				"phone_number": phone_number,
 				"submitted_date_start": formatdate(start_date, "yyyy-MM-dd"),
 				"submitted_date_end": formatdate(end_date, "yyyy-MM-dd")
 			},
@@ -1250,13 +1249,14 @@ def update_all_customers_revenue():
 def load_buyback_records_async(customer):
 	"""Async method to load buyback records after page load"""
 	customer_doc = frappe.get_doc("Customer", customer)
-	if not customer_doc.phone:
+	phone_number = customer_doc.phone or customer_doc.mobile_no
+	if not phone_number:
 		return []
 
 	try:
 		response = requests.get(
 			url=f"{config.FN_BASE_URL}/api/larksuites/buyback-exchanges",
-			params={"phone_number": customer_doc.phone},
+			params={"phone_number": phone_number},
 			headers={"Authorization": f"Bearer {config.FN_BEARER_TOKEN}"},
 			timeout=3
 		)
@@ -1477,7 +1477,8 @@ def _get_referral_revenue_up_to_date(customer_name, target_date):
 def _get_buyback_revenue_up_to_date(customer_name, target_date):
 	"""Get total buyback revenue up to a specific date"""
 	customer = frappe.get_doc("Customer", customer_name)
-	if not customer.phone:
+	phone_number = customer.phone or customer.mobile_no
+	if not phone_number:
 		return 0
 
 	try:
@@ -1486,7 +1487,7 @@ def _get_buyback_revenue_up_to_date(customer_name, target_date):
 		response = requests.get(
 			url=f"{config.FN_BASE_URL}/api/larksuites/buyback-exchanges",
 			params={
-				"phone_number": customer.phone,
+				"phone_number": phone_number,
 				"submitted_date_end": formatdate(target_date, "yyyy-MM-dd")
 			},
 			headers={"Authorization": f"Bearer {config.FN_BEARER_TOKEN}"},
