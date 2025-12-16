@@ -230,12 +230,70 @@ def update_lead_by_batch(docs):
 			pancake_list_tags = doc.get("pancake_tags", [])
 			pancake_list_tags = [transform_price_label(tag) for tag in pancake_list_tags]
 			
-			existing_doc = frappe.get_doc(doc["doctype"], doc["docname"])
+			try:
+				existing_doc = frappe.get_doc(doc["doctype"], doc["docname"])
+			except (frappe.DoesNotExistError, Exception):
+				conversation_id = doc.get("pancake_data", {}).get("conversation_id")
+				lead_name = get_lead_name_by_conversation_id(conversation_id) if conversation_id else None
+				
+				if lead_name:
+					existing_doc = frappe.get_doc(doc["doctype"], lead_name)
+				else:
+					raise
 
 			# exist phone not update
 			if existing_doc.phone and existing_doc.phone != "":
 				doc["phone"] = existing_doc.phone
 
+			# Check if the new phone number already exists in another lead
+			new_phone = doc.get("phone")
+			if new_phone:
+				conflicting_lead = frappe.db.get_value("Lead", {"phone": new_phone}, "name")
+				if conflicting_lead and conflicting_lead != existing_doc.name:
+					conflicting_doc = frappe.get_doc("Lead", conflicting_lead)
+					
+					is_existing_older = False
+					if existing_doc.first_reach_at and conflicting_doc.first_reach_at:
+						if get_datetime(existing_doc.first_reach_at) < get_datetime(conflicting_doc.first_reach_at):
+							is_existing_older = True
+					elif existing_doc.first_reach_at: # conflicting has no date
+						is_existing_older = True
+					
+					if is_existing_older:
+						master_doc = existing_doc
+						loser_doc = conflicting_doc
+					else:
+						master_doc = conflicting_doc
+						loser_doc = existing_doc
+
+					# Fetch loser's contacts
+					loser_contacts = frappe.get_all("Contact", filters=[
+						["Dynamic Link", "link_doctype", "=", "Lead"],
+						["Dynamic Link", "link_name", "=", loser_doc.name]
+					], fields=["name", "pancake_conversation_id", "pancake_page_id"])
+
+					for lc in loser_contacts:
+						if lc.pancake_conversation_id:
+							# Use method to link (handles check/deduplication logic inside Lead)
+							try:
+								master_doc.link_to_contacts(lc.pancake_page_id, lc.pancake_conversation_id)
+							except Exception:
+								# Fallback or ignore if linking fails
+								pass
+						else:
+							# Manual link for non-pancake contacts
+							frappe.db.sql("""
+								UPDATE `tabDynamic Link`
+								SET link_name = %s
+								WHERE link_doctype = 'Lead' AND link_name = %s AND parent = %s
+							""", (master_doc.name, loser_doc.name, lc.name))
+
+					# Delete the loser lead (orphaned duplicate contacts will be deleted by on_trash)
+					frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True, force=1)
+					
+					if existing_doc.name != master_doc.name:
+						existing_doc = master_doc
+			
 			if existing_doc.lead_name  and existing_doc.lead_name != "" and existing_doc.lead_name != "Chưa rõ":
 				doc["first_name"] = existing_doc.lead_name
 				doc["lead_name"] = existing_doc.lead_name
