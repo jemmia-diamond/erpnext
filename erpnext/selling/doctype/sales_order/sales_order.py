@@ -255,6 +255,7 @@ class SalesOrder(SellingController):
 			INNER JOIN `tabPayment Entry` pe ON pr.parent = pe.name
 			WHERE pr.reference_doctype = 'Sales Order' AND pr.reference_name = %s
 			AND pe.docstatus < 2
+			AND pe.payment_order_status = 'Success'
 		""", self.name, as_dict=True)
 
 		if not payment_references:
