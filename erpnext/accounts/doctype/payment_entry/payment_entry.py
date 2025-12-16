@@ -278,6 +278,7 @@ class PaymentEntry(AccountsController):
 
 	def on_update(self):
 		self.sync_bank_transaction_payments()
+		self.update_sales_order_paid_amount()
 
 	def sync_bank_transaction_payments(self):
 		if self.flags.get("updating_from_bank_transaction"):
@@ -311,12 +312,15 @@ class PaymentEntry(AccountsController):
 		self.make_advance_payment_ledger_entries()
 		self.update_advance_paid()  # advance_paid_status depends on the payment request amount
 		self.set_status()
+		self.update_sales_order_paid_amount()
 
 	def validate_for_repost(self):
 		validate_docs_for_voucher_types(["Payment Entry"])
 		validate_docs_for_deferred_accounting([self.name], [])
 
 	def on_update_after_submit(self):
+		self.update_sales_order_paid_amount()
+		
 		# Flag will be set on Reconciliation
 		# Reconciliation tool will anyways repost ledger entries. So, no need to check and do implicit repost.
 		if self.flags.get("ignore_reposting_on_reconciliation"):
@@ -328,6 +332,39 @@ class PaymentEntry(AccountsController):
 		if self.needs_repost:
 			self.validate_for_repost()
 			self.repost_accounting_entries()
+
+	def update_sales_order_paid_amount(self):
+		sales_orders_to_update = set()
+
+		if self.references:
+			for ref in self.references:
+				if ref.reference_doctype == "Sales Order" and ref.reference_name:
+					sales_orders_to_update.add(ref.reference_name)
+
+		# Process each unique Sales Order found
+		for so_name in sales_orders_to_update:
+			result = frappe.db.sql("""
+				SELECT SUM(
+					CASE WHEN parent.payment_type = 'Pay' THEN -1 * child.allocated_amount
+					ELSE child.allocated_amount END
+				)
+				FROM `tabPayment Entry Reference` child
+				INNER JOIN `tabPayment Entry` parent ON child.parent = parent.name
+				WHERE child.reference_doctype = 'Sales Order'
+				AND child.reference_name = %s
+				AND parent.docstatus < 2 
+				AND parent.payment_order_status = 'Success'
+			""", (so_name))
+
+			# Handle None result if no records match (return 0.0)
+			total_paid = result[0][0] if result and result[0][0] else 0.0
+
+			current_paid_amount = frappe.db.get_value("Sales Order", so_name, "paid_amount")
+
+			if flt(total_paid) != flt(current_paid_amount):
+				# Update the Sales Order 'paid_amount' field directly
+				frappe.db.set_value("Sales Order", so_name, "paid_amount", total_paid)
+				frappe.msgprint(f"Đã cập nhật Sales Order {so_name} số tiền đã thanh toán {total_paid}")
 
 	def set_liability_account(self):
 		# Auto setting liability account should only be done during 'draft' status
@@ -417,6 +454,7 @@ class PaymentEntry(AccountsController):
 		self.make_advance_payment_ledger_entries()
 		self.update_advance_paid()  # advance_paid_status depends on the payment request amount
 		self.set_status()
+		self.update_sales_order_paid_amount()
 
 	def update_payment_requests(self, cancel=False):
 		from erpnext.accounts.doctype.payment_request.payment_request import (
