@@ -288,14 +288,6 @@ class SalesOrder(SellingController):
 					"payment_order_status": pe_ref.payment_order_status
 			})
 		
-		# Update paid_amount on Sales Order
-		if payment_references:
-			total_paid = sum(flt(pe_ref.allocated_amount) for pe_ref in payment_references)
-		else:
-			total_paid = 0
-		
-		if flt(self.paid_amount) != total_paid:
-			self.db_set("paid_amount", total_paid)
 
 	def validate(self):
 		super().validate()
