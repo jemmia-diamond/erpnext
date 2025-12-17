@@ -212,6 +212,7 @@
   "column_break_ptow",
   "balance",
   "payment_section_section",
+  "payment_entries",
   "payment_records",
   "debt_history",
   "payment_terms_section",
@@ -231,10 +232,7 @@
   "column_break_phue",
   "haravan_created_at",
   "source_name",
-  "connections_tab",
-  "payment_entries_tab",
-  "payment_entries_section",
-  "payment_entries"
+  "connections_tab"
  ],
  "fields": [
   {
@@ -1902,9 +1900,14 @@
    "read_only": 1
   },
   {
+   "fieldname": "payment_entries",
+   "fieldtype": "Table",
+   "label": "Payment Entries",
+   "options": "Payment Entry Reference"
+  },
+  {
    "fieldname": "payment_records",
    "fieldtype": "Table",
-   "hidden": 1,
    "options": "Sales Order Payment Record",
    "read_only": 1
   },
@@ -1935,8 +1938,7 @@
   },
   {
    "fieldname": "payment_section_section",
-   "fieldtype": "Section Break",
-   "read_only": 1
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "section_break_pulu",
@@ -2124,22 +2126,6 @@
    "in_standard_filter": 1,
    "label": "Split Order Group Name",
    "permlevel": 1
-  },
-  {
-   "fieldname": "payment_entries",
-   "fieldtype": "Table",
-   "label": "Payment Entries",
-   "options": "Payment Entry Reference"
-  },
-  {
-   "fieldname": "payment_entries_section",
-   "fieldtype": "Section Break",
-   "label": "Payment Entries"
-  },
-  {
-   "fieldname": "payment_entries_tab",
-   "fieldtype": "Tab Break",
-   "label": "Payment Entries"
   },
   {
    "fieldname": "payment_completion_date",
