@@ -365,19 +365,22 @@ class PaymentEntry(AccountsController):
 				WHERE parent = %s AND kind IN ('capture', 'authorization')
 			""", (so_name))[0][0] or 0.0
 
-			sales_order_grand_total = frappe.db.get_value("Sales Order", so_name, "grand_total")
+			sales_order_grand_total, current_paid_amount, current_balance = frappe.db.get_value("Sales Order", so_name, ["grand_total", "paid_amount", "balance"])
 
 			if flt(payment_records_total) >= flt(sales_order_grand_total):
 				total_paid = flt(payment_records_total)
 			else:
 				total_paid = flt(payment_entries_total) + flt(payment_records_total)
 
-			current_paid_amount = frappe.db.get_value("Sales Order", so_name, "paid_amount")
+			balance = flt(sales_order_grand_total) - flt(total_paid)
 
 			if flt(total_paid) != flt(current_paid_amount):
-				# Update the Sales Order 'paid_amount' field directly
-				frappe.db.set_value("Sales Order", so_name, "paid_amount", total_paid)
-				frappe.msgprint(f"Đã cập nhật Sales Order {so_name} số tiền đã thanh toán {total_paid}")
+				# Update the Sales Order 'paid_amount' and 'balance' field directly
+				frappe.db.set_value("Sales Order", so_name, {
+					"paid_amount": total_paid,
+					"balance": balance
+				})
+				frappe.msgprint(f"Đã cập nhật Sales Order {so_name}: Đã thanh toán {total_paid}, Còn lại {balance}")
 
 	def set_liability_account(self):
 		# Auto setting liability account should only be done during 'draft' status
