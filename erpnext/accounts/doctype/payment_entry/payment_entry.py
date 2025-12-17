@@ -365,15 +365,13 @@ class PaymentEntry(AccountsController):
 				WHERE parent = %s AND kind IN ('capture', 'authorization')
 			""", (so_name))[0][0] or 0.0
 
-			sales_order_grand_total = frappe.db.get_value("Sales Order", so_name, "grand_total")
+			sales_order_grand_total, current_paid_amount, current_balance = frappe.db.get_value("Sales Order", so_name, ["grand_total", "paid_amount", "balance"])
 
 			if flt(payment_records_total) >= flt(sales_order_grand_total):
 				total_paid = flt(payment_records_total)
 			else:
 				total_paid = flt(payment_entries_total) + flt(payment_records_total)
 
-			current_paid_amount = frappe.db.get_value("Sales Order", so_name, "paid_amount")
-			current_balance = frappe.db.get_value("Sales Order", so_name, "balance")
 			balance = flt(sales_order_grand_total) - flt(total_paid)
 
 			if flt(total_paid) != flt(current_paid_amount):
