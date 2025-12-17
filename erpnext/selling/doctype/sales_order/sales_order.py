@@ -247,10 +247,14 @@ class SalesOrder(SellingController):
 
 		# Get payment entries linked to this sales order
 		payment_references = frappe.db.sql("""
-			SELECT 
-				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name, 
-				pr.total_amount, pr.outstanding_amount, pr.allocated_amount,
-				pe.mode_of_payment, pe.gateway, pe.paid_amount, pe.payment_date, pe.payment_order_status
+			SELECT
+				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name,
+				pr.total_amount, pr.outstanding_amount,
+				CASE
+					WHEN pe.payment_type = 'Pay' THEN -pr.allocated_amount
+					ELSE pr.allocated_amount
+				END AS allocated_amount,
+				pe.mode_of_payment, pe.gateway, pe.paid_amount, pe.payment_date, pe.payment_order_status, pe.payment_type
 			FROM `tabPayment Entry Reference` pr
 			INNER JOIN `tabPayment Entry` pe ON pr.parent = pe.name
 			WHERE pr.reference_doctype = 'Sales Order' AND pr.reference_name = %s
@@ -283,6 +287,7 @@ class SalesOrder(SellingController):
 					"payment_date": pe_ref.payment_date,
 					"payment_order_status": pe_ref.payment_order_status
 			})
+		
 
 	def validate(self):
 		super().validate()
