@@ -406,7 +406,8 @@ frappe.ui.form.on("Payment Entry", {
 			!frm.is_new() &&
 			!frm.doc.verified_by &&
 			(frm.doc.payment_order_status === "Draft" || frm.doc.payment_order_status === "Pending" || frm.doc.payment_order_status === "Success") &&
-			(frappe.user.has_role("Accounts User") || frappe.user.has_role("Accounts Manager"))
+			(frappe.user.has_role("Accounts User") || frappe.user.has_role("Accounts Manager")) &&
+			frm.doc.references && frm.doc.references.some(ref => ref.reference_doctype === "Sales Order")
 		) {
 			frm.add_custom_button(__("Verify"), () => {
 				frm.events.get_payment_code(frm, (payment_code) => {
