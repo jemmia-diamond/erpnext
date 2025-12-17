@@ -212,9 +212,9 @@
   "column_break_ptow",
   "balance",
   "payment_section_section",
-  "payment_entries",
   "payment_records",
   "debt_history",
+  "payment_entries",
   "payment_terms_section",
   "payment_terms_template",
   "payment_schedule",
@@ -1900,16 +1900,16 @@
    "read_only": 1
   },
   {
-   "fieldname": "payment_entries",
-   "fieldtype": "Table",
-   "label": "Payment Entries",
-   "options": "Payment Entry Reference"
-  },
-  {
    "fieldname": "payment_records",
    "fieldtype": "Table",
    "options": "Sales Order Payment Record",
    "read_only": 1
+  },
+  {
+   "fieldname": "payment_entries",
+   "fieldtype": "Table",
+   "label": "Payment Entry",
+   "options": "Payment Entry Reference"
   },
   {
    "fieldname": "sales_team_tab",
@@ -2146,7 +2146,7 @@
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-12 02:28:20.542876",
+ "modified": "2025-12-17 00:31:33.503360",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
