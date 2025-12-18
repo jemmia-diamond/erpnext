@@ -479,6 +479,34 @@ class PaymentEntry(AccountsController):
 
 		update_payment_requests_as_per_pe_references(self.references, cancel=cancel)
 
+	@frappe.whitelist()
+	def cancel_draft_payment_entry(self):
+		if self.docstatus != 0:
+			frappe.throw(_("Chỉ được huỷ Phiếu thanh toán khi đang ở trạng thái Nháp"))
+
+		payment_code = None
+		if self.mode_of_payment:
+			payment_code = frappe.db.get_value("Mode of Payment", self.mode_of_payment, "payment_code")
+
+		if payment_code == "banking":
+			if self.bank_transactions and len(self.bank_transactions) > 0:
+				frappe.throw(_("Không thể huỷ Phiếu thanh toán chuyển khoản đã có giao dịch ngân hàng"))
+
+		if payment_code in ["cash_on_delivery", "cash", "pos", "payment_link"]:
+			if self.verified_by:
+				frappe.throw(_("Không thể huỷ Phiếu thanh toán đã được xác nhận"))
+
+		frappe.db.sql("""
+			UPDATE `tabPayment Entry`
+			SET docstatus = 2,
+			status = 'Cancelled',
+			payment_order_status = "Cancel"
+			WHERE name = %s
+		""", self.name)
+
+		frappe.db.commit()
+		return {"message": _("Huỷ Phiếu thanh toán thành công")}
+
 	def update_outstanding_amounts(self):
 		self.set_missing_ref_details(force=True)
 
