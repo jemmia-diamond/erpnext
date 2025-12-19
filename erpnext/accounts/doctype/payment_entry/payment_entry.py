@@ -372,9 +372,12 @@ class PaymentEntry(AccountsController):
 			else:
 				total_paid = flt(payment_entries_total) + flt(payment_records_total)
 
+			if total_paid >= sales_order_grand_total:
+				total_paid = sales_order_grand_total
+
 			balance = flt(sales_order_grand_total) - flt(total_paid)
 
-			if flt(total_paid) != flt(current_paid_amount):
+			if flt(total_paid) != flt(current_paid_amount) or flt(current_balance) != flt(balance):
 				# Update the Sales Order 'paid_amount' and 'balance' field directly
 				frappe.db.set_value("Sales Order", so_name, {
 					"paid_amount": total_paid,
