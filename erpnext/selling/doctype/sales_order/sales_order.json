@@ -74,6 +74,7 @@
   "promotions",
   "product_categories",
   "policies",
+  "order_policies",
   "column_break_bscz",
   "total_qty",
   "total",
@@ -212,7 +213,6 @@
   "column_break_ptow",
   "balance",
   "payment_section_section",
-  "payment_entries",
   "payment_records",
   "debt_history",
   "payment_terms_section",
@@ -232,7 +232,10 @@
   "column_break_phue",
   "haravan_created_at",
   "source_name",
-  "connections_tab"
+  "connections_tab",
+  "payment_entries_tab",
+  "payment_entries_section",
+  "payment_entries"
  ],
  "fields": [
   {
@@ -1938,7 +1941,8 @@
   },
   {
    "fieldname": "payment_section_section",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_pulu",
@@ -2140,13 +2144,29 @@
    "in_standard_filter": 1,
    "label": "Fulfillment Completion Date",
    "read_only": 1
+  },
+  {
+   "fieldname": "order_policies",
+   "fieldtype": "Long Text",
+   "label": "Policies",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "payment_entries_tab",
+   "fieldtype": "Tab Break",
+   "label": "Payment Entries"
+  },
+  {
+   "fieldname": "payment_entries_section",
+   "fieldtype": "Section Break",
+   "label": "Payment Entries"
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-12 02:28:20.542876",
+ "modified": "2025-12-19 04:51:46.817365",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",

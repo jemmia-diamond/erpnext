@@ -159,6 +159,7 @@ class SalesOrder(SellingController):
 		net_total: DF.Currency
 		order_currency: DF.Link | None
 		order_number: DF.Data | None
+		order_policies: DF.LongText | None
 		order_type: DF.Literal["Sales", "Maintenance", "Shopping Cart"]
 		other_charges_calculation: DF.TextEditor | None
 		packed_items: DF.Table[PackedItem]

@@ -50,10 +50,12 @@ class SalesOrderItem(Document):
 		haravan_variant_id: DF.Int
 		image: DF.Attach | None
 		is_free_item: DF.Check
+		is_policy_locked: DF.Check
 		is_stock_item: DF.Check
 		item_code: DF.Link | None
 		item_group: DF.Link | None
 		item_name: DF.Data
+		item_policy: DF.LongText | None
 		item_tax_rate: DF.Code | None
 		item_tax_template: DF.Link | None
 		margin_rate_or_amount: DF.Float
