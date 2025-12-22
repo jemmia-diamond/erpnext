@@ -77,9 +77,8 @@ def insert_lead(doc) -> "Document":
 		existing_lead_name = get_lead_name_by_conversation_id(conversation_id)
 		if existing_lead_name:
 			existing_doc = frappe.get_doc("Lead", existing_lead_name)
-			existing_doc.link_to_contacts(
-				page_id=page_id,
-				conversation_id=conversation_id,
+			existing_doc.link_contacts_with_pancake_data(
+				pancake_data=doc.get("pancake_data", {})
 			)
 			return existing_doc
 
@@ -89,9 +88,8 @@ def insert_lead(doc) -> "Document":
 		if existing_lead_name:
 			existing_doc = frappe.get_doc("Lead", existing_lead_name)
 			if conversation_id and page_id:
-				existing_doc.link_to_contacts(
-					page_id=page_id,
-					conversation_id=conversation_id,
+				existing_doc.link_contacts_with_pancake_data(
+					pancake_data=doc.get("pancake_data", {})
 				)
 			return existing_doc
 
