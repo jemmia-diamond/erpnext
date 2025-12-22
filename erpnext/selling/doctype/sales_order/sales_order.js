@@ -375,7 +375,7 @@ frappe.ui.form.on("Sales Order", {
 			const current_year = new Date().getFullYear();
 
 			if (year < 1900 || year > current_year) {
-				frappe.msgprint(__("Birth Date year must be between 1900 and {0}", [current_year]));
+				frappe.msgprint(__("Năm sinh phải nằm trong khoảng 1900 đến {0}", [current_year]));
 				frm.set_value("birth_date", "");
 			}
 		}
