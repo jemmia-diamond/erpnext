@@ -144,12 +144,6 @@ frappe.ui.form.on("Sales Order", {
 		frm.add_custom_button(__("Send Order To Lark"), frappe.utils.debounce(() => {
 			frappe.db.get_doc("Sales Order", frm.doc.name).then((doc) => {
 
-				// Show warning requiring user to input personal ID
-				if (!doc.customer_personal_id && !doc.customer_passport_id) {
-					frappe.msgprint(__("Vui lòng nhập số CMND/CCCD/Hộ chiếu của khách hàng trước khi gửi đơn hàng đến Lark."));
-					return;
-				}
-
 				const btn = frm.custom_buttons[__("Send Order To Lark")];
 				$(btn).prop("disabled", true);
 
@@ -372,6 +366,18 @@ frappe.ui.form.on("Sales Order", {
 		if (frm.doc.currency) {
 			frm.set_currency_labels(["deposit_amount"], frm.doc.order_currency);
 			frm.set_df_property("deposit_amount", "options", "currency");
+		}
+	},
+
+	birth_date: function (frm) {
+		if (frm.doc.birth_date) {
+			const year = parseInt(frm.doc.birth_date.split("-")[0]);
+			const current_year = new Date().getFullYear();
+
+			if (year < 1900 || year > current_year) {
+				frappe.msgprint(__("Năm sinh phải nằm trong khoảng 1900 đến {0}", [current_year]));
+				frm.set_value("birth_date", "");
+			}
 		}
 	},
 
