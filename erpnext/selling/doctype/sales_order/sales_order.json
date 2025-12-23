@@ -1964,7 +1964,8 @@
   {
    "fieldname": "expected_payment_date",
    "fieldtype": "Date",
-   "label": "Expected Payment Date"
+   "label": "Expected Payment Date",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_yifm",
