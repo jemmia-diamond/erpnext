@@ -1429,38 +1429,69 @@ frappe.ui.form.on("Payment Entry", {
 			return;
 		}
 
-		const TOLERANCE = 5000;
 		let total_allocated = 0;
 
 		$.each(frm.doc.references || [], function (i, row) {
 			if (row.allocated_amount) {
 				total_allocated += flt(row.allocated_amount);
+				let max_amount = row.balance || row.outstanding_amount || 0;
+				if (flt(row.allocated_amount) > flt(max_amount)) {
+					frappe.throw({
+						title: __("Phân bổ vượt số dư"),
+						indicator: "red",
+						message: __(
+							"Dòng #{0}: Số tiền phân bổ ({1}) vượt quá số dư còn lại ({2}) của {3} {4}.<br><br>Vui lòng điều chỉnh lại số tiền phân bổ.",
+							[
+								row.idx,
+								format_currency(row.allocated_amount, frm.doc.paid_from_account_currency, 0),
+								format_currency(max_amount, frm.doc.paid_from_account_currency, 0),
+								row.reference_doctype,
+								row.reference_name
+							]
+						)
+					});
+				}
 			}
 		});
 
 		const difference = total_allocated - flt(frm.doc.paid_amount);
+		const tolerance = (frm.doc.payment_code === "cash") ? 1000 : 0;
 
-		if (difference > TOLERANCE) {
-			frappe.throw({
-				title: __("Phân bổ vượt mức"),
-				indicator: "red",
-				message: __(
-					"Phân bổ vượt {0} (tối đa {1}).",
+		if (Math.abs(difference) > tolerance) {
+			let error_message = "";
+			if (tolerance > 0) {
+				error_message = __(
+					"Tổng số tiền phân bổ ({0}) phải bằng số tiền thanh toán ({1}).<br><br>Chênh lệch: {2} (tối đa cho phép: {3} cho tiền mặt)<br><br>Vui lòng điều chỉnh lại số tiền phân bổ.",
 					[
-						format_currency(difference, frm.doc.paid_from_account_currency, 0),
-						format_currency(TOLERANCE, frm.doc.paid_from_account_currency, 0)
+						format_currency(total_allocated, frm.doc.paid_from_account_currency, 0),
+						format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
+						format_currency(Math.abs(difference), frm.doc.paid_from_account_currency, 0),
+						format_currency(tolerance, frm.doc.paid_from_account_currency, 0)
 					]
-				)
-			});
-		} else if (difference > 0 && difference <= TOLERANCE) {
-			frappe.show_alert({
-				title: __("Phân bổ vượt mức"),
-				indicator: "green",
-				message: __(
-					"Số tiền phân bổ vượt số tiền thanh toán {0}, <strong>nằm trong mức cho phép {1}</strong>.",
+				);
+			} else {
+				error_message = __(
+					"Tổng số tiền phân bổ ({0}) phải bằng đúng số tiền thanh toán ({1}).<br><br>Chênh lệch: {2}<br><br>Vui lòng điều chỉnh lại số tiền phân bổ.",
 					[
-						format_currency(difference, frm.doc.paid_from_account_currency, 0),
-						format_currency(TOLERANCE, frm.doc.paid_from_account_currency, 0)
+						format_currency(total_allocated, frm.doc.paid_from_account_currency, 0),
+						format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
+						format_currency(Math.abs(difference), frm.doc.paid_from_account_currency, 0)
+					]
+				);
+			}
+
+			frappe.throw({
+				title: __("Phân bổ không khớp"),
+				indicator: "red",
+				message: error_message
+			});
+		} else if (difference !== 0 && tolerance > 0) {
+			frappe.show_alert({
+				message: __(
+					"Chênh lệch {0} nằm trong mức cho phép {1} cho thanh toán tiền mặt.",
+					[
+						format_currency(Math.abs(difference), frm.doc.paid_from_account_currency, 0),
+						format_currency(tolerance, frm.doc.paid_from_account_currency, 0)
 					]
 				),
 				indicator: "blue"
