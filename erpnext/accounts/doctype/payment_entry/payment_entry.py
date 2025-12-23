@@ -2255,6 +2255,16 @@ def validate_and_misa_field(payment_entry_name):
 		if not doc.verified_by:
 			return
 
+	total_allocated = sum(flt(ref.allocated_amount) for ref in doc.references)
+	difference = abs(flt(total_allocated) - flt(doc.paid_amount))
+	if difference > 1000:
+		frappe.throw(
+			_("Số tiền thanh toán ({0}) phải bằng tổng số tiền phân bổ ({1}).").format(
+				fmt_money(doc.paid_amount, currency=doc.paid_from_account_currency),
+				fmt_money(total_allocated, currency=doc.paid_from_account_currency)
+			)
+		)
+
 	frappe.db.sql("""
 		UPDATE `tabPayment Entry`
 		SET docstatus = 1,
