@@ -1488,10 +1488,9 @@ frappe.ui.form.on("Payment Entry", {
 		} else if (difference !== 0 && tolerance > 0) {
 			frappe.show_alert({
 				message: __(
-					"Chênh lệch {0} nằm trong mức cho phép {1} cho thanh toán tiền mặt.",
+					"Chênh lệch {0} nằm trong mức cho phép thanh toán tiền mặt.",
 					[
-						format_currency(Math.abs(difference), frm.doc.paid_from_account_currency, 0),
-						format_currency(tolerance, frm.doc.paid_from_account_currency, 0)
+						format_currency(Math.abs(difference), frm.doc.paid_from_account_currency, 0)
 					]
 				),
 				indicator: "blue"
