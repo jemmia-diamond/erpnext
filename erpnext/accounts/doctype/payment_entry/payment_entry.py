@@ -1150,6 +1150,8 @@ class PaymentEntry(AccountsController):
 	def set_status(self):
 		if self.docstatus == 2:
 			self.status = "Cancelled"
+			self.payment_order_status = "Cancel"
+			self.custom_transfer_status = "cancel"
 		elif self.docstatus == 1:
 			self.status = "Submitted"
 		else:
