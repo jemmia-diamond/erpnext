@@ -213,7 +213,7 @@
    "label": "Payment Status",
    "no_copy": 1,
    "options": "Pending\nSuccess\nCancel",
-   "read_only": 1
+   "read_only_depends_on": "eval: !(frappe.user.has_role('Developer') || frappe.user.has_role('Administrator'))"
   },
   {
    "fieldname": "gateway",
@@ -237,7 +237,7 @@
    "fieldtype": "Select",
    "label": "Transfer Status",
    "options": "\npending\nsuccess\ncancel",
-   "read_only": 1
+   "read_only_depends_on": "eval: !(frappe.user.has_role('Developer') || frappe.user.has_role('Administrator'))"
   },
   {
    "fieldname": "qr_url",
@@ -933,25 +933,25 @@
    "label": "Misa Synced",
    "options": "Project",
    "print_hide": 1,
-   "read_only": 1
+   "read_only_depends_on": "eval: !(frappe.user.has_role('Developer') || frappe.user.has_role('Administrator'))"
   },
   {
    "fieldname": "misa_sync_guid",
    "fieldtype": "Data",
    "label": "Misa GUID",
-   "read_only": 1
+   "read_only_depends_on": "eval: !(frappe.user.has_role('Developer') || frappe.user.has_role('Administrator'))"
   },
   {
    "fieldname": "misa_synced_at",
    "fieldtype": "Datetime",
    "label": "Misa Synced At",
-   "read_only": 1
+   "read_only_depends_on": "eval: !(frappe.user.has_role('Developer') || frappe.user.has_role('Administrator'))"
   },
   {
    "fieldname": "misa_sync_error_msg",
    "fieldtype": "Data",
    "label": "Misa Failed Message",
-   "read_only": 1
+   "read_only_depends_on": "eval: !(frappe.user.has_role('Developer') || frappe.user.has_role('Administrator'))"
   },
   {
    "fieldname": "dimension_col_break_2",
