@@ -37,6 +37,7 @@
   "promotion_5",
   "column_break_klcw",
   "promotion",
+  "fetch_policy",
   "item_policy",
   "is_policy_locked",
   "section_break_5",
@@ -1164,12 +1165,17 @@
    "fieldtype": "Check",
    "label": "Is Policy Locked",
    "permlevel": 1
+  },
+  {
+   "fieldname": "fetch_policy",
+   "fieldtype": "Button",
+   "label": "Fetch Policy"
   }
  ],
  "idx": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-12-19 05:03:02.525176",
+ "modified": "2025-12-24 03:50:36.248951",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order Item",
