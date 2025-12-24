@@ -4067,7 +4067,7 @@ def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, fil
 	"""Custom query to search Sales Orders by name and order_number"""
 	return frappe.db.sql(
 		"""
-		SELECT name, order_number, customer_name
+		SELECT name, FORMAT(grand_total, 0) as grand_total, order_number, customer_name
 		FROM `tabSales Order`
 		WHERE (
 			name LIKE %(txt)s
@@ -4077,6 +4077,7 @@ def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, fil
 		AND company = %(company)s
 		AND customer = %(customer)s
 		AND cancelled_status = "Uncancelled"
+		AND grand_total > 0
 		ORDER BY
 			CASE
 				WHEN name LIKE %(txt)s THEN 0
