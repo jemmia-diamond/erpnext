@@ -280,9 +280,6 @@ class PaymentEntry(AccountsController):
 		self.sync_bank_transaction_payments()
 		self.update_sales_order_paid_amount()
 
-		if self.misa_synced:
-			validate_and_misa_field(self.name)
-
 	def sync_bank_transaction_payments(self):
 		if self.flags.get("updating_from_bank_transaction"):
 			return
@@ -502,11 +499,18 @@ class PaymentEntry(AccountsController):
 			if self.verified_by:
 				frappe.throw(_("Không thể huỷ Phiếu thanh toán đã được xác nhận"))
 
+		doc = frappe.get_doc("Payment Entry", self.name)
+		doc.payment_order_status = "Cancel"
+		doc.flags.ignore_permissions = True
+		doc.flags.ignore_validate = True
+		doc.save()
+
 		frappe.db.sql("""
 			UPDATE `tabPayment Entry`
 			SET docstatus = 2,
 			status = 'Cancelled',
-			payment_order_status = "Cancel"
+			payment_order_status = 'Cancel',
+			custom_transfer_status = 'cancel'
 			WHERE name = %s
 		""", self.name)
 
@@ -4123,17 +4127,23 @@ def cancel_pending_transfers():
 
 	payment_entry_names = list(set(all_pending_entries) - set(entries_with_bank_transactions))
 
-	if not payment_entry_names:
-		return
-
-	frappe.db.sql("""
-		UPDATE `tabPayment Entry`
-		SET custom_transfer_status = 'cancel',
-			docstatus = 2,
-			status = 'Cancelled',
-			payment_order_status = 'Cancel'
-		WHERE name IN ({})
-	""".format(','.join(['%s'] * len(payment_entry_names))), 
-	payment_entry_names)
+	for name in payment_entry_names:
+		try:
+			doc = frappe.get_doc("Payment Entry", name)
+			doc.payment_order_status = "Cancel"
+			doc.flags.ignore_permissions = True
+			doc.flags.ignore_validate = True
+			doc.save()
+			
+			frappe.db.sql("""
+				UPDATE `tabPayment Entry`
+				SET docstatus = 2,
+				status = 'Cancelled',
+				custom_transfer_status = 'cancel',
+				payment_order_status = 'Cancel'
+				WHERE name = %s
+			""", name)
+		except Exception as e:
+			frappe.log_error(f"Failed to cancel Payment Entry {name}: {str(e)}")
 
 	frappe.db.commit()
