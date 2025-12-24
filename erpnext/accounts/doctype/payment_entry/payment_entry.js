@@ -2160,7 +2160,7 @@ frappe.ui.form.on("Payment Entry Reference", {
 		}
 	},
 
-	allocated_amount: function (frm, cdt, cdn) {
+	allocated_amount: function (frm) {
 		frm.events.set_total_allocated_amount(frm);
 		frm.events.validate_total_allocated_amount(frm);
 	},
