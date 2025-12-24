@@ -1455,42 +1455,29 @@ frappe.ui.form.on("Payment Entry", {
 		});
 
 		const difference = total_allocated - flt(frm.doc.paid_amount);
-		const tolerance = (frm.doc.payment_code === "cash") ? 1000 : 0;
+		const tolerance = 1000;
 
 		if (Math.abs(difference) > tolerance) {
-			let error_message = "";
-			if (tolerance > 0) {
-				error_message = __(
-					"Tổng số tiền phân bổ ({0}) phải bằng số tiền thanh toán ({1}).<br><br>Chênh lệch: {2} (tối đa cho phép: {3} cho tiền mặt)<br><br>Vui lòng điều chỉnh lại số tiền phân bổ.",
+			frappe.throw({
+				title: __("Phân bổ không khớp"),
+				indicator: "red",
+				message: __(
+					"Tổng số tiền phân bổ ({0}) phải bằng số tiền thanh toán ({1}).<br><br>Chênh lệch: {2} (tối đa cho phép: {3})<br><br>Vui lòng điều chỉnh lại số tiền phân bổ.",
 					[
 						format_currency(total_allocated, frm.doc.paid_from_account_currency, 0),
 						format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
 						format_currency(Math.abs(difference), frm.doc.paid_from_account_currency, 0),
 						format_currency(tolerance, frm.doc.paid_from_account_currency, 0)
 					]
-				);
-			} else {
-				error_message = __(
-					"Tổng số tiền phân bổ ({0}) phải bằng đúng số tiền thanh toán ({1}).<br><br>Chênh lệch: {2}<br><br>Vui lòng điều chỉnh lại số tiền phân bổ.",
-					[
-						format_currency(total_allocated, frm.doc.paid_from_account_currency, 0),
-						format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
-						format_currency(Math.abs(difference), frm.doc.paid_from_account_currency, 0)
-					]
-				);
-			}
-
-			frappe.throw({
-				title: __("Phân bổ không khớp"),
-				indicator: "red",
-				message: error_message
+				)
 			});
-		} else if (difference !== 0 && tolerance > 0) {
+		} else if (difference !== 0) {
 			frappe.show_alert({
 				message: __(
-					"Chênh lệch {0} nằm trong mức cho phép thanh toán tiền mặt.",
+					"Chênh lệch {0} nằm trong mức cho phép {1}.",
 					[
-						format_currency(Math.abs(difference), frm.doc.paid_from_account_currency, 0)
+						format_currency(Math.abs(difference), frm.doc.paid_from_account_currency, 0),
+						format_currency(tolerance, frm.doc.paid_from_account_currency, 0)
 					]
 				),
 				indicator: "blue"
