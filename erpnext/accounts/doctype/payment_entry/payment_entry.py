@@ -280,9 +280,6 @@ class PaymentEntry(AccountsController):
 		self.sync_bank_transaction_payments()
 		self.update_sales_order_paid_amount()
 
-		if self.misa_synced:
-			validate_and_misa_field(self.name)
-
 	def sync_bank_transaction_payments(self):
 		if self.flags.get("updating_from_bank_transaction"):
 			return
