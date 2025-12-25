@@ -114,6 +114,7 @@ class PaymentEntry(AccountsController):
 		mode_of_payment: DF.Link
 		name_display: DF.Data | None
 		naming_series: DF.Literal["ACC-PAY-.YYYY.-"]
+		notification_sent: DF.Check
 		paid_amount: DF.Currency
 		paid_amount_after_tax: DF.Currency
 		paid_from: DF.Link | None
@@ -147,6 +148,7 @@ class PaymentEntry(AccountsController):
 		references: DF.Table[PaymentEntryReference]
 		remarks: DF.SmallText | None
 		sales_taxes_and_charges_template: DF.Link | None
+		shipping_code: DF.Data | None
 		source_exchange_rate: DF.Float
 		status: DF.Literal["", "Draft", "Submitted", "Cancelled"]
 		target_exchange_rate: DF.Float
@@ -4067,7 +4069,7 @@ def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, fil
 	"""Custom query to search Sales Orders by name and order_number"""
 	return frappe.db.sql(
 		"""
-		SELECT name, order_number, customer_name
+		SELECT name, FORMAT(grand_total, 0) as grand_total, order_number, customer_name
 		FROM `tabSales Order`
 		WHERE (
 			name LIKE %(txt)s
@@ -4077,6 +4079,7 @@ def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, fil
 		AND company = %(company)s
 		AND customer = %(customer)s
 		AND cancelled_status = "Uncancelled"
+		AND grand_total > 0
 		ORDER BY
 			CASE
 				WHEN name LIKE %(txt)s THEN 0
