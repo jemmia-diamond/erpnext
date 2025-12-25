@@ -114,6 +114,7 @@ class PaymentEntry(AccountsController):
 		mode_of_payment: DF.Link
 		name_display: DF.Data | None
 		naming_series: DF.Literal["ACC-PAY-.YYYY.-"]
+		notification_sent: DF.Check
 		paid_amount: DF.Currency
 		paid_amount_after_tax: DF.Currency
 		paid_from: DF.Link | None
