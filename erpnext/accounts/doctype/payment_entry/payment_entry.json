@@ -27,6 +27,7 @@
   "payment_order_status",
   "party",
   "shipping_code",
+  "notification_sent",
   "qr_section_break",
   "custom_transaction_id",
   "custom_transfer_status",
@@ -983,6 +984,14 @@
    "fieldname": "shipping_code",
    "fieldtype": "Data",
    "label": "Shipping Code"
+  },
+  {
+   "default": "0",
+   "fieldname": "notification_sent",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Notification Sent",
+   "print_hide": 1
   }
  ],
  "grid_page_length": 50,
@@ -997,7 +1006,7 @@
    "table_fieldname": "payment_entries"
   }
  ],
- "modified": "2025-12-25 09:40:30.108619",
+ "modified": "2025-12-25 11:34:19.343649",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Payment Entry",
