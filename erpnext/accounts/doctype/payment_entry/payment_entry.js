@@ -357,6 +357,12 @@ frappe.ui.form.on("Payment Entry", {
 	},
 
 	refresh: function (frm) {
+		if (!frm.is_new()) {
+			frm.set_df_property("mode_of_payment", "read_only", 1);
+		} else {
+			frm.set_df_property("mode_of_payment", "read_only", 0);
+		}
+
 		frm.events.update_gateway_options(frm);
 		frm.events.update_bank_branch_logic(frm);
 		frm.events.update_field_visibility(frm);
