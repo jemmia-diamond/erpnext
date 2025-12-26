@@ -1909,10 +1909,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "section_break_payment_entries_container",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "payment_entries",
    "fieldtype": "Table",
    "label": "Payment Entries",
