@@ -45,15 +45,18 @@ class SalesOrderItem(Document):
 		discount_rate: DF.Data | None
 		distributed_discount_amount: DF.Currency
 		ensure_delivery_based_on_produced_serial_no: DF.Check
+		fetch_policy: DF.Button
 		grant_commission: DF.Check
 		gross_profit: DF.Currency
 		haravan_variant_id: DF.Int
 		image: DF.Attach | None
 		is_free_item: DF.Check
+		is_policy_locked: DF.Check
 		is_stock_item: DF.Check
 		item_code: DF.Link | None
 		item_group: DF.Link | None
 		item_name: DF.Data
+		item_policy: DF.LongText | None
 		item_tax_rate: DF.Code | None
 		item_tax_template: DF.Link | None
 		margin_rate_or_amount: DF.Float
@@ -118,3 +121,53 @@ class SalesOrderItem(Document):
 
 def on_doctype_update():
 	frappe.db.add_index("Sales Order Item", ["item_code", "warehouse"])
+
+
+@frappe.whitelist()
+def trigger_manual_webhook(item_name):
+	"""
+	Trigger manual sync webhook for a Sales Order Item.
+	Doesn't save the document, just finds and fires the configured webhooks.
+	"""
+	from frappe.integrations.doctype.webhook import get_all_webhooks
+	from frappe.integrations.doctype.webhook.webhook import get_context
+	
+	doc = frappe.get_doc("Sales Order Item", item_name)
+	
+	# Ge webhooks from DB
+	webhooks = frappe.cache.get_value("webhooks", get_all_webhooks)
+	webhooks_for_doc = webhooks.get(doc.doctype, [])
+	
+	if not webhooks_for_doc:
+		frappe.msgprint(frappe._("Chưa cấu hình Webhook cho {0}").format(doc.doctype))
+		return False
+
+	triggered = False
+	# Check "on_update" events
+	for webhook in webhooks_for_doc:
+		if webhook.get("webhook_docevent") != "on_update":
+			continue
+			
+		trigger_webhook = False
+		# Check conditions
+		if not webhook.get("condition"):
+			trigger_webhook = True
+		elif frappe.safe_eval(webhook.get("condition"), eval_locals=get_context(doc)):
+			trigger_webhook = True
+				
+		if trigger_webhook:
+			triggered = True
+			frappe.enqueue(
+				"frappe.integrations.doctype.webhook.webhook.enqueue_webhook",
+				doc_doctype=doc.doctype,
+				doc_name=doc.name,
+				webhook=webhook,
+				queue=webhook.get("background_jobs_queue") or "default",
+				now=frappe.flags.in_test
+			)
+	
+	if not triggered:
+		frappe.msgprint(frappe._("Chính sách đã được điền"))
+		return False
+		
+	return True

@@ -139,6 +139,7 @@ class SalesOrder(SellingController):
 		fulfillment_status: DF.Literal["", "Fulfilled", "Not Fulfilled"]
 		gender: DF.Data | None
 		grand_total: DF.Currency
+		group_payment_entries: DF.Table[PaymentEntryReference]
 		group_same_items: DF.Check
 		haravan_created_at: DF.Datetime | None
 		haravan_order_id: DF.Data | None
@@ -159,6 +160,7 @@ class SalesOrder(SellingController):
 		net_total: DF.Currency
 		order_currency: DF.Link | None
 		order_number: DF.Data | None
+		order_policies: DF.LongText | None
 		order_type: DF.Literal["Sales", "Maintenance", "Shopping Cart"]
 		other_charges_calculation: DF.TextEditor | None
 		packed_items: DF.Table[PackedItem]
@@ -441,6 +443,8 @@ class SalesOrder(SellingController):
 			from erpnext.accounts.doctype.pricing_rule.utils import validate_coupon_code
 
 			validate_coupon_code(self.coupon_code)
+
+		self.set_order_policies_summary()
 
 		from erpnext.stock.doctype.packed_item.packed_item import make_packing_list
 
@@ -759,6 +763,17 @@ class SalesOrder(SellingController):
 
 	def on_update(self):
 		pass
+
+	def set_order_policies_summary(self):
+		summary = []
+		for d in self.items:
+			if d.item_policy:
+				summary.append(f"{d.item_name}:\n{d.item_policy}")
+		
+		if summary:
+			self.order_policies = "\n\n".join(summary)
+		else:
+			self.order_policies = ""
 
 	def on_update_after_submit(self):
 		self.calculate_commission()
