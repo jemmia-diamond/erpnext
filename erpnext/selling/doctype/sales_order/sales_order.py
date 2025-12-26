@@ -231,6 +231,8 @@ class SalesOrder(SellingController):
 	def onload(self) -> None:
 		super().onload()
 		self.set_payment_entries()
+		self.set_group_payment_entries()
+
 
 		if frappe.db.get_single_value("Stock Settings", "enable_stock_reservation"):
 			if self.has_unreserved_stock():
@@ -288,7 +290,136 @@ class SalesOrder(SellingController):
 					"payment_date": pe_ref.payment_date,
 					"payment_order_status": pe_ref.payment_order_status
 			})
+			
+
+	def set_group_payment_entries(self):
+		"""Fetch and set the payment entries linked to the split order group and reference tree."""
+		if self.docstatus == 2:
+			return
+
+		related_orders = self.get_all_related_sales_orders()
 		
+		# If no related orders (including self), explicitly empty list
+		if not related_orders:
+			self.set("group_payment_entries", [])
+			return
+
+		self.set("group_payment_entries", [])
+
+		payment_references = frappe.db.sql("""
+			SELECT
+				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name,
+				pr.total_amount, pr.outstanding_amount,
+				CASE
+					WHEN pe.payment_type = 'Pay' THEN -pr.allocated_amount
+					ELSE pr.allocated_amount
+				END AS allocated_amount,
+				pe.mode_of_payment, pe.gateway, pe.paid_amount, pe.payment_date, pe.payment_order_status, pe.payment_type
+			FROM `tabPayment Entry Reference` pr
+			INNER JOIN `tabPayment Entry` pe ON pr.parent = pe.name
+			INNER JOIN `tabSales Order` so ON pr.reference_name = so.name
+			WHERE pr.reference_doctype = 'Sales Order' 
+			AND so.name IN %s
+			AND pe.docstatus < 2
+			AND pe.payment_order_status = 'Success'
+			ORDER BY pe.payment_date DESC
+		""", (tuple(related_orders),), as_dict=True)
+
+		if not payment_references:
+			return
+
+		for pe_ref in payment_references:
+			row = self.append("group_payment_entries", {})
+			row.update({
+					"name": pe_ref.name,
+					"owner": "Administrator",
+					"modified_by": "Administrator",
+					"docstatus": 0,
+					"reference_doctype": pe_ref.parenttype,
+					"reference_name": pe_ref.parent,
+					"total_amount": pe_ref.total_amount,
+					"outstanding_amount": pe_ref.outstanding_amount,
+					"allocated_amount": pe_ref.allocated_amount,
+					"parent": pe_ref.reference_name,
+					"parentfield": "group_payment_entries",
+					"parenttype": pe_ref.reference_doctype,
+					"doctype": "Payment Entry Reference",
+					"mode_of_payment": pe_ref.mode_of_payment,
+					"gateway": pe_ref.gateway,
+					"paid_amount": pe_ref.paid_amount,
+					"payment_date": pe_ref.payment_date,
+					"payment_order_status": pe_ref.payment_order_status
+			})
+
+
+	
+	def get_all_related_sales_orders(self):
+		"""
+		Returns a set of Sales Order names that are related to this order via:
+		1. Split Order Group (all orders with same split_order_group)
+		2. Reference Tree (recursive traversal of ref_sales_orders)
+		"""
+		related_orders = set()
+		related_orders.add(self.name)
+
+		# 1. Fetch by Split Order Group
+		if self.is_split_order and self.split_order_group:
+			group_orders = frappe.db.get_all("Sales Order", 
+				filters={
+					"split_order_group": self.split_order_group,
+					"is_split_order": 1
+				}, 
+				fields=["name"]
+			)
+			for o in group_orders:
+				related_orders.add(o.name)
+		
+		# 2. Fetch by Reference Tree (Recursive)
+		# We need to traverse:
+		# - Down: Orders referenced by this order (ref_sales_orders child table)
+		# - Up: Orders that reference this order (Ref Sales Order table of other orders) - OPTIONAL depending on req, 
+		#   but user said "every ref sales orders in tree based", implying full connectivity.
+		#   However, typically `ref_sales_orders` is a directed link. 
+		#   Let's assume standard traversal of the graph defined by `ref_sales_orders`.
+
+		# To be safe and thorough, let's treat it as an undirected graph traversal.
+		# Nodes: Sales Orders
+		# Edges: Entries in `Sales Order Reference` table.
+		
+		to_visit = list(related_orders)
+		visited = set(related_orders)
+
+		while to_visit:
+			current_so = to_visit.pop()
+			
+			# A. Find orders referenced BY current_so
+			# query child table `Sales Order Reference` where parent = current_so
+			refs_down = frappe.db.get_all("Sales Order Reference", 
+				filters={"parent": current_so}, 
+				fields=["sales_order"]
+			)
+			
+			for ref in refs_down:
+				if ref.sales_order and ref.sales_order not in visited:
+					visited.add(ref.sales_order)
+					to_visit.append(ref.sales_order)
+					related_orders.add(ref.sales_order)
+
+			# B. Find orders referencing current_so
+			# query child table `Sales Order Reference` where sales_order = current_so
+			refs_up = frappe.db.get_all("Sales Order Reference", 
+				filters={"sales_order": current_so}, 
+				fields=["parent"]
+			)
+			
+			for ref in refs_up:
+				if ref.parent and ref.parent not in visited:
+					visited.add(ref.parent)
+					to_visit.append(ref.parent)
+					related_orders.add(ref.parent)
+		
+		return list(related_orders)
+
 
 	def validate(self):
 		super().validate()
