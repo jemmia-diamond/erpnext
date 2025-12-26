@@ -235,9 +235,7 @@
   "haravan_created_at",
   "source_name",
   "connections_tab",
-  "payment_entries_tab",
-  "payment_entries_section",
-  "payment_entries"
+  "payment_entries_tab"
  ],
  "fields": [
   {
@@ -2157,17 +2155,12 @@
   {
    "fieldname": "order_policies",
    "fieldtype": "Long Text",
-   "label": "Policies",
-   "permlevel": 1
+   "label": "Policies (Auto)",
+   "read_only": 1
   },
   {
    "fieldname": "payment_entries_tab",
    "fieldtype": "Tab Break",
-   "label": "Payment Entries"
-  },
-  {
-   "fieldname": "payment_entries_section",
-   "fieldtype": "Section Break",
    "label": "Payment Entries"
   }
  ],
@@ -2175,7 +2168,7 @@
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-19 04:51:46.817365",
+ "modified": "2025-12-26 03:13:06.976730",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
