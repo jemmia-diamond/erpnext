@@ -167,7 +167,7 @@ def trigger_manual_webhook(item_name):
 			)
 	
 	if not triggered:
-		frappe.msgprint(frappe._("Chinh sách đã được diền"))
+		frappe.msgprint(frappe._("Chính sách đã được điền"))
 		return False
 		
 	return True

@@ -768,7 +768,7 @@ class SalesOrder(SellingController):
 		summary = []
 		for d in self.items:
 			if d.item_policy:
-				summary.append(f"{d.item_name} ({d.item_code}):\n{d.item_policy}")
+				summary.append(f"{d.item_name}:\n{d.item_policy}")
 		
 		if summary:
 			self.order_policies = "\n\n".join(summary)
