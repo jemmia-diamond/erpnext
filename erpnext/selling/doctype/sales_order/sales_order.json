@@ -213,7 +213,13 @@
   "balance",
   "payment_section_section",
   "payment_entries",
+  "total_allocated_payment",
+  "balance_payment",
+  "section_break_group_payment",
   "group_payment_entries",
+  "total_allocated_group_payment",
+  "balance_group_payment",
+  "section_break_payment_records",
   "payment_records",
   "debt_history",
   "payment_terms_section",
@@ -1901,10 +1907,32 @@
    "read_only": 1
   },
   {
+   "fieldname": "section_break_payment_entries_container",
+   "fieldtype": "Section Break"
+  },
+  {
    "fieldname": "payment_entries",
    "fieldtype": "Table",
    "label": "Payment Entries",
    "options": "Payment Entry Reference"
+  },
+  {
+   "fieldname": "total_allocated_payment",
+   "fieldtype": "Currency",
+   "label": "Total Allocated (Current Order)",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "balance_payment",
+   "fieldtype": "Currency",
+   "label": "Balance (Current Order)",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_group_payment",
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "group_payment_entries",
@@ -1912,6 +1940,24 @@
    "label": "Group Payment Entries",
    "options": "Payment Entry Reference",
    "read_only": 1
+  },
+  {
+   "fieldname": "total_allocated_group_payment",
+   "fieldtype": "Currency",
+   "label": "Total Allocated (Group)",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "balance_group_payment",
+   "fieldtype": "Currency",
+   "label": "Balance (Group)",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_payment_records",
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "payment_records",
