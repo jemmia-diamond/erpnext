@@ -336,12 +336,13 @@ class SalesOrder(SellingController):
 		# Calculate total required amount for the group
 		group_grand_total = 0.0
 		
-		# User requested to only sum "Split Order Group" members for the total
+		# Find total grand amount from Split Group Orders
 		if self.is_split_order and self.split_order_group:
 			group_orders_data = frappe.db.get_all("Sales Order", 
 				filters={
 					"split_order_group": self.split_order_group,
-					"is_split_order": 1
+					"is_split_order": 1,
+					"cancelled_status": "Uncancelled"
 				}, 
 				fields=["grand_total"]
 			)
