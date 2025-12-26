@@ -336,7 +336,7 @@ class SalesOrder(SellingController):
 		# Calculate total required amount for the group
 		group_grand_total = 0.0
 		
-		# Final total grand amount from Split Group Orders
+		# Find total grand amount from Split Group Orders
 		if self.is_split_order and self.split_order_group:
 			group_orders_data = frappe.db.get_all("Sales Order", 
 				filters={
