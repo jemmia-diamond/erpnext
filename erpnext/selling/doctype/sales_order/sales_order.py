@@ -267,9 +267,13 @@ class SalesOrder(SellingController):
 		""", self.name, as_dict=True)
 
 		if not payment_references:
+			self.total_allocated_payment = 0.0
+			self.balance_payment = self.grand_total
 			return
 
+		total_allocated = 0.0
 		for pe_ref in payment_references:
+			total_allocated += flt(pe_ref.allocated_amount)
 			row = self.append("payment_entries", {})
 			row.update({
 					"name": pe_ref.name,
@@ -291,6 +295,9 @@ class SalesOrder(SellingController):
 					"payment_date": pe_ref.payment_date,
 					"payment_order_status": pe_ref.payment_order_status
 			})
+		
+		self.total_allocated_payment = total_allocated
+		self.balance_payment = self.grand_total - total_allocated
 			
 
 	def set_group_payment_entries(self):
@@ -326,10 +333,32 @@ class SalesOrder(SellingController):
 			ORDER BY pe.payment_date DESC
 		""", (tuple(related_orders),), as_dict=True)
 
+		# Calculate total required amount for the group
+		group_grand_total = 0.0
+		
+		# User requested to only sum "Split Order Group" members for the total
+		if self.is_split_order and self.split_order_group:
+			group_orders_data = frappe.db.get_all("Sales Order", 
+				filters={
+					"split_order_group": self.split_order_group,
+					"is_split_order": 1
+				}, 
+				fields=["grand_total"]
+			)
+			for o in group_orders_data:
+				group_grand_total += flt(o.grand_total)
+		else:
+			group_grand_total = self.grand_total
+
 		if not payment_references:
+			self.total_allocated_group_payment = 0.0
+			self.balance_group_payment = group_grand_total
 			return
 
+		total_allocated_group = 0.0
 		for pe_ref in payment_references:
+			total_allocated_group += flt(pe_ref.allocated_amount)
+			
 			row = self.append("group_payment_entries", {})
 			row.update({
 					"name": pe_ref.name,
@@ -351,6 +380,9 @@ class SalesOrder(SellingController):
 					"payment_date": pe_ref.payment_date,
 					"payment_order_status": pe_ref.payment_order_status
 			})
+		
+		self.total_allocated_group_payment = total_allocated_group
+		self.balance_group_payment = group_grand_total - total_allocated_group
 
 
 	
