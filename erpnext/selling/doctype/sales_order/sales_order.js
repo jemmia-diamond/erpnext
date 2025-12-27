@@ -369,6 +369,18 @@ frappe.ui.form.on("Sales Order", {
 		}
 	},
 
+	birth_date: function (frm) {
+		if (frm.doc.birth_date) {
+			const year = parseInt(frm.doc.birth_date.split("-")[0]);
+			const current_year = new Date().getFullYear();
+
+			if (year < 1900 || year > current_year) {
+				frappe.msgprint(__("Năm sinh phải nằm trong khoảng 1900 đến {0}", [current_year]));
+				frm.set_value("birth_date", "");
+			}
+		}
+	},
+
 	delivery_date: function (frm) {
 		$.each(frm.doc.items || [], function (i, d) {
 			if (!d.delivery_date) d.delivery_date = frm.doc.delivery_date;
@@ -715,6 +727,19 @@ frappe.ui.form.on("Sales Order Item", {
 		if (!frm.doc.delivery_date) {
 			erpnext.utils.copy_value_in_all_rows(frm.doc, cdt, cdn, "items", "delivery_date");
 		}
+	},
+
+	fetch_policy: function(frm, cdt, cdn) {
+		let row = locals[cdt][cdn];
+		frappe.call({
+			method: "erpnext.selling.doctype.sales_order_item.sales_order_item.trigger_manual_webhook",
+			args: { item_name: row.name },
+			callback: function(r) {
+				if (r.message) {
+					frappe.show_alert(__('Đang tự động lấy thông tin chính sách ...'), 5);
+				}
+			}
+		});
 	},
 
 	serial: function (frm, cdt, cdn) {

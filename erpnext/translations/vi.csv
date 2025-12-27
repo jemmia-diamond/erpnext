@@ -8788,4 +8788,8 @@ Customer Rank, Xếp hạng
 Hot Opportunity, Cơ hội nóng
 Warm Opportunity, Cơ hội ấm
 Cold Opportunity, Cơ hội lạnh
-Probability, Xác suất
+Probability, Xác suất,
+Total Allocated (Current Order),Tổng đã thanh toán (Đơn hiện tại)
+Balance (Current Order),Số dư (Đơn hiện tại)
+Total Allocated (Group),Tổng đã thanh toán (Nhóm)
+Balance (Group),Số dư (Nhóm)

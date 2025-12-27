@@ -74,6 +74,7 @@
   "promotions",
   "product_categories",
   "policies",
+  "order_policies",
   "column_break_bscz",
   "total_qty",
   "total",
@@ -213,6 +214,13 @@
   "balance",
   "payment_section_section",
   "payment_entries",
+  "total_allocated_payment",
+  "balance_payment",
+  "section_break_group_payment",
+  "group_payment_entries",
+  "total_allocated_group_payment",
+  "balance_group_payment",
+  "section_break_payment_records",
   "payment_records",
   "debt_history",
   "payment_terms_section",
@@ -232,7 +240,8 @@
   "column_break_phue",
   "haravan_created_at",
   "source_name",
-  "connections_tab"
+  "connections_tab",
+  "payment_entries_tab"
  ],
  "fields": [
   {
@@ -1906,6 +1915,49 @@
    "options": "Payment Entry Reference"
   },
   {
+   "fieldname": "total_allocated_payment",
+   "fieldtype": "Currency",
+   "label": "Total Allocated (Current Order)",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "balance_payment",
+   "fieldtype": "Currency",
+   "label": "Balance (Current Order)",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_group_payment",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "group_payment_entries",
+   "fieldtype": "Table",
+   "label": "Group Payment Entries",
+   "options": "Payment Entry Reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_allocated_group_payment",
+   "fieldtype": "Currency",
+   "label": "Total Allocated (Group)",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "balance_group_payment",
+   "fieldtype": "Currency",
+   "label": "Balance (Group)",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_payment_records",
+   "fieldtype": "Section Break"
+  },
+  {
    "fieldname": "payment_records",
    "fieldtype": "Table",
    "options": "Sales Order Payment Record",
@@ -1938,7 +1990,8 @@
   },
   {
    "fieldname": "payment_section_section",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_pulu",
@@ -2140,13 +2193,24 @@
    "in_standard_filter": 1,
    "label": "Fulfillment Completion Date",
    "read_only": 1
+  },
+  {
+   "fieldname": "order_policies",
+   "fieldtype": "Long Text",
+   "label": "Policies (Auto)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_entries_tab",
+   "fieldtype": "Tab Break",
+   "label": "Payment Entries"
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-12 02:28:20.542876",
+ "modified": "2025-12-26 03:13:06.976730",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
