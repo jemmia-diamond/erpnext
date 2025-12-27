@@ -4151,54 +4151,6 @@ def cancel_pending_transfers():
 
 	frappe.db.commit()
 
-
-@frappe.whitelist()
-def get_payment_entries_by_phone(phone):
-	if not phone:
-		return []
-	
-	phone = phone.strip()
-	
-	customers = frappe.db.sql("""
-		SELECT name
-		FROM `tabCustomer`
-		WHERE mobile_no LIKE %(phone)s
-		OR phone LIKE %(phone)s
-	""", {"phone": f"%{phone}%"}, as_list=True)
-	
-	if not customers:
-		return []
-	
-	customer_names = [c[0] for c in customers]
-	
-	payment_entries = frappe.db.sql("""
-		SELECT name
-		FROM `tabPayment Entry`
-		WHERE party_type = 'Customer'
-		AND party IN %(customers)s
-		ORDER BY creation DESC
-	""", {"customers": customer_names}, as_list=True)
-	
-	return [pe[0] for pe in payment_entries] if payment_entries else []
-
-
-@frappe.whitelist()
-def get_payment_entries_by_order_number(order_number):
-	if not order_number:
-		return []
-	
-	order_number = order_number.strip()
-	
-	payment_entries = frappe.db.sql("""
-		SELECT DISTINCT parent
-		FROM `tabPayment Entry Reference`
-		WHERE order_number LIKE %(order_number)s
-		ORDER BY creation DESC
-	""", {"order_number": f"%{order_number}%"}, as_list=True)
-	
-	return [pe[0] for pe in payment_entries] if payment_entries else []
-
-
 @frappe.whitelist()
 def get_payment_entry_list(doctype=None, txt="", searchfield="name", start=0, page_len=20, filters=None, as_dict=False, **kwargs):
 
@@ -4242,7 +4194,6 @@ def get_payment_entry_list(doctype=None, txt="", searchfield="name", start=0, pa
 		conditions.append("NOT EXISTS (SELECT 1 FROM `tabPayment Entry Reference` WHERE parent = pe.name)")
 
 	if filters:
-		import json
 		if isinstance(filters, str):
 			try:
 				filters = json.loads(filters)
