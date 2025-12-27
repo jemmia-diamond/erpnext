@@ -481,8 +481,7 @@ class Lead(SellingController, CRMNote):
 			)
 			self.contact_doc.save()
 
-	def link_contacts_with_pancake_data(self, pancake_data):
-		print("link_contacts_with_pancake_data")
+	def link_to_contacts(self, pancake_data):
 		try: 
 			page_id = pancake_data.get("page_id")
 			conversation_id = pancake_data.get("conversation_id")
@@ -508,28 +507,7 @@ class Lead(SellingController, CRMNote):
 				self.set_first_lead_source()
 
 		except Exception as e:
-			print(f"Error link_contacts_with_pancake_data {e}")
-
-	def link_to_contacts(self, page_id, conversation_id):
-		print("link_to_contacts")
-		try:
-			self.contact_doc = self.check_contact(
-				page_id=page_id, 
-				conversation_id=conversation_id
-			)
-			if self.contact_doc:
-				contact_link = frappe.get_value("Dynamic Link", {
-						"link_doctype": self.doctype,
-						"link_name": self.name,
-						"parenttype": "Contact",
-						"parent": self.contact_doc.name
-				}, "name")
-				if not contact_link:
-					self.link_to_contact()
-					
-				self.set_first_lead_source()
-		except Exception as e:
-			print(f"Error link_to_contacts {e}")
+			frappe.log_error(f"Error link_to_contacts {e}")
 	
 	def set_first_lead_source(self):
 		try:
@@ -656,9 +634,8 @@ class Lead(SellingController, CRMNote):
 				parsed_pancake_data = frappe.parse_json(self.pancake_data)
 			except Exception as e:
 				parsed_pancake_data = None
-
-		_conversation_id = parsed_pancake_data.get("conversation_id") if parsed_pancake_data and parsed_pancake_data.get("conversation_id") else None
-		_page_id = parsed_pancake_data.get("page_id") if parsed_pancake_data and parsed_pancake_data.get("page_id") else None
+		
+		pancake_dict = parsed_pancake_data or {}
 		
 		contact.update(
 			{
@@ -669,14 +646,14 @@ class Lead(SellingController, CRMNote):
 				"gender": self.gender,
 				"designation": self.job_title,
 				"company_name": self.company_name,
-				"pancake_conversation_id": _conversation_id,
-				"pancake_customer_id": parsed_pancake_data.get("customer_id") if parsed_pancake_data and parsed_pancake_data.get("customer_id") else None,
-				"pancake_inserted_at": parsed_pancake_data.get("inserted_at") if parsed_pancake_data and parsed_pancake_data.get("inserted_at") else None,
-				"inserted_at": parsed_pancake_data.get("inserted_at") if parsed_pancake_data and parsed_pancake_data.get("inserted_at") else None,
-				"pancake_updated_at": parsed_pancake_data.get("updated_at") if parsed_pancake_data and parsed_pancake_data.get("updated_at") else None,
-				"pancake_page_id": _page_id,
-				"can_inbox": parsed_pancake_data.get("can_inbox") if parsed_pancake_data and parsed_pancake_data.get("can_inbox") else 0,
-				"last_message_time" :  parsed_pancake_data.get("latest_message_at", None) if parsed_pancake_data else None
+				"pancake_conversation_id": pancake_dict.get("conversation_id") or None,
+				"pancake_customer_id": pancake_dict.get("customer_id") or None,
+				"pancake_inserted_at": pancake_dict.get("inserted_at") or None,
+				"inserted_at": pancake_dict.get("inserted_at") or None,
+				"pancake_updated_at": pancake_dict.get("updated_at") or None,
+				"pancake_page_id": pancake_dict.get("page_id") or None,
+				"can_inbox": pancake_dict.get("can_inbox") or 0,
+				"last_message_time" :  pancake_dict.get("latest_message_at") or None
 			}
 		)
 
