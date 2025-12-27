@@ -511,29 +511,26 @@ class Lead(SellingController, CRMNote):
 	
 	def set_first_lead_source(self):
 		try:
-			linked_contacts_data = frappe.db.sql(
+			source = frappe.db.sql(
 				'''
-				SELECT tdl.parent 
+				SELECT tc.source 
 				FROM `tabDynamic Link` as tdl
-				LEFT JOIN `tabContact` as tc ON tdl.parent = tc.name
+				JOIN `tabContact` as tc ON tdl.parent = tc.name
 				WHERE tdl.link_name = %s
 					AND tdl.link_doctype = 'Lead'
 					AND tdl.parenttype = 'Contact'
+					AND tc.inserted_at IS NOT NULL
 				ORDER BY tc.inserted_at ASC
 				LIMIT 1
 				''',
-				(self.name),
-				as_dict=True
+				(self.name)
 			)
-			if linked_contacts_data:
-				if linked_contacts_data[0].get('parent', None):
-					contact_name = linked_contacts_data[0].get('parent', None)
-					contact = frappe.get_doc("Contact", contact_name)
-					self.source = contact.source
-					self.save(ignore_permissions=True)
+			
+			if source and source[0][0]:
+				self.db_set("source", source[0][0]) 
 
 		except Exception as e:
-			print(f"Error set_first_lead_source {e}")
+			frappe.log_error(f"Error set_first_lead_source {e}")
 
 	def update_prospect(self):
 		lead_row_name = frappe.db.get_value("Prospect Lead", filters={"lead": self.name}, fieldname="name")
@@ -684,6 +681,7 @@ class Lead(SellingController, CRMNote):
 				f"Failed to create contact for lead (LinkValidationError): {str(e)}")
 			frappe.throw(_(f"Failed to create contact for lead (LinkValidationError): {str(e)}."))		
 		except Exception as e:
+			frappe.log_error(f"Error create_contact: {e}")
 			return None
 		return None
 
