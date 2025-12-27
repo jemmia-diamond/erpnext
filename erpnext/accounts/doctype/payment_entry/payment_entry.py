@@ -4185,7 +4185,7 @@ def get_payment_entry_list(doctype=None, txt="", searchfield="name", start=0, pa
 		values["phone"] = f"%{phone_search}%"
 
 	if order_number_search:
-		conditions.append("per.order_number LIKE %(order_number)s")
+		conditions.append("(per.order_number LIKE %(order_number)s OR per.split_order_group_name LIKE %(order_number)s)")
 		values["order_number"] = f"%{order_number_search}%"
 
 	if reference_filter == "has_references":
