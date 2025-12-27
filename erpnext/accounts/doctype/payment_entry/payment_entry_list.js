@@ -1,4 +1,5 @@
 frappe.listview_settings["Payment Entry"] = {
+	hide_name_column: true,
 	onload: function (listview) {
 		if (listview.page.fields_dict.party_type) {
 			listview.page.fields_dict.party_type.get_query = function () {
