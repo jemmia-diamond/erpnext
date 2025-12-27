@@ -45,6 +45,7 @@ class SalesOrderItem(Document):
 		discount_rate: DF.Data | None
 		distributed_discount_amount: DF.Currency
 		ensure_delivery_based_on_produced_serial_no: DF.Check
+		fetch_policy: DF.Button
 		grant_commission: DF.Check
 		gross_profit: DF.Currency
 		haravan_variant_id: DF.Int
