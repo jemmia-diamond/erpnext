@@ -58,7 +58,8 @@
    "fieldname": "order_number",
    "fieldtype": "Data",
    "label": "Order Number",
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fieldname": "mode_of_payment",
