@@ -3,7 +3,7 @@
  "allow_auto_repeat": 1,
  "allow_import": 1,
  "autoname": "naming_series:",
- "creation": "2025-12-07 19:16:48.513741",
+ "creation": "2025-12-24 17:28:19.328781",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -26,6 +26,8 @@
   "company",
   "payment_order_status",
   "party",
+  "shipping_code",
+  "notification_sent",
   "qr_section_break",
   "custom_transaction_id",
   "custom_transfer_status",
@@ -213,7 +215,7 @@
    "label": "Payment Status",
    "no_copy": 1,
    "options": "Pending\nSuccess\nCancel",
-   "read_only": 1
+   "permlevel": 1
   },
   {
    "fieldname": "gateway",
@@ -237,7 +239,7 @@
    "fieldtype": "Select",
    "label": "Transfer Status",
    "options": "\npending\nsuccess\ncancel",
-   "read_only": 1
+   "permlevel": 1
   },
   {
    "fieldname": "qr_url",
@@ -932,26 +934,26 @@
    "in_standard_filter": 1,
    "label": "Misa Synced",
    "options": "Project",
-   "print_hide": 1,
-   "read_only": 1
+   "permlevel": 1,
+   "print_hide": 1
   },
   {
    "fieldname": "misa_sync_guid",
    "fieldtype": "Data",
    "label": "Misa GUID",
-   "read_only": 1
+   "permlevel": 1
   },
   {
    "fieldname": "misa_synced_at",
    "fieldtype": "Datetime",
    "label": "Misa Synced At",
-   "read_only": 1
+   "permlevel": 1
   },
   {
    "fieldname": "misa_sync_error_msg",
    "fieldtype": "Data",
    "label": "Misa Failed Message",
-   "read_only": 1
+   "permlevel": 1
   },
   {
    "fieldname": "dimension_col_break_2",
@@ -976,6 +978,20 @@
    "fieldtype": "Check",
    "hidden": 1,
    "label": "Webhook Process"
+  },
+  {
+   "depends_on": "eval:!doc.__islocal && doc.payment_code == 'cash_on_delivery'",
+   "fieldname": "shipping_code",
+   "fieldtype": "Data",
+   "label": "Shipping Code"
+  },
+  {
+   "default": "0",
+   "fieldname": "notification_sent",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Notification Sent",
+   "print_hide": 1
   }
  ],
  "grid_page_length": 50,
@@ -990,7 +1006,7 @@
    "table_fieldname": "payment_entries"
   }
  ],
- "modified": "2025-12-12 09:42:11.806026",
+ "modified": "2025-12-25 11:34:19.343649",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Payment Entry",

@@ -78,8 +78,7 @@ def insert_lead(doc) -> "Document":
 		if existing_lead_name:
 			existing_doc = frappe.get_doc("Lead", existing_lead_name)
 			existing_doc.link_to_contacts(
-				page_id=page_id,
-				conversation_id=conversation_id,
+				pancake_data=doc.get("pancake_data", {})
 			)
 			return existing_doc
 
@@ -90,8 +89,7 @@ def insert_lead(doc) -> "Document":
 			existing_doc = frappe.get_doc("Lead", existing_lead_name)
 			if conversation_id and page_id:
 				existing_doc.link_to_contacts(
-					page_id=page_id,
-					conversation_id=conversation_id,
+					pancake_data=doc.get("pancake_data", {})
 				)
 			return existing_doc
 
@@ -119,7 +117,7 @@ def insert_lead(doc) -> "Document":
 				todo_doc.allocated_to = frappe_doc.lead_owner
 				todo_doc.insert()
 			except Exception as e :
-				print(e)
+				frappe.log_error(e)
 		
 		return frappe_doc
 	except Exception as e:

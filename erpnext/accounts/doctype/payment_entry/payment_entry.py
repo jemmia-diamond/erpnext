@@ -114,6 +114,7 @@ class PaymentEntry(AccountsController):
 		mode_of_payment: DF.Link
 		name_display: DF.Data | None
 		naming_series: DF.Literal["ACC-PAY-.YYYY.-"]
+		notification_sent: DF.Check
 		paid_amount: DF.Currency
 		paid_amount_after_tax: DF.Currency
 		paid_from: DF.Link | None
@@ -147,6 +148,7 @@ class PaymentEntry(AccountsController):
 		references: DF.Table[PaymentEntryReference]
 		remarks: DF.SmallText | None
 		sales_taxes_and_charges_template: DF.Link | None
+		shipping_code: DF.Data | None
 		source_exchange_rate: DF.Float
 		status: DF.Literal["", "Draft", "Submitted", "Cancelled"]
 		target_exchange_rate: DF.Float
@@ -278,6 +280,7 @@ class PaymentEntry(AccountsController):
 
 	def on_update(self):
 		self.sync_bank_transaction_payments()
+		self.update_sales_order_paid_amount()
 
 	def sync_bank_transaction_payments(self):
 		if self.flags.get("updating_from_bank_transaction"):
@@ -311,12 +314,15 @@ class PaymentEntry(AccountsController):
 		self.make_advance_payment_ledger_entries()
 		self.update_advance_paid()  # advance_paid_status depends on the payment request amount
 		self.set_status()
+		self.update_sales_order_paid_amount()
 
 	def validate_for_repost(self):
 		validate_docs_for_voucher_types(["Payment Entry"])
 		validate_docs_for_deferred_accounting([self.name], [])
 
 	def on_update_after_submit(self):
+		self.update_sales_order_paid_amount()
+		
 		# Flag will be set on Reconciliation
 		# Reconciliation tool will anyways repost ledger entries. So, no need to check and do implicit repost.
 		if self.flags.get("ignore_reposting_on_reconciliation"):
@@ -328,6 +334,58 @@ class PaymentEntry(AccountsController):
 		if self.needs_repost:
 			self.validate_for_repost()
 			self.repost_accounting_entries()
+
+	def update_sales_order_paid_amount(self):
+		sales_orders_to_update = set()
+
+		if self.references:
+			for ref in self.references:
+				if ref.reference_doctype == "Sales Order" and ref.reference_name:
+					sales_orders_to_update.add(ref.reference_name)
+
+		# Process each unique Sales Order found
+		for so_name in sales_orders_to_update:
+			result = frappe.db.sql("""
+				SELECT SUM(
+					CASE WHEN parent.payment_type = 'Pay' THEN -1 * child.allocated_amount
+					ELSE child.allocated_amount END
+				)
+				FROM `tabPayment Entry Reference` child
+				INNER JOIN `tabPayment Entry` parent ON child.parent = parent.name
+				WHERE child.reference_doctype = 'Sales Order'
+				AND child.reference_name = %s
+				AND parent.docstatus < 2 
+				AND parent.payment_order_status = 'Success'
+			""", (so_name))
+
+			# Handle None result if no records match (return 0.0)
+			payment_entries_total = result[0][0] if result and result[0][0] else 0.0
+
+			# Fetch payment_records sum
+			payment_records_total = frappe.db.sql("""
+				SELECT SUM(amount) FROM `tabSales Order Payment Record`
+				WHERE parent = %s AND kind IN ('capture', 'authorization')
+			""", (so_name))[0][0] or 0.0
+
+			sales_order_grand_total, current_paid_amount, current_balance = frappe.db.get_value("Sales Order", so_name, ["grand_total", "paid_amount", "balance"])
+
+			if flt(payment_records_total) >= flt(sales_order_grand_total):
+				total_paid = flt(payment_records_total)
+			else:
+				total_paid = flt(payment_entries_total) + flt(payment_records_total)
+
+			if total_paid >= sales_order_grand_total:
+				total_paid = sales_order_grand_total
+
+			balance = flt(sales_order_grand_total) - flt(total_paid)
+
+			if flt(total_paid) != flt(current_paid_amount) or flt(current_balance) != flt(balance):
+				# Update the Sales Order 'paid_amount' and 'balance' field directly
+				frappe.db.set_value("Sales Order", so_name, {
+					"paid_amount": total_paid,
+					"balance": balance
+				})
+				frappe.msgprint(f"Đã cập nhật Sales Order {so_name}: Đã thanh toán {total_paid}, Còn lại {balance}")
 
 	def set_liability_account(self):
 		# Auto setting liability account should only be done during 'draft' status
@@ -417,6 +475,7 @@ class PaymentEntry(AccountsController):
 		self.make_advance_payment_ledger_entries()
 		self.update_advance_paid()  # advance_paid_status depends on the payment request amount
 		self.set_status()
+		self.update_sales_order_paid_amount()
 
 	def update_payment_requests(self, cancel=False):
 		from erpnext.accounts.doctype.payment_request.payment_request import (
@@ -424,6 +483,41 @@ class PaymentEntry(AccountsController):
 		)
 
 		update_payment_requests_as_per_pe_references(self.references, cancel=cancel)
+
+	@frappe.whitelist()
+	def cancel_draft_payment_entry(self):
+		if self.docstatus != 0:
+			frappe.throw(_("Chỉ được huỷ Phiếu thanh toán khi đang ở trạng thái Nháp"))
+
+		payment_code = None
+		if self.mode_of_payment:
+			payment_code = frappe.db.get_value("Mode of Payment", self.mode_of_payment, "payment_code")
+
+		if payment_code == "banking":
+			if self.bank_transactions and len(self.bank_transactions) > 0:
+				frappe.throw(_("Không thể huỷ Phiếu thanh toán chuyển khoản đã có giao dịch ngân hàng"))
+
+		if payment_code in ["cash_on_delivery", "cash", "pos", "payment_link"]:
+			if self.verified_by:
+				frappe.throw(_("Không thể huỷ Phiếu thanh toán đã được xác nhận"))
+
+		doc = frappe.get_doc("Payment Entry", self.name)
+		doc.payment_order_status = "Cancel"
+		doc.flags.ignore_permissions = True
+		doc.flags.ignore_validate = True
+		doc.save()
+
+		frappe.db.sql("""
+			UPDATE `tabPayment Entry`
+			SET docstatus = 2,
+			status = 'Cancelled',
+			payment_order_status = 'Cancel',
+			custom_transfer_status = 'cancel'
+			WHERE name = %s
+		""", self.name)
+
+		frappe.db.commit()
+		return {"message": _("Huỷ Phiếu thanh toán thành công")}
 
 	def update_outstanding_amounts(self):
 		self.set_missing_ref_details(force=True)
@@ -1062,6 +1156,8 @@ class PaymentEntry(AccountsController):
 	def set_status(self):
 		if self.docstatus == 2:
 			self.status = "Cancelled"
+			self.payment_order_status = "Cancel"
+			self.custom_transfer_status = "cancel"
 		elif self.docstatus == 1:
 			self.status = "Submitted"
 		else:
@@ -2144,6 +2240,46 @@ class PaymentEntry(AccountsController):
 		self.save()
 
 		frappe.msgprint(_("Payment Entry verified successfully"))
+
+
+def validate_and_misa_field(payment_entry_name):
+	doc = frappe.get_doc("Payment Entry", payment_entry_name)
+
+	if not doc.misa_synced:
+		return
+
+	has_sales_order = any(ref.reference_doctype == "Sales Order" for ref in doc.references)
+
+	if not has_sales_order:
+		return
+
+	if doc.docstatus != 0:
+		return
+
+	if doc.payment_code == "banking":
+		if not doc.bank_transactions or len(doc.bank_transactions) == 0:
+			return
+	else:
+		if not doc.verified_by:
+			return
+
+	total_allocated = sum(flt(ref.allocated_amount) for ref in doc.references)
+	difference = abs(flt(total_allocated) - flt(doc.paid_amount))
+	if difference > 1000:
+		frappe.throw(
+			_("Số tiền thanh toán ({0}) phải bằng tổng số tiền phân bổ ({1}).").format(
+				fmt_money(doc.paid_amount, currency=doc.paid_from_account_currency),
+				fmt_money(total_allocated, currency=doc.paid_from_account_currency)
+			)
+		)
+
+	frappe.db.sql("""
+		UPDATE `tabPayment Entry`
+		SET docstatus = 1,
+			status = 'Submitted'
+		WHERE name = %s AND misa_synced = 1
+	""", payment_entry_name)
+	frappe.db.commit()
 
 	@frappe.whitelist()
 	def allocate_amount_to_references(self, paid_amount, paid_amount_change, allocate_payment_amount):
@@ -3933,7 +4069,7 @@ def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, fil
 	"""Custom query to search Sales Orders by name and order_number"""
 	return frappe.db.sql(
 		"""
-		SELECT name, order_number, customer_name
+		SELECT name, FORMAT(grand_total, 0) as grand_total, order_number, customer_name
 		FROM `tabSales Order`
 		WHERE (
 			name LIKE %(txt)s
@@ -3943,6 +4079,7 @@ def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, fil
 		AND company = %(company)s
 		AND customer = %(customer)s
 		AND cancelled_status = "Uncancelled"
+		AND grand_total > 0
 		ORDER BY
 			CASE
 				WHEN name LIKE %(txt)s THEN 0
@@ -3964,23 +4101,52 @@ def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, fil
 def cancel_pending_transfers():
 	from frappe.utils import add_to_date, now_datetime
 
-	# Calculate threshold time (24 hours ago)
 	threshold_time = add_to_date(now_datetime(), hours=-24)
-
 	allowed_modes = frappe.get_all("Mode of Payment", filters={"payment_code": "banking"}, pluck="name")
 
 	if not allowed_modes:
 		return
 
-	payment_entries = frappe.get_all(
+	all_pending_entries = frappe.get_all(
 		"Payment Entry",
 		filters={
 			"custom_transfer_status": "pending",
 			"creation": ("<", threshold_time),
 			"mode_of_payment": ["in", allowed_modes]
 		},
-		fields=["name"]
+		pluck="name"
 	)
 
-	for entry in payment_entries:
-		frappe.db.set_value("Payment Entry", entry.name, "custom_transfer_status", "cancel")
+	if not all_pending_entries:
+		return
+
+	entries_with_bank_transactions = frappe.get_all(
+		"Payment Entry Bank Transaction",
+		filters={
+			"parent": ["in", all_pending_entries]
+		},
+		pluck="parent"
+	)
+
+	payment_entry_names = list(set(all_pending_entries) - set(entries_with_bank_transactions))
+
+	for name in payment_entry_names:
+		try:
+			doc = frappe.get_doc("Payment Entry", name)
+			doc.payment_order_status = "Cancel"
+			doc.flags.ignore_permissions = True
+			doc.flags.ignore_validate = True
+			doc.save()
+			
+			frappe.db.sql("""
+				UPDATE `tabPayment Entry`
+				SET docstatus = 2,
+				status = 'Cancelled',
+				custom_transfer_status = 'cancel',
+				payment_order_status = 'Cancel'
+				WHERE name = %s
+			""", name)
+		except Exception as e:
+			frappe.log_error(f"Failed to cancel Payment Entry {name}: {str(e)}")
+
+	frappe.db.commit()

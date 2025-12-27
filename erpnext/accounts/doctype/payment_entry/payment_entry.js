@@ -357,6 +357,12 @@ frappe.ui.form.on("Payment Entry", {
 	},
 
 	refresh: function (frm) {
+		if (!frm.is_new()) {
+			frm.set_df_property("mode_of_payment", "read_only", 1);
+		} else {
+			frm.set_df_property("mode_of_payment", "read_only", 0);
+		}
+
 		frm.events.update_gateway_options(frm);
 		frm.events.update_bank_branch_logic(frm);
 		frm.events.update_field_visibility(frm);
@@ -386,6 +392,47 @@ frappe.ui.form.on("Payment Entry", {
 		erpnext.accounts.unreconcile_payment.add_unreconcile_btn(frm);
 		frappe.flags.allocate_payment_amount = true;
 
+		if (frm.doc.docstatus === 0 && !frm.is_new()) {
+			frm.events.get_payment_code(frm, (payment_code) => {
+				let can_cancel = true;
+				if (payment_code === "banking") {
+					if (frm.doc.bank_transactions && frm.doc.bank_transactions.length > 0) {
+						can_cancel = false;
+					}
+				}
+
+				if (["cash_on_delivery", "cash", "pos", "payment_link"].includes(payment_code)) {
+					if (frm.doc.verified_by) {
+						can_cancel = false;
+					}
+				}
+
+				if (can_cancel) {
+					frm.add_custom_button(__("Cancel"), function () {
+						frappe.confirm(
+							__("Bạn có chắc chắn muốn huỷ Phiếu thanh toán này không?"),
+							function () {
+								frappe.call({
+									method: "cancel_draft_payment_entry",
+									doc: frm.doc,
+									callback: function (r) {
+										if (!r.exc) {
+											frappe.show_alert({
+												message: __("Huỷ Phiếu thanh toán thành công"),
+												indicator: "green"
+											});
+											frm.reload_doc();
+										}
+									}
+								});
+							}
+						);
+					}).addClass("btn-danger");
+				}
+			});
+		}
+
+
 		if (frm.doc.qr_url) {
 			const qr_group = __("Mã QR");
 			frm.add_custom_button(__("Copy URL"), () => {
@@ -408,7 +455,9 @@ frappe.ui.form.on("Payment Entry", {
 			(frm.doc.payment_order_status === "Draft" || frm.doc.payment_order_status === "Pending" || frm.doc.payment_order_status === "Success") &&
 			(frappe.user.has_role("Accounts User") || frappe.user.has_role("Accounts Manager"))
 		) {
-			frm.add_custom_button(__("Verify"), () => {
+			let has_sales_order = frm.doc.references && frm.doc.references.some(ref => ref.reference_doctype === "Sales Order");
+			
+			let btn = frm.add_custom_button(__("Verify"), () => {
 				frm.events.get_payment_code(frm, (payment_code) => {
 					let requires_bank_transaction = payment_code === "banking";
 					if (requires_bank_transaction && (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0)) {
@@ -440,12 +489,17 @@ frappe.ui.form.on("Payment Entry", {
 					});
 				});
 			});
+			
+			if (!has_sales_order) {
+				btn.addClass('disabled').prop('disabled', true);
+			}
 		}
 	},
 
 	validate: async function (frm) {
 		await frm.events.set_exchange_gain_loss_deduction(frm);
 		frm.events.validate_bank_transactions(frm);
+		frm.events.validate_total_allocated_amount(frm);
 	},
 
 	before_save: function(frm) {
@@ -1338,6 +1392,11 @@ frappe.ui.form.on("Payment Entry", {
 	},
 
 	allocate_party_amount_against_ref_docs: async function (frm, paid_amount, paid_amount_change) {
+		if (frm.is_new()) {
+			frm.events.set_total_allocated_amount(frm);
+			return;
+		}
+
 		await frm.call("allocate_amount_to_references", {
 			paid_amount: paid_amount,
 			paid_amount_change: paid_amount_change,
@@ -1369,6 +1428,67 @@ frappe.ui.form.on("Payment Entry", {
 		frm.set_value("base_total_allocated_amount", Math.abs(base_total_allocated_amount));
 
 		frm.events.set_unallocated_amount(frm);
+	},
+
+	validate_total_allocated_amount: function (frm) {
+		if (!frm.doc.paid_amount || !frm.doc.references || frm.doc.references.length === 0) {
+			return;
+		}
+
+		let total_allocated = 0;
+
+		$.each(frm.doc.references || [], function (i, row) {
+			if (row.allocated_amount) {
+				total_allocated += flt(row.allocated_amount);
+				let max_amount = row.balance || row.outstanding_amount || 0;
+				if (flt(row.allocated_amount) > flt(max_amount)) {
+					frappe.throw({
+						title: __("Phân bổ vượt số dư"),
+						indicator: "red",
+						message: __(
+							"Dòng #{0}: Số tiền phân bổ ({1}) vượt quá số dư còn lại ({2}) của {3} {4}.<br><br>Vui lòng điều chỉnh lại số tiền phân bổ.",
+							[
+								row.idx,
+								format_currency(row.allocated_amount, frm.doc.paid_from_account_currency, 0),
+								format_currency(max_amount, frm.doc.paid_from_account_currency, 0),
+								row.reference_doctype,
+								row.reference_name
+							]
+						)
+					});
+				}
+			}
+		});
+
+		const difference = total_allocated - flt(frm.doc.paid_amount);
+		const tolerance = 1000;
+
+		if (Math.abs(difference) > tolerance) {
+			frappe.throw({
+				title: __("Phân bổ không khớp"),
+				indicator: "red",
+				message: __(
+					"Tổng số tiền phân bổ ({0}) phải bằng số tiền thanh toán ({1}).<br><br>Chênh lệch: {2} (tối đa cho phép: {3})<br><br>Vui lòng điều chỉnh lại số tiền phân bổ.",
+					[
+						format_currency(total_allocated, frm.doc.paid_from_account_currency, 0),
+						format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
+						format_currency(Math.abs(difference), frm.doc.paid_from_account_currency, 0),
+						format_currency(tolerance, frm.doc.paid_from_account_currency, 0)
+					]
+				)
+			});
+		} else if (difference !== 0) {
+			frappe.show_alert({
+				message: __(
+					"Chênh lệch {0} nằm trong mức cho phép {1}.",
+					[
+						format_currency(Math.abs(difference), frm.doc.paid_from_account_currency, 0),
+						format_currency(tolerance, frm.doc.paid_from_account_currency, 0)
+					]
+				),
+				indicator: "blue"
+			}, 10);
+		}
 	},
 
 	set_unallocated_amount: function (frm) {
@@ -2013,12 +2133,14 @@ frappe.ui.form.on("Payment Entry Reference", {
 							frappe.model.set_value(cdt, cdn, field, value);
 						});
 
-						let allocated_amount =
-							frm.doc.unallocated_amount > row.outstanding_amount
-								? row.outstanding_amount
-								: frm.doc.unallocated_amount;
+						if (!row.allocated_amount || row.allocated_amount === 0) {
+							let allocated_amount =
+								frm.doc.unallocated_amount > row.outstanding_amount
+									? row.outstanding_amount
+									: frm.doc.unallocated_amount;
 
-						frappe.model.set_value(cdt, cdn, "allocated_amount", allocated_amount);
+							frappe.model.set_value(cdt, cdn, "allocated_amount", allocated_amount);
+						}
 						
 						if (row.reference_doctype === "Sales Order") {
 							frappe.model.set_value(cdt, cdn, "mode_of_payment", frm.doc.mode_of_payment);
@@ -2046,6 +2168,7 @@ frappe.ui.form.on("Payment Entry Reference", {
 
 	allocated_amount: function (frm) {
 		frm.events.set_total_allocated_amount(frm);
+		frm.events.validate_total_allocated_amount(frm);
 	},
 
 	references_remove: function (frm) {
