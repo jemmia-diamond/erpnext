@@ -20,15 +20,22 @@ class BankTransaction(Document):
 
 		allocated_amount: DF.Currency
 		amended_from: DF.Link | None
+		app_id: DF.Int
+		app_time: DF.Data | None
+		app_user: DF.Data | None
 		bank_account: DF.Link | None
 		bank_party_account_number: DF.Data | None
 		bank_party_iban: DF.Data | None
 		bank_party_name: DF.Data | None
+		channel: DF.Int
 		company: DF.Link | None
 		currency: DF.Link | None
 		date: DF.Date | None
 		deposit: DF.Currency
 		description: DF.SmallText | None
+		embed_data: DF.JSON | None
+		item: DF.JSON | None
+		merchant_user_id: DF.Data | None
 		naming_series: DF.Literal["ACC-BTN-.YYYY.-"]
 		party: DF.DynamicLink | None
 		party_type: DF.Link | None
@@ -48,11 +55,14 @@ class BankTransaction(Document):
 		sepay_sub_account: DF.Data | None
 		sepay_transaction_content: DF.Data | None
 		sepay_transaction_date: DF.Data | None
+		server_time: DF.Data | None
 		status: DF.Literal["", "Pending", "Settled", "Unreconciled", "Reconciled", "Cancelled"]
 		transaction_id: DF.Data | None
 		transaction_type: DF.Data | None
 		unallocated_amount: DF.Currency
+		user_fee_amount: DF.Currency
 		withdrawal: DF.Currency
+		zp_trans_id: DF.Data | None
 	# end: auto-generated types
 
 	def before_validate(self):
