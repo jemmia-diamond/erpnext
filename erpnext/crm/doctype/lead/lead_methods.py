@@ -329,28 +329,24 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 	loser_contacts = frappe.get_all("Contact", filters=[
 		["Dynamic Link", "link_doctype", "=", "Lead"],
 		["Dynamic Link", "link_name", "=", loser_doc.name]
-	], fields=["name", "pancake_conversation_id", "pancake_page_id"])
+	], fields=["name"])
 
-	for lc in loser_contacts:
-		if lc.pancake_conversation_id:
-			# Use method to link (handles check/deduplication logic inside Lead)
-			try:
-				master_doc.link_to_contacts({
-					"page_id": lc.pancake_page_id,
-					"conversation_id": lc.pancake_conversation_id
-				})
-			except Exception:
-				pass
-		else:
-			# Manual link for non-pancake contacts
+	try:
+		for lc in loser_contacts:
 			frappe.db.sql("""
 				UPDATE `tabDynamic Link`
 				SET link_name = %s
 				WHERE link_doctype = 'Lead' AND link_name = %s AND parent = %s
 			""", (master_doc.name, loser_doc.name, lc.name))
-
-	# Delete the loser lead
-	frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True, force=1)
+		
+		frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True, force=1)
+		
+	except Exception as e:
+		frappe.log_error(
+			f"Failed to merge lead {loser_doc.name} into {master_doc.name}: {str(e)}. All changes rolled back.",
+			"Lead Merge Error"
+		)
+		raise
 	
 	return master_doc
 
