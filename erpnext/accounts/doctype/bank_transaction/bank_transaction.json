@@ -2,7 +2,7 @@
  "actions": [],
  "allow_import": 1,
  "autoname": "naming_series:",
- "creation": "2018-10-22 18:19:02.784533",
+ "creation": "2025-12-08 17:47:45.582788",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -90,7 +90,8 @@
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Bank Account",
-   "options": "Bank Account"
+   "options": "Bank Account",
+   "search_index": 1
   },
   {
    "fetch_from": "bank_account.company",
@@ -335,7 +336,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2023-11-18 18:32:47.203694",
+ "modified": "2025-12-29 13:27:37.564606",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Bank Transaction",
