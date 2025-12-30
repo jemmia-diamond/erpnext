@@ -2,7 +2,7 @@
  "actions": [],
  "allow_import": 1,
  "autoname": "naming_series:",
- "creation": "2018-10-22 18:19:02.784533",
+ "creation": "2025-12-08 17:47:45.582788",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -54,7 +54,20 @@
   "sepay_reference_number",
   "sepay_code",
   "sepay_sub_account",
-  "sepay_bank_account_id"
+  "sepay_bank_account_id",
+  "payment_link_section",
+  "app_id",
+  "app_time",
+  "app_user",
+  "column_break_zalopay",
+  "zp_trans_id",
+  "embed_data",
+  "item",
+  "column_break_zalopay2",
+  "server_time",
+  "channel",
+  "merchant_user_id",
+  "user_fee_amount"
  ],
  "fields": [
   {
@@ -90,7 +103,8 @@
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Bank Account",
-   "options": "Bank Account"
+   "options": "Bank Account",
+   "search_index": 1
   },
   {
    "fetch_from": "bank_account.company",
@@ -220,10 +234,12 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "SePay",
    "fieldname": "transaction_type",
-   "fieldtype": "Data",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
    "label": "Transaction Type",
-   "length": 50
+   "options": "SePay\nZaloPay\nPayoo"
   },
   {
    "fieldname": "column_break_3czf",
@@ -331,11 +347,75 @@
   {
    "fieldname": "column_break_oufv",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "payment_link_section",
+   "fieldtype": "Section Break",
+   "label": "Payment Link Details"
+  },
+  {
+   "fieldname": "app_id",
+   "fieldtype": "Data",
+   "label": "App ID"
+  },
+  {
+   "fieldname": "app_time",
+   "fieldtype": "Data",
+   "label": "App Time"
+  },
+  {
+   "fieldname": "app_user",
+   "fieldtype": "Data",
+   "label": "App User"
+  },
+  {
+   "fieldname": "column_break_zalopay",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "embed_data",
+   "fieldtype": "JSON",
+   "label": "Embed Data"
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "JSON",
+   "label": "Item"
+  },
+  {
+   "fieldname": "zp_trans_id",
+   "fieldtype": "Data",
+   "label": "ZP Trans ID"
+  },
+  {
+   "fieldname": "column_break_zalopay2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "server_time",
+   "fieldtype": "Data",
+   "label": "Server Time"
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Data",
+   "label": "Channel"
+  },
+  {
+   "fieldname": "merchant_user_id",
+   "fieldtype": "Data",
+   "label": "Merchant User ID"
+  },
+  {
+   "fieldname": "user_fee_amount",
+   "fieldtype": "Currency",
+   "label": "User Fee Amount",
+   "precision": "0"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2023-11-18 18:32:47.203694",
+ "modified": "2025-12-29 13:58:05.948890",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Bank Transaction",
@@ -384,6 +464,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "date",
  "sort_order": "DESC",
  "states": [],
