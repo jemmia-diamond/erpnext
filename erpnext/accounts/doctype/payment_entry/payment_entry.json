@@ -123,6 +123,7 @@
   "subscription_section",
   "auto_repeat",
   "amended_from",
+  "admin_editing",
   "title"
  ],
  "fields": [
@@ -992,6 +993,15 @@
    "hidden": 1,
    "label": "Notification Sent",
    "print_hide": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "admin_editing",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Admin Editing",
+   "print_hide": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
