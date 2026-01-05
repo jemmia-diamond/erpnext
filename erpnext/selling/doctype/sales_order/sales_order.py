@@ -819,7 +819,6 @@ class SalesOrder(SellingController):
 				coupon_codes.append(code)
 		
 		# Check if any coupon code is a partner coupon
-		# Rule: 1 hyphen, no spaces, 6 characters after hyphen
 		partner_coupons = []
 		for coupon_code in coupon_codes:
 			if " " in coupon_code:
