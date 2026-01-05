@@ -75,6 +75,7 @@ class PaymentEntry(AccountsController):
 		from frappe.types import DF
 
 		amended_from: DF.Link | None
+		admin_editing: DF.Check
 		apply_tax_withholding_amount: DF.Check
 		auto_repeat: DF.Link | None
 		bank: DF.ReadOnly | None

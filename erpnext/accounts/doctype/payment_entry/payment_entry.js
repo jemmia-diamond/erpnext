@@ -1435,6 +1435,12 @@ frappe.ui.form.on("Payment Entry", {
 			return;
 		}
 
+		if (frappe.user.has_role("Administrator") || frappe.user.has_role("Developer")) {
+			frm.doc.admin_editing = 1;
+			return;
+		}
+
+
 		let total_allocated = 0;
 
 		$.each(frm.doc.references || [], function (i, row) {
