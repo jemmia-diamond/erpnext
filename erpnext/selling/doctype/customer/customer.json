@@ -54,6 +54,7 @@
   "doc_image",
   "orther_section",
   "first_source",
+  "customer_identity_image",
   "customer_website",
   "column_break_ioxt",
   "customer_journey",
@@ -698,6 +699,12 @@
    "label": "Identity Document"
   },
   {
+   "fieldname": "customer_identity_image",
+   "fieldtype": "Attach Image",
+   "label": "Customer Identity Image",
+   "print_hide": 1
+  },
+  {
    "fieldname": "birth_date",
    "fieldtype": "Date",
    "label": "Birth Date"
@@ -1110,7 +1117,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2025-11-17 12:24:33.883694",
+ "modified": "2026-01-05 04:26:15.456289",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",

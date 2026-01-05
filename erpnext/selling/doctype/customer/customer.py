@@ -72,21 +72,19 @@ class Customer(TransactionBase):
 		bizfly_customer_number: DF.Data | None
 		bizfly_id: DF.Data | None
 		buyback_revenue: DF.Currency
-		cashback: DF.Currency
 		ceo_name: DF.Data | None
 		companies: DF.Table[AllowedToTransactWith]
 		company_name: DF.Data | None
 		coupon_table: DF.Table[Coupon]
 		credit_limits: DF.Table[CustomerCreditLimit]
-		cumulative_revenue: DF.Currency
 		customer_details: DF.Text | None
 		customer_group: DF.Link | None
+		customer_identity_image: DF.AttachImage | None
 		customer_journey: DF.SmallText | None
 		customer_name: DF.Data
 		customer_pos_id: DF.Data | None
 		customer_primary_address: DF.Link | None
 		customer_primary_contact: DF.Link | None
-		customer_rank: DF.Literal["No Rank", "Silver", "Gold", "Platinum"]
 		customer_type: DF.Literal["Company", "Individual", "Partnership"]
 		customer_website: DF.Data | None
 		date_of_issuance: DF.Date | None
@@ -118,11 +116,10 @@ class Customer(TransactionBase):
 		naming_series: DF.Literal["CUST-.YYYY.-"]
 		no_of_employees: DF.Data | None
 		opportunity_name: DF.Link | None
+		partner_role: DF.Data | None
 		passport_expiry_date: DF.Date | None
 		passport_id: DF.Data | None
 		payment_terms: DF.Link | None
-		pending_cashback: DF.Currency
-		pending_point: DF.Float
 		person_name: DF.Data | None
 		personal_document_type: DF.Literal["CCCD", "Passport"]
 		personal_id: DF.Data | None
@@ -136,13 +133,10 @@ class Customer(TransactionBase):
 		priority_bank_account: DF.Link | None
 		priority_login_date: DF.Date | None
 		prospect_name: DF.Link | None
-		purchase_amount_last_12_months: DF.Currency
 		rank: DF.Literal["No Rank", "Silver", "Gold", "Platinum"]
-		rank_expired_date: DF.Date | None
 		rank_score_12m: DF.Currency
 		rank_updated_at: DF.Date | None
 		referral_cumulative_revenue: DF.Currency
-		referrals_revenue: DF.Currency
 		represents_company: DF.Link | None
 		sales_team: DF.Table[SalesTeam]
 		salutation: DF.Link | None
@@ -154,14 +148,12 @@ class Customer(TransactionBase):
 		territory: DF.Link | None
 		total_cumulative_revenue: DF.Currency
 		total_referral_point: DF.Float
-		true_cumulative_revenue: DF.Currency
 		vat_address: DF.Data | None
 		vat_email: DF.Data | None
 		vat_name: DF.Data | None
 		website: DF.Data | None
 		withdraw_cash_amount: DF.Currency
 		withdraw_cash_amount_pending: DF.Currency
-		withdraw_cashback: DF.Currency
 		withdraw_point: DF.Float
 	# end: auto-generated types
 

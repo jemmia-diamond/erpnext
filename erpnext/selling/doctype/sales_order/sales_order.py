@@ -82,6 +82,8 @@ class SalesOrder(SellingController):
 		apply_discount_on: DF.Literal["", "Grand Total", "Net Total"]
 		auto_repeat: DF.Link | None
 		balance: DF.Currency
+		balance_group_payment: DF.Currency
+		balance_payment: DF.Currency
 		base_discount_amount: DF.Currency
 		base_grand_total: DF.Currency
 		base_in_words: DF.Data | None
@@ -141,6 +143,7 @@ class SalesOrder(SellingController):
 		grand_total: DF.Currency
 		group_payment_entries: DF.Table[PaymentEntryReference]
 		group_same_items: DF.Check
+		haravan_coupon_code: DF.SmallText | None
 		haravan_created_at: DF.Datetime | None
 		haravan_order_id: DF.Data | None
 		haravan_ref_order_id: DF.Data | None
@@ -218,6 +221,8 @@ class SalesOrder(SellingController):
 		title: DF.Data | None
 		to_date: DF.Date | None
 		total: DF.Currency
+		total_allocated_group_payment: DF.Currency
+		total_allocated_payment: DF.Currency
 		total_amount: DF.Currency
 		total_commission: DF.Currency
 		total_net_weight: DF.Float
@@ -476,6 +481,8 @@ class SalesOrder(SellingController):
 			from erpnext.accounts.doctype.pricing_rule.utils import validate_coupon_code
 
 			validate_coupon_code(self.coupon_code)
+
+		self.validate_sensitive_coupons()
 
 		self.set_order_policies_summary()
 
@@ -796,6 +803,40 @@ class SalesOrder(SellingController):
 
 	def on_update(self):
 		pass
+
+	def validate_sensitive_coupons(self):
+		"""
+		US2: Check if haravan coupon codes are partner coupons and require customer identity image.
+		Partner coupons are identified by having a hyphen "-" in the code.
+		Supports multiple coupon codes separated by newline.
+		"""
+		if not self.haravan_coupon_code:
+			return
+		
+		# Parse multiple coupon codes (separated by newline)
+		coupon_codes = []
+		for code in self.haravan_coupon_code.split("\n"):
+			code = code.strip()
+			if code:
+				coupon_codes.append(code)
+		
+		# Check if any coupon code is a partner coupon (contains hyphen)
+		partner_coupons = []
+		for coupon_code in coupon_codes:
+			if "-" in coupon_code:
+				partner_coupons.append(coupon_code)
+		
+		if partner_coupons:
+			# Check if customer has identity image
+			has_image = frappe.db.get_value("Customer", self.customer, "customer_identity_image")
+			if not has_image:
+				frappe.throw(
+					_("Đơn hàng sử dụng mã giới thiệu Partner {0} yêu cầu nhân viên phải upload hình ảnh xác minh vào hồ sơ khách hàng {1} trước khi cho phép lưu đơn hàng.").format(
+						frappe.bold(", ".join(partner_coupons)),
+						frappe.bold(self.customer)
+					),
+					title=_("Thiếu thông tin khách hàng")
+				)
 
 	def set_order_policies_summary(self):
 		summary = []
