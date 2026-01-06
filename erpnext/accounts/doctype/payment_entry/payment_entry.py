@@ -4109,6 +4109,7 @@ def get_sales_orders_for_auto_populate(company, customer):
 		WHERE company = %(company)s
 		AND customer = %(customer)s
 		AND cancelled_status = "Uncancelled"
+		AND financial_status IN ("Pending", "Partially Paid")
 		AND grand_total > 0
 		ORDER BY modified DESC
 		""",
