@@ -726,6 +726,15 @@ frappe.ui.form.on("Payment Entry", {
 			});
 		}
 		
+		if (frm.doc.references && frm.doc.references.length > 0) {
+			frm.doc.references.forEach(function(row) {
+				if (row.reference_doctype === "Sales Order") {
+					frappe.model.set_value(row.doctype, row.name, "mode_of_payment", frm.doc.mode_of_payment);
+				}
+			});
+			frm.refresh_field("references");
+		}
+		
 		erpnext.accounts.pos.get_payment_mode_account(frm, frm.doc.mode_of_payment, function (account) {
 			let payment_account_field = frm.doc.payment_type == "Receive" ? "paid_to" : "paid_from";
 			frm.set_value(payment_account_field, account);
@@ -919,7 +928,7 @@ frappe.ui.form.on("Payment Entry", {
 									frappe.model.set_value(row.doctype, row.name, "mode_of_payment", frm.doc.mode_of_payment);
 									frappe.model.set_value(row.doctype, row.name, "gateway", frm.doc.gateway);
 									frappe.model.set_value(row.doctype, row.name, "paid_amount", frm.doc.paid_amount);
-									frappe.model.set_value(row.doctype, row.name, "payment_date", frm.doc.posting_date);
+									frappe.model.set_value(row.doctype, row.name, "payment_date", frm.doc.payment_date);
 									frappe.model.set_value(row.doctype, row.name, "payment_order_status", frm.doc.payment_order_status);
 									
 									frappe.db.get_value("Sales Order", so.name, [
@@ -1115,6 +1124,17 @@ frappe.ui.form.on("Payment Entry", {
 
 	posting_date: function (frm) {
 		frm.events.paid_from_account_currency(frm);
+	},
+
+	payment_date: function (frm) {
+		if (frm.doc.references && frm.doc.references.length > 0) {
+			frm.doc.references.forEach(function(row) {
+				if (row.reference_doctype === "Sales Order") {
+					frappe.model.set_value(row.doctype, row.name, "payment_date", frm.doc.payment_date);
+				}
+			});
+			frm.refresh_field("references");
+		}
 	},
 
 	source_exchange_rate: function (frm) {
@@ -2231,7 +2251,7 @@ frappe.ui.form.on("Payment Entry Reference", {
 							frappe.model.set_value(cdt, cdn, "mode_of_payment", frm.doc.mode_of_payment);
 							frappe.model.set_value(cdt, cdn, "gateway", frm.doc.gateway);
 							frappe.model.set_value(cdt, cdn, "paid_amount", frm.doc.paid_amount);
-							frappe.model.set_value(cdt, cdn, "payment_date", frm.doc.posting_date);
+							frappe.model.set_value(cdt, cdn, "payment_date", frm.doc.payment_date);
 							frappe.model.set_value(cdt, cdn, "payment_order_status", frm.doc.payment_order_status);
 							frappe.db.get_value("Sales Order", row.reference_name, [
 								"order_number",
