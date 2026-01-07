@@ -726,6 +726,15 @@ frappe.ui.form.on("Payment Entry", {
 			});
 		}
 		
+		if (frm.doc.references && frm.doc.references.length > 0) {
+			frm.doc.references.forEach(function(row) {
+				if (row.reference_doctype === "Sales Order") {
+					frappe.model.set_value(row.doctype, row.name, "mode_of_payment", frm.doc.mode_of_payment);
+				}
+			});
+			frm.refresh_field("references");
+		}
+		
 		erpnext.accounts.pos.get_payment_mode_account(frm, frm.doc.mode_of_payment, function (account) {
 			let payment_account_field = frm.doc.payment_type == "Receive" ? "paid_to" : "paid_from";
 			frm.set_value(payment_account_field, account);
@@ -862,11 +871,85 @@ frappe.ui.form.on("Payment Entry", {
 									frm.doc.paid_to_account_currency,
 									company_currency
 								),
+							() => frm.events.auto_populate_sales_orders(frm),
 						]);
 					}
 				},
 			});
 		}
+	},
+
+
+	auto_populate_sales_orders: function(frm) {
+		if (!frm.doc.party || !frm.doc.paid_amount) {
+			return;
+		}
+
+		frm.clear_table("references");
+		frappe.call({
+			method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_sales_orders_for_auto_populate",
+			args: {
+				company: frm.doc.company,
+				customer: frm.doc.party
+			},
+			callback: function(r) {
+				if (r.message && r.message.length > 0) {
+					let sales_orders = r.message;
+					let single_order = sales_orders.length === 1;
+
+					sales_orders.forEach(function(so) {
+						let row = frm.add_child("references");
+						row.reference_doctype = "Sales Order";
+						row.reference_name = so.name;
+
+						if (single_order) {
+							row.allocated_amount = frm.doc.paid_amount;
+						} else {
+							row.allocated_amount = 0;
+						}
+
+						frappe.call({
+							method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_reference_details",
+							args: {
+								reference_doctype: "Sales Order",
+								reference_name: so.name,
+								party_account_currency: frm.doc.payment_type == "Receive" 
+									? frm.doc.paid_from_account_currency 
+									: frm.doc.paid_to_account_currency,
+								party_type: frm.doc.party_type,
+								party: frm.doc.party,
+							},
+							callback: function(ref_r) {
+								if (ref_r.message) {
+									$.each(ref_r.message, function(field, value) {
+										frappe.model.set_value(row.doctype, row.name, field, value);
+									});
+
+									frappe.model.set_value(row.doctype, row.name, "mode_of_payment", frm.doc.mode_of_payment);
+									frappe.model.set_value(row.doctype, row.name, "gateway", frm.doc.gateway);
+									frappe.model.set_value(row.doctype, row.name, "paid_amount", frm.doc.paid_amount);
+									frappe.model.set_value(row.doctype, row.name, "payment_date", frm.doc.payment_date);
+									frappe.model.set_value(row.doctype, row.name, "payment_order_status", frm.doc.payment_order_status);
+									
+									frappe.db.get_value("Sales Order", so.name, [
+										"order_number",
+										"split_order_group_name"
+									], (so_data) => {
+										if (so_data) {
+											frappe.model.set_value(row.doctype, row.name, "order_number", so_data.order_number);
+											frappe.model.set_value(row.doctype, row.name, "split_order_group_name", so_data.split_order_group_name);
+										}
+									});
+								}
+							}
+						});
+					});
+
+					frm.refresh_field("references");
+					frm.events.set_total_allocated_amount(frm);
+				}
+			}
+		});
 	},
 
 	apply_tax_withholding_amount: function (frm) {
@@ -1043,6 +1126,17 @@ frappe.ui.form.on("Payment Entry", {
 		frm.events.paid_from_account_currency(frm);
 	},
 
+	payment_date: function (frm) {
+		if (frm.doc.references && frm.doc.references.length > 0) {
+			frm.doc.references.forEach(function(row) {
+				if (row.reference_doctype === "Sales Order") {
+					frappe.model.set_value(row.doctype, row.name, "payment_date", frm.doc.payment_date);
+				}
+			});
+			frm.refresh_field("references");
+		}
+	},
+
 	source_exchange_rate: function (frm) {
 		let company_currency = frappe.get_doc(":Company", frm.doc.company).default_currency;
 		if (frm.doc.paid_amount) {
@@ -1097,6 +1191,11 @@ frappe.ui.form.on("Payment Entry", {
 	},
 
 	paid_amount: function (frm) {
+		if (frm.doc.party && frm.doc.paid_amount) {
+			frm.events.auto_populate_sales_orders(frm);
+		}
+		
+		// Original logic
 		frm.set_value("base_paid_amount", flt(frm.doc.paid_amount) * flt(frm.doc.source_exchange_rate));
 		let company_currency = frappe.get_doc(":Company", frm.doc.company).default_currency;
 		if (!frm.doc.received_amount) {
@@ -2152,7 +2251,7 @@ frappe.ui.form.on("Payment Entry Reference", {
 							frappe.model.set_value(cdt, cdn, "mode_of_payment", frm.doc.mode_of_payment);
 							frappe.model.set_value(cdt, cdn, "gateway", frm.doc.gateway);
 							frappe.model.set_value(cdt, cdn, "paid_amount", frm.doc.paid_amount);
-							frappe.model.set_value(cdt, cdn, "payment_date", frm.doc.posting_date);
+							frappe.model.set_value(cdt, cdn, "payment_date", frm.doc.payment_date);
 							frappe.model.set_value(cdt, cdn, "payment_order_status", frm.doc.payment_order_status);
 							frappe.db.get_value("Sales Order", row.reference_name, [
 								"order_number",
@@ -2174,7 +2273,6 @@ frappe.ui.form.on("Payment Entry Reference", {
 
 	allocated_amount: function (frm) {
 		frm.events.set_total_allocated_amount(frm);
-		frm.events.validate_total_allocated_amount(frm);
 	},
 
 	references_remove: function (frm) {
