@@ -349,37 +349,48 @@ class SalesOrder(SellingController):
 		else:
 			group_grand_total = self.grand_total
 
-		if not payment_references:
-			self.total_allocated_group_payment = 0.0
-			self.balance_group_payment = group_grand_total
-			return
-
 		total_allocated_group = 0.0
-		for pe_ref in payment_references:
-			total_allocated_group += flt(pe_ref.allocated_amount)
+		if payment_references:
+			for pe_ref in payment_references:
+				total_allocated_group += flt(pe_ref.allocated_amount)
+				
+				row = self.append("group_payment_entries", {})
+				row.update({
+						"name": pe_ref.name,
+						"owner": "Administrator",
+						"modified_by": "Administrator",
+						"docstatus": 0,
+						"reference_doctype": pe_ref.parenttype,
+						"reference_name": pe_ref.parent,
+						"total_amount": pe_ref.total_amount,
+						"outstanding_amount": pe_ref.outstanding_amount,
+						"allocated_amount": pe_ref.allocated_amount,
+						"parent": pe_ref.reference_name,
+						"parentfield": "group_payment_entries",
+						"parenttype": pe_ref.reference_doctype,
+						"doctype": "Payment Entry Reference",
+						"mode_of_payment": pe_ref.mode_of_payment,
+						"gateway": pe_ref.gateway,
+						"paid_amount": pe_ref.paid_amount,
+						"payment_date": pe_ref.payment_date,
+						"payment_order_status": pe_ref.payment_order_status
+				})
 			
-			row = self.append("group_payment_entries", {})
-			row.update({
-					"name": pe_ref.name,
-					"owner": "Administrator",
-					"modified_by": "Administrator",
-					"docstatus": 0,
-					"reference_doctype": pe_ref.parenttype,
-					"reference_name": pe_ref.parent,
-					"total_amount": pe_ref.total_amount,
-					"outstanding_amount": pe_ref.outstanding_amount,
-					"allocated_amount": pe_ref.allocated_amount,
-					"parent": pe_ref.reference_name,
-					"parentfield": "group_payment_entries",
-					"parenttype": pe_ref.reference_doctype,
-					"doctype": "Payment Entry Reference",
-					"mode_of_payment": pe_ref.mode_of_payment,
-					"gateway": pe_ref.gateway,
-					"paid_amount": pe_ref.paid_amount,
-					"payment_date": pe_ref.payment_date,
-					"payment_order_status": pe_ref.payment_order_status
-			})
-		
+		# Calculate total from Payment Records from current order
+		payment_records_total = 0.0
+		records = frappe.db.get_all("Sales Order Payment Record",
+			filters={
+				"parent": self.name,
+				"parenttype": "Sales Order",
+				"gateway": ["!=", "Thanh toán qua ERP"]
+			},
+			fields=["amount"]
+		)
+		for record in records:
+			payment_records_total += flt(record.amount)
+
+		# Add to total allocated
+		total_allocated_group += payment_records_total
 		self.total_allocated_group_payment = total_allocated_group
 		self.balance_group_payment = group_grand_total - total_allocated_group
 
