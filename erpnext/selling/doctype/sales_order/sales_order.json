@@ -215,8 +215,6 @@
   "balance",
   "payment_section_section",
   "payment_entries",
-  "total_allocated_payment",
-  "balance_payment",
   "section_break_group_payment",
   "group_payment_entries",
   "total_allocated_group_payment",
@@ -1921,20 +1919,7 @@
    "label": "Payment Entries",
    "options": "Payment Entry Reference"
   },
-  {
-   "fieldname": "total_allocated_payment",
-   "fieldtype": "Currency",
-   "label": "Total Allocated (Current Order)",
-   "options": "currency",
-   "read_only": 1
-  },
-  {
-   "fieldname": "balance_payment",
-   "fieldtype": "Currency",
-   "label": "Balance (Current Order)",
-   "options": "currency",
-   "read_only": 1
-  },
+
   {
    "fieldname": "section_break_group_payment",
    "fieldtype": "Section Break"
