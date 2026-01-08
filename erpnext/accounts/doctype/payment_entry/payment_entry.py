@@ -491,15 +491,18 @@ class PaymentEntry(AccountsController):
 		if self.docstatus != 0:
 			frappe.throw(_("Chỉ được huỷ Phiếu thanh toán khi đang ở trạng thái Nháp"))
 
+		user_roles = frappe.get_roles()
+		is_admin = ("Administrator" in user_roles or "Developer" in user_roles)
+
 		payment_code = None
 		if self.mode_of_payment:
 			payment_code = frappe.db.get_value("Mode of Payment", self.mode_of_payment, "payment_code")
 
-		if payment_code == "banking":
+		if payment_code == "banking" and not is_admin:
 			if self.bank_transactions and len(self.bank_transactions) > 0:
 				frappe.throw(_("Không thể huỷ Phiếu thanh toán chuyển khoản đã có giao dịch ngân hàng"))
 
-		if payment_code in ["cash_on_delivery", "cash", "pos", "payment_link"]:
+		if payment_code in ["cash_on_delivery", "cash", "pos", "payment_link"]  and not is_admin:
 			if self.verified_by:
 				frappe.throw(_("Không thể huỷ Phiếu thanh toán đã được xác nhận"))
 
