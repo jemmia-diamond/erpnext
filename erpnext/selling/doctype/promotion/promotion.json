@@ -103,6 +103,7 @@
    "fieldtype": "Select",
    "label": "Promotion Type",
    "options": "\nKhuyến mãi nền\nKhác",
+   "default": "Khác",
    "reqd": 1
   },
   {
