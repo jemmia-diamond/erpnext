@@ -11,57 +11,48 @@ frappe.ui.form.ContactAddressQuickEntryForm = class ContactAddressQuickEntryForm
 	render_dialog() {
 		this.mandatory = this.mandatory.concat(this.get_variant_fields());
 		super.render_dialog();
-		this.setup_mobile_validation();
+		this.setup_save_validation();
 	}
 
-	setup_mobile_validation() {
+	setup_save_validation() {
 		const me = this;
-		this.dialog.get_primary_btn().prop('disabled', true);		
-		if (!this.dialog.fields_dict.mobile_number) {
-			return;
-		}
-
-		const check_btn = $(`
-			<button class="btn btn-sm btn-secondary check-mobile-btn" style="margin-top: 5px;">
-				${__("Check")}
-			</button>
-		`);
-		
-		this.dialog.fields_dict.mobile_number.$wrapper.append(check_btn);
-		this.dialog.fields_dict.mobile_number.$input.on('input', function() {
-			const mobile_value = $(this).val().trim();
-			const check_btn = me.dialog.fields_dict.mobile_number.$wrapper.find('.check-mobile-btn');
-			
-			if (!mobile_value) {
-				me.dialog.get_primary_btn().prop('disabled', true);
-				check_btn.hide();
-			} else {
-				me.dialog.get_primary_btn().prop('disabled', true);
-				check_btn.show().text(__("Check")).prop('disabled', false);
-			}
-		});
-
-		check_btn.on('click', function() {
+		this.dialog.set_primary_action(__("Save"), function() {
 			const mobile_no = me.dialog.get_value('mobile_number');
 			if (!mobile_no || !mobile_no.trim()) {
-				frappe.msgprint(__("Please enter a mobile number first"));
+				frappe.msgprint(__("Mobile number is required"));
 				return;
 			}
-
-			const trimmed_mobile = mobile_no.trim();			
-			$(this).text(__("Checking")).prop('disabled', true);
-
-			me.validate_mobile_number(trimmed_mobile).then(() => {
-				me.dialog.get_primary_btn().prop('disabled', false);
-				$(this).hide();
-				frappe.show_alert({
-					message: __("Phone number available"),
-					indicator: "green"
-				});
+			me.dialog.set_primary_action(__("Checking"), null);
+			me.dialog.get_primary_btn().prop('disabled', true);
+			me.validate_mobile_number(mobile_no.trim()).then(() => {
+				me.proceed_with_save();
 			}).catch(() => {
-				$(this).text(__("Check")).prop('disabled', false);
+				me.reset_save_button();
 			});
 		});
+	}
+
+	reset_save_button() {
+		const me = this;
+		this.dialog.set_primary_action(__("Save"), function() {
+			const mobile_no = me.dialog.get_value('mobile_number');
+			if (!mobile_no || !mobile_no.trim()) {
+				frappe.msgprint(__("Mobile number is required"));
+				return;
+			}
+			me.dialog.set_primary_action(__("Checking"), null);
+			me.dialog.get_primary_btn().prop('disabled', true);
+			me.validate_mobile_number(mobile_no.trim()).then(() => {
+				me.proceed_with_save();
+			}).catch(() => {
+				me.reset_save_button();
+			});
+		});
+		this.dialog.get_primary_btn().prop('disabled', false);
+	}
+
+	proceed_with_save() {
+		this.insert();
 	}
 
 	insert() {
