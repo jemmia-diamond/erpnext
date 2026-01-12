@@ -11,6 +11,48 @@ frappe.ui.form.ContactAddressQuickEntryForm = class ContactAddressQuickEntryForm
 	render_dialog() {
 		this.mandatory = this.mandatory.concat(this.get_variant_fields());
 		super.render_dialog();
+		this.setup_save_validation();
+	}
+
+	setup_save_validation() {
+		const me = this;
+		this.dialog.set_primary_action(__("Save"), function() {
+			const mobile_no = me.dialog.get_value('mobile_number');
+			if (!mobile_no || !mobile_no.trim()) {
+				frappe.msgprint(__("Mobile number is required"));
+				return;
+			}
+			me.dialog.set_primary_action(__("Checking"), null);
+			me.dialog.get_primary_btn().prop('disabled', true);
+			me.validate_mobile_number(mobile_no.trim()).then(() => {
+				me.proceed_with_save();
+			}).catch(() => {
+				me.reset_save_button();
+			});
+		});
+	}
+
+	reset_save_button() {
+		const me = this;
+		this.dialog.set_primary_action(__("Save"), function() {
+			const mobile_no = me.dialog.get_value('mobile_number');
+			if (!mobile_no || !mobile_no.trim()) {
+				frappe.msgprint(__("Mobile number is required"));
+				return;
+			}
+			me.dialog.set_primary_action(__("Checking"), null);
+			me.dialog.get_primary_btn().prop('disabled', true);
+			me.validate_mobile_number(mobile_no.trim()).then(() => {
+				me.proceed_with_save();
+			}).catch(() => {
+				me.reset_save_button();
+			});
+		});
+		this.dialog.get_primary_btn().prop('disabled', false);
+	}
+
+	proceed_with_save() {
+		this.insert();
 	}
 
 	insert() {
@@ -30,6 +72,39 @@ frappe.ui.form.ContactAddressQuickEntryForm = class ContactAddressQuickEntryForm
 		});
 
 		return super.insert();
+	}
+
+	validate_mobile_number(mobile_no) {
+		return new Promise((resolve, reject) => {
+			frappe.call({
+				method: "frappe.client.get_list",
+				args: {
+					doctype: "Customer",
+					or_filters: [
+						["mobile_no", "=", mobile_no],
+						["phone", "=", mobile_no]
+					],
+					fields: ["name", "customer_name"]
+				},
+				callback: function(r) {
+					if (r.message && r.message.length > 0) {
+						const existing_customer = r.message[0];
+						frappe.msgprint({
+							title: __("Duplicate Mobile Number"),
+							message: __("Mobile number {0} already exists for customer: {1}", 
+								[mobile_no, existing_customer.customer_name || existing_customer.name]),
+							indicator: "orange"
+						});
+						reject();
+					} else {
+						resolve();
+					}
+				},
+				error: function() {
+					reject();
+				}
+			});
+		});
 	}
 
 	get_variant_fields() {
