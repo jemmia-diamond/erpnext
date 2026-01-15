@@ -1,7 +1,7 @@
-import asyncio
+
 import json
 from typing import TYPE_CHECKING
-from erpnext.crm.doctype.lead.lead import Lead
+
 from erpnext.crm.doctype.lead_product.lead_product_dao import get_lead_product, create_lead_product
 from erpnext.crm.doctype.lead.lead_dao import (
 	get_lead_by_name,
@@ -15,7 +15,7 @@ from frappe.www.contact import get_contacts_by_conversation_id
 import frappe 
 from frappe import _
 from frappe.utils import validate_phone_number, get_datetime
-import re
+
 import time
 
 if TYPE_CHECKING:
@@ -362,51 +362,6 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 
 def transform_price_label(label: str) -> str:
     return label.replace('<', 'dưới ').replace('>', 'trên ').strip()
-
-def find_purpose_tag(tags):
-    VALID_PURPOSE_TAGS = [
-		"Unspecified",
-        "NC Cưới",
-        "NC Khiếu nại",
-        "NC TMTĐ",
-        "NC Cầu hôn",
-        "NC Tặng",
-        "NC Bản thân",
-        "NC trên 6.3 Ly",
-        "NC Mã cạnh đẹp",
-    ]
-    
-    if not tags:
-        return None
-        
-    for tag in tags:
-        if tag in VALID_PURPOSE_TAGS:
-            return tag
-    return None
-
-def find_budget_tag(tags):
-    VALID_BUDGET_TAGS = [
-		"Unspecified",
-        "dưới 15 TRIỆU",
-        "15-30 TRIỆU",
-        "30-50 TRIỆU",
-        "50-80 TRIỆU",
-        "80-120 TRIỆU",
-        "120-200 TRIỆU",
-        "200-300 TRIỆU",
-        "300-500 TRIỆU",
-        "500-800 TRIỆU",
-        "800 TRIỆU - 1 TỶ",
-        "trên 1 TỶ"
-    ]
-    
-    if not tags:
-        return None
-        
-    for tag in tags:
-        if tag in VALID_BUDGET_TAGS:
-            return tag
-    return None
 
 def get_lead_province(province : str):
 	lead_province = None
