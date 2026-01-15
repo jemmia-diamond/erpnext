@@ -34,14 +34,24 @@ def insert_lead_by_batch(docs=None):
 	
 	result = []
 	for doc in docs:
+		conversation_id = doc.get("pancake_data", {}).get("conversation_id")
 		try:
 			inserted_doc = insert_lead(doc)
 			if inserted_doc:
-				result.append(inserted_doc.name)
+				result.append({
+					"name": inserted_doc.name,
+					"conversation_id": conversation_id
+				})
 			else:
-				result.append(None)
+				result.append({
+					"name": None,
+					"conversation_id": conversation_id
+				})
 		except Exception:
-			result.append(None)
+			result.append({
+				"name": None,
+				"conversation_id": conversation_id
+			})
 	return result
 
 def insert_lead(doc) -> "Document":
