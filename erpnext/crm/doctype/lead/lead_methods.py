@@ -71,13 +71,10 @@ def insert_lead(doc) -> "Document":
 		parent.save()
 		return parent
 
-	pancake_list_tags = doc.get("pancake_tags", [])
 	pancake_phone = doc.get("phone", "")
 	is_valid_phone = validate_phone_number(pancake_phone)
 	if is_valid_phone is False:
 		doc["phone"] = ""
-	
-	pancake_list_tags = [transform_price_label(tag) for tag in pancake_list_tags]
 	
 	# Check if lead exists by conversation_id
 	page_id = doc.get("pancake_data", {}).get("page_id")
@@ -109,9 +106,7 @@ def insert_lead(doc) -> "Document":
 		Insert a new Lead
 		"""
 		frappe_doc = frappe_doc.insert()
-		if len(pancake_list_tags) > 0:
-			for tag in pancake_list_tags:
-				frappe_doc.add_tag(tag)
+
 
 		# only exist when migrate from pancake
 		# lead reach at before 2025/06/15 21:00:00
@@ -235,10 +230,6 @@ def update_lead_by_batch(docs):
 			is_valid_phone = validate_phone_number(pancake_phone)
 			if is_valid_phone is False:
 				doc["phone"] = ""
-
-			pancake_list_tags = doc.get("pancake_tags", [])
-			pancake_list_tags = [transform_price_label(tag) for tag in pancake_list_tags]
-			
 			try:
 				existing_doc = frappe.get_doc(doc["doctype"], doc["docname"])
 			except (frappe.DoesNotExistError, Exception):
@@ -284,14 +275,6 @@ def update_lead_by_batch(docs):
 				contact_doc = frappe.get_doc("Contact", contact)
 				contact_doc.last_message_time =  doc.get("pancake_data", {}).get("latest_message_at")
 				contact_doc.save(ignore_permissions=True)
-
-			try: 
-				if pancake_list_tags:
-					for tag in pancake_list_tags:
-						existing_doc.add_tag(tag)
-			except Exception as e:
-				pass
-			
 			results.append({
 				"conversation_id": doc.get("pancake_data", {}).get("conversation_id"),
 				"name": existing_doc.name
