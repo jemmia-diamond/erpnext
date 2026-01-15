@@ -763,7 +763,7 @@ class SalesOrder(SellingController):
 			update_bin_qty(item_code, warehouse, {"reserved_qty": get_reserved_qty(item_code, warehouse)})
 
 	def on_update(self):
-		pass
+		self.check_status_changes_for_rank()
 
 	def validate_sensitive_coupons(self):
 		"""
@@ -824,7 +824,6 @@ class SalesOrder(SellingController):
 		self.calculate_commission()
 		self.calculate_contribution()
 		self.check_credit_limit()
-		self.check_cancelled_status_change()
 
 	def before_update_after_submit(self):
 		self.validate_po()
@@ -832,9 +831,21 @@ class SalesOrder(SellingController):
 		self.validate_supplier_after_submit()
 		self.validate_delivery_date()
 
-	def check_cancelled_status_change(self):
-		if self.has_value_changed("cancelled_status"):
-			reevaluate_customer_rank(self.customer)
+	def check_status_changes_for_rank(self):
+		should_reevaluate = False
+		if self.has_value_changed("financial_status") and self.financial_status in ["Paid", "Partially Paid"]:
+			should_reevaluate = True
+
+		if self.has_value_changed("cancelled_status") and self.cancelled_status in ["Cancelled", "Uncancelled"]:
+			should_reevaluate = True
+
+		if should_reevaluate:
+			frappe.enqueue(
+				"erpnext.selling.doctype.customer.customer.reevaluate_customer_rank",
+				customer_name=self.customer,
+				queue="default",
+				timeout=10
+			)
 
 	def validate_supplier_after_submit(self):
 		"""Check that supplier is the same after submit if PO is already made"""
