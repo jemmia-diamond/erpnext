@@ -2188,46 +2188,6 @@ class PaymentEntry(AccountsController):
 
 		frappe.msgprint(_("Payment Entry verified successfully"))
 
-
-def validate_and_misa_field(payment_entry_name):
-	doc = frappe.get_doc("Payment Entry", payment_entry_name)
-
-	if not doc.misa_synced:
-		return
-
-	has_sales_order = any(ref.reference_doctype == "Sales Order" for ref in doc.references)
-
-	if not has_sales_order:
-		return
-
-	if doc.docstatus != 0:
-		return
-
-	if doc.payment_code == "banking":
-		if not doc.bank_transactions or len(doc.bank_transactions) == 0:
-			return
-	else:
-		if not doc.verified_by:
-			return
-
-	total_allocated = sum(flt(ref.allocated_amount) for ref in doc.references)
-	difference = abs(flt(total_allocated) - flt(doc.paid_amount))
-	if difference > 1000:
-		frappe.throw(
-			_("Số tiền thanh toán ({0}) phải bằng tổng số tiền phân bổ ({1}).").format(
-				fmt_money(doc.paid_amount, currency=doc.paid_from_account_currency),
-				fmt_money(total_allocated, currency=doc.paid_from_account_currency)
-			)
-		)
-
-	frappe.db.sql("""
-		UPDATE `tabPayment Entry`
-		SET docstatus = 1,
-			status = 'Submitted'
-		WHERE name = %s AND misa_synced = 1
-	""", payment_entry_name)
-	frappe.db.commit()
-
 	@frappe.whitelist()
 	def allocate_amount_to_references(self, paid_amount, paid_amount_change, allocate_payment_amount):
 		"""
