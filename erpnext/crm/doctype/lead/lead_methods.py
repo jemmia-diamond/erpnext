@@ -90,12 +90,19 @@ def insert_lead(doc) -> "Document":
 		existing_lead_name = frappe.db.get_value("Lead", {"phone": pancake_phone}, "name")
 		if existing_lead_name:
 			existing_doc = frappe.get_doc("Lead", existing_lead_name)
-			if conversation_id and page_id:
-				existing_doc.link_to_contacts(
-					pancake_data=doc.get("pancake_data", {})
-				)
-			return existing_doc
 
+			if should_merge_lead(existing_doc):
+				if conversation_id and page_id:
+					existing_doc.link_to_contacts(
+						pancake_data=doc.get("pancake_data", {})
+					)
+				return {
+					"name": existing_doc.name,
+					"conversation_id": conversation_id
+				}
+			else:
+				doc["phone"] = f"{pancake_phone}."
+				pancake_phone = doc["phone"]
 	frappe_doc = frappe.get_doc(doc)
 	try:
 		"""
@@ -302,7 +309,10 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 
 	conflicting_doc = frappe.get_doc("Lead", conflicting_lead)
 
-	# Determine which lead is older (Master) and which is newer (Loser)
+	if not should_merge_lead(conflicting_doc):
+		existing_doc.phone = f"{new_phone}."
+		return existing_doc
+
 	is_existing_older = False
 	if existing_doc.first_reach_at and conflicting_doc.first_reach_at:
 		if get_datetime(existing_doc.first_reach_at) < get_datetime(conflicting_doc.first_reach_at):
@@ -342,6 +352,18 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 
 	return master_doc
 
+def should_merge_lead(master_doc):
+	"""
+	Determine if we should merge with the master_doc based on business rules.
+	"""
+	cutoff_date = get_datetime(config.DATE_ASSIGN_LEAD_OWNER)
+
+	if master_doc.first_reach_at:
+		master_first_reach = get_datetime(master_doc.first_reach_at)
+		if master_first_reach < cutoff_date:
+			return False
+
+	return True
 
 def get_lead_province(province : str):
 	lead_province = None
