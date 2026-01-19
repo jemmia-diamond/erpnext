@@ -301,7 +301,7 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 		return existing_doc
 
 	conflicting_doc = frappe.get_doc("Lead", conflicting_lead)
-	
+
 	# Determine which lead is older (Master) and which is newer (Loser)
 	is_existing_older = False
 	if existing_doc.first_reach_at and conflicting_doc.first_reach_at:
