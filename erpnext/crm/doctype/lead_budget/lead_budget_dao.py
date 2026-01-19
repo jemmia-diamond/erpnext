@@ -3,7 +3,7 @@ import frappe
 
 def find_range_budget(budget_from: int | None, budget_to:int | None):
 
-	if budget_from is None and budget_to is None: 
+	if budget_from is None and budget_to is None:
 		return None
 
 	lead_budgets = None
@@ -16,9 +16,9 @@ def find_range_budget(budget_from: int | None, budget_to:int | None):
 		filters["budget_from"] = ["<=", budget_from]
 
 	lead_budgets = frappe.get_all(
-		"Lead Budget", 
-		filters = filters, 
-		limit_page_length=1, 
+		"Lead Budget",
+		filters = filters,
+		limit_page_length=1,
 		fields=["name", "budget_label"],
 		order_by="budget_to asc"
 	)
