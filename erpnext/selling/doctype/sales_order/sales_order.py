@@ -524,6 +524,122 @@ class SalesOrder(SellingController):
 						)
 					)
 
+	def validate_promotion_validation(self):
+		tolerance = 10000
+		promotion_map = self._get_promotion_map()
+
+		# Step A: Item-Level Validation
+		total_item_level_discount = self._validate_item_level_promotions(promotion_map, tolerance)
+
+		# Step B: Order-Level Validation
+		self._validate_order_level_promotions(total_item_level_discount, promotion_map, tolerance)
+
+	def _get_promotion_map(self):
+		promotion_ids = set()
+		for item in self.items:
+			# Check all 5 promotion slots
+			for i in range(1, 6):
+				promo = item.get(f"promotion_{i}")
+				if promo:
+					promotion_ids.add(promo)
+
+		# check table multi-select
+		if self.get("promotions"):
+			for p in self.promotions:
+				if p.promotion:
+					promotion_ids.add(p.promotion)
+
+		if not promotion_ids:
+			return {}
+
+		return frappe._dict(frappe.db.get_all("Promotion", filters={"name": ["in", list(promotion_ids)]}, fields=["name", "priority"], as_list=1))
+
+	def _get_g0_promotion_name(self, scope):
+		key = f"g0_promotion_{scope}"
+		if frappe.local.cache.get(key):
+			return frappe.local.cache.get(key)
+
+		filters = {"priority": "G0", "is_active": 1, "scope": scope}
+		p = frappe.db.get_value("Promotion", filters, "name")
+
+		if p:
+			frappe.local.cache[key] = p
+
+		return p
+
+	def _validate_item_level_promotions(self, promotion_map, tolerance):
+		total_item_level_discount = 0.0
+		for item in self.items:
+			item_discount = (flt(item.price_list_rate) - flt(item.rate)) * flt(item.qty)
+
+			# Collect used promotions on this item
+			used_promos = []
+			for i in range(1, 6):
+				field_name = f"promotion_{i}"
+				val = item.get(field_name)
+				if val:
+					used_promos.append(val)
+
+			if item_discount > tolerance:
+				if not used_promos:
+					frappe.throw(
+						_("Sản phẩm {0} có chênh lệch giá {1} nhưng chưa chọn CTKM. Vui lòng chọn CTKM cho sản phẩm.").format(
+							item.item_code, item_discount
+						)
+					)
+
+				# Check priority logic for ALL selected promotions
+				for p_name in used_promos:
+					current_priority = promotion_map.get(p_name)
+					if current_priority == "G0":
+						frappe.throw(
+							_("Sản phẩm {0} có chênh lệch giá {1} nhưng CTKM lại là 'G0' (Không giảm). Vui lòng kiểm tra lại.").format(
+								item.item_code, item_discount
+							)
+						)
+
+				total_item_level_discount += item_discount
+
+			elif item_discount <= tolerance:
+				# Auto-set G0 for negligible item discounts if missing
+				if not used_promos:
+					g0_promo = self._get_g0_promotion_name("Line Item")
+					if g0_promo:
+						item.promotion_1 = g0_promo
+
+		return total_item_level_discount
+
+	def _validate_order_level_promotions(self, total_item_level_discount, promotion_map, tolerance):
+		total_pre_discount_price = sum(flt(item.price_list_rate) * flt(item.qty) for item in self.items)
+		total_post_discount_price = flt(self.grand_total)
+		trade_in_amount = flt(self.get("custom_trade_in_amount", 0))
+
+		total_actual_discount = total_pre_discount_price - total_post_discount_price - trade_in_amount
+		order_level_discount = total_actual_discount - total_item_level_discount
+
+		if order_level_discount > tolerance:
+			if not self.get("promotions"):
+				frappe.throw(
+					_("Đơn hàng còn chênh lệch {0} chưa được phân bổ. Vui lòng chọn CTKM cấp đơn hàng.").format(
+						order_level_discount
+					)
+				)
+
+			for p in self.get("promotions"):
+				p_priority = promotion_map.get(p.promotion)
+				if p_priority == "G0":
+					frappe.throw(
+						_("Đơn hàng còn chênh lệch {0} nhưng CTKM cấp đơn hàng có chứa 'G0' (Không giảm). Vui lòng kiểm tra lại.").format(
+							order_level_discount
+						)
+					)
+
+		elif order_level_discount <= tolerance:
+			if not self.get("promotions"):
+				g0_promo_order = self._get_g0_promotion_name("Order")
+				if g0_promo_order:
+					self.append("promotions", {"promotion": g0_promo_order})
+
 	def validate_for_items(self):
 		for d in self.get("items"):
 			# used for production plan
@@ -534,7 +650,8 @@ class SalesOrder(SellingController):
 				where item_code = %s and warehouse = %s",
 				(d.item_code, d.warehouse),
 			)
-			d.projected_qty = tot_avail_qty and flt(tot_avail_qty[0][0]) or 0
+			d.projected_qty = (tot_avail_qty and flt(tot_avail_qty[0][0])) or 0
+
 
 	def product_bundle_has_stock_item(self, product_bundle):
 		"""Returns true if product bundle has stock item"""
