@@ -316,7 +316,8 @@
   {
    "fieldname": "sepay_accumulated",
    "fieldtype": "Currency",
-   "label": "Sepay Accumulated"
+   "label": "Sepay Accumulated",
+   "hidden": 1
   },
   {
    "fieldname": "sepay_transaction_content",
