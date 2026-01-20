@@ -5,7 +5,7 @@ import frappe
 from frappe import _
 from frappe.model.docstatus import DocStatus
 from frappe.model.document import Document
-from frappe.utils import flt, getdate
+from frappe.utils import flt, getdate, get_datetime
 
 
 class BankTransaction(Document):
@@ -168,7 +168,7 @@ class BankTransaction(Document):
 							"auto_updated": 1
 						})
 						if self.sepay_transaction_date:
-							payment_entry.payment_date = self.sepay_transaction_date
+							payment_entry.payment_date = get_datetime(self.sepay_transaction_date)
 
 						payment_entry.custom_webhook_processed = 0
 						payment_entry.modified_by = payment_entry.owner
