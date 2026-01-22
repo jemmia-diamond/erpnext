@@ -2,7 +2,9 @@
 # For license information, please see license.txt
 
 # import frappe
+import frappe
 from frappe.model.document import Document
+from frappe.utils import getdate, nowdate
 
 
 class Promotion(Document):
@@ -34,3 +36,26 @@ class Promotion(Document):
 		promotion_type: DF.Literal["Khuyến mãi nền", "Khác"]
 	# end: auto-generated types
 	pass
+
+def update_promotion_status():
+	today = nowdate()
+
+	frappe.db.sql("""
+		UPDATE `tabPromotion`
+		SET is_active = 0, is_expired = 1
+		WHERE end_date < %s AND (is_active = 1 OR is_expired = 0)
+	""", (today,))
+
+	frappe.db.sql("""
+		UPDATE `tabPromotion`
+		SET is_active = 1, is_expired = 0
+		WHERE start_date <= %s
+		AND (end_date >= %s OR end_date IS NULL)
+		AND (is_active = 0 OR is_expired = 1)
+	""", (today, today))
+
+	frappe.db.sql("""
+		UPDATE `tabPromotion`
+		SET is_active = 0, is_expired = 0
+		WHERE start_date > %s AND (is_active = 1 OR is_expired = 1)
+	""", (today,))
