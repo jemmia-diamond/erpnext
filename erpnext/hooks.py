@@ -470,6 +470,7 @@ scheduler_events = {
 		"erpnext.accounts.utils.run_ledger_health_checks",
 		"erpnext.assets.doctype.asset_maintenance_log.asset_maintenance_log.update_asset_maintenance_log_status",
         "erpnext.selling.doctype.customer.customer_methods.map_customer_lead",
+		"erpnext.selling.doctype.promotion.promotion.update_promotion_status",
 	],
 	"weekly": [
 		"erpnext.accounts.utils.auto_create_exchange_rate_revaluation_weekly",
