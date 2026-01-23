@@ -432,6 +432,10 @@ scheduler_events = {
 		# Daily but offset by 45 minutes
 		"45 0 * * *": [
 			"erpnext.stock.reorder_item.reorder_item",
+		],
+		# Daily run at 9am
+		"0 9 * * *": [
+			"erpnext.accounts.doctype.payment_entry.payment_entry.daily_run_success_batch",
 		]
 	},
 	"hourly": [
