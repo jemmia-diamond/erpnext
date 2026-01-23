@@ -348,7 +348,9 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 			""", (master_doc.name, loser_doc.name, lc.name))
 
 		frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True, force=1)
-		
+
+		master_doc.set_first_lead_source()
+
 	except Exception as e:
 		frappe.log_error(
 			f"Failed to merge lead {loser_doc.name} into {master_doc.name}: {e!s}. All changes rolled back.",

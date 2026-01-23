@@ -533,7 +533,7 @@ class Lead(SellingController, CRMNote):
 			)
 
 			if source and source[0][0]:
-				self.db_set("source", source[0][0]) 
+				self.db_set("source", source[0][0])
 
 		except Exception as e:
 			frappe.log_error(f"Error set_first_lead_source {e}")
