@@ -8793,3 +8793,5 @@ Total Allocated (Current Order),Tổng đã thanh toán (Đơn hiện tại)
 Balance (Current Order),Số dư (Đơn hiện tại)
 Total Allocated (Group),Tổng đã thanh toán (Nhóm)
 Balance (Group),Số dư (Nhóm)
+Return Type,Loại thu mua / thu đổi
+Return Amount,Số tiền thu mua / thu đổi

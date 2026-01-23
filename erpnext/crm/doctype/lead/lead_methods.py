@@ -1,5 +1,6 @@
 
 import json
+import re
 import time
 from typing import TYPE_CHECKING
 
@@ -9,6 +10,7 @@ from frappe.utils import get_datetime, validate_phone_number
 from frappe.www.contact import get_contacts_by_conversation_id
 
 from erpnext.config.config import config
+from erpnext.crm.doctype.lead.lead import Lead
 from erpnext.crm.doctype.lead.lead_dao import get_lead_by_name, get_lead_name_by_conversation_id
 from erpnext.crm.doctype.lead_budget.lead_budget_dao import find_range_budget
 from erpnext.crm.doctype.lead_demand.lead_demand_dao import get_lead_purpose
@@ -332,6 +334,8 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 			""", (master_doc.name, loser_doc.name, lc.name))
 
 		frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True, force=1)
+
+		master_doc.set_first_lead_source()
 
 	except Exception as e:
 		frappe.log_error(
