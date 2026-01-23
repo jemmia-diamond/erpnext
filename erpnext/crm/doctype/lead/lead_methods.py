@@ -1,22 +1,20 @@
 import asyncio
 import json
-from typing import TYPE_CHECKING
-from erpnext.crm.doctype.lead.lead import Lead
-from erpnext.crm.doctype.lead_product.lead_product_dao import get_lead_product, create_lead_product
-from erpnext.crm.doctype.lead.lead_dao import (
-	get_lead_by_name,
-	get_lead_name_by_conversation_id
-)
-from erpnext.crm.doctype.lead_budget.lead_budget_dao import find_range_budget
-from erpnext.crm.doctype.lead_demand.lead_demand_dao import get_lead_purpose
-from erpnext.config.config import config
-from frappe.www.contact import get_contacts_by_conversation_id
-
-import frappe 
-from frappe import _
-from frappe.utils import validate_phone_number, get_datetime
 import re
 import time
+from typing import TYPE_CHECKING
+
+import frappe
+from frappe import _
+from frappe.utils import get_datetime, validate_phone_number
+from frappe.www.contact import get_contacts_by_conversation_id
+
+from erpnext.config.config import config
+from erpnext.crm.doctype.lead.lead import Lead
+from erpnext.crm.doctype.lead.lead_dao import get_lead_by_name, get_lead_name_by_conversation_id
+from erpnext.crm.doctype.lead_budget.lead_budget_dao import find_range_budget
+from erpnext.crm.doctype.lead_demand.lead_demand_dao import get_lead_purpose
+from erpnext.crm.doctype.lead_product.lead_product_dao import create_lead_product, get_lead_product
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
@@ -31,7 +29,7 @@ def insert_lead_by_batch(docs=None):
 
 	if len(docs) > 200:
 		frappe.throw(_("Only 200 inserts allowed in one request"))
-	
+
 	result = []
 	for doc in docs:
 		conversation_id = doc.get("pancake_data", {}).get("conversation_id")
@@ -76,9 +74,9 @@ def insert_lead(doc) -> "Document":
 	is_valid_phone = validate_phone_number(pancake_phone)
 	if is_valid_phone is False:
 		doc["phone"] = ""
-	
+
 	pancake_list_tags = [transform_price_label(tag) for tag in pancake_list_tags]
-	
+
 	# Check if lead exists by conversation_id
 	page_id = doc.get("pancake_data", {}).get("page_id")
 	conversation_id = doc.get("pancake_data", {}).get("conversation_id")
@@ -128,17 +126,17 @@ def insert_lead(doc) -> "Document":
 				todo_doc.insert()
 			except Exception as e :
 				frappe.log_error(e)
-		
+
 		return frappe_doc
-	except Exception as e:
-		try: 
+	except Exception:
+		try:
 			existing_doc = frappe.get_doc(frappe_doc.doctype, frappe_doc.name)
 			if existing_doc:
-				return existing_doc 
-			return None 
+				return existing_doc
+			return None
 		except Exception:
 			return None
-		
+
 @frappe.whitelist(methods=["PUT", "PATCH"])
 def backfill_lead_info(docs):
     """Bulk update leads"""
@@ -167,7 +165,7 @@ def backfill_lead_info(docs):
 
             # Build CASE WHEN clauses for first_name with nested conditions
             if new_name:  # Only add clause if new_name is not empty
-                name_case_when_clauses.append(f"""
+                name_case_when_clauses.append("""
                     WHEN name = %s THEN
                         CASE
                             WHEN first_name IS NULL OR first_name = '' OR first_name = 'Chưa rõ' THEN %s
@@ -179,7 +177,7 @@ def backfill_lead_info(docs):
 
             # Build CASE WHEN clauses for phone with nested conditions
             if new_phone:  # Only add clause if new_phone is not empty
-                phone_case_when_clauses.append(f"""
+                phone_case_when_clauses.append("""
                     WHEN name = %s THEN
                         CASE
                             WHEN phone IS NULL OR phone = '' THEN %s
@@ -213,7 +211,7 @@ def backfill_lead_info(docs):
 
         frappe.db.sql(sql_query, tuple(sql_params))
 
-    except Exception as e:
+    except Exception:
         for doc in docs:
             failed_docs.append({"doc": doc, "exc": frappe.utils.get_traceback()})
 
@@ -238,13 +236,13 @@ def update_lead_by_batch(docs):
 
 			pancake_list_tags = doc.get("pancake_tags", [])
 			pancake_list_tags = [transform_price_label(tag) for tag in pancake_list_tags]
-			
+
 			try:
 				existing_doc = frappe.get_doc(doc["doctype"], doc["docname"])
 			except (frappe.DoesNotExistError, Exception):
 				conversation_id = doc.get("pancake_data", {}).get("conversation_id")
 				lead_name = get_lead_name_by_conversation_id(conversation_id) if conversation_id else None
-				
+
 				if lead_name:
 					existing_doc = frappe.get_doc(doc["doctype"], lead_name)
 				else:
@@ -258,7 +256,7 @@ def update_lead_by_batch(docs):
 			new_phone = doc.get("phone")
 			if new_phone:
 				existing_doc = handle_duplicate_and_merge(existing_doc, new_phone)
-			
+
 			if existing_doc.lead_name  and existing_doc.lead_name != "" and existing_doc.lead_name != "Chưa rõ":
 				doc["first_name"] = existing_doc.lead_name
 				doc["lead_name"] = existing_doc.lead_name
@@ -266,7 +264,7 @@ def update_lead_by_batch(docs):
 			existing_doc.update(doc)
 			existing_doc.save(ignore_permissions=True)
 			frappe.db.commit()
-			
+
 			contact = None
 			try:
 				contact = frappe.get_value(
@@ -276,22 +274,22 @@ def update_lead_by_batch(docs):
 						"pancake_conversation_id": doc.get("pancake_data", {}).get("conversation_id", None)
 					},
 				)
-			
-			except Exception as e:
+
+			except Exception:
 				contact = None
 
-			if contact: 
+			if contact:
 				contact_doc = frappe.get_doc("Contact", contact)
 				contact_doc.last_message_time =  doc.get("pancake_data", {}).get("latest_message_at")
 				contact_doc.save(ignore_permissions=True)
 
-			try: 
+			try:
 				if pancake_list_tags:
 					for tag in pancake_list_tags:
 						existing_doc.add_tag(tag)
-			except Exception as e:
+			except Exception:
 				pass
-			
+
 			results.append({
 				"conversation_id": doc.get("pancake_data", {}).get("conversation_id"),
 				"name": existing_doc.name
@@ -314,12 +312,12 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 	Returns the 'master' document that survived.
 	"""
 	conflicting_lead = frappe.db.get_value("Lead", {"phone": new_phone}, "name")
-	
+
 	if not conflicting_lead or conflicting_lead == existing_doc.name:
 		return existing_doc
 
 	conflicting_doc = frappe.get_doc("Lead", conflicting_lead)
-	
+
 	# Determine which lead is older (Master) and which is newer (Loser)
 	is_existing_older = False
 	if existing_doc.first_reach_at and conflicting_doc.first_reach_at:
@@ -327,7 +325,7 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 			is_existing_older = True
 	elif existing_doc.first_reach_at: # conflicting has no date
 		is_existing_older = True
-	
+
 	if is_existing_older:
 		master_doc = existing_doc
 		loser_doc = conflicting_doc
@@ -348,16 +346,16 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 				SET link_name = %s
 				WHERE link_doctype = 'Lead' AND link_name = %s AND parent = %s
 			""", (master_doc.name, loser_doc.name, lc.name))
-		
+
 		frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True, force=1)
 		
 	except Exception as e:
 		frappe.log_error(
-			f"Failed to merge lead {loser_doc.name} into {master_doc.name}: {str(e)}. All changes rolled back.",
+			f"Failed to merge lead {loser_doc.name} into {master_doc.name}: {e!s}. All changes rolled back.",
 			"Lead Merge Error"
 		)
 		raise
-	
+
 	return master_doc
 
 def transform_price_label(label: str) -> str:
@@ -375,10 +373,10 @@ def find_purpose_tag(tags):
         "NC trên 6.3 Ly",
         "NC Mã cạnh đẹp",
     ]
-    
+
     if not tags:
         return None
-        
+
     for tag in tags:
         if tag in VALID_PURPOSE_TAGS:
             return tag
@@ -399,10 +397,10 @@ def find_budget_tag(tags):
         "800 TRIỆU - 1 TỶ",
         "trên 1 TỶ"
     ]
-    
+
     if not tags:
         return None
-        
+
     for tag in tags:
         if tag in VALID_BUDGET_TAGS:
             return tag
@@ -415,7 +413,7 @@ def get_lead_province(province : str):
 		lead_province = frappe.get_doc("Province", {
 			"province_name" : province
 		})
-	except:
+	except Exception:
 		return None
 	return lead_province
 
@@ -428,24 +426,24 @@ def update_lead_from_summary(data):
 
 	conversation_id = data.get("conversation_id", None)
 	if conversation_id is None:
-		return 
+		return
 	lead_name = get_lead_name_by_conversation_id(conversation_id)
-	
+
 	if lead_name is None:
 		return
-	
+
 	# lead not found return not update
 	lead = get_lead_by_name(lead_name)
-	
-	if lead is None: 
+
+	if lead is None:
 		contacts = get_contacts_by_conversation_id(conversation_id)
 		if contacts is not None:
 			for contact in contacts:
-				try: 
+				try:
 					contact_doc = frappe.get_doc('Contact', {'name': contact.name})
 					contact_doc.last_summarize_time = frappe.utils.now_datetime()
 					contact_doc.save()
-				except:
+				except Exception:
 					pass
 
 		return
@@ -471,7 +469,7 @@ def update_lead_from_summary(data):
 				new_lead_product = create_lead_product(product_name)
 				if new_lead_product:
 					products.append(new_lead_product)
-					
+
 	max_retries = 3
 	for attempt in range(max_retries):
 		try:
@@ -483,7 +481,7 @@ def update_lead_from_summary(data):
 
 			if new_expected_receiving_date:
 				lead.expected_delivery_date	= new_expected_receiving_date
-			
+
 			if new_lead_province:
 				lead.province = new_lead_province.name
 
@@ -513,7 +511,7 @@ def update_lead_from_summary(data):
 				lead.reload()
 			else:
 				break
-	#update last summarize at 
+	#update last summarize at
 	contacts = get_contacts_by_conversation_id(conversation_id)
 	if contacts is not None:
 		for contact in contacts:
