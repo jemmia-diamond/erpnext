@@ -1,6 +1,5 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
-from erpnext.config.config import config
 import frappe
 from frappe import _
 from frappe.contacts.address_and_contact import (
@@ -12,6 +11,7 @@ from frappe.model.mapper import get_mapped_doc
 from frappe.utils import comma_and, get_link_to_form, has_gravatar, validate_email_address
 
 from erpnext.accounts.party import set_taxes
+from erpnext.config.config import config
 from erpnext.controllers.selling_controller import SellingController
 from erpnext.crm.utils import CRMNote, copy_comments, link_communications, link_open_events
 from erpnext.selling.doctype.customer.customer import parse_full_name
@@ -24,9 +24,10 @@ class Lead(SellingController, CRMNote):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
+		from frappe.types import DF
+
 		from erpnext.crm.doctype.crm_note.crm_note import CRMNote
 		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
-		from frappe.types import DF
 
 		account_number: DF.Data | None
 		address: DF.Data | None
@@ -137,13 +138,13 @@ class Lead(SellingController, CRMNote):
 				if lead_source:
 					parsed_pancake_data = frappe.parse_json(self.pancake_data)
 					existing_contact = self.check_contact(
-						page_id=parsed_pancake_data.get("page_id"), 
+						page_id=parsed_pancake_data.get("page_id"),
 						conversation_id=parsed_pancake_data.get("conversation_id")
 					)
 					if not existing_contact:
 						self.contact_doc = self.create_contact(lead_source)
 					else:
-						self.contact_doc = existing_contact 
+						self.contact_doc = existing_contact
 					if self.contact_doc:
 						self.source = self.contact_doc.source
 			else:
@@ -156,11 +157,11 @@ class Lead(SellingController, CRMNote):
 		if self.pancake_data:
 			pancake_user_id = self.pancake_data.get("pancake_user_id", None)
 			self.update_lead_owner(pancake_user_id)
-		
-		
+
+
 	def before_save(self):
 		self.update_lead_stage()
-		self.update_qualification_status() 
+		self.update_qualification_status()
 		self.fetch_region_from_province()
 		self.update_first_reach_at()
 		self.upsert_lead_source()
@@ -170,7 +171,7 @@ class Lead(SellingController, CRMNote):
 	def process_notes(self):
 		for note in self.notes:
 			note.update_added_by()
-	
+
 	def update_pancake_lead_owner(self):
 		try:
 			if self.pancake_data:
@@ -185,8 +186,8 @@ class Lead(SellingController, CRMNote):
 			return
 
 		lead_stage = self.get_lead_stage()
-		
-		if lead_stage: 
+
+		if lead_stage:
 			self.lead_stage = lead_stage
 
 		if  self.has_value_changed("lead_stage") \
@@ -204,50 +205,50 @@ class Lead(SellingController, CRMNote):
 			if not self.qualified_by:
 				self.qualified_by = frappe.session.user
 			self.qualified_on = frappe.utils.now_datetime()
-			return  
-		
-		
+			return
+
+
 		new_qualification_status = self.get_qualification_status()
-		
+
 		# Auto-qualification logic based on phone and province
 		if (new_qualification_status == "Qualified" and self.qualification_status != "Qualified") or \
 		   (self.qualification_status != "Qualified"):
-			
+
 			old_status = self.qualification_status
 			self.qualification_status = new_qualification_status
-			
+
 			# Set qualified_by and qualified_on when moving to Qualified
 			if self.qualification_status == "Qualified" and old_status != "Qualified":
 				if not self.qualified_by:
 					self.qualified_by = frappe.session.user
 				self.qualified_on = frappe.utils.now_datetime()
-		
+
 	def update_lead_owner(self, pancake_user_id:str | None):
 		"""
-		update lead owner 
+		update lead owner
 		"""
-		user = None 
+		user = None
 
 		filters = {
 			"pancake_id" : pancake_user_id
 		}
-		
+
 		if pancake_user_id:
 			try:
 				user = frappe.get_doc('User',filters, "name")
 			except Exception:
-				user = None 
+				user = None
 
-		# pancake id not  exist == user off board 
+		# pancake id not  exist == user off board
 		# assign default mail config
-		if not user: 
+		if not user:
 			try:
 				user = frappe.get_doc('User',{
 					"email":config.DEFAULT_MAIL_OWNER
 				}, "name")
 			except Exception:
-				user = None 
-			
+				user = None
+
 		if user:
 			self.lead_owner = user.name
 
@@ -267,17 +268,17 @@ class Lead(SellingController, CRMNote):
 					first_reach_at_dt = frappe.utils.get_datetime(self.first_reach_at)
 					if inserted_at_dt < first_reach_at_dt:
 						self.first_reach_at = inserted_at_dt
-						
+
 	def upsert_lead_source(self):
 		# Update source if source is None
 		if self.source is None or self.source.strip() == "":
 			if not self.pancake_data:
 				return
-			
+
 			lead_source = self.check_lead_source()
 			if not lead_source:
-				return 
-			
+				return
+
 			parsed_pancake_data = frappe.parse_json(self.pancake_data)
 			check_contact = frappe.db.get_value(
 				"Contact",
@@ -290,12 +291,12 @@ class Lead(SellingController, CRMNote):
 
 			if check_contact:
 				self.contact_doc = frappe.get_doc("Contact", check_contact)
-				self.source = self.contact_doc.source 
+				self.source = self.contact_doc.source
 				self.link_to_contact()
 			else:
 				self.contact_doc = self.create_contact(lead_source)
 				if self.contact_doc:
-					self.source = self.contact_doc.source 
+					self.source = self.contact_doc.source
 					self.link_to_contact()
 
 	def check_contact(self, page_id, conversation_id):
@@ -303,7 +304,7 @@ class Lead(SellingController, CRMNote):
 		If contact with pancake data exists, do not create again
 		'''
 		existing_contact_name = frappe.db.get_value(
-			"Contact", 
+			"Contact",
 			{
 				"pancake_page_id": page_id,
 				"pancake_conversation_id": conversation_id,
@@ -312,25 +313,25 @@ class Lead(SellingController, CRMNote):
 		)
 		if existing_contact_name:
 			return frappe.get_doc("Contact", existing_contact_name)
-		
+
 		return None
-		
+
 	def check_lead_source(self, pancake_data=None):
 		lead_source = None
 		parsed_pancake_data = None
-		
+
 		if pancake_data:
 			parsed_pancake_data = pancake_data
 		else:
 			try:
 				parsed_pancake_data = frappe.parse_json(self.pancake_data)
-			except Exception as e:
+			except Exception:
 				parsed_pancake_data = None
-		
+
 		if parsed_pancake_data is None:
-			return 
+			return
 		if parsed_pancake_data.get("page_id", None):
-			lead_source = frappe.db.get_value("Lead Source", 
+			lead_source = frappe.db.get_value("Lead Source",
 			{"pancake_page_id": parsed_pancake_data.get("page_id")}, ["name", "source_name", "pancake_platform" ])
 			if lead_source is None or lead_source == "":
 				lead_source = frappe.new_doc("Lead Source")
@@ -354,9 +355,9 @@ class Lead(SellingController, CRMNote):
 					lead_source_platform = "Instagram"
 					lead_source_prefix = "IG"
 				elif "tiktok" in pc_platform:
-					lead_source_platform = "Tiktok"	
+					lead_source_platform = "Tiktok"
 					lead_source_prefix = "TT"
-				
+
 				source_name = None
 				if lead_source_prefix:
 					source_name = f"{lead_source_prefix} {parsed_pancake_data.get('page_name', '')}"
@@ -373,7 +374,7 @@ class Lead(SellingController, CRMNote):
 				lead_source.insert(ignore_permissions=True)
 				lead_source.reload()
 				lead_source = frappe.db.get_value("Lead Source", {"name": lead_source.name}, ["name", "source_name", "pancake_platform"])
-		
+
 		return lead_source
 
 	def after_insert(self):
@@ -465,7 +466,7 @@ class Lead(SellingController, CRMNote):
 			filters = {"phone": self.phone}
 			if self.name:
 				filters["name"] = ["!=", self.name]
-				
+
 			duplicate_leads = frappe.get_all("Lead", filters=filters)
 			duplicate_leads = [
 				frappe.bold(get_link_to_form("Lead", lead.name)) for lead in duplicate_leads
@@ -487,12 +488,12 @@ class Lead(SellingController, CRMNote):
 			self.contact_doc.save()
 
 	def link_to_contacts(self, pancake_data):
-		try: 
+		try:
 			page_id = pancake_data.get("page_id")
 			conversation_id = pancake_data.get("conversation_id")
-			
+
 			self.contact_doc = self.check_contact(
-				page_id=page_id, 
+				page_id=page_id,
 				conversation_id=conversation_id
 			)
 
@@ -508,17 +509,17 @@ class Lead(SellingController, CRMNote):
 				}, "name")
 				if not contact_link:
 					self.link_to_contact()
-					
+
 				self.set_first_lead_source()
 
 		except Exception as e:
 			frappe.log_error(f"Error link_to_contacts {e}")
-	
+
 	def set_first_lead_source(self):
 		try:
 			source = frappe.db.sql(
 				'''
-				SELECT tc.source 
+				SELECT tc.source
 				FROM `tabDynamic Link` as tdl
 				JOIN `tabContact` as tc ON tdl.parent = tc.name
 				WHERE tdl.link_name = %s
@@ -530,9 +531,9 @@ class Lead(SellingController, CRMNote):
 				''',
 				(self.name)
 			)
-			
+
 			if source and source[0][0]:
-				self.db_set("source", source[0][0]) 
+				self.db_set("source", source[0][0])
 
 		except Exception as e:
 			frappe.log_error(f"Error set_first_lead_source {e}")
@@ -597,9 +598,9 @@ class Lead(SellingController, CRMNote):
 		"""
 
 		if self.lead_stage != "Opportunity":
-			return 
-		
-		opportunity = None 
+			return
+
+		opportunity = None
 		try:
 			opportunity = frappe.get_doc("Lead", {
 				"party_name" : self.name,
@@ -607,8 +608,8 @@ class Lead(SellingController, CRMNote):
 			})
 		except Exception:
 			opportunity = None
-		
-		if opportunity: 
+
+		if opportunity:
 			return
 
 		opportunity = make_opportunity(self.name)
@@ -634,18 +635,18 @@ class Lead(SellingController, CRMNote):
 		if not parsed_pancake_data and self.pancake_data:
 			try:
 				parsed_pancake_data = frappe.parse_json(self.pancake_data)
-			except Exception as e:
+			except Exception:
 				parsed_pancake_data = None
-		
+
 		pancake_dict = parsed_pancake_data or {}
 
 		# Determine source from pancake platform
-		derived_source = self.source		
+		derived_source = self.source
 		if pancake_dict:
 			lead_source_data = self.check_lead_source(pancake_data=pancake_dict)
 			if lead_source_data:
 				derived_source = lead_source_data[0]
-		
+
 		contact.update(
 			{
 				"first_name": self.first_name or self.lead_name,
@@ -686,12 +687,12 @@ class Lead(SellingController, CRMNote):
 				raise_direct_exception=True,
 			)
 			contact.reload()
-			return contact    
-		
+			return contact
+
 		except frappe.LinkValidationError as e:
 			frappe.log_error(
-				f"Failed to create contact for lead (LinkValidationError): {str(e)}")
-			frappe.throw(_(f"Failed to create contact for lead (LinkValidationError): {str(e)}."))		
+				f"Failed to create contact for lead (LinkValidationError): {e!s}")
+			frappe.throw(_(f"Failed to create contact for lead (LinkValidationError): {e!s}."))
 		except Exception as e:
 			frappe.log_error(f"Error create_contact: {e}")
 			return None
@@ -735,11 +736,11 @@ class Lead(SellingController, CRMNote):
 		if not self.phone or not self.province:
 			return "Lead"
 
-		#TODO 
+		#TODO
 		# hide this feature
 		# if not self.budget_lead or not self.purpose_lead or not self.preferred_product_type:
 		# 	return "Qualified Lead"
-		
+
 
 		# return "Opportunity"
 
@@ -751,7 +752,7 @@ class Lead(SellingController, CRMNote):
 		"""
 		if self.phone and self.province:
 			return "Qualified"
-			
+
 		return self.qualification_status
 
 @frappe.whitelist()
