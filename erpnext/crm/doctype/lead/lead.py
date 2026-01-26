@@ -129,7 +129,7 @@ class Lead(SellingController, CRMNote):
 					self.contact_doc = frappe.get_doc("Contact", contact)
 					return
 
-			''' 
+			'''
 			Pancake_data is not null when the leads are synced from Pancake
 			'''
 			if self.pancake_data:
@@ -499,6 +499,8 @@ class Lead(SellingController, CRMNote):
 
 			if not self.contact_doc:
 				self.contact_doc = self.create_contact(pancake_data=pancake_data)
+			else:
+				self.update_contact(self.contact_doc, pancake_data=pancake_data)
 
 			if self.contact_doc:
 				contact_link = frappe.get_value("Dynamic Link", {
@@ -514,6 +516,33 @@ class Lead(SellingController, CRMNote):
 
 		except Exception as e:
 			frappe.log_error(f"Error link_to_contacts {e}")
+
+	def update_contact(self, contact, pancake_data):
+		try:
+			if not contact or not pancake_data:
+				return
+
+			has_changed = False
+
+			# Map fields to update
+			fields_map = {
+				"latest_message_at": "last_message_time",
+				"updated_at": "pancake_updated_at",
+				"customer_id": "pancake_customer_id",
+				"inserted_at": "pancake_inserted_at"
+			}
+
+			for pancake_field, contact_field in fields_map.items():
+				value = pancake_data.get(pancake_field)
+				if value and contact.get(contact_field) != value:
+					contact.set(contact_field, value)
+					has_changed = True
+
+			if has_changed:
+				contact.save(ignore_permissions=True)
+
+		except Exception as e:
+			frappe.log_error(f"Error update_contact: {e}")
 
 	def set_first_lead_source(self):
 		try:

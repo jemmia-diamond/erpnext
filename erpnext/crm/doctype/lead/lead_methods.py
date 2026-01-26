@@ -32,7 +32,8 @@ def insert_lead_by_batch(docs=None):
 
 	result = []
 	for doc in docs:
-		conversation_id = doc.get("pancake_data", {}).get("conversation_id")
+		pancake_data = doc.get("pancake_data", {})
+		conversation_id = pancake_data.get("conversation_id")
 		try:
 			inserted_doc = insert_lead(doc)
 			if inserted_doc:
@@ -74,16 +75,16 @@ def insert_lead(doc) -> "Document":
 	if is_valid_phone is False:
 		doc["phone"] = ""
 
-	# Check if lead exists by conversation_id
-	page_id = doc.get("pancake_data", {}).get("page_id")
-	conversation_id = doc.get("pancake_data", {}).get("conversation_id")
+	pancake_data = doc.get("pancake_data", {})
+	page_id = pancake_data.get("page_id")
+	conversation_id = pancake_data.get("conversation_id")
 
 	if conversation_id:
 		existing_lead_name = get_lead_name_by_conversation_id(conversation_id)
 		if existing_lead_name:
-			existing_doc = frappe.get_doc("Lead", existing_lead_name)
+			existing_doc: Lead = frappe.get_doc("Lead", existing_lead_name)
 			existing_doc.link_to_contacts(
-				pancake_data=doc.get("pancake_data", {})
+				pancake_data=pancake_data
 			)
 			return existing_doc
 
@@ -94,7 +95,7 @@ def insert_lead(doc) -> "Document":
 			existing_doc = frappe.get_doc("Lead", existing_lead_name)
 			if conversation_id and page_id:
 				existing_doc.link_to_contacts(
-					pancake_data=doc.get("pancake_data", {})
+					pancake_data=pancake_data
 				)
 			return existing_doc
 
@@ -223,6 +224,7 @@ def update_lead_by_batch(docs):
 	results = []
 	for doc in docs:
 		doc.pop("flags", None)
+		pancake_data = doc.get("pancake_data", {})
 		try:
 			pancake_phone = doc.get("phone", "")
 			is_valid_phone = validate_phone_number(pancake_phone)
@@ -231,7 +233,7 @@ def update_lead_by_batch(docs):
 			try:
 				existing_doc = frappe.get_doc(doc["doctype"], doc["docname"])
 			except (frappe.DoesNotExistError, Exception):
-				conversation_id = doc.get("pancake_data", {}).get("conversation_id")
+				conversation_id = pancake_data.get("conversation_id")
 				lead_name = get_lead_name_by_conversation_id(conversation_id) if conversation_id else None
 
 				if lead_name:
@@ -259,31 +261,16 @@ def update_lead_by_batch(docs):
 			existing_doc.save(ignore_permissions=True)
 			frappe.db.commit()
 
-			contact = None
-			try:
-				contact = frappe.get_value(
-					"Contact",
-					{
-						"pancake_page_id": doc.get("pancake_data", {}).get("page_id", None),
-						"pancake_conversation_id": doc.get("pancake_data", {}).get("conversation_id", None)
-					},
-				)
+			existing_doc.link_to_contacts(pancake_data)
 
-			except Exception:
-				contact = None
-
-			if contact:
-				contact_doc = frappe.get_doc("Contact", contact)
-				contact_doc.last_message_time =  doc.get("pancake_data", {}).get("latest_message_at")
-				contact_doc.save(ignore_permissions=True)
 			results.append({
-				"conversation_id": doc.get("pancake_data", {}).get("conversation_id"),
+				"conversation_id": pancake_data.get("conversation_id"),
 				"name": existing_doc.name
 			})
 
 		except Exception:
 			results.append({
-				"conversation_id": doc.get("pancake_data", {}).get("conversation_id"),
+				"conversation_id": pancake_data.get("conversation_id"),
 				"name": None
 			})
 			failed_docs.append({"doc": doc, "exc": frappe.utils.get_traceback()})
