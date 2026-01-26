@@ -76,6 +76,11 @@ def insert_lead(doc) -> "Document":
 		doc["phone"] = ""
 
 	pancake_data = doc.get("pancake_data", {})
+
+	pancake_list_tags = doc.get("pancake_tags", [])
+	if pancake_list_tags:
+		pancake_list_tags = [transform_price_label(tag) for tag in pancake_list_tags]
+
 	page_id = pancake_data.get("page_id")
 	conversation_id = pancake_data.get("conversation_id")
 
@@ -106,6 +111,9 @@ def insert_lead(doc) -> "Document":
 		"""
 		frappe_doc = frappe_doc.insert()
 
+		if pancake_list_tags:
+			for tag in pancake_list_tags:
+				frappe_doc.add_tag(tag)
 
 		# only exist when migrate from pancake
 		# lead reach at before 2025/06/15 21:00:00
@@ -262,6 +270,15 @@ def update_lead_by_batch(docs):
 			frappe.db.commit()
 
 			existing_doc.link_to_contacts(pancake_data)
+
+			try:
+				pancake_list_tags = doc.get("pancake_tags", [])
+				if pancake_list_tags:
+					pancake_list_tags = [transform_price_label(tag) for tag in pancake_list_tags]
+					for tag in pancake_list_tags:
+						existing_doc.add_tag(tag)
+			except Exception:
+				pass
 
 			results.append({
 				"conversation_id": pancake_data.get("conversation_id"),
@@ -420,6 +437,8 @@ def update_lead_from_summary(data):
 	update_contact_summary_timestamp(conversation_id)
 	return True
 
+def transform_price_label(label: str) -> str:
+    return label.replace('<', 'dưới ').replace('>', 'trên ').strip()
 
 def update_contact_summary_timestamp(conversation_id):
 	"""Updates Contact timestamp without loading full documents"""
