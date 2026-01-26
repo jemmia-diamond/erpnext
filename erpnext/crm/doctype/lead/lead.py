@@ -129,7 +129,7 @@ class Lead(SellingController, CRMNote):
 					self.contact_doc = frappe.get_doc("Contact", contact)
 					return
 
-			''' 
+			'''
 			Pancake_data is not null when the leads are synced from Pancake
 			'''
 			if self.pancake_data:
@@ -157,7 +157,6 @@ class Lead(SellingController, CRMNote):
 		if self.pancake_data:
 			pancake_user_id = self.pancake_data.get("pancake_user_id", None)
 			self.update_lead_owner(pancake_user_id)
-
 
 	def before_save(self):
 		self.update_lead_stage()
@@ -206,7 +205,6 @@ class Lead(SellingController, CRMNote):
 				self.qualified_by = frappe.session.user
 			self.qualified_on = frappe.utils.now_datetime()
 			return
-
 
 		new_qualification_status = self.get_qualification_status()
 
@@ -364,8 +362,6 @@ class Lead(SellingController, CRMNote):
 				else:
 					source_name = parsed_pancake_data.get("page_name", '')
 
-
-
 				lead_source.update({
 					"source_name": source_name,
 					"pancake_page_id": parsed_pancake_data.get("page_id", None),
@@ -499,6 +495,8 @@ class Lead(SellingController, CRMNote):
 
 			if not self.contact_doc:
 				self.contact_doc = self.create_contact(pancake_data=pancake_data)
+			else:
+				self.update_contact(self.contact_doc, pancake_data=pancake_data)
 
 			if self.contact_doc:
 				contact_link = frappe.get_value("Dynamic Link", {
@@ -514,6 +512,34 @@ class Lead(SellingController, CRMNote):
 
 		except Exception as e:
 			frappe.log_error(f"Error link_to_contacts {e}")
+
+	def update_contact(self, contact, pancake_data):
+		try:
+			if not contact or not pancake_data:
+				return
+
+			has_changed = False
+
+			fields_map = [
+				("latest_message_at", "last_message_time"),
+				("updated_at", "pancake_updated_at"),
+				("updated_at", "updated_at"),
+				("customer_id", "pancake_customer_id"),
+				("inserted_at", "pancake_inserted_at"),
+				("inserted_at", "inserted_at")
+			]
+
+			for pancake_field, contact_field in fields_map:
+				value = pancake_data.get(pancake_field)
+				if value is not None and contact.get(contact_field) != value:
+					contact.set(contact_field, value)
+					has_changed = True
+
+			if has_changed:
+				contact.save(ignore_permissions=True)
+
+		except Exception as e:
+			frappe.log_error(f"Error update_contact: {e}")
 
 	def set_first_lead_source(self):
 		try:
@@ -590,7 +616,6 @@ class Lead(SellingController, CRMNote):
 
 	def has_lost_quotation(self):
 		return frappe.db.get_value("Quotation", {"party_name": self.name, "docstatus": 1, "status": "Lost"})
-
 
 	def create_opportunity(self):
 		"""
