@@ -165,7 +165,6 @@ class Lead(SellingController, CRMNote):
 			pancake_user_id = self.pancake_info.get("pancake_user_id")
 			self.update_lead_owner(pancake_user_id)
 
-
 	def before_save(self):
 		self.update_lead_stage()
 		self.update_qualification_status()
@@ -213,7 +212,6 @@ class Lead(SellingController, CRMNote):
 				self.qualified_by = frappe.session.user
 			self.qualified_on = frappe.utils.now_datetime()
 			return
-
 
 		new_qualification_status = self.get_qualification_status()
 
@@ -356,8 +354,6 @@ class Lead(SellingController, CRMNote):
 					source_name = f"{lead_source_prefix} {parsed_pancake_data.get('page_name', '')}"
 				else:
 					source_name = parsed_pancake_data.get("page_name", '')
-
-
 
 				lead_source.update({
 					"source_name": source_name,
@@ -518,17 +514,18 @@ class Lead(SellingController, CRMNote):
 
 			has_changed = False
 
-			# Map fields to update
-			fields_map = {
-				"latest_message_at": "last_message_time",
-				"updated_at": "pancake_updated_at",
-				"customer_id": "pancake_customer_id",
-				"inserted_at": "pancake_inserted_at"
-			}
+			fields_map = [
+				("latest_message_at", "last_message_time"),
+				("updated_at", "pancake_updated_at"),
+				("updated_at", "updated_at"),
+				("customer_id", "pancake_customer_id"),
+				("inserted_at", "pancake_inserted_at"),
+				("inserted_at", "inserted_at")
+			]
 
-			for pancake_field, contact_field in fields_map.items():
+			for pancake_field, contact_field in fields_map:
 				value = pancake_data.get(pancake_field)
-				if value and contact.get(contact_field) != value:
+				if value is not None and contact.get(contact_field) != value:
 					contact.set(contact_field, value)
 					has_changed = True
 
@@ -613,7 +610,6 @@ class Lead(SellingController, CRMNote):
 
 	def has_lost_quotation(self):
 		return frappe.db.get_value("Quotation", {"party_name": self.name, "docstatus": 1, "status": "Lost"})
-
 
 	def create_opportunity(self):
 		"""

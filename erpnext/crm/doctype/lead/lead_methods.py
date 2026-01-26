@@ -77,6 +77,10 @@ def insert_lead(doc) -> "Document":
 
 	pancake_data = doc.get("pancake_data", {})
 
+	pancake_list_tags = doc.get("pancake_tags", [])
+	if pancake_list_tags:
+		pancake_list_tags = [transform_price_label(tag) for tag in pancake_list_tags]
+
 	existing_doc = find_existing_lead(pancake_data, doc.get("phone"), is_valid_phone)
 	if existing_doc:
 		existing_doc.link_to_contacts(pancake_data=pancake_data)
@@ -88,6 +92,10 @@ def insert_lead(doc) -> "Document":
 		Insert a new Lead
 		"""
 		frappe_doc = frappe_doc.insert()
+
+		if pancake_list_tags:
+			for tag in pancake_list_tags:
+				frappe_doc.add_tag(tag)
 
 		# only exist when migrate from pancake
 		if frappe_doc.first_reach_at and \
@@ -277,6 +285,15 @@ def update_lead_by_batch(docs):
 
 			existing_doc.link_to_contacts(pancake_data)
 
+			try:
+				pancake_list_tags = doc.get("pancake_tags", [])
+				if pancake_list_tags:
+					pancake_list_tags = [transform_price_label(tag) for tag in pancake_list_tags]
+					for tag in pancake_list_tags:
+						existing_doc.add_tag(tag)
+			except Exception:
+				pass
+
 			results.append({
 				"conversation_id": pancake_data.get("conversation_id"),
 				"name": existing_doc.name
@@ -347,6 +364,8 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 
 	return master_doc
 
+def transform_price_label(label: str) -> str:
+    return label.replace('<', 'dưới ').replace('>', 'trên ').strip()
 
 def get_lead_province(province : str):
 	lead_province = None
@@ -434,7 +453,6 @@ def update_lead_from_summary(data):
 	update_contact_summary_timestamp(conversation_id)
 	return True
 
-
 def update_contact_summary_timestamp(conversation_id):
 	"""Updates Contact timestamp without loading full documents"""
 	contacts = get_contacts_by_conversation_id(conversation_id)
@@ -449,5 +467,5 @@ def update_contact_summary_timestamp(conversation_id):
 					update_modified=False,
 				)
 			except Exception:
-				pass
+				frappe.log_error(f"Error updating last_summarize_time for Contact {contact.name}")
 		frappe.db.commit()
