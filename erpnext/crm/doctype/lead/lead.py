@@ -158,7 +158,6 @@ class Lead(SellingController, CRMNote):
 			pancake_user_id = self.pancake_data.get("pancake_user_id", None)
 			self.update_lead_owner(pancake_user_id)
 
-
 	def before_save(self):
 		self.update_lead_stage()
 		self.update_qualification_status()
@@ -206,7 +205,6 @@ class Lead(SellingController, CRMNote):
 				self.qualified_by = frappe.session.user
 			self.qualified_on = frappe.utils.now_datetime()
 			return
-
 
 		new_qualification_status = self.get_qualification_status()
 
@@ -363,8 +361,6 @@ class Lead(SellingController, CRMNote):
 					source_name = f"{lead_source_prefix} {parsed_pancake_data.get('page_name', '')}"
 				else:
 					source_name = parsed_pancake_data.get("page_name", '')
-
-
 
 				lead_source.update({
 					"source_name": source_name,
@@ -619,7 +615,6 @@ class Lead(SellingController, CRMNote):
 
 	def has_lost_quotation(self):
 		return frappe.db.get_value("Quotation", {"party_name": self.name, "docstatus": 1, "status": "Lost"})
-
 
 	def create_opportunity(self):
 		"""
