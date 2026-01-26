@@ -2419,8 +2419,10 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 					frappe.model.set_value(cdt, cdn, "sepay_reference_number", r.sepay_reference_number);
 					frappe.model.set_value(cdt, cdn, "sepay_id", r.sepay_id);
 					if (r.sepay_transaction_date) {
-						let datetime_str = moment(r.sepay_transaction_date, "YYYY-MM-DD HH:mm:ss").format("YYYY-MM-DD HH:mm:ss");
-						frm.set_value("payment_date", datetime_str);
+						// sepay_transaction_date is Vietnam time, convert to UTC (-7 hours)
+						let vietnam_dt = moment(r.sepay_transaction_date, "YYYY-MM-DD HH:mm:ss");
+						let utc_dt = vietnam_dt.subtract(7, 'hours');
+						frm.set_value("payment_date", utc_dt.format("YYYY-MM-DD HH:mm:ss"));
 					}
 				}
 			});

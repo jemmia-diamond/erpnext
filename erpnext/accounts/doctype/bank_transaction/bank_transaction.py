@@ -5,8 +5,7 @@ import frappe
 from frappe import _
 from frappe.model.docstatus import DocStatus
 from frappe.model.document import Document
-from frappe.utils import flt, getdate, get_datetime
-
+from frappe.utils import flt, getdate, get_datetime, add_to_date
 
 class BankTransaction(Document):
 	# begin: auto-generated types
@@ -168,7 +167,11 @@ class BankTransaction(Document):
 							"auto_updated": 1
 						})
 						if self.sepay_transaction_date:
-							payment_entry.payment_date = get_datetime(self.sepay_transaction_date)
+							# sepay_transaction_date is Vietnam time in YYYY-MM-DD HH:mm:ss format
+							# Convert to UTC (-7 hours)
+							vietnam_dt = get_datetime(self.sepay_transaction_date)
+							utc_dt = add_to_date(vietnam_dt, hours=-7)
+							payment_entry.payment_date = utc_dt
 
 						payment_entry.custom_webhook_processed = 0
 						payment_entry.modified_by = payment_entry.owner
