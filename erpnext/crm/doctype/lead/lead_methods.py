@@ -81,10 +81,28 @@ def insert_lead(doc) -> "Document":
 	if pancake_list_tags:
 		pancake_list_tags = [transform_price_label(tag) for tag in pancake_list_tags]
 
-	existing_doc = find_existing_lead(pancake_data, doc.get("phone"), is_valid_phone)
-	if existing_doc:
-		existing_doc.link_to_contacts(pancake_data=pancake_data)
-		return existing_doc
+	page_id = pancake_data.get("page_id")
+	conversation_id = pancake_data.get("conversation_id")
+
+	if conversation_id:
+		existing_lead_name = get_lead_name_by_conversation_id(conversation_id)
+		if existing_lead_name:
+			existing_doc: Lead = frappe.get_doc("Lead", existing_lead_name)
+			existing_doc.link_to_contacts(
+				pancake_data=pancake_data
+			)
+			return existing_doc
+
+	# Check if lead exists by phone
+	if is_valid_phone and pancake_phone:
+		existing_lead_name = frappe.db.get_value("Lead", {"phone": pancake_phone}, "name")
+		if existing_lead_name:
+			existing_doc = frappe.get_doc("Lead", existing_lead_name)
+			if conversation_id and page_id:
+				existing_doc.link_to_contacts(
+					pancake_data=pancake_data
+				)
+			return existing_doc
 
 	frappe_doc = frappe.get_doc(doc)
 	try:
@@ -101,7 +119,13 @@ def insert_lead(doc) -> "Document":
 		if frappe_doc.first_reach_at and \
 			get_datetime(frappe_doc.first_reach_at) < get_datetime(config.DATE_ASSIGN_LEAD_OWNER):
 			try:
-				create_assignment_todo(frappe_doc)
+				todo_doc = frappe.new_doc("ToDo")
+				todo_doc.description = f"Assignment Rule for Lead {frappe_doc.name}"
+				todo_doc.priority = "Medium"
+				todo_doc.reference_type = "Lead"
+				todo_doc.reference_name = frappe_doc.name
+				todo_doc.allocated_to = frappe_doc.lead_owner
+				todo_doc.insert()
 			except Exception as e:
 				frappe.log_error(e)
 
@@ -141,16 +165,6 @@ def find_existing_lead(pancake_data, phone, is_valid_phone):
 			return frappe.get_doc("Lead", existing_lead_name)
 
 	return None
-
-def create_assignment_todo(frappe_doc):
-	todo_doc = frappe.new_doc("ToDo")
-	todo_doc.description = f"Assignment Rule for Lead {frappe_doc.name}"
-	todo_doc.priority = "Medium"
-	todo_doc.reference_type = "Lead"
-	todo_doc.reference_name = frappe_doc.name
-	todo_doc.allocated_to = frappe_doc.lead_owner
-	todo_doc.insert()
-
 
 @frappe.whitelist(methods=["PUT", "PATCH"])
 def backfill_lead_info(docs):
