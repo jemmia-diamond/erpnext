@@ -776,6 +776,7 @@ frappe.ui.form.on("Sales Order Item", {
 	promotion: function (frm, cdt, cdn) {
 		var row = locals[cdt][cdn];
 		if (row.promotion) {
+			var selected_promotions = [row.promotion_1, row.promotion_2, row.promotion_3, row.promotion_4, row.promotion_5];
 			var is_earring = false;
 			
 			const type = row.type ? decode_unicode(row.type) : "";
