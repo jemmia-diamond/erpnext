@@ -520,15 +520,16 @@ class Lead(SellingController, CRMNote):
 
 			has_changed = False
 
-			# Map fields to update
-			fields_map = {
-				"latest_message_at": "last_message_time",
-				"updated_at": "pancake_updated_at",
-				"customer_id": "pancake_customer_id",
-				"inserted_at": "pancake_inserted_at"
-			}
+			fields_map = [
+				("latest_message_at", "last_message_time"),
+				("updated_at", "pancake_updated_at"),
+				("updated_at", "updated_at"),
+				("customer_id", "pancake_customer_id"),
+				("inserted_at", "pancake_inserted_at"),
+				("inserted_at", "inserted_at")
+			]
 
-			for pancake_field, contact_field in fields_map.items():
+			for pancake_field, contact_field in fields_map:
 				value = pancake_data.get(pancake_field)
 				if value is not None and contact.get(contact_field) != value:
 					contact.set(contact_field, value)
