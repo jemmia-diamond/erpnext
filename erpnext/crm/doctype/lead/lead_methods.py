@@ -76,28 +76,11 @@ def insert_lead(doc) -> "Document":
 		doc["phone"] = ""
 
 	pancake_data = doc.get("pancake_data", {})
-	page_id = pancake_data.get("page_id")
-	conversation_id = pancake_data.get("conversation_id")
 
-	if conversation_id:
-		existing_lead_name = get_lead_name_by_conversation_id(conversation_id)
-		if existing_lead_name:
-			existing_doc: Lead = frappe.get_doc("Lead", existing_lead_name)
-			existing_doc.link_to_contacts(
-				pancake_data=pancake_data
-			)
-			return existing_doc
-
-	# Check if lead exists by phone
-	if is_valid_phone and pancake_phone:
-		existing_lead_name = frappe.db.get_value("Lead", {"phone": pancake_phone}, "name")
-		if existing_lead_name:
-			existing_doc = frappe.get_doc("Lead", existing_lead_name)
-			if conversation_id and page_id:
-				existing_doc.link_to_contacts(
-					pancake_data=pancake_data
-				)
-			return existing_doc
+	existing_doc = find_existing_lead(pancake_data, doc.get("phone"), is_valid_phone)
+	if existing_doc:
+		existing_doc.link_to_contacts(pancake_data=pancake_data)
+		return existing_doc
 
 	frappe_doc = frappe.get_doc(doc)
 	try:
@@ -106,21 +89,12 @@ def insert_lead(doc) -> "Document":
 		"""
 		frappe_doc = frappe_doc.insert()
 
-
 		# only exist when migrate from pancake
-		# lead reach at before 2025/06/15 21:00:00
-		if frappe_doc.first_reach_at  and  \
+		if frappe_doc.first_reach_at and \
 			get_datetime(frappe_doc.first_reach_at) < get_datetime(config.DATE_ASSIGN_LEAD_OWNER):
 			try:
-				todo_doc = frappe.new_doc("ToDo")
-				todo_doc.description = f"Assignment Rule for Lead {frappe_doc.name}"
-				todo_doc.priority =  "Medium"
-				todo_doc.reference_type= "Lead"
-				todo_doc.reference_name = frappe_doc.name
-
-				todo_doc.allocated_to = frappe_doc.lead_owner
-				todo_doc.insert()
-			except Exception as e :
+				create_assignment_todo(frappe_doc)
+			except Exception as e:
 				frappe.log_error(e)
 
 		return frappe_doc
@@ -132,6 +106,43 @@ def insert_lead(doc) -> "Document":
 			return None
 		except Exception:
 			return None
+
+def find_existing_lead(pancake_data, phone, is_valid_phone):
+	conversation_id = pancake_data.get("conversation_id")
+
+	if conversation_id:
+		existing_lead_name = get_lead_name_by_conversation_id(conversation_id)
+		if existing_lead_name:
+			return frappe.get_doc("Lead", existing_lead_name)
+
+		# Explicitly check if any contact has this conversation_id and find its Lead
+		contact_name = frappe.db.get_value("Contact", {"pancake_conversation_id": conversation_id}, "name")
+		if contact_name:
+			lead_name = frappe.db.get_value("Dynamic Link", {
+				"parent": contact_name,
+				"parenttype": "Contact",
+				"link_doctype": "Lead"
+			}, "link_name")
+
+			if lead_name:
+				return frappe.get_doc("Lead", lead_name)
+
+	if is_valid_phone and phone:
+		existing_lead_name = frappe.db.get_value("Lead", {"phone": phone}, "name")
+		if existing_lead_name:
+			return frappe.get_doc("Lead", existing_lead_name)
+
+	return None
+
+def create_assignment_todo(frappe_doc):
+	todo_doc = frappe.new_doc("ToDo")
+	todo_doc.description = f"Assignment Rule for Lead {frappe_doc.name}"
+	todo_doc.priority = "Medium"
+	todo_doc.reference_type = "Lead"
+	todo_doc.reference_name = frappe_doc.name
+	todo_doc.allocated_to = frappe_doc.lead_owner
+	todo_doc.insert()
+
 
 @frappe.whitelist(methods=["PUT", "PATCH"])
 def backfill_lead_info(docs):
@@ -230,16 +241,19 @@ def update_lead_by_batch(docs):
 			is_valid_phone = validate_phone_number(pancake_phone)
 			if is_valid_phone is False:
 				doc["phone"] = ""
+
+			existing_doc = None
 			try:
 				existing_doc = frappe.get_doc(doc["doctype"], doc["docname"])
-			except (frappe.DoesNotExistError, Exception):
-				conversation_id = pancake_data.get("conversation_id")
-				lead_name = get_lead_name_by_conversation_id(conversation_id) if conversation_id else None
+			except frappe.DoesNotExistError:
+				pass
 
-				if lead_name:
-					existing_doc = frappe.get_doc(doc["doctype"], lead_name)
-				else:
-					raise
+			if not existing_doc:
+				existing_doc = find_existing_lead(pancake_data, None, False)
+
+			if not existing_doc:
+				# Cannot find lead to update, skip or raise
+				continue
 
 			# exist phone not update
 			if existing_doc.phone and existing_doc.phone != "":

@@ -116,6 +116,12 @@ class Lead(SellingController, CRMNote):
 		self.check_phone_is_unique()
 		self.validate_email_id()
 
+	@property
+	def pancake_info(self):
+		if not hasattr(self, "_pancake_info"):
+			self._pancake_info = frappe.parse_json(self.pancake_data) if self.pancake_data else {}
+		return self._pancake_info
+
 	def before_insert(self):
 		self.contact_doc = None
 		if frappe.db.get_single_value("CRM Settings", "auto_creation_of_contact"):
@@ -134,17 +140,18 @@ class Lead(SellingController, CRMNote):
 			'''
 			if self.pancake_data:
 
-				lead_source = self.check_lead_source()
+				lead_source = self.check_lead_source(self.pancake_info)
 				if lead_source:
-					parsed_pancake_data = frappe.parse_json(self.pancake_data)
 					existing_contact = self.check_contact(
-						page_id=parsed_pancake_data.get("page_id"),
-						conversation_id=parsed_pancake_data.get("conversation_id")
+						page_id=self.pancake_info.get("page_id"),
+						conversation_id=self.pancake_info.get("conversation_id")
 					)
+
 					if not existing_contact:
-						self.contact_doc = self.create_contact(lead_source)
+						self.contact_doc = self.create_contact(lead_source, pancake_data=self.pancake_info)
 					else:
-						self.contact_doc = existing_contact
+						self.contact_doc = self.update_contact(existing_contact, pancake_data=self.pancake_info)
+
 					if self.contact_doc:
 						self.source = self.contact_doc.source
 			else:
@@ -155,7 +162,7 @@ class Lead(SellingController, CRMNote):
 			self.first_name, self.middle_name, self.last_name = parse_full_name(self.lead_name)
 
 		if self.pancake_data:
-			pancake_user_id = self.pancake_data.get("pancake_user_id", None)
+			pancake_user_id = self.pancake_info.get("pancake_user_id")
 			self.update_lead_owner(pancake_user_id)
 
 
@@ -175,7 +182,7 @@ class Lead(SellingController, CRMNote):
 	def update_pancake_lead_owner(self):
 		try:
 			if self.pancake_data:
-				pancake_user_id = frappe.parse_json(self.pancake_data).get("pancake_user_id", None)
+				pancake_user_id = self.pancake_info.get("pancake_user_id")
 				if pancake_user_id and (not self.lead_owner or self.lead_owner == "tech@jemmia.vn"):
 					self.update_lead_owner(pancake_user_id)
 		except Exception as _:
@@ -258,8 +265,7 @@ class Lead(SellingController, CRMNote):
 
 	def update_first_reach_at(self):
 		if self.pancake_data:
-			parsed_pancake_data = frappe.parse_json(self.pancake_data)
-			inserted_at_str = parsed_pancake_data.get("inserted_at", None)
+			inserted_at_str = self.pancake_info.get("inserted_at")
 			if inserted_at_str:
 				inserted_at_dt = frappe.utils.get_datetime(inserted_at_str)
 				if not self.first_reach_at:
@@ -275,26 +281,21 @@ class Lead(SellingController, CRMNote):
 			if not self.pancake_data:
 				return
 
-			lead_source = self.check_lead_source()
+			lead_source = self.check_lead_source(self.pancake_info)
 			if not lead_source:
 				return
 
-			parsed_pancake_data = frappe.parse_json(self.pancake_data)
-			check_contact = frappe.db.get_value(
-				"Contact",
-				{
-					"pancake_page_id": parsed_pancake_data.get("page_id", None),
-					"pancake_conversation_id": parsed_pancake_data.get("conversation_id", None),
-					"pancake_customer_id": parsed_pancake_data.get("customer_id", None)
-				},
+			check_contact = self.check_contact(
+				page_id=self.pancake_info.get("page_id"),
+				conversation_id=self.pancake_info.get("conversation_id")
 			)
 
 			if check_contact:
-				self.contact_doc = frappe.get_doc("Contact", check_contact)
+				self.contact_doc = check_contact
 				self.source = self.contact_doc.source
 				self.link_to_contact()
 			else:
-				self.contact_doc = self.create_contact(lead_source)
+				self.contact_doc = self.create_contact(lead_source, pancake_data=self.pancake_info)
 				if self.contact_doc:
 					self.source = self.contact_doc.source
 					self.link_to_contact()
@@ -303,14 +304,13 @@ class Lead(SellingController, CRMNote):
 		'''
 		If contact with pancake data exists, do not create again
 		'''
-		existing_contact_name = frappe.db.get_value(
-			"Contact",
-			{
-				"pancake_page_id": page_id,
-				"pancake_conversation_id": conversation_id,
-			},
-			"name"
-		)
+		filters = {
+			"pancake_page_id": page_id,
+			"pancake_conversation_id": conversation_id,
+		}
+
+		existing_contact_name = frappe.db.get_value("Contact", filters, "name")
+
 		if existing_contact_name:
 			return frappe.get_doc("Contact", existing_contact_name)
 
@@ -318,18 +318,11 @@ class Lead(SellingController, CRMNote):
 
 	def check_lead_source(self, pancake_data=None):
 		lead_source = None
-		parsed_pancake_data = None
-
-		if pancake_data:
-			parsed_pancake_data = pancake_data
-		else:
-			try:
-				parsed_pancake_data = frappe.parse_json(self.pancake_data)
-			except Exception:
-				parsed_pancake_data = None
+		parsed_pancake_data = pancake_data or self.pancake_info
 
 		if parsed_pancake_data is None:
 			return
+
 		if parsed_pancake_data.get("page_id", None):
 			lead_source = frappe.db.get_value("Lead Source",
 			{"pancake_page_id": parsed_pancake_data.get("page_id")}, ["name", "source_name", "pancake_platform" ])
@@ -487,10 +480,11 @@ class Lead(SellingController, CRMNote):
 			)
 			self.contact_doc.save()
 
-	def link_to_contacts(self, pancake_data):
+	def link_to_contacts(self, pancake_data=None):
 		try:
-			page_id = pancake_data.get("page_id")
-			conversation_id = pancake_data.get("conversation_id")
+			data = pancake_data or self.pancake_info
+			page_id = data.get("page_id")
+			conversation_id = data.get("conversation_id")
 
 			self.contact_doc = self.check_contact(
 				page_id=page_id,
@@ -498,9 +492,9 @@ class Lead(SellingController, CRMNote):
 			)
 
 			if not self.contact_doc:
-				self.contact_doc = self.create_contact(pancake_data=pancake_data)
+				self.contact_doc = self.create_contact(pancake_data=data)
 			else:
-				self.update_contact(self.contact_doc, pancake_data=pancake_data)
+				self.contact_doc = self.update_contact(self.contact_doc, pancake_data=data)
 
 			if self.contact_doc:
 				contact_link = frappe.get_value("Dynamic Link", {
@@ -662,10 +656,7 @@ class Lead(SellingController, CRMNote):
 
 		parsed_pancake_data = pancake_data
 		if not parsed_pancake_data and self.pancake_data:
-			try:
-				parsed_pancake_data = frappe.parse_json(self.pancake_data)
-			except Exception:
-				parsed_pancake_data = None
+			parsed_pancake_data = self.pancake_info
 
 		pancake_dict = parsed_pancake_data or {}
 
