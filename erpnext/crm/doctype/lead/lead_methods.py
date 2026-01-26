@@ -453,5 +453,5 @@ def update_contact_summary_timestamp(conversation_id):
 					update_modified=False,
 				)
 			except Exception:
-				pass
+				frappe.log_error(f"Error updating last_summarize_time for Contact {contact.name}")
 		frappe.db.commit()

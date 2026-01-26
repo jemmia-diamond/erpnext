@@ -534,7 +534,7 @@ class Lead(SellingController, CRMNote):
 
 			for pancake_field, contact_field in fields_map.items():
 				value = pancake_data.get(pancake_field)
-				if value and contact.get(contact_field) != value:
+				if value is not None and contact.get(contact_field) != value:
 					contact.set(contact_field, value)
 					has_changed = True
 
