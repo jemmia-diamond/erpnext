@@ -350,6 +350,8 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 
 	return master_doc
 
+def transform_price_label(label: str) -> str:
+    return label.replace('<', 'dưới ').replace('>', 'trên ').strip()
 
 def get_lead_province(province : str):
 	lead_province = None
@@ -436,9 +438,6 @@ def update_lead_from_summary(data):
 
 	update_contact_summary_timestamp(conversation_id)
 	return True
-
-def transform_price_label(label: str) -> str:
-    return label.replace('<', 'dưới ').replace('>', 'trên ').strip()
 
 def update_contact_summary_timestamp(conversation_id):
 	"""Updates Contact timestamp without loading full documents"""
