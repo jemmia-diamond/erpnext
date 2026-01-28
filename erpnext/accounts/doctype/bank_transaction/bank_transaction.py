@@ -20,14 +20,14 @@ class BankTransaction(Document):
 
 		allocated_amount: DF.Currency
 		amended_from: DF.Link | None
-		app_id: DF.Int
+		app_id: DF.Data | None
 		app_time: DF.Data | None
 		app_user: DF.Data | None
 		bank_account: DF.Link | None
 		bank_party_account_number: DF.Data | None
 		bank_party_iban: DF.Data | None
 		bank_party_name: DF.Data | None
-		channel: DF.Int
+		channel: DF.Data | None
 		company: DF.Link | None
 		currency: DF.Link | None
 		date: DF.Date | None
@@ -58,7 +58,7 @@ class BankTransaction(Document):
 		server_time: DF.Data | None
 		status: DF.Literal["", "Pending", "Settled", "Unreconciled", "Reconciled", "Cancelled"]
 		transaction_id: DF.Data | None
-		transaction_type: DF.Data | None
+		transaction_type: DF.Literal["SePay", "ZaloPay", "Payoo"]
 		unallocated_amount: DF.Currency
 		user_fee_amount: DF.Currency
 		withdrawal: DF.Currency
