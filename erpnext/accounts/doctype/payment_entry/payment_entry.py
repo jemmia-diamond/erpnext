@@ -4215,7 +4215,7 @@ def daily_run_success_batch():
 	)
 
 	if not payment_entries:
-		frappe.logger().info("No Payment Entries found for daily webhook trigger")
+		frappe.logger().info("No Payment Entries found for every 15 minute webhook trigger")
 		return
 
 	for pe_name in payment_entries:
