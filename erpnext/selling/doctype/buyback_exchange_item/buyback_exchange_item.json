@@ -10,6 +10,7 @@
   "order_code",
   "prev_sales_order",
   "prev_sales_order_item",
+  "current_sales_order",
   "column_break_1",
   "sale_price",
   "buyback_percentage",
@@ -48,6 +49,13 @@
    "fieldtype": "Link",
    "label": "Previous Sales Order Item",
    "options": "Sales Order Item"
+  },
+  {
+   "fieldname": "current_sales_order",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Current Sales Order",
+   "options": "Sales Order"
   },
   {
    "fieldname": "column_break_1",

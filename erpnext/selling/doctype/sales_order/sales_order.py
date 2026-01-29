@@ -2634,7 +2634,7 @@ def get_split_orders_in_group(split_order_group, include_cancelled=False):
 @frappe.whitelist()
 def get_buyback_items(sales_order):
 	return frappe.get_list("Buyback Exchange Item",
-		filters={"prev_sales_order": sales_order},
+		filters={"current_sales_order": sales_order},
 		fields=["product_name", "item_code", "buyback_price", "parent", "order_code", "name", "buyback_percentage", "calculated_buyback_price", "sale_price"],
 		ignore_permissions=True
 	)

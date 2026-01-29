@@ -307,51 +307,52 @@ frappe.ui.form.on("Sales Order", {
 			callback: function(r) {
 				if (r.message && r.message.length > 0) {
 					let html = `
-						<div class="control-value">
-							<div style="border: 1px solid #d1d8dd; border-radius: 4px; overflow: hidden; background-color: #fff;">
-								<table class="table table-hover" style="margin-bottom: 0px;">
+						<div class="control-value" style="margin-top: 8px;">
+							<div style="border: 1px solid #e4e7eb; border-radius: 8px; overflow: hidden; background-color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+								<table class="table" style="margin-bottom: 0; border-collapse: collapse; width: 100%;">
 									<thead>
-										<tr style="background-color: #f8fafc; border-bottom: 1px solid #d1d8dd;">
-											<th style="padding: 12px 15px; font-weight: 600; font-size: 11px; text-transform: uppercase; color: #526671; letter-spacing: 0.025em;">${__("Product Info")}</th>
-											<th style="padding: 12px 15px; font-weight: 600; font-size: 11px; text-transform: uppercase; color: #526671; letter-spacing: 0.025em;">${__("Codes")}</th>
-											<th style="padding: 12px 15px; font-weight: 600; font-size: 11px; text-transform: uppercase; color: #526671; letter-spacing: 0.025em; text-align: right;">${__("Price")}</th>
-											<th style="padding: 12px 15px; font-weight: 600; font-size: 11px; text-transform: uppercase; color: #526671; letter-spacing: 0.025em; text-align: right;">${__("Buyback %")}</th>
-											<th style="padding: 12px 15px; font-weight: 600; font-size: 11px; text-transform: uppercase; color: #526671; letter-spacing: 0.025em; text-align: right;">${__("Calculated")}</th>
-											<th style="padding: 12px 15px; font-weight: 600; font-size: 11px; text-transform: uppercase; color: #526671; letter-spacing: 0.025em; text-align: right;">${__("Final Price")}</th>
-											<th style="width: 50px;"></th>
+										<tr style="background: linear-gradient(180deg, #f8f9fb 0%, #f3f4f6 100%); border-bottom: 2px solid #e4e7eb;">
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #4b5563; letter-spacing: 0.5px; border-bottom: none;">${__("Product")}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #4b5563; letter-spacing: 0.5px; border-bottom: none;">${__("References")}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #4b5563; letter-spacing: 0.5px; text-align: right; border-bottom: none;">${__("Sale Price")}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #4b5563; letter-spacing: 0.5px; text-align: center; border-bottom: none;">${__("Buyback %")}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #4b5563; letter-spacing: 0.5px; text-align: right; border-bottom: none;">${__("Calculated")}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #4b5563; letter-spacing: 0.5px; text-align: right; border-bottom: none;">${__("Exchange Value")}</th>
+											<th style="padding: 14px 16px; width: 60px; border-bottom: none;"></th>
 										</tr>
 									</thead>
 									<tbody>
 					`;
 					
-					r.message.forEach(item => {
+					r.message.forEach((item, index) => {
+						const rowBg = index % 2 === 0 ? '#ffffff' : '#fafbfc';
 						html += `
-							<tr style="border-bottom: 1px solid #f1f3f4;">
-								<td style="padding: 15px; vertical-align: middle;">
-									<div style="font-weight: 600; font-size: 13px; color: #1f272e; margin-bottom: 2px;">${item.product_name || "-"}</div>
-									<div style="font-size: 11px; color: #8d99ae;">ID: ${item.name}</div>
+							<tr style="background-color: ${rowBg}; border-bottom: 1px solid #f0f1f3; transition: background-color 0.15s ease;">
+								<td style="padding: 16px; vertical-align: middle; border-bottom: 1px solid #f0f1f3;">
+									<div style="font-weight: 600; font-size: 14px; color: #111827; margin-bottom: 4px; line-height: 1.4;">${item.product_name || "-"}</div>
+									<div style="font-size: 11px; color: #9ca3af; font-family: 'SF Mono', Monaco, monospace;">ID: ${item.name}</div>
 								</td>
-								<td style="padding: 15px; vertical-align: middle;">
-									<div style="font-size: 12px; color: #333;">
-										<div style="margin-bottom: 2px;">Item: <span style="font-family: monospace;">${item.item_code || "-"}</span></div>
-										<div>Ref: <span style="font-family: monospace;">${item.order_code || "-"}</span></div>
+								<td style="padding: 16px; vertical-align: middle; border-bottom: 1px solid #f0f1f3;">
+									<div style="font-size: 12px; color: #374151; line-height: 1.6;">
+										<div style="margin-bottom: 4px;"><span style="color: #6b7280; font-size: 11px;">Item:</span> <span style="font-family: 'SF Mono', Monaco, monospace; color: #111827; font-weight: 500;">${item.item_code || "-"}</span></div>
+										<div><span style="color: #6b7280; font-size: 11px;">Order:</span> <span style="font-family: 'SF Mono', Monaco, monospace; color: #111827; font-weight: 500;">${item.order_code || "-"}</span></div>
 									</div>
 								</td>
-								<td style="padding: 15px; vertical-align: middle; text-align: right; color: #1f272e; font-size: 12px;">
-									${format_currency(item.sale_price, frm.doc.currency)}
+								<td style="padding: 16px; vertical-align: middle; text-align: right; border-bottom: 1px solid #f0f1f3;">
+									<span style="font-size: 13px; font-weight: 600; color: #374151;">${format_currency(item.sale_price, frm.doc.currency)}</span>
 								</td>
-								<td style="padding: 15px; vertical-align: middle; text-align: right;">
-									<span class="label label-info" style="font-size: 11px; font-weight: 500;">${item.buyback_percentage || 0}%</span>
+								<td style="padding: 16px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f0f1f3;">
+									<span style="display: inline-block; padding: 4px 10px; background-color: #dbeafe; color: #1e40af; border-radius: 12px; font-size: 12px; font-weight: 600;">${item.buyback_percentage || 0}%</span>
 								</td>
-								<td style="padding: 15px; vertical-align: middle; text-align: right; color: #707070; font-size: 12px;">
-									${format_currency(item.calculated_buyback_price, frm.doc.currency)}
+								<td style="padding: 16px; vertical-align: middle; text-align: right; border-bottom: 1px solid #f0f1f3;">
+									<span style="font-size: 13px; color: #6b7280;">${format_currency(item.calculated_buyback_price, frm.doc.currency)}</span>
 								</td>
-								<td style="padding: 15px; vertical-align: middle; text-align: right;">
-									<span style="font-weight: 700; font-size: 14px; color: #2ecc71;">${format_currency(item.buyback_price, frm.doc.currency)}</span>
+								<td style="padding: 16px; vertical-align: middle; text-align: right; border-bottom: 1px solid #f0f1f3;">
+									<span style="font-weight: 700; font-size: 15px; color: #059669;">${format_currency(item.buyback_price, frm.doc.currency)}</span>
 								</td>
-								<td style="padding: 15px; vertical-align: middle; text-align: center;">
-									<a href="/app/buyback-exchange/${item.parent}" class="btn btn-default btn-xs" title="${__('View Exchange')}" target="_blank" style="box-shadow: none; border-color: #d1d8dd;">
-										<i class="fa fa-external-link" style="color: #526671;"></i>
+								<td style="padding: 16px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f0f1f3;">
+									<a href="/app/buyback-exchange/${item.parent}" class="btn btn-sm" title="${__('View Exchange')}" target="_blank" style="padding: 6px 10px; background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; color: #374151; transition: all 0.15s ease;">
+										<i class="fa fa-external-link" style="font-size: 12px;"></i>
 									</a>
 								</td>
 							</tr>
