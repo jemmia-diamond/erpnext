@@ -1,0 +1,90 @@
+{
+ "actions": [],
+ "creation": "2024-01-29 12:20:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "product_name",
+  "item_code",
+  "order_code",
+  "prev_sales_order",
+  "prev_sales_order_item",
+  "column_break_1",
+  "sale_price",
+  "buyback_percentage",
+  "calculated_buyback_price",
+  "buyback_price"
+ ],
+ "fields": [
+  {
+   "fieldname": "product_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Product Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Code"
+  },
+  {
+   "fieldname": "order_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Order Code (Raw)"
+  },
+  {
+   "fieldname": "prev_sales_order",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Previous Sales Order",
+   "options": "Sales Order"
+  },
+  {
+   "fieldname": "prev_sales_order_item",
+   "fieldtype": "Link",
+   "label": "Previous Sales Order Item",
+   "options": "Sales Order Item"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sale_price",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Sale Price"
+  },
+  {
+   "fieldname": "buyback_percentage",
+   "fieldtype": "Percent",
+   "label": "Buyback Percentage"
+  },
+  {
+   "fieldname": "calculated_buyback_price",
+   "fieldtype": "Currency",
+   "label": "Calculated Buyback Price"
+  },
+  {
+   "fieldname": "buyback_price",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Buyback Price"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2024-01-29 12:20:00.000000",
+ "modified_by": "Administrator",
+ "module": "Selling",
+ "name": "Buyback Exchange Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

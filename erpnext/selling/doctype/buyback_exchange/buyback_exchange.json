@@ -1,0 +1,146 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:BBE-{YYYY}-{MM}-{#####}",
+ "creation": "2024-01-29 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "lark_instance_id",
+  "instance_type",
+  "status",
+  "submitted_date",
+  "column_break_1",
+  "customer_name",
+  "phone_number",
+  "national_id",
+  "section_break_1",
+  "order_code",
+  "prev_sales_order",
+  "new_order_code",
+  "refund_amount",
+  "reason",
+  "section_break_items",
+  "items",
+  "products_info"
+ ],
+ "fields": [
+  {
+   "fieldname": "lark_instance_id",
+   "fieldtype": "Data",
+   "label": "Lark Instance ID",
+   "unique": 1
+  },
+  {
+   "fieldname": "instance_type",
+   "fieldtype": "Data",
+   "label": "Instance Type"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nSubmitted\nCancelled\nCompleted"
+  },
+  {
+   "fieldname": "submitted_date",
+   "fieldtype": "Datetime",
+   "label": "Submitted Date"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Customer Name"
+  },
+  {
+   "fieldname": "phone_number",
+   "fieldtype": "Data",
+   "label": "Phone Number",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "national_id",
+   "fieldtype": "Data",
+   "label": "National ID"
+  },
+  {
+   "fieldname": "section_break_1",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "order_code",
+   "fieldtype": "Data",
+   "label": "Order Code"
+  },
+  {
+   "fieldname": "prev_sales_order",
+   "fieldtype": "Link",
+   "label": "Previous Sales Order",
+   "options": "Sales Order"
+  },
+  {
+   "fieldname": "new_order_code",
+   "fieldtype": "Link",
+   "label": "New Order Code",
+   "options": "Sales Order"
+  },
+  {
+   "fieldname": "refund_amount",
+   "fieldtype": "Currency",
+   "label": "Refund Amount"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason"
+  },
+  {
+   "fieldname": "section_break_items",
+   "fieldtype": "Section Break",
+   "label": "Items"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Buyback Exchange Item"
+  },
+  {
+   "fieldname": "products_info",
+   "fieldtype": "Code",
+   "label": "Products Info",
+   "options": "JSON"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-01-29 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Selling",
+ "name": "Buyback Exchange",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
