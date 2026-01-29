@@ -293,6 +293,87 @@ frappe.ui.form.on("Sales Order", {
 			frm.set_currency_labels(["deposit_amount"], frm.doc.order_currency);
 			frm.set_df_property("deposit_amount", "options", "currency");
 		}
+
+		frm.trigger('render_buyback_items');
+	},
+
+	render_buyback_items(frm) {
+		if (frm.doc.__islocal) return;
+		frappe.call({
+			method: "erpnext.selling.doctype.sales_order.sales_order.get_buyback_items",
+			args: {
+				sales_order: frm.doc.name
+			},
+			callback: function(r) {
+				if (r.message && r.message.length > 0) {
+					let html = `
+						<div class="control-value">
+							<div style="border: 1px solid #d1d8dd; border-radius: 4px; overflow: hidden; background-color: #fff;">
+								<table class="table table-hover" style="margin-bottom: 0px;">
+									<thead>
+										<tr style="background-color: #f8fafc; border-bottom: 1px solid #d1d8dd;">
+											<th style="padding: 12px 15px; font-weight: 600; font-size: 11px; text-transform: uppercase; color: #526671; letter-spacing: 0.025em;">${__("Product Info")}</th>
+											<th style="padding: 12px 15px; font-weight: 600; font-size: 11px; text-transform: uppercase; color: #526671; letter-spacing: 0.025em;">${__("Codes")}</th>
+											<th style="padding: 12px 15px; font-weight: 600; font-size: 11px; text-transform: uppercase; color: #526671; letter-spacing: 0.025em; text-align: right;">${__("Price")}</th>
+											<th style="padding: 12px 15px; font-weight: 600; font-size: 11px; text-transform: uppercase; color: #526671; letter-spacing: 0.025em; text-align: right;">${__("Buyback %")}</th>
+											<th style="padding: 12px 15px; font-weight: 600; font-size: 11px; text-transform: uppercase; color: #526671; letter-spacing: 0.025em; text-align: right;">${__("Calculated")}</th>
+											<th style="padding: 12px 15px; font-weight: 600; font-size: 11px; text-transform: uppercase; color: #526671; letter-spacing: 0.025em; text-align: right;">${__("Final Price")}</th>
+											<th style="width: 50px;"></th>
+										</tr>
+									</thead>
+									<tbody>
+					`;
+					
+					r.message.forEach(item => {
+						html += `
+							<tr style="border-bottom: 1px solid #f1f3f4;">
+								<td style="padding: 15px; vertical-align: middle;">
+									<div style="font-weight: 600; font-size: 13px; color: #1f272e; margin-bottom: 2px;">${item.product_name || "-"}</div>
+									<div style="font-size: 11px; color: #8d99ae;">ID: ${item.name}</div>
+								</td>
+								<td style="padding: 15px; vertical-align: middle;">
+									<div style="font-size: 12px; color: #333;">
+										<div style="margin-bottom: 2px;">Item: <span style="font-family: monospace;">${item.item_code || "-"}</span></div>
+										<div>Ref: <span style="font-family: monospace;">${item.order_code || "-"}</span></div>
+									</div>
+								</td>
+								<td style="padding: 15px; vertical-align: middle; text-align: right; color: #1f272e; font-size: 12px;">
+									${format_currency(item.sale_price, frm.doc.currency)}
+								</td>
+								<td style="padding: 15px; vertical-align: middle; text-align: right;">
+									<span class="label label-info" style="font-size: 11px; font-weight: 500;">${item.buyback_percentage || 0}%</span>
+								</td>
+								<td style="padding: 15px; vertical-align: middle; text-align: right; color: #707070; font-size: 12px;">
+									${format_currency(item.calculated_buyback_price, frm.doc.currency)}
+								</td>
+								<td style="padding: 15px; vertical-align: middle; text-align: right;">
+									<span style="font-weight: 700; font-size: 14px; color: #2ecc71;">${format_currency(item.buyback_price, frm.doc.currency)}</span>
+								</td>
+								<td style="padding: 15px; vertical-align: middle; text-align: center;">
+									<a href="/app/buyback-exchange/${item.parent}" class="btn btn-default btn-xs" title="${__('View Exchange')}" target="_blank" style="box-shadow: none; border-color: #d1d8dd;">
+										<i class="fa fa-external-link" style="color: #526671;"></i>
+									</a>
+								</td>
+							</tr>
+						`;
+					});
+					
+					html += `
+									</tbody>
+								</table>
+							</div>
+						</div>
+					`;
+					
+					frm.set_df_property("buyback_items_html", "options", html);
+					frm.set_df_property("buyback_items_html", "hidden", 0);
+					frm.set_df_property("buyback_section_break", "hidden", 0);
+				} else {
+					frm.set_df_property("buyback_items_html", "hidden", 1);
+					frm.set_df_property("buyback_section_break", "hidden", 1);
+				}
+			}
+		});
 	},
 
 	get_items_from_internal_purchase_order(frm) {

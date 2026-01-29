@@ -12,6 +12,7 @@ def get_data():
 			"Auto Repeat": "reference_document",
 			"Maintenance Visit": "prevdoc_docname",
 			"Stock Reservation Entry": "voucher_no",
+			"Buyback Exchange": "prev_sales_order",
 		},
 		"internal_links": {
 			"Quotation": ["items", "prevdoc_docname"],
@@ -28,5 +29,6 @@ def get_data():
 			{"label": _("Manufacturing"), "items": ["Work Order", "BOM", "Blanket Order"]},
 			{"label": _("Reference"), "items": ["Quotation", "Auto Repeat", "Stock Reservation Entry"]},
 			{"label": _("Payment"), "items": ["Payment Entry", "Payment Request", "Journal Entry"]},
+			{"label": _("Buyback"), "items": ["Buyback Exchange"]},
 		],
 	}
