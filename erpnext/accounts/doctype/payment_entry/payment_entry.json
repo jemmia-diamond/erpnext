@@ -3,7 +3,7 @@
  "allow_auto_repeat": 1,
  "allow_import": 1,
  "autoname": "naming_series:",
- "creation": "2025-12-24 17:28:19.328781",
+ "creation": "2026-01-20 11:03:04.077563",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -31,7 +31,6 @@
   "qr_section_break",
   "custom_transaction_id",
   "custom_transfer_status",
-  "custom_webhook_processed",
   "column_break_redx",
   "custom_transfer_note",
   "qr_url",
@@ -974,13 +973,6 @@
    "read_only": 1
   },
   {
-   "default": "0",
-   "fieldname": "custom_webhook_processed",
-   "fieldtype": "Check",
-   "hidden": 1,
-   "label": "Webhook Process"
-  },
-  {
    "depends_on": "eval:!doc.__islocal && doc.payment_code == 'cash_on_delivery'",
    "fieldname": "shipping_code",
    "fieldtype": "Data",
@@ -1016,7 +1008,7 @@
    "table_fieldname": "payment_entries"
   }
  ],
- "modified": "2025-12-25 11:34:19.343649",
+ "modified": "2026-01-29 17:49:27.048607",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Payment Entry",
