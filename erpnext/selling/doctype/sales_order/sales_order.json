@@ -2132,9 +2132,9 @@
   },
   {
    "fieldname": "buyback_items",
-   "fieldtype": "MultiSelectList",
+   "fieldtype": "Data",
    "label": "Select Buyback Items",
-   "options": "get_available_buyback_items"
+   "read_only": 1
   },
   {
    "fieldname": "invoice_information",

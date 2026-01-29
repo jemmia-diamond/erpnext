@@ -2656,6 +2656,64 @@ def get_split_orders_in_group(split_order_group, include_cancelled=False):
 def get_buyback_items(sales_order):
 	return frappe.get_list("Buyback Exchange Item",
 		filters={"current_sales_order": sales_order},
-		fields=["product_name", "item_code", "buyback_price", "parent", "order_code", "name", "buyback_percentage", "calculated_buyback_price", "sale_price"],
+		fields=["product_name", "item_code", "buyback_price", "parent", "order_code", "prev_sales_order", "name", "buyback_percentage", "calculated_buyback_price", "sale_price"],
 		ignore_permissions=True
 	)
+
+@frappe.whitelist()
+def get_available_buyback_items(phone=None):
+	"""Get all available buyback items that are not yet linked to any sales order.
+	Filters by phone number if provided.
+	"""
+	query = """
+		SELECT i.name, i.product_name, i.item_code, i.buyback_price, i.parent, i.sale_price, i.buyback_percentage, i.order_code, i.prev_sales_order
+		FROM `tabBuyback Exchange Item` i
+		JOIN `tabBuyback Exchange` p ON i.parent = p.name
+		WHERE i.current_sales_order IS NULL
+	"""
+	params = {}
+	if phone:
+		query += " AND p.phone_number LIKE %(phone)s"
+		params["phone"] = f"%{phone}%"
+
+	query += " ORDER BY i.creation DESC LIMIT 100"
+
+	return frappe.db.sql(query, params, as_dict=True)
+
+@frappe.whitelist()
+def link_buyback_items(sales_order, item_names):
+	"""Link selected buyback items to the current sales order."""
+	import json
+
+	if isinstance(item_names, str):
+		item_names = json.loads(item_names)
+
+	if not item_names:
+		frappe.throw("No items selected")
+
+	updated_count = 0
+	for item_name in item_names:
+		try:
+			frappe.db.set_value("Buyback Exchange Item", item_name, "current_sales_order", sales_order)
+			updated_count += 1
+		except Exception as e:
+			frappe.log_error(f"Failed to link buyback item {item_name}: {e!s}")
+
+	frappe.db.commit()
+
+	return {
+		"success": True,
+		"message": f"Successfully linked {updated_count} buyback item(s)",
+		"count": updated_count
+	}
+
+@frappe.whitelist()
+def unlink_buyback_item(item_name):
+	"""Unlink a buyback item from the current sales order."""
+	frappe.db.set_value("Buyback Exchange Item", item_name, "current_sales_order", None)
+	frappe.db.commit()
+
+	return {
+		"success": True,
+		"message": "Buyback item unlinked successfully"
+	}

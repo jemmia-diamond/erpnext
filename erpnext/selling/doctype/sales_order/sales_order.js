@@ -294,7 +294,171 @@ frappe.ui.form.on("Sales Order", {
 			frm.set_df_property("deposit_amount", "options", "currency");
 		}
 
+		// Make buyback_items field clickable to open selection dialog
+		if (!frm.doc.__islocal && frm.doc.docstatus === 0) {
+			frm.fields_dict.buyback_items.$wrapper.css('cursor', 'pointer');
+			if (frm.fields_dict.buyback_items.$input) {
+				frm.fields_dict.buyback_items.$input.css('cursor', 'pointer');
+			} else {
+				frm.fields_dict.buyback_items.$wrapper.find('.control-value').css('cursor', 'pointer');
+			}
+			frm.fields_dict.buyback_items.$wrapper.off('click').on('click', function() {
+				frm.trigger('show_buyback_selector');
+			});
+			// Set placeholder text
+			frm.set_value('buyback_items', 'Select buyback/exchange items');
+		}
+
 		frm.trigger('render_buyback_items');
+	},
+	
+	show_buyback_selector(frm) {
+		// Get customer phone from sales order
+		const phone = frm.doc.contact_mobile || frm.doc.contact_phone;
+		
+		// Fetch available buyback items
+		frappe.call({
+			method: 'erpnext.selling.doctype.sales_order.sales_order.get_available_buyback_items',
+			args: {
+				phone: phone
+			},
+			callback: function(r) {
+				if (r.message && r.message.length > 0) {
+					frm.events.open_buyback_dialog(frm, r.message);
+				} else {
+					frappe.msgprint(__('No available buyback items found for this customer phone.'));
+				}
+			}
+		});
+	},
+
+	open_buyback_dialog(frm, items) {
+		let d = new frappe.ui.Dialog({
+			title: __('Select Buyback Items to Link'),
+			size: 'large',
+			fields: [
+				{
+					fieldname: 'items_html',
+					fieldtype: 'HTML'
+				}
+			],
+			primary_action_label: __('Link Selected Items'),
+			primary_action(values) {
+				const selected = [];
+				d.$wrapper.find('input[type="checkbox"]:checked').each(function() {
+					selected.push($(this).data('item-name'));
+				});
+				
+				if (selected.length === 0) {
+					frappe.msgprint(__('Please select at least one item'));
+					return;
+				}
+				
+				frappe.call({
+					method: 'erpnext.selling.doctype.sales_order.sales_order.link_buyback_items',
+					args: {
+						sales_order: frm.doc.name,
+						item_names: selected
+					},
+					callback: function(r) {
+						if (r.message && r.message.success) {
+							frappe.show_alert({
+								message: r.message.message,
+								indicator: 'green'
+							});
+							d.hide();
+							frm.trigger('render_buyback_items');
+						}
+					}
+				});
+			}
+		});
+
+		// Build HTML table with direct borders (simple)
+		let html = `
+			<div style="margin-top: 8px;">
+				<div style="max-height: 450px; overflow-y: auto; overflow-x: auto;">
+					<table class="table table-bordered" style="margin-bottom: 0; border-collapse: collapse; width: 100%; min-width: 800px; table-layout: fixed;">
+						<thead>
+							<tr style="background: linear-gradient(180deg, #f8f9fb 0%, #f3f4f6 100%); border-bottom: 2px solid #e4e7eb;">
+								<th style="padding: 14px 16px; width: 5%; border-bottom: none; text-align: center;">
+									<!-- No Select All for single selection -->
+								</th>
+								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 20%; text-align: center;">${__("Product")}</th>
+								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__("Item Code")}</th>
+								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__("Sale Price")}</th>
+								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__("Buyback Price")}</th>
+								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__("Buyback %")}</th>
+								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__("Prev Sales Order")}</th>
+							</tr>
+						</thead>
+						<tbody>
+		`;
+
+		// Escape text to HTML entities to be safe in JS strings and HTML
+		const escape = (str) => (str || "").toString()
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;")
+			.replace(/'/g, "&#39;");
+
+		// Normalize frappe.format output: verify no single quotes break the template
+		const safeFormat = (val, doc) => {
+			let s = frappe.format(val, {fieldtype: 'Currency', currency: doc.currency});
+			// Replace single quotes in HTML attributes with double quotes to be template-safe
+			return (s || "").toString().replace(/'/g, '"');
+		};
+
+		items.forEach((item, index) => {
+			const prevOrder = item.prev_sales_order || item.order_code;
+			const rowBg = index % 2 === 0 ? '#ffffff' : '#fafbfc';
+			html += `
+				<tr style="background-color: ${rowBg}; border-bottom: 1px solid #f0f1f3; transition: background-color 0.15s ease;">
+					<td style="padding: 16px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f0f1f3;">
+						<input type="checkbox" class="buyback-item-checkbox" data-item-name="${escape(item.name)}" style="width: 16px; height: 16px; cursor: pointer;">
+					</td>
+					<td style="padding: 16px; vertical-align: middle; border-bottom: 1px solid #f0f1f3;">
+						<div style="font-size: 14px; color: #111827; line-height: 1.4; word-wrap: break-word;" title="${escape(item.product_name)}">${escape(item.product_name || "-")}</div>
+					</td>
+					<td style="padding: 16px; vertical-align: middle; border-bottom: 1px solid #f0f1f3;">
+						<div style="font-size: 12px; color: #374151; line-height: 1.6;">
+							<span style="font-family: Menlo, Monaco, Consolas, monospace; color: #111827;">${escape(item.item_code)}</span>
+						</div>
+					</td>
+					<td style="padding: 16px; vertical-align: middle; text-align: right; border-bottom: 1px solid #f0f1f3; color: #111827;">
+						${safeFormat(item.sale_price, frm.doc)}
+					</td>
+					<td style="padding: 16px; vertical-align: middle; text-align: right; border-bottom: 1px solid #f0f1f3; color: #111827;">
+						${safeFormat(item.buyback_price, frm.doc)}
+					</td>
+					<td style="padding: 16px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f0f1f3; color: #111827;">
+						${item.buyback_percentage}%
+					</td>
+					<td style="padding: 16px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f0f1f3;">
+						${prevOrder ? `<a href="/app/sales-order/${escape(prevOrder)}" target="_blank" style="text-decoration: underline;">${escape(prevOrder)}</a>` : "-"}
+					</td>
+				</tr>
+			`;
+		});
+
+		html += `
+						</tbody>
+					</table>
+				</div>
+			</div>
+		`;
+
+		d.fields_dict.items_html.$wrapper.html(html);
+
+		// Single selection logic: uncheck others when one is checked
+		d.$wrapper.find('.buyback-item-checkbox').on('change', function() {
+			if ($(this).prop('checked')) {
+				d.$wrapper.find('.buyback-item-checkbox').not(this).prop('checked', false);
+			}
+		});
+
+		d.show();
 	},
 
 	render_buyback_items(frm) {
@@ -308,52 +472,70 @@ frappe.ui.form.on("Sales Order", {
 				if (r.message && r.message.length > 0) {
 					let html = `
 						<div class="control-value" style="margin-top: 8px;">
-							<div style="border: 1px solid #e4e7eb; border-radius: 8px; overflow: hidden; background-color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-								<table class="table" style="margin-bottom: 0; border-collapse: collapse; width: 100%;">
+							<div style="max-height: 450px; overflow-y: auto; overflow-x: auto;">
+								<table class="table table-bordered" style="margin-bottom: 0; border-collapse: collapse; width: 100%; min-width: 800px; table-layout: fixed;">
 									<thead>
 										<tr style="background: linear-gradient(180deg, #f8f9fb 0%, #f3f4f6 100%); border-bottom: 2px solid #e4e7eb;">
-											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #4b5563; letter-spacing: 0.5px; border-bottom: none;">${__("Product")}</th>
-											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #4b5563; letter-spacing: 0.5px; border-bottom: none;">${__("References")}</th>
-											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #4b5563; letter-spacing: 0.5px; text-align: right; border-bottom: none;">${__("Sale Price")}</th>
-											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #4b5563; letter-spacing: 0.5px; text-align: center; border-bottom: none;">${__("Buyback %")}</th>
-											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #4b5563; letter-spacing: 0.5px; text-align: right; border-bottom: none;">${__("Calculated")}</th>
-											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #4b5563; letter-spacing: 0.5px; text-align: right; border-bottom: none;">${__("Exchange Value")}</th>
-											<th style="padding: 14px 16px; width: 60px; border-bottom: none;"></th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 20%; text-align: center;">${__("Product")}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 17%; text-align: center;">${__("Item Code")}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; text-align: center; border-bottom: none; width: 15%;">${__("Sale Price")}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; text-align: center; border-bottom: none; width: 15%;">${__("Exchange Amount")}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; text-align: center; width: 12%;">${__("Buyback %")}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; text-align: center; border-bottom: none; width: 16%;">${__("Prev Sales Order")}</th>
+											<th style="padding: 14px 16px; width: 9%; border-bottom: none; text-align: center;">${__("Actions")}</th>
 										</tr>
 									</thead>
 									<tbody>
 					`;
 					
+					// Escape text to HTML entities
+					const escape = (str) => (str || "").toString()
+						.replace(/&/g, "&amp;")
+						.replace(/</g, "&lt;")
+						.replace(/>/g, "&gt;")
+						.replace(/"/g, "&quot;")
+						.replace(/'/g, "&#39;");
+
+					// Normalize frappe.format output
+					const safeFormat = (val, doc) => {
+						let s = frappe.format(val, {fieldtype: 'Currency', currency: doc.currency});
+						return (s || "").toString().replace(/'/g, '"');
+					};
+
 					r.message.forEach((item, index) => {
+						const prevOrder = item.prev_sales_order || item.order_code;
 						const rowBg = index % 2 === 0 ? '#ffffff' : '#fafbfc';
 						html += `
 							<tr style="background-color: ${rowBg}; border-bottom: 1px solid #f0f1f3; transition: background-color 0.15s ease;">
 								<td style="padding: 16px; vertical-align: middle; border-bottom: 1px solid #f0f1f3;">
-									<div style="font-weight: 600; font-size: 14px; color: #111827; margin-bottom: 4px; line-height: 1.4;">${item.product_name || "-"}</div>
-									<div style="font-size: 11px; color: #9ca3af; font-family: 'SF Mono', Monaco, monospace;">ID: ${item.name}</div>
+									<div style="font-size: 14px; color: #111827; margin-bottom: 4px; line-height: 1.4; word-wrap: break-word;" title="${escape(item.product_name)}">${escape(item.product_name || "-")}</div>
 								</td>
 								<td style="padding: 16px; vertical-align: middle; border-bottom: 1px solid #f0f1f3;">
 									<div style="font-size: 12px; color: #374151; line-height: 1.6;">
-										<div style="margin-bottom: 4px;"><span style="color: #6b7280; font-size: 11px;">Item:</span> <span style="font-family: 'SF Mono', Monaco, monospace; color: #111827; font-weight: 500;">${item.item_code || "-"}</span></div>
-										<div><span style="color: #6b7280; font-size: 11px;">Order:</span> <span style="font-family: 'SF Mono', Monaco, monospace; color: #111827; font-weight: 500;">${item.order_code || "-"}</span></div>
+										<span style="font-family: Menlo, Monaco, Consolas, monospace; color: #111827;">${escape(item.item_code)}</span>
 									</div>
 								</td>
-								<td style="padding: 16px; vertical-align: middle; text-align: right; border-bottom: 1px solid #f0f1f3;">
-									<span style="font-size: 13px; font-weight: 600; color: #374151;">${format_currency(item.sale_price, frm.doc.currency)}</span>
+								<td style="padding: 16px; vertical-align: middle; text-align: right; border-bottom: 1px solid #f0f1f3; color: #111827;">
+									${safeFormat(item.sale_price, frm.doc)}
+								</td>
+								<td style="padding: 16px; vertical-align: middle; text-align: right; border-bottom: 1px solid #f0f1f3; color: #111827;">
+									${safeFormat(item.buyback_price, frm.doc)}
+								</td>
+								<td style="padding: 16px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f0f1f3; color: #111827;">
+									${item.buyback_percentage}%
 								</td>
 								<td style="padding: 16px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f0f1f3;">
-									<span style="display: inline-block; padding: 4px 10px; background-color: #dbeafe; color: #1e40af; border-radius: 12px; font-size: 12px; font-weight: 600;">${item.buyback_percentage || 0}%</span>
-								</td>
-								<td style="padding: 16px; vertical-align: middle; text-align: right; border-bottom: 1px solid #f0f1f3;">
-									<span style="font-size: 13px; color: #6b7280;">${format_currency(item.calculated_buyback_price, frm.doc.currency)}</span>
-								</td>
-								<td style="padding: 16px; vertical-align: middle; text-align: right; border-bottom: 1px solid #f0f1f3;">
-									<span style="font-weight: 700; font-size: 15px; color: #059669;">${format_currency(item.buyback_price, frm.doc.currency)}</span>
+									${prevOrder ? `<a href="/app/sales-order/${escape(prevOrder)}" target="_blank" style="text-decoration: underline;">${escape(prevOrder)}</a>` : "-"}
 								</td>
 								<td style="padding: 16px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f0f1f3;">
-									<a href="/app/buyback-exchange/${item.parent}" class="btn btn-sm" title="${__('View Exchange')}" target="_blank" style="padding: 6px 10px; background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; color: #374151; transition: all 0.15s ease;">
-										<i class="fa fa-external-link" style="font-size: 12px;"></i>
-									</a>
+									<div style="display: flex; justify-content: center; gap: 8px;">
+										<a href="/app/buyback-exchange/${escape(item.parent)}" class="btn btn-sm" title="${__('View Exchange')}" target="_blank" style="padding: 6px 10px; background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; color: #374151; transition: all 0.15s ease;">
+											<i class="fa fa-external-link" style="font-size: 12px;"></i>
+										</a>
+										<button class="btn btn-sm btn-unlink-buyback" data-item-name="${escape(item.name)}" title="${__('Unlink Item')}" style="padding: 6px 10px; background-color: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; color: #dc2626; transition: all 0.15s ease;">
+											<i class="fa fa-times" style="font-size: 12px;"></i>
+										</button>
+									</div>
 								</td>
 							</tr>
 						`;
@@ -369,10 +551,40 @@ frappe.ui.form.on("Sales Order", {
 					frm.set_df_property("buyback_items_html", "options", html);
 					frm.set_df_property("buyback_items_html", "hidden", 0);
 					frm.set_df_property("buyback_section_break", "hidden", 0);
+					
+					// Add click handlers for unlink buttons
+					setTimeout(() => {
+						$('.btn-unlink-buyback').off('click').on('click', function(e) {
+							e.preventDefault();
+							const item_name = $(this).data('item-name');
+							
+							frappe.confirm(
+								__('Are you sure you want to unlink this buyback item?'),
+								() => {
+									frappe.call({
+										method: 'erpnext.selling.doctype.sales_order.sales_order.unlink_buyback_item',
+										args: { item_name: item_name },
+										callback: function(r) {
+											if (r.message && r.message.success) {
+												frappe.show_alert({
+													message: r.message.message,
+													indicator: 'green'
+												});
+												frm.trigger('render_buyback_items');
+											}
+										}
+									});
+								}
+							);
+						});
+					}, 100);
 				} else {
+					// Hide only the items table, not the section
 					frm.set_df_property("buyback_items_html", "hidden", 1);
-					frm.set_df_property("buyback_section_break", "hidden", 1);
 				}
+				
+				// Always show the Buyback section
+				frm.set_df_property("buyback_section_break", "hidden", 0);
 			}
 		});
 	},
