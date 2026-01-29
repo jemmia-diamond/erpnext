@@ -53,6 +53,7 @@ class BuybackExchange(Document):
 						self.prev_sales_order = row.prev_sales_order
 
 		except Exception:
+			frappe.log_error(f"Invalid products_info in BuybackExchange {self.name}", self.products_info)
 			frappe.throw(f"Invalid products_info JSON in BuybackExchange {self.name}. Please check data from Lark.")
 
 	def resolve_item_reference(self, row):
@@ -77,6 +78,7 @@ class BuybackExchange(Document):
 				if len(candidates) == 1:
 					selected = candidates[0]
 				else:
+					frappe.log_error(f"Ambiguous buyback item for {self.phone_number} / {row.item_code} with {len(candidates)} candidates", str(candidates))
 					if row.order_code:
 						normalized_input = re.search(r'(\d+)', str(row.order_code))
 						if normalized_input:
