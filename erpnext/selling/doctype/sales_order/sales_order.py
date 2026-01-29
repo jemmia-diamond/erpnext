@@ -2,20 +2,32 @@
 # License: GNU General Public License v3. See license.txt
 
 
+import copy
 import json
 from typing import Literal
-import requests
-import copy
 
 import frappe
 import frappe.utils
+import requests
 from frappe import _, qb
 from frappe.contacts.doctype.address.address import get_company_address
 from frappe.desk.notifications import clear_doctype_notifications
+from frappe.model.docstatus import DocStatus
 from frappe.model.mapper import get_mapped_doc
 from frappe.model.utils import get_fetch_values
 from frappe.query_builder.functions import Sum
-from frappe.utils import add_days, cint, cstr, flt, get_link_to_form, getdate, nowdate, strip_html, add_to_date, get_datetime
+from frappe.utils import (
+	add_days,
+	add_to_date,
+	cint,
+	cstr,
+	flt,
+	get_datetime,
+	get_link_to_form,
+	getdate,
+	nowdate,
+	strip_html,
+)
 
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import (
 	unlink_inter_company_doc,
@@ -23,6 +35,7 @@ from erpnext.accounts.doctype.sales_invoice.sales_invoice import (
 	validate_inter_company_party,
 )
 from erpnext.accounts.party import get_party_account
+from erpnext.config.config import config
 from erpnext.controllers.selling_controller import SellingController
 from erpnext.manufacturing.doctype.blanket_order.blanket_order import (
 	validate_against_blanket_order,
@@ -30,7 +43,7 @@ from erpnext.manufacturing.doctype.blanket_order.blanket_order import (
 from erpnext.manufacturing.doctype.production_plan.production_plan import (
 	get_items_for_material_requests,
 )
-from erpnext.selling.doctype.customer.customer import check_credit_limit
+from erpnext.selling.doctype.customer.customer import check_credit_limit, reevaluate_customer_rank
 from erpnext.setup.doctype.item_group.item_group import get_item_group_defaults
 from erpnext.stock.doctype.item.item import get_item_defaults
 from erpnext.stock.doctype.stock_reservation_entry.stock_reservation_entry import (
@@ -39,10 +52,6 @@ from erpnext.stock.doctype.stock_reservation_entry.stock_reservation_entry impor
 )
 from erpnext.stock.get_item_details import get_bin_details, get_default_bom, get_price_list_rate
 from erpnext.stock.stock_balance import get_reserved_qty, update_bin_qty
-from frappe.model.docstatus import DocStatus
-from erpnext.selling.doctype.customer.customer import reevaluate_customer_rank
-
-from erpnext.config.config import config
 
 form_grid_templates = {"items": "templates/form_grid/item_grid.html"}
 
@@ -58,21 +67,32 @@ class SalesOrder(SellingController):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from erpnext.accounts.doctype.payment_entry_reference.payment_entry_reference import PaymentEntryReference
+		from frappe.types import DF
+
+		from erpnext.accounts.doctype.payment_entry_reference.payment_entry_reference import (
+			PaymentEntryReference,
+		)
 		from erpnext.accounts.doctype.payment_schedule.payment_schedule import PaymentSchedule
 		from erpnext.accounts.doctype.pricing_rule_detail.pricing_rule_detail import PricingRuleDetail
-		from erpnext.accounts.doctype.sales_taxes_and_charges.sales_taxes_and_charges import SalesTaxesandCharges
-		from erpnext.selling.doctype.order_and_debt_tracking.order_and_debt_tracking import OrderandDebtTracking
+		from erpnext.accounts.doctype.sales_taxes_and_charges.sales_taxes_and_charges import (
+			SalesTaxesandCharges,
+		)
+		from erpnext.selling.doctype.order_and_debt_tracking.order_and_debt_tracking import (
+			OrderandDebtTracking,
+		)
 		from erpnext.selling.doctype.sales_order_item.sales_order_item import SalesOrderItem
-		from erpnext.selling.doctype.sales_order_payment_record.sales_order_payment_record import SalesOrderPaymentRecord
+		from erpnext.selling.doctype.sales_order_payment_record.sales_order_payment_record import (
+			SalesOrderPaymentRecord,
+		)
 		from erpnext.selling.doctype.sales_order_policy.sales_order_policy import SalesOrderPolicy
-		from erpnext.selling.doctype.sales_order_product_category.sales_order_product_category import SalesOrderProductCategory
+		from erpnext.selling.doctype.sales_order_product_category.sales_order_product_category import (
+			SalesOrderProductCategory,
+		)
 		from erpnext.selling.doctype.sales_order_promotion.sales_order_promotion import SalesOrderPromotion
 		from erpnext.selling.doctype.sales_order_purpose.sales_order_purpose import SalesOrderPurpose
 		from erpnext.selling.doctype.sales_order_reference.sales_order_reference import SalesOrderReference
 		from erpnext.selling.doctype.sales_team.sales_team import SalesTeam
 		from erpnext.stock.doctype.packed_item.packed_item import PackedItem
-		from frappe.types import DF
 
 		additional_discount_percentage: DF.Float
 		address_display: DF.SmallText | None
@@ -296,7 +316,7 @@ class SalesOrder(SellingController):
 					"payment_date": pe_ref.payment_date,
 					"payment_order_status": pe_ref.payment_order_status
 			})
-			
+
 
 	def set_group_payment_entries(self):
 		"""Fetch and set the payment entries linked to the split order group and reference tree."""
@@ -304,7 +324,7 @@ class SalesOrder(SellingController):
 			return
 
 		related_orders = self.get_all_related_sales_orders()
-		
+
 		# If no related orders (including self), explicitly empty list
 		if not related_orders:
 			self.set("group_payment_entries", [])
@@ -324,7 +344,7 @@ class SalesOrder(SellingController):
 			FROM `tabPayment Entry Reference` pr
 			INNER JOIN `tabPayment Entry` pe ON pr.parent = pe.name
 			INNER JOIN `tabSales Order` so ON pr.reference_name = so.name
-			WHERE pr.reference_doctype = 'Sales Order' 
+			WHERE pr.reference_doctype = 'Sales Order'
 			AND so.name IN %s
 			AND pe.docstatus < 2
 			AND pe.payment_order_status = 'Success'
@@ -354,7 +374,7 @@ class SalesOrder(SellingController):
 						"payment_date": pe_ref.payment_date,
 						"payment_order_status": pe_ref.payment_order_status
 				})
-	
+
 	def get_all_related_sales_orders(self):
 		"""
 		Returns a set of Sales Order names that are related to this order via:
@@ -366,41 +386,41 @@ class SalesOrder(SellingController):
 
 		# 1. Fetch by Split Order Group
 		if self.is_split_order and self.split_order_group:
-			group_orders = frappe.db.get_all("Sales Order", 
+			group_orders = frappe.db.get_all("Sales Order",
 				filters={
 					"split_order_group": self.split_order_group,
 					"is_split_order": 1
-				}, 
+				},
 				fields=["name"]
 			)
 			for o in group_orders:
 				related_orders.add(o.name)
-		
+
 		# 2. Fetch by Reference Tree (Recursive)
 		# We need to traverse:
 		# - Down: Orders referenced by this order (ref_sales_orders child table)
-		# - Up: Orders that reference this order (Ref Sales Order table of other orders) - OPTIONAL depending on req, 
+		# - Up: Orders that reference this order (Ref Sales Order table of other orders) - OPTIONAL depending on req,
 		#   but user said "every ref sales orders in tree based", implying full connectivity.
-		#   However, typically `ref_sales_orders` is a directed link. 
+		#   However, typically `ref_sales_orders` is a directed link.
 		#   Let's assume standard traversal of the graph defined by `ref_sales_orders`.
 
 		# To be safe and thorough, let's treat it as an undirected graph traversal.
 		# Nodes: Sales Orders
 		# Edges: Entries in `Sales Order Reference` table.
-		
+
 		to_visit = list(related_orders)
 		visited = set(related_orders)
 
 		while to_visit:
 			current_so = to_visit.pop()
-			
+
 			# A. Find orders referenced BY current_so
 			# query child table `Sales Order Reference` where parent = current_so
-			refs_down = frappe.db.get_all("Sales Order Reference", 
-				filters={"parent": current_so}, 
+			refs_down = frappe.db.get_all("Sales Order Reference",
+				filters={"parent": current_so},
 				fields=["sales_order"]
 			)
-			
+
 			for ref in refs_down:
 				if ref.sales_order and ref.sales_order not in visited:
 					visited.add(ref.sales_order)
@@ -409,17 +429,17 @@ class SalesOrder(SellingController):
 
 			# B. Find orders referencing current_so
 			# query child table `Sales Order Reference` where sales_order = current_so
-			refs_up = frappe.db.get_all("Sales Order Reference", 
-				filters={"sales_order": current_so}, 
+			refs_up = frappe.db.get_all("Sales Order Reference",
+				filters={"sales_order": current_so},
 				fields=["parent"]
 			)
-			
+
 			for ref in refs_up:
 				if ref.parent and ref.parent not in visited:
 					visited.add(ref.parent)
 					to_visit.append(ref.parent)
 					related_orders.add(ref.parent)
-		
+
 		return list(related_orders)
 
 
@@ -513,7 +533,7 @@ class SalesOrder(SellingController):
 				where item_code = %s and warehouse = %s",
 				(d.item_code, d.warehouse),
 			)
-			d.projected_qty = tot_avail_qty and flt(tot_avail_qty[0][0]) or 0
+			d.projected_qty = (tot_avail_qty and flt(tot_avail_qty[0][0])) or 0
 
 	def product_bundle_has_stock_item(self, product_bundle):
 		"""Returns true if product bundle has stock item"""
@@ -773,30 +793,30 @@ class SalesOrder(SellingController):
 		"""
 		if not self.haravan_coupon_code:
 			return
-		
+
 		# Parse multiple coupon codes (separated by newline)
 		coupon_codes = []
 		for code in self.haravan_coupon_code.split("\n"):
 			code = code.strip()
 			if code:
 				coupon_codes.append(code)
-		
+
 		# Check if any coupon code is a partner coupon
 		partner_coupons = []
 		for coupon_code in coupon_codes:
 			if " " in coupon_code:
 				continue
-			
+
 			parts = coupon_code.split("-")
 			if len(parts) != 2:
 				continue
-			
+
 			if parts[0] == "AP0001":
 				continue
 
 			if len(parts[1]) == 6:
 				partner_coupons.append(coupon_code)
-		
+
 		if partner_coupons:
 			# Check if customer has identity image
 			has_image = frappe.db.get_value("Customer", self.customer, "customer_identity_image")
@@ -814,7 +834,7 @@ class SalesOrder(SellingController):
 		for d in self.items:
 			if d.item_policy:
 				summary.append(f"{d.item_name}:\n{d.item_policy}")
-		
+
 		if summary:
 			self.order_policies = "\n\n".join(summary)
 		else:
@@ -1205,7 +1225,7 @@ class SalesOrder(SellingController):
 			self.copy_attachments_from_reference(ref_order_name)
 
 		except Exception as e:
-			frappe.log_error(f"Error copying from reference order: {str(e)}")
+			frappe.log_error(f"Error copying from reference order: {e!s}")
 
 	def copy_attachments_from_reference(self, ref_order_name):
 		"""Copy attachments from reference order to current order"""
@@ -1232,7 +1252,7 @@ class SalesOrder(SellingController):
 			frappe.db.commit()
 
 		except Exception as e:
-			frappe.log_error(f"Error copying attachments from reference order: {str(e)}")
+			frappe.log_error(f"Error copying attachments from reference order: {e!s}")
 
 	def handle_serial_numbers_changes(self):
 		"""Handle serial_numbers changes and backfill from reference orders"""
@@ -1260,7 +1280,7 @@ class SalesOrder(SellingController):
 					self._backfill_item_from_reference_by_serial(current_item)
 
 		except Exception as e:
-			frappe.log_error(f"Error handling serial_numbers changes: {str(e)}")
+			frappe.log_error(f"Error handling serial_numbers changes: {e!s}")
 
 	def _get_previous_serial_numbers(self):
 		"""Get previous serial_numbers from database for comparison"""
@@ -1273,7 +1293,7 @@ class SalesOrder(SellingController):
 			""", (self.name,), as_dict=True)
 			return {item.name: item.serial_numbers for item in serial_data}
 		except Exception as e:
-			frappe.log_error(f"Error getting previous serial_numbers: {str(e)}")
+			frappe.log_error(f"Error getting previous serial_numbers: {e!s}")
 			return {}
 
 	def _backfill_item_from_reference_by_serial(self, current_item):
@@ -1303,7 +1323,7 @@ class SalesOrder(SellingController):
 			self._copy_item_fields(matching_ref_item, current_item)
 
 		except Exception as e:
-			frappe.log_error(f"Error backfilling item {current_item.name}: {str(e)}")
+			frappe.log_error(f"Error backfilling item {current_item.name}: {e!s}")
 
 	def _find_matching_ref_item_by_serial(self, ref_items, current_serial):
 		"""Find reference item with matching serial_numbers"""
@@ -2585,7 +2605,7 @@ def larksuite_notification(sales_order_doc):
         except json.JSONDecodeError:
             return response.text
 
-    except requests.exceptions.HTTPError as e:
+    except requests.exceptions.HTTPError:
         error_message = f"Error ({response.status_code}): {response.text}"
         return error_message
 
@@ -2630,6 +2650,7 @@ def get_split_orders_in_group(split_order_group, include_cancelled=False):
 		order["is_original_order"] = (order.get("haravan_order_id") == split_order_group)
 
 	return orders
+
 
 @frappe.whitelist()
 def get_buyback_items(sales_order):

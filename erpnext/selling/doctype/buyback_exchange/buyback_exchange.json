@@ -78,16 +78,9 @@
    "label": "Order Code"
   },
   {
-   "fieldname": "prev_sales_order",
-   "fieldtype": "Link",
-   "label": "Previous Sales Order",
-   "options": "Sales Order"
-  },
-  {
    "fieldname": "new_order_code",
-   "fieldtype": "Link",
-   "label": "New Order Code",
-   "options": "Sales Order"
+   "fieldtype": "Data",
+   "label": "New Order Code"
   },
   {
    "fieldname": "refund_amount",

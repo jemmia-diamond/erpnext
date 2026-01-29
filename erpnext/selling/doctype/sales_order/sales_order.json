@@ -120,6 +120,7 @@
   "pricing_rule_details",
   "pricing_rules",
   "buyback_section_break",
+  "buyback_items",
   "return_amount",
   "buyback_items_html",
   "invoice_information",
@@ -2128,6 +2129,12 @@
    "fieldname": "buyback_section_break",
    "fieldtype": "Section Break",
    "label": "Buyback"
+  },
+  {
+   "fieldname": "buyback_items",
+   "fieldtype": "MultiSelectList",
+   "label": "Select Buyback Items",
+   "options": "get_available_buyback_items"
   },
   {
    "fieldname": "invoice_information",
