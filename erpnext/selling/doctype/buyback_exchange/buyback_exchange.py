@@ -31,7 +31,8 @@ class BuybackExchange(Document):
 		try:
 			products = json.loads(self.products_info)
 			if isinstance(products, list):
-				self.set("items", [])
+				if self.items:
+					return
 
 				for product in products:
 					row = self.append("items", {})
@@ -51,8 +52,8 @@ class BuybackExchange(Document):
 					if not self.prev_sales_order and row.prev_sales_order:
 						self.prev_sales_order = row.prev_sales_order
 
-		except Exception as e:
-			frappe.log_error(f"Error parsing products_info in BuybackExchange {self.name}: {e!s}")
+		except Exception:
+			frappe.throw(f"Invalid products_info JSON in BuybackExchange {self.name}. Please check data from Lark.")
 
 	def resolve_item_reference(self, row):
 		if self.phone_number and row.item_code:
@@ -107,6 +108,7 @@ class BuybackExchange(Document):
 						{"parent": sales_order, "item_code": row.item_code}, "name")
 
 					if not item_name:
+						is_gia = str(row.item_code).startswith("GIA") if row.item_code else False
 						if is_gia:
 							item_name = frappe.db.get_value("Sales Order Item",
 								{"parent": sales_order, "sku": ["like", f"%{row.item_code}%"]}, "name")
@@ -123,8 +125,9 @@ class BuybackExchange(Document):
 
 		number_part = self.extract_order_number(raw_code)
 		if not number_part:
-			if frappe.db.exists("Sales Order", {"order_number": raw_code}):
-				return frappe.get_value("Sales Order", {"order_number": raw_code}, "name")
+			so_name = frappe.db.get_value("Sales Order", {"order_number": raw_code}, "name")
+			if so_name:
+				return so_name
 			return None
 
 		return self.find_sales_order_by_number(number_part, raw_code)
