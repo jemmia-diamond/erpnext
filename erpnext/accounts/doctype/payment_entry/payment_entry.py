@@ -4176,6 +4176,84 @@ def get_payment_entry_list(doctype=None, txt="", searchfield="name", start=0, pa
 
 	return frappe.db.sql(query, values, as_dict=True)
 
+@frappe.whitelist()
+def recreate_payment_entry(payment_entry_name):
+	from frappe.utils import now_datetime, nowdate, flt
+
+	doc = frappe.get_doc("Payment Entry", payment_entry_name)
+
+	if doc.docstatus != 2:
+		frappe.throw(_("Chỉ có thể tạo lại phiếu từ phiếu đã huỷ"))
+
+	new_doc = frappe.copy_doc(doc)
+	new_doc.amended_from = None
+	new_doc.docstatus = 0
+	new_doc.payment_date = now_datetime()
+	new_doc.posting_date = nowdate()
+	new_doc.payment_order_status = 'Pending'
+
+	for field in new_doc.meta.fields:
+		if field.fieldname.startswith("custom_") or field.fieldname.startswith("misa_"):
+			new_doc.set(field.fieldname, None)
+
+	new_doc.custom_transaction_id = None
+	new_doc.custom_transfer_status = None
+	new_doc.qr_url = None
+	new_doc.save()
+	frappe.db.commit()
+
+	time.sleep(6)
+	alert_message = None
+	alert_indicator = "orange"
+	transfer_note = doc.custom_transfer_note
+	amount = flt(doc.paid_amount)
+	if transfer_note:
+		fields_to_search = [
+			"description",
+			"sepay_transaction_content",
+			"sepay_order_description",
+			"sepay_order_number"
+		]
+
+		conditions = " OR ".join([f"{field} LIKE %s" for field in fields_to_search])
+		query = f"""
+			SELECT name
+			FROM `tabBank Transaction`
+			WHERE ({conditions})
+			LIMIT 1
+		"""
+		params = [f"%{transfer_note}%"] * len(fields_to_search)
+		bank_transactions = frappe.db.sql(query, tuple(params), as_dict=True)
+
+		if bank_transactions:
+			bt_name = bank_transactions[0].name
+			bt = frappe.get_doc("Bank Transaction", bt_name)
+
+			if flt(bt.sepay_amount_in) == amount:
+				if bt.payment_entries:
+					alert_message = _("Giao dịch ngân hàng có nội dung chuyển khoản của phiếu cũ đã được map với phiếu khác")
+					alert_indicator = "orange"
+				else:
+					bt.append("payment_entries", {
+						"payment_document": "Payment Entry",
+						"payment_entry": new_doc.name,
+						"allocated_amount": amount
+					})
+					bt.save()
+					alert_message = _("Tạo và map giao dịch ngân hàng thành công")
+					alert_indicator = "green"
+			else:
+				alert_message = _("Không tìm thấy giao dịch ngân hàng khớp số tiền: '{0}' và nội dung: '{1}'. Vui lòng map thủ công.").format(amount, transfer_note)
+				alert_indicator = "red"
+		else:
+			alert_message = _("Không tìm thấy giao dịch ngân hàng khớp số tiền: '{0}' và nội dung: '{1}'. Vui lòng map thủ công.").format(amount, transfer_note)
+			alert_indicator = "red"
+	else:
+		alert_message = _("Thiếu nội dung chuyển khoản ở phiếu cũ")
+		alert_indicator = "red"
+
+	return { "name": new_doc.name, "alert": alert_message, "indicator": alert_indicator }
+
 def daily_run_success_batch():
 	webhooks = frappe.get_all(
 		"Webhook",

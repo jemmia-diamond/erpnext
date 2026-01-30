@@ -452,6 +452,37 @@ frappe.ui.form.on("Payment Entry", {
 			}, qr_group);
 		}
 
+		// Quick Re-create button for Cancelled Banking PEs
+		if (frm.doc.docstatus === 2) {
+			frm.events.get_payment_code(frm, (payment_code) => {
+				if (payment_code === "banking") {
+					frm.add_custom_button(__("Tạo lại phiếu nhanh"), function() {
+						frappe.call({
+							method: "erpnext.accounts.doctype.payment_entry.payment_entry.recreate_payment_entry",
+							args: {
+								payment_entry_name: frm.doc.name
+							},
+							freeze: true,
+							freeze_message: __("Đang tạo phiếu mới và map giao dịch ngân hàng"),
+							callback: function(r) {
+								if (r.message) {
+									if (r.message.name) {
+										frappe.set_route("Form", "Payment Entry", r.message.name);
+									}
+									if (r.message.alert) {
+										frappe.show_alert({
+											message: r.message.alert,
+											indicator: r.message.indicator || 'orange'
+										});
+									}
+								}
+							}
+						});
+					}).addClass("btn-primary");
+				}
+			});
+		}
+
 		// Add Verify button
 		if (
 			!frm.is_new() &&
