@@ -107,7 +107,8 @@
    "fieldname": "products_info",
    "fieldtype": "Code",
    "label": "Products Info",
-   "options": "JSON"
+   "options": "JSON",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,

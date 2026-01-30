@@ -311,6 +311,11 @@ frappe.ui.form.on("Sales Order", {
 	show_buyback_selector(frm) {
 		// Get customer phone from sales order
 		const phone = frm.doc.contact_mobile || frm.doc.contact_phone;
+
+		if (!phone) {
+			frappe.msgprint(__('Please set customer phone before selecting buyback items.'));
+			return;
+		}
 		
 		// Fetch available buyback items
 		frappe.call({
@@ -359,7 +364,7 @@ frappe.ui.form.on("Sales Order", {
 					callback: function(r) {
 						if (r.message && r.message.success) {
 							frappe.show_alert({
-								message: r.message.message,
+								message: __('Successfully linked {0} buyback item(s)', [r.message.count]),
 								indicator: 'green'
 							});
 							d.hide();
@@ -564,7 +569,7 @@ frappe.ui.form.on("Sales Order", {
 											callback: function(r) {
 												if (r.message && r.message.success) {
 													frappe.show_alert({
-														message: r.message.message,
+														message: __('Buyback item unlinked successfully'),
 														indicator: 'green'
 													});
 													frm.trigger('render_buyback_items');

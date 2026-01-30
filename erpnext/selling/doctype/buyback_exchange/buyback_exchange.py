@@ -31,7 +31,7 @@ class BuybackExchange(Document):
 		try:
 			products = json.loads(self.products_info)
 			if not isinstance(products, list):
-				frappe.throw(f"Invalid products_info in BuybackExchange {self.name}: Expected a list of products.")
+				frappe.throw(frappe._("Invalid products_info in BuybackExchange {0}: Expected a list of products.").format(self.name))
 
 			if self.items:
 				return
@@ -56,7 +56,7 @@ class BuybackExchange(Document):
 
 		except Exception as e:
 			frappe.log_error(f"Invalid products_info in BuybackExchange {self.name}: {e!s}", self.products_info)
-			frappe.throw(f"Invalid products_info JSON in BuybackExchange {self.name}. Please check data from Lark.")
+			frappe.throw(frappe._("Invalid products_info JSON in BuybackExchange {0}. Please check data from Lark.").format(self.name))
 
 	def resolve_item_reference(self, row):
 		if self.phone_number and row.item_code:
@@ -80,7 +80,11 @@ class BuybackExchange(Document):
 				if len(candidates) == 1:
 					selected = candidates[0]
 				else:
-					frappe.log_error(f"Ambiguous buyback item for {self.phone_number} / {row.item_code} with {len(candidates)} candidates", str(candidates))
+					frappe.logger().info(
+						frappe._("Ambiguous buyback item for {0} / {1} with {2} candidates: {3}").format(
+							self.phone_number, row.item_code, len(candidates), str(candidates)
+						)
+					)
 					if row.order_code:
 						normalized_input = re.search(r'(\d+)', str(row.order_code))
 						if normalized_input:
