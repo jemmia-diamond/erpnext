@@ -320,7 +320,7 @@ class PaymentEntry(AccountsController):
 		validate_docs_for_voucher_types(["Payment Entry"])
 		validate_docs_for_deferred_accounting([self.name], [])
 
-	def on_update_after_submit(self):		
+	def on_update_after_submit(self):
 		# Flag will be set on Reconciliation
 		# Reconciliation tool will anyways repost ledger entries. So, no need to check and do implicit repost.
 		if self.flags.get("ignore_reposting_on_reconciliation"):
@@ -802,7 +802,7 @@ class PaymentEntry(AccountsController):
 		for field in ("paid_amount", "received_amount", "source_exchange_rate", "target_exchange_rate"):
 			if not self.get(field):
 				frappe.throw(_("{0} is mandatory").format(self.meta.get_label(field)))
-		
+
 		if not self.payment_date and self.payment_code != "cash_on_delivery":
 			frappe.throw(_("Payment Date is mandatory"))
 
@@ -1462,9 +1462,9 @@ class PaymentEntry(AccountsController):
 		for ref in self.get("references"):
 			if ref.allocated_amount or ref.reference_doctype == "Sales Order":
 				filtered_references.append(ref)
-		
+
 		self.set("references", filtered_references)
-		
+
 		frappe.db.sql(
 			"""delete from `tabPayment Entry Reference`
 			where parent = %s and allocated_amount = 0 and reference_doctype != 'Sales Order'""",
@@ -2162,9 +2162,9 @@ class PaymentEntry(AccountsController):
 		"""Get payment code from mode of payment"""
 		if not self.mode_of_payment:
 			return None
-		
+
 		return frappe.db.get_value("Mode of Payment", self.mode_of_payment, "payment_code")
-	
+
 	def set_payment_code(self):
 		if self.mode_of_payment:
 			self.payment_code = self.get_payment_code()
@@ -2172,19 +2172,19 @@ class PaymentEntry(AccountsController):
 	@frappe.whitelist()
 	def verify_payment(self):
 		"""Verify payment entry after bank transaction matching"""
-		payment_code = self.get_payment_code()		
+		payment_code = self.get_payment_code()
 		requires_bank_transaction = payment_code == "banking"
-		
+
 		if requires_bank_transaction and (not self.bank_transactions or len(self.bank_transactions) == 0):
 			frappe.throw(_("Cannot verify: Banking payment must have at least one Bank Transaction"))
-		
+
 		has_sales_order = any(ref.reference_doctype == "Sales Order" for ref in self.references)
 		if not has_sales_order:
 			frappe.throw(_("Cannot verify: Payment Entry must have at least one Sales Order reference"))
 
 		if not self.verified_by:
 			self.verified_by = frappe.session.user
-		
+
 		self.save()
 
 		frappe.msgprint(_("Payment Entry verified successfully"))
@@ -3921,7 +3921,7 @@ def get_customer_with_phone(doctype, txt, searchfield, start, page_len, filters)
 			OR phone LIKE %(txt)s
 		)
 		ORDER BY
-			CASE 
+			CASE
 				WHEN name LIKE %(txt)s THEN 0
 				WHEN customer_name LIKE %(txt)s THEN 1
 				ELSE 2
@@ -4067,7 +4067,7 @@ def cancel_pending_transfers():
 			doc.flags.ignore_permissions = True
 			doc.flags.ignore_validate = True
 			doc.save()
-			
+
 			frappe.db.sql("""
 				UPDATE `tabPayment Entry`
 				SET docstatus = 2,
@@ -4182,7 +4182,7 @@ def daily_run_success_batch():
 		filters={"enabled": 1, "webhook_doctype": "Payment Entry"},
 		fields=["name"]
 	)
-	
+
 	webhook = None
 	for wh in webhooks:
 		w = frappe.get_doc("Webhook", wh.name)
@@ -4226,5 +4226,5 @@ def daily_run_success_batch():
 			frappe.log_error(
 				f"Failed to trigger webhook for Payment Entry {pe_name}: {str(e)}",
 				"Payment Entry Webhook Trigger Error"
-			)		
+			)
 		time.sleep(1)
