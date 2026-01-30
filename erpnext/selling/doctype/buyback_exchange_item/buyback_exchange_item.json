@@ -91,7 +91,6 @@
  "module": "Selling",
  "name": "Buyback Exchange Item",
  "owner": "Administrator",
- "permissions": [],
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

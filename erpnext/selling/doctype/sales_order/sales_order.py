@@ -2689,7 +2689,7 @@ def link_buyback_items(sales_order, item_names):
 		item_names = json.loads(item_names)
 
 	if not item_names:
-		frappe.throw("No items selected")
+		frappe.throw(_("No items selected"))
 
 	updated_count = 0
 	for item_name in item_names:
