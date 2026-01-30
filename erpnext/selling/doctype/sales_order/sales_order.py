@@ -2668,7 +2668,10 @@ def _update_sales_order_return_amount(sales_order):
 
 	total_return_amount = 0.0
 	for item in buyback_items:
-		price = flt(item.calculated_buyback_price) or flt(item.buyback_price)
+		if item.calculated_buyback_price is not None:
+			price = flt(item.calculated_buyback_price)
+		else:
+			price = flt(item.buyback_price)
 		total_return_amount += price
 
 	frappe.db.set_value("Sales Order", sales_order, "return_amount", total_return_amount)
