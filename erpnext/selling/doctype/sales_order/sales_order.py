@@ -2652,6 +2652,29 @@ def get_split_orders_in_group(split_order_group, include_cancelled=False):
 	return orders
 
 
+def _update_sales_order_return_amount(sales_order):
+	"""
+	Recalculate and update the return_amount for the sales order based on linked buyback items.
+	Logic: Sum of (calculated_buyback_price IF exists ELSE buyback_price)
+	"""
+	if not sales_order:
+		return
+
+	buyback_items = frappe.get_all(
+		"Buyback Exchange Item",
+		filters={"current_sales_order": sales_order},
+		fields=["buyback_price", "calculated_buyback_price"],
+	)
+
+	total_return_amount = 0.0
+	for item in buyback_items:
+		price = flt(item.calculated_buyback_price) or flt(item.buyback_price)
+		total_return_amount += price
+
+	frappe.db.set_value("Sales Order", sales_order, "return_amount", total_return_amount)
+	return total_return_amount
+
+
 @frappe.whitelist()
 def get_buyback_items(sales_order):
 	return frappe.get_list("Buyback Exchange Item",
@@ -2699,18 +2722,36 @@ def link_buyback_items(sales_order, item_names):
 		except Exception as e:
 			frappe.log_error(f"Failed to link buyback item {item_name}: {e!s}")
 
+	if not updated_count:
+		return {
+			"success": False,
+			"message": _("No buyback items were updated"),
+			"count": 0
+		}
+
+	# Update total return amount on the Sales Order
+	new_total = _update_sales_order_return_amount(sales_order)
+
 	return {
 		"success": True,
 		"message": f"Successfully linked {updated_count} buyback item(s)",
-		"count": updated_count
+		"count": updated_count,
+		"return_amount": new_total
 	}
 
 @frappe.whitelist()
 def unlink_buyback_item(item_name):
 	"""Unlink a buyback item from the current sales order."""
+	current_so = frappe.db.get_value("Buyback Exchange Item", item_name, "current_sales_order")
+
 	frappe.db.set_value("Buyback Exchange Item", item_name, "current_sales_order", None)
+
+	new_total = 0.0
+	if current_so:
+		new_total = _update_sales_order_return_amount(current_so)
 
 	return {
 		"success": True,
-		"message": "Buyback item unlinked successfully"
+		"message": "Buyback item unlinked successfully",
+		"return_amount": new_total
 	}
