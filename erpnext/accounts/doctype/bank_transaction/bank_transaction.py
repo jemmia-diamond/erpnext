@@ -170,7 +170,6 @@ class BankTransaction(Document):
 						if self.sepay_transaction_date:
 							payment_entry.payment_date = get_datetime(self.sepay_transaction_date)
 
-						payment_entry.custom_webhook_processed = 0
 						payment_entry.modified_by = payment_entry.owner
 						payment_entry.save(ignore_permissions=True)
 				except Exception as e:
