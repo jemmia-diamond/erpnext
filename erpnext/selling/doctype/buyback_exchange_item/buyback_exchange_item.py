@@ -11,6 +11,7 @@ class BuybackExchangeItem(Document):
 	order_code: str
 	prev_sales_order: str
 	prev_sales_order_item: str
+	current_sales_order: str
 	sale_price: float
 	buyback_percentage: float
 	calculated_buyback_price: float
