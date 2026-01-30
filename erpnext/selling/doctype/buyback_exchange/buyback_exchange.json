@@ -37,11 +37,11 @@
    "label": "Instance Type"
   },
   {
-   "default": "Draft",
+   "default": "PENDING",
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Draft\nSubmitted\nCancelled\nCompleted"
+   "options": "PENDING\nCANCELED\nAPPROVED\nREJECTED"
   },
   {
    "fieldname": "submitted_date",
