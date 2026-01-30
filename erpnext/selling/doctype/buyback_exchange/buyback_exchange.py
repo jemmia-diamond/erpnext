@@ -59,21 +59,6 @@ class BuybackExchange(Document):
 			frappe.throw(f"Invalid products_info JSON in BuybackExchange {self.name}. Please check data from Lark.")
 
 	def resolve_item_reference(self, row):
-		"""
-		Attempt to match the buyback item to a previous Sales Order Item.
-		Heuristics:
-		1. If phone number is available:
-			- Search for Sales Order Items linked to this customer (by phone).
-			- For GIA items (code starts with 'GIA'), matches against 'sku' field using LIKE.
-			- For non-GIA items, matches against 'barcode' field using exact match.
-			- Sorts candidates by transaction date descending.
-		2. If ambiguity (multiple matches):
-			- Attempts to narrow down by matching numeric part of 'order_code' in the payload
-				against the 'order_number' or 'sales_order' name suffix.
-		3. Fallback (if no phone or no match by phone):
-			- Looks up Sales Order directly by 'order_code'.
-			- Tries to find the item within that order.
-		"""
 		if self.phone_number and row.item_code:
 			is_gia = str(row.item_code).startswith("GIA")
 			lookup_field = "sku" if is_gia else "barcode"
@@ -161,10 +146,6 @@ class BuybackExchange(Document):
 	def find_sales_order_by_number(self, number_part, original_raw_code=None):
 		"""
 		Finds a Sales Order by loosely matching the order number token.
-		Patterns checked:
-		- Exact match of original raw code
-		- ORDER{number}
-		- {number} (suffix match via LIKE)
 		"""
 		if original_raw_code:
 			if frappe.db.exists("Sales Order", {"order_number": original_raw_code}):
