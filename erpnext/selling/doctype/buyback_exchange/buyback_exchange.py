@@ -30,33 +30,50 @@ class BuybackExchange(Document):
 
 		try:
 			products = json.loads(self.products_info)
-			if isinstance(products, list):
-				if self.items:
-					return
+			if not isinstance(products, list):
+				frappe.throw(f"Invalid products_info in BuybackExchange {self.name}: Expected a list of products.")
 
-				for product in products:
-					row = self.append("items", {})
+			if self.items:
+				return
 
-					row.product_name = product.get("product_name")
-					row.item_code = product.get("code")
-					row.sale_price = product.get("sale_price")
-					row.buyback_percentage = product.get("buyback_percentage")
-					row.calculated_buyback_price = product.get("calculated_buyback_price")
-					row.buyback_price = product.get("buyback_price")
-					row.order_code = product.get("order_code")
+			for product in products:
+				row = self.append("items", {})
 
-					self.resolve_item_reference(row)
+				row.product_name = product.get("product_name")
+				row.item_code = product.get("code")
+				row.sale_price = product.get("sale_price")
+				row.buyback_percentage = product.get("buyback_percentage")
+				row.calculated_buyback_price = product.get("calculated_buyback_price")
+				row.buyback_price = product.get("buyback_price")
+				row.order_code = product.get("order_code")
 
-					if not self.order_code and row.order_code:
-						self.order_code = row.order_code
-					if not self.prev_sales_order and row.prev_sales_order:
-						self.prev_sales_order = row.prev_sales_order
+				self.resolve_item_reference(row)
 
-		except Exception:
-			frappe.log_error(f"Invalid products_info in BuybackExchange {self.name}", self.products_info)
+				if not self.order_code and row.order_code:
+					self.order_code = row.order_code
+				if not self.prev_sales_order and row.prev_sales_order:
+					self.prev_sales_order = row.prev_sales_order
+
+		except Exception as e:
+			frappe.log_error(f"Invalid products_info in BuybackExchange {self.name}: {e!s}", self.products_info)
 			frappe.throw(f"Invalid products_info JSON in BuybackExchange {self.name}. Please check data from Lark.")
 
 	def resolve_item_reference(self, row):
+		"""
+		Attempt to match the buyback item to a previous Sales Order Item.
+		Heuristics:
+		1. If phone number is available:
+			- Search for Sales Order Items linked to this customer (by phone).
+			- For GIA items (code starts with 'GIA'), matches against 'sku' field using LIKE.
+			- For non-GIA items, matches against 'barcode' field using exact match.
+			- Sorts candidates by transaction date descending.
+		2. If ambiguity (multiple matches):
+			- Attempts to narrow down by matching numeric part of 'order_code' in the payload
+				against the 'order_number' or 'sales_order' name suffix.
+		3. Fallback (if no phone or no match by phone):
+			- Looks up Sales Order directly by 'order_code'.
+			- Tries to find the item within that order.
+		"""
 		if self.phone_number and row.item_code:
 			is_gia = str(row.item_code).startswith("GIA")
 			lookup_field = "sku" if is_gia else "barcode"
@@ -135,12 +152,20 @@ class BuybackExchange(Document):
 		return self.find_sales_order_by_number(number_part, raw_code)
 
 	def extract_order_number(self, raw_code):
+		"""Extracts the first numeric sequence from the order string."""
 		match = re.search(r'(\d+)', str(raw_code))
 		if match:
 			return match.group(1)
 		return None
 
 	def find_sales_order_by_number(self, number_part, original_raw_code=None):
+		"""
+		Finds a Sales Order by loosely matching the order number token.
+		Patterns checked:
+		- Exact match of original raw code
+		- ORDER{number}
+		- {number} (suffix match via LIKE)
+		"""
 		if original_raw_code:
 			if frappe.db.exists("Sales Order", {"order_number": original_raw_code}):
 				return frappe.get_value("Sales Order", {"order_number": original_raw_code}, "name")

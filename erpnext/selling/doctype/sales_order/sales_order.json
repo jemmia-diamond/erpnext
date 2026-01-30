@@ -2132,9 +2132,8 @@
   },
   {
    "fieldname": "buyback_items",
-   "fieldtype": "Data",
-   "label": "Select Buyback Items",
-   "read_only": 1
+   "fieldtype": "Button",
+   "label": "Select buyback/exchange items"
   },
   {
    "fieldname": "invoice_information",

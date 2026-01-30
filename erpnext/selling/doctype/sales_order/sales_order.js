@@ -294,19 +294,15 @@ frappe.ui.form.on("Sales Order", {
 			frm.set_df_property("deposit_amount", "options", "currency");
 		}
 
-		// Make buyback_items field clickable to open selection dialog
-		if (!frm.doc.__islocal && frm.doc.docstatus === 0) {
-			frm.fields_dict.buyback_items.$wrapper.css('cursor', 'pointer');
-			if (frm.fields_dict.buyback_items.$input) {
-				frm.fields_dict.buyback_items.$input.css('cursor', 'pointer');
-			} else {
-				frm.fields_dict.buyback_items.$wrapper.find('.control-value').css('cursor', 'pointer');
-			}
-			frm.fields_dict.buyback_items.$wrapper.off('click').on('click', function() {
+		// Handle buyback button visibility and click
+		const can_add_buyback = !frm.doc.__islocal && frm.doc.docstatus === 0;
+		frm.toggle_display('buyback_items', can_add_buyback);
+		
+		if (can_add_buyback) {
+			// For Button field, bind to the input element
+			frm.fields_dict.buyback_items.$input.off('click').on('click', function() {
 				frm.trigger('show_buyback_selector');
 			});
-			// Set placeholder text
-			frm.set_value('buyback_items', 'Select buyback/exchange items');
 		}
 
 		frm.trigger('render_buyback_items');
@@ -554,29 +550,31 @@ frappe.ui.form.on("Sales Order", {
 					
 					// Add click handlers for unlink buttons
 					setTimeout(() => {
-						$('.btn-unlink-buyback').off('click').on('click', function(e) {
-							e.preventDefault();
-							const item_name = $(this).data('item-name');
-							
-							frappe.confirm(
-								__('Are you sure you want to unlink this buyback item?'),
-								() => {
-									frappe.call({
-										method: 'erpnext.selling.doctype.sales_order.sales_order.unlink_buyback_item',
-										args: { item_name: item_name },
-										callback: function(r) {
-											if (r.message && r.message.success) {
-												frappe.show_alert({
-													message: r.message.message,
-													indicator: 'green'
-												});
-												frm.trigger('render_buyback_items');
+						if (frm.fields_dict.buyback_items_html && frm.fields_dict.buyback_items_html.$wrapper) {
+							frm.fields_dict.buyback_items_html.$wrapper.find('.btn-unlink-buyback').off('click').on('click', function(e) {
+								e.preventDefault();
+								const item_name = $(this).data('item-name');
+								
+								frappe.confirm(
+									__('Are you sure you want to unlink this buyback item?'),
+									() => {
+										frappe.call({
+											method: 'erpnext.selling.doctype.sales_order.sales_order.unlink_buyback_item',
+											args: { item_name: item_name },
+											callback: function(r) {
+												if (r.message && r.message.success) {
+													frappe.show_alert({
+														message: r.message.message,
+														indicator: 'green'
+													});
+													frm.trigger('render_buyback_items');
+												}
 											}
-										}
-									});
-								}
-							);
-						});
+										});
+									}
+								);
+							});
+						}
 					}, 100);
 				} else {
 					// Hide only the items table, not the section

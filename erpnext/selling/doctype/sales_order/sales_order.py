@@ -2699,8 +2699,6 @@ def link_buyback_items(sales_order, item_names):
 		except Exception as e:
 			frappe.log_error(f"Failed to link buyback item {item_name}: {e!s}")
 
-	frappe.db.commit()
-
 	return {
 		"success": True,
 		"message": f"Successfully linked {updated_count} buyback item(s)",
@@ -2711,7 +2709,6 @@ def link_buyback_items(sales_order, item_names):
 def unlink_buyback_item(item_name):
 	"""Unlink a buyback item from the current sales order."""
 	frappe.db.set_value("Buyback Exchange Item", item_name, "current_sales_order", None)
-	frappe.db.commit()
 
 	return {
 		"success": True,

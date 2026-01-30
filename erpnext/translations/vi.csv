@@ -8735,7 +8735,6 @@ Pay,Trả,
 You can also copy-paste this link in your browser,Bạn cũng có thể sao chép-dán liên kết này trong trình duyệt của bạn,
 Verified By,Xác nhận bởi,
 Invalid naming series (. missing) for {0},Chuỗi đặt tên không hợp lệ (. Thiếu) cho {0},
-Phone Number,Số điện thoại,
 Account SID,Tài khoản SID,
 Global Defaults,Mặc định toàn cầu,
 Is Mandatory,Bắt buộc,
@@ -8795,3 +8794,35 @@ Total Allocated (Group),Tổng đã thanh toán (Nhóm)
 Balance (Group),Số dư (Nhóm)
 Return Type,Loại thu mua / thu đổi
 Return Amount,Số tiền thu mua / thu đổi
+Select buyback/exchange items,Chọn sản phẩm thu đổi
+No available buyback items found for this customer phone.,Không tìm thấy sản phẩm thu đổi phù hợp cho số điện thoại này.
+Select Buyback Items to Link,Chọn sản phẩm thu đổi để liên kết
+Link Selected Items,Liên kết sản phẩm
+Please select at least one item,Vui lòng chọn ít nhất một sản phẩm
+Sale Price,Giá bán
+Buyback Price,Giá thu đổi
+Buyback %,% Thu đổi
+Prev Sales Order,Đơn hàng cũ
+View Exchange,Xem phiếu đổi
+Unlink Item,Hủy liên kết
+Are you sure you want to unlink this buyback item?,Bạn có chắc chắn muốn hủy liên kết sản phẩm này không?
+Exchange Amount,Giá trị quy đổi
+No items selected,Chưa chọn sản phẩm nào
+Successfully linked {0} buyback item(s),Đã liên kết thành công {0} sản phẩm
+Buyback item unlinked successfully,Đã hủy liên kết sản phẩm thành công
+Lark Instance ID,Lark ID
+Instance Type,Loại Instance
+Submitted Date,Ngày gửi
+National ID,CMND/CCCD
+Order Code,Mã đơn hàng
+New Order Code,Mã đơn hàng mới
+Refund Amount,Số tiền hoàn lại
+Products Info,Thông tin sản phẩm
+Product Name,Tên sản phẩm
+Order Code (Raw),Mã đơn hàng (Gốc)
+Previous Sales Order,Đơn hàng cũ
+Previous Sales Order Item,Sản phẩm đơn hàng cũ
+Buyback Percentage,Tỷ lệ thu đổi
+Calculated Buyback Price,Giá thu đổi đã tính
+Invalid products_info in BuybackExchange {0}: Expected a list of products.,Thông tin sản phẩm không hợp lệ trong Phiếu Thu Đổi {0}: Cần danh sách sản phẩm.
+Invalid products_info JSON in BuybackExchange {0}. Please check data from Lark.,Dữ liệu JSON sản phẩm không hợp lệ trong Phiếu Thu Đổi {0}. Vui lòng kiểm tra dữ liệu từ Lark.
