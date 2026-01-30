@@ -526,7 +526,9 @@ class Lead(SellingController, CRMNote):
 				("updated_at", "updated_at"),
 				("customer_id", "pancake_customer_id"),
 				("inserted_at", "pancake_inserted_at"),
-				("inserted_at", "inserted_at")
+				("inserted_at", "inserted_at"),
+				("page_id", "pancake_page_id"),
+				("can_inbox", "can_inbox"),
 			]
 
 			for pancake_field, contact_field in fields_map:
@@ -534,6 +536,53 @@ class Lead(SellingController, CRMNote):
 				if value is not None and contact.get(contact_field) != value:
 					contact.set(contact_field, value)
 					has_changed = True
+
+			# 2. Update Standard Fields from Lead (New Logic)
+			lead_fields_map = [
+				("last_name", "last_name"),
+				("salutation", "salutation"),
+				("gender", "gender"),
+				("job_title", "designation"),
+				("company_name", "company_name"),
+			]
+
+			# Use first_name or lead_name logic similar to create_contact
+			if not contact.first_name and (self.first_name or self.lead_name):
+				contact.first_name = self.first_name or self.lead_name
+				has_changed = True
+
+			for lead_field, contact_field in lead_fields_map:
+				val = self.get(lead_field)
+				if val and contact.get(contact_field) != val:
+					contact.set(contact_field, val)
+					has_changed = True
+
+			# 3. Update Phones
+			existing_phones = [d.phone for d in contact.phone_nos]
+			if self.phone and self.phone not in existing_phones:
+				contact.append("phone_nos", {"phone": self.phone, "is_primary_phone": 1 if not existing_phones else 0})
+				existing_phones.append(self.phone)
+				has_changed = True
+
+			if self.mobile_no and self.mobile_no not in existing_phones:
+				contact.append("phone_nos", {"phone": self.mobile_no, "is_primary_mobile_no": 1 if not existing_phones else 0})
+				has_changed = True
+
+			# 4. Update Emails
+			existing_emails = [d.email_id for d in contact.email_ids]
+			if self.email_id and self.email_id not in existing_emails:
+				contact.append("email_ids", {"email_id": self.email_id, "is_primary": 1 if not existing_emails else 0})
+				has_changed = True
+
+			# 5. Update Source from Pancake (if applicable)
+			if pancake_data:
+				lead_source_data = self.check_lead_source(pancake_data=pancake_data)
+				if lead_source_data:
+					new_source = lead_source_data[0]
+					if contact.source != new_source:
+						contact.source = new_source
+						contact.source_group = lead_source_data[2]
+						has_changed = True
 
 			if has_changed:
 				contact.save(ignore_permissions=True)
