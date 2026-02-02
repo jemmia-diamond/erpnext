@@ -320,7 +320,7 @@ class PaymentEntry(AccountsController):
 		validate_docs_for_voucher_types(["Payment Entry"])
 		validate_docs_for_deferred_accounting([self.name], [])
 
-	def on_update_after_submit(self):		
+	def on_update_after_submit(self):
 		# Flag will be set on Reconciliation
 		# Reconciliation tool will anyways repost ledger entries. So, no need to check and do implicit repost.
 		if self.flags.get("ignore_reposting_on_reconciliation"):
@@ -802,7 +802,7 @@ class PaymentEntry(AccountsController):
 		for field in ("paid_amount", "received_amount", "source_exchange_rate", "target_exchange_rate"):
 			if not self.get(field):
 				frappe.throw(_("{0} is mandatory").format(self.meta.get_label(field)))
-		
+
 		if not self.payment_date and self.payment_code != "cash_on_delivery":
 			frappe.throw(_("Payment Date is mandatory"))
 
@@ -1462,9 +1462,9 @@ class PaymentEntry(AccountsController):
 		for ref in self.get("references"):
 			if ref.allocated_amount or ref.reference_doctype == "Sales Order":
 				filtered_references.append(ref)
-		
+
 		self.set("references", filtered_references)
-		
+
 		frappe.db.sql(
 			"""delete from `tabPayment Entry Reference`
 			where parent = %s and allocated_amount = 0 and reference_doctype != 'Sales Order'""",
@@ -2162,9 +2162,9 @@ class PaymentEntry(AccountsController):
 		"""Get payment code from mode of payment"""
 		if not self.mode_of_payment:
 			return None
-		
+
 		return frappe.db.get_value("Mode of Payment", self.mode_of_payment, "payment_code")
-	
+
 	def set_payment_code(self):
 		if self.mode_of_payment:
 			self.payment_code = self.get_payment_code()
@@ -2172,19 +2172,19 @@ class PaymentEntry(AccountsController):
 	@frappe.whitelist()
 	def verify_payment(self):
 		"""Verify payment entry after bank transaction matching"""
-		payment_code = self.get_payment_code()		
+		payment_code = self.get_payment_code()
 		requires_bank_transaction = payment_code == "banking"
-		
+
 		if requires_bank_transaction and (not self.bank_transactions or len(self.bank_transactions) == 0):
 			frappe.throw(_("Cannot verify: Banking payment must have at least one Bank Transaction"))
-		
+
 		has_sales_order = any(ref.reference_doctype == "Sales Order" for ref in self.references)
 		if not has_sales_order:
 			frappe.throw(_("Cannot verify: Payment Entry must have at least one Sales Order reference"))
 
 		if not self.verified_by:
 			self.verified_by = frappe.session.user
-		
+
 		self.save()
 
 		frappe.msgprint(_("Payment Entry verified successfully"))
@@ -3921,7 +3921,7 @@ def get_customer_with_phone(doctype, txt, searchfield, start, page_len, filters)
 			OR phone LIKE %(txt)s
 		)
 		ORDER BY
-			CASE 
+			CASE
 				WHEN name LIKE %(txt)s THEN 0
 				WHEN customer_name LIKE %(txt)s THEN 1
 				ELSE 2
@@ -4067,7 +4067,7 @@ def cancel_pending_transfers():
 			doc.flags.ignore_permissions = True
 			doc.flags.ignore_validate = True
 			doc.save()
-			
+
 			frappe.db.sql("""
 				UPDATE `tabPayment Entry`
 				SET docstatus = 2,
@@ -4176,13 +4176,91 @@ def get_payment_entry_list(doctype=None, txt="", searchfield="name", start=0, pa
 
 	return frappe.db.sql(query, values, as_dict=True)
 
+@frappe.whitelist()
+def recreate_payment_entry(payment_entry_name):
+	from frappe.utils import now_datetime, nowdate, flt
+
+	doc = frappe.get_doc("Payment Entry", payment_entry_name)
+
+	if doc.docstatus != 2:
+		frappe.throw(_("Chỉ có thể tạo lại phiếu từ phiếu đã huỷ"))
+
+	new_doc = frappe.copy_doc(doc)
+	new_doc.amended_from = None
+	new_doc.docstatus = 0
+	new_doc.payment_date = now_datetime()
+	new_doc.posting_date = nowdate()
+	new_doc.payment_order_status = 'Pending'
+
+	for field in new_doc.meta.fields:
+		if field.fieldname.startswith("custom_") or field.fieldname.startswith("misa_"):
+			new_doc.set(field.fieldname, None)
+
+	new_doc.custom_transaction_id = None
+	new_doc.custom_transfer_status = None
+	new_doc.qr_url = None
+	new_doc.save()
+	frappe.db.commit()
+
+	time.sleep(6)
+	alert_message = None
+	alert_indicator = "orange"
+	transfer_note = doc.custom_transfer_note
+	amount = flt(doc.paid_amount)
+	if transfer_note:
+		fields_to_search = [
+			"description",
+			"sepay_transaction_content",
+			"sepay_order_description",
+			"sepay_order_number"
+		]
+
+		conditions = " OR ".join([f"{field} LIKE %s" for field in fields_to_search])
+		query = f"""
+			SELECT name
+			FROM `tabBank Transaction`
+			WHERE ({conditions})
+			LIMIT 1
+		"""
+		params = [f"%{transfer_note}%"] * len(fields_to_search)
+		bank_transactions = frappe.db.sql(query, tuple(params), as_dict=True)
+
+		if bank_transactions:
+			bt_name = bank_transactions[0].name
+			bt = frappe.get_doc("Bank Transaction", bt_name)
+
+			if flt(bt.sepay_amount_in) == amount:
+				if bt.payment_entries:
+					alert_message = _("Giao dịch ngân hàng có nội dung chuyển khoản của phiếu cũ đã được map với phiếu khác")
+					alert_indicator = "orange"
+				else:
+					bt.append("payment_entries", {
+						"payment_document": "Payment Entry",
+						"payment_entry": new_doc.name,
+						"allocated_amount": amount
+					})
+					bt.save()
+					alert_message = _("Tạo và map giao dịch ngân hàng thành công")
+					alert_indicator = "green"
+			else:
+				alert_message = _("Không tìm thấy giao dịch ngân hàng khớp số tiền: '{0}' và nội dung: '{1}'. Vui lòng map thủ công.").format(amount, transfer_note)
+				alert_indicator = "red"
+		else:
+			alert_message = _("Không tìm thấy giao dịch ngân hàng khớp số tiền: '{0}' và nội dung: '{1}'. Vui lòng map thủ công.").format(amount, transfer_note)
+			alert_indicator = "red"
+	else:
+		alert_message = _("Thiếu nội dung chuyển khoản ở phiếu cũ")
+		alert_indicator = "red"
+
+	return { "name": new_doc.name, "alert": alert_message, "indicator": alert_indicator }
+
 def daily_run_success_batch():
 	webhooks = frappe.get_all(
 		"Webhook",
 		filters={"enabled": 1, "webhook_doctype": "Payment Entry"},
 		fields=["name"]
 	)
-	
+
 	webhook = None
 	for wh in webhooks:
 		w = frappe.get_doc("Webhook", wh.name)
@@ -4226,5 +4304,5 @@ def daily_run_success_batch():
 			frappe.log_error(
 				f"Failed to trigger webhook for Payment Entry {pe_name}: {str(e)}",
 				"Payment Entry Webhook Trigger Error"
-			)		
+			)
 		time.sleep(1)
