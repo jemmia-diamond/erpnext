@@ -19,6 +19,9 @@ from erpnext.crm.doctype.lead_product.lead_product_dao import create_lead_produc
 if TYPE_CHECKING:
 	from frappe.model.document import Document
 
+def is_non_empty(value: str | None) -> bool:
+	return bool(value and value.strip())
+
 @frappe.whitelist(methods=["POST", "PUT"])
 def insert_lead_by_batch(docs=None):
 	"""Insert multiple lead
@@ -35,7 +38,13 @@ def insert_lead_by_batch(docs=None):
 		doc = doc.copy()
 		pancake_data = doc.get("pancake_data", {})
 		conversation_id = pancake_data.get("conversation_id")
-		if not conversation_id or not conversation_id.strip():
+
+		if not is_non_empty(conversation_id):
+			conversation_id = None
+			frappe.logger().warning(
+				"insert_lead_by_batch: missing conversation_id",
+				exc_info=False
+			)
 			result.append({
 				"name": None,
 				"conversation_id": conversation_id
@@ -92,7 +101,7 @@ def insert_lead(doc) -> "Document":
 	page_id = pancake_data.get("page_id")
 	conversation_id = pancake_data.get("conversation_id")
 
-	if conversation_id and conversation_id.strip():
+	if is_non_empty(conversation_id):
 		existing_lead_name = get_lead_name_by_conversation_id(conversation_id)
 		if existing_lead_name:
 			existing_doc: Lead = frappe.get_doc("Lead", existing_lead_name)
@@ -102,7 +111,7 @@ def insert_lead(doc) -> "Document":
 			return existing_doc
 
 	# Check if lead exists by phone
-	if is_valid_phone and pancake_phone and pancake_phone.strip():
+	if is_valid_phone and is_non_empty(pancake_phone):
 		existing_lead_name = frappe.db.get_value("Lead", {"phone": pancake_phone}, "name")
 		if existing_lead_name:
 			existing_doc = frappe.get_doc("Lead", existing_lead_name)
@@ -176,7 +185,7 @@ def backfill_lead_info(docs):
             ids_to_update.append(lead_id)
 
             # Build CASE WHEN clauses for first_name with nested conditions
-            if new_name:  # Only add clause if new_name is not empty
+            if is_non_empty(new_name):  # Only add clause if new_name is not empty
                 name_case_when_clauses.append("""
                     WHEN name = %s THEN
                         CASE
@@ -188,7 +197,7 @@ def backfill_lead_info(docs):
                 sql_params_name.extend([lead_id, new_name])
 
             # Build CASE WHEN clauses for phone with nested conditions
-            if new_phone:  # Only add clause if new_phone is not empty
+            if is_non_empty(new_phone):  # Only add clause if new_phone is not empty
                 phone_case_when_clauses.append("""
                     WHEN name = %s THEN
                         CASE
@@ -252,7 +261,7 @@ def update_lead_by_batch(docs):
 				existing_doc = frappe.get_doc(doc["doctype"], doc["docname"])
 			except (frappe.DoesNotExistError, Exception):
 				conversation_id = pancake_data.get("conversation_id")
-				lead_name = get_lead_name_by_conversation_id(conversation_id) if conversation_id and conversation_id.strip() else None
+				lead_name = get_lead_name_by_conversation_id(conversation_id) if is_non_empty(conversation_id) else None
 
 				if lead_name:
 					existing_doc = frappe.get_doc(doc["doctype"], lead_name)
@@ -265,7 +274,7 @@ def update_lead_by_batch(docs):
 
 			# Check if the new phone number already exists in another lead
 			new_phone = doc.get("phone")
-			if new_phone and new_phone.strip():
+			if is_non_empty(new_phone):
 				existing_doc = handle_duplicate_and_merge(
 					existing_doc,
 					new_phone
@@ -311,7 +320,7 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 	If so, keep the oldest lead (by first_reach_at), merge contacts, and delete the duplicate.
 	Returns the 'master' document that survived.
 	"""
-	if not new_phone or not new_phone.strip():
+	if not is_non_empty(new_phone):
 		return existing_doc
 
 	conflicting_lead = frappe.db.get_value("Lead", {"phone": new_phone}, "name")
@@ -384,7 +393,11 @@ def update_lead_from_summary(data):
 		data = frappe.parse_json(data)
 
 	conversation_id = data.get("conversation_id")
-	if not conversation_id or not conversation_id.strip():
+	if not is_non_empty(conversation_id):
+		frappe.logger().warning(
+			"update_lead_from_summary: missing conversation_id",
+			exc_info=False
+		)
 		return
 
 	lead_name = get_lead_name_by_conversation_id(conversation_id)
