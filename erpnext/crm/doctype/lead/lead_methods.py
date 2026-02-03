@@ -40,7 +40,6 @@ def insert_lead_by_batch(docs=None):
 		conversation_id = pancake_data.get("conversation_id")
 
 		if not is_non_empty(conversation_id):
-			conversation_id = None
 			frappe.logger().warning(
 				"insert_lead_by_batch: missing conversation_id",
 				exc_info=False
