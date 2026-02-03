@@ -32,8 +32,16 @@ def insert_lead_by_batch(docs=None):
 
 	result = []
 	for doc in docs:
+		doc = doc.copy()
 		pancake_data = doc.get("pancake_data", {})
 		conversation_id = pancake_data.get("conversation_id")
+		if not conversation_id or not conversation_id.strip():
+			result.append({
+				"name": None,
+				"conversation_id": conversation_id
+			})
+			continue
+
 		try:
 			inserted_doc = insert_lead(doc)
 			if inserted_doc:
@@ -84,7 +92,7 @@ def insert_lead(doc) -> "Document":
 	page_id = pancake_data.get("page_id")
 	conversation_id = pancake_data.get("conversation_id")
 
-	if conversation_id:
+	if conversation_id and conversation_id.strip():
 		existing_lead_name = get_lead_name_by_conversation_id(conversation_id)
 		if existing_lead_name:
 			existing_doc: Lead = frappe.get_doc("Lead", existing_lead_name)
@@ -94,7 +102,7 @@ def insert_lead(doc) -> "Document":
 			return existing_doc
 
 	# Check if lead exists by phone
-	if is_valid_phone and pancake_phone:
+	if is_valid_phone and pancake_phone and pancake_phone.strip():
 		existing_lead_name = frappe.db.get_value("Lead", {"phone": pancake_phone}, "name")
 		if existing_lead_name:
 			existing_doc = frappe.get_doc("Lead", existing_lead_name)
@@ -231,6 +239,7 @@ def update_lead_by_batch(docs):
 	failed_docs = []
 	results = []
 	for doc in docs:
+		doc = doc.copy()
 		doc.pop("flags", None)
 		pancake_data = doc.get("pancake_data", {})
 		try:
@@ -243,7 +252,7 @@ def update_lead_by_batch(docs):
 				existing_doc = frappe.get_doc(doc["doctype"], doc["docname"])
 			except (frappe.DoesNotExistError, Exception):
 				conversation_id = pancake_data.get("conversation_id")
-				lead_name = get_lead_name_by_conversation_id(conversation_id) if conversation_id else None
+				lead_name = get_lead_name_by_conversation_id(conversation_id) if conversation_id and conversation_id.strip() else None
 
 				if lead_name:
 					existing_doc = frappe.get_doc(doc["doctype"], lead_name)
@@ -256,7 +265,7 @@ def update_lead_by_batch(docs):
 
 			# Check if the new phone number already exists in another lead
 			new_phone = doc.get("phone")
-			if new_phone:
+			if new_phone and new_phone.strip():
 				existing_doc = handle_duplicate_and_merge(
 					existing_doc,
 					new_phone
@@ -302,6 +311,9 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 	If so, keep the oldest lead (by first_reach_at), merge contacts, and delete the duplicate.
 	Returns the 'master' document that survived.
 	"""
+	if not new_phone or not new_phone.strip():
+		return existing_doc
+
 	conflicting_lead = frappe.db.get_value("Lead", {"phone": new_phone}, "name")
 
 	if not conflicting_lead or conflicting_lead == existing_doc.name:
@@ -372,7 +384,7 @@ def update_lead_from_summary(data):
 		data = frappe.parse_json(data)
 
 	conversation_id = data.get("conversation_id")
-	if not conversation_id:
+	if not conversation_id or not conversation_id.strip():
 		return
 
 	lead_name = get_lead_name_by_conversation_id(conversation_id)
