@@ -161,6 +161,32 @@ frappe.ui.form.on("Customer", {
 			// Load customer orders
 			frm.trigger("load_sales_orders");
 
+			if (!frm.doc.__islocal) {
+				frappe.call({
+					method: "erpnext.selling.doctype.customer.customer.get_customer_buybacks",
+					args: {
+						customer_name: frm.doc.name,
+						phone_number: frm.doc.phone || frm.doc.mobile_no
+					},
+					callback: function(r) {
+						if (r.message) {
+							frm.clear_table("buyback_history");
+							r.message.forEach(function(row) {
+								let child = frm.add_child("buyback_history");
+								child.buyback_exchange = row.name;
+								child.instance_type = row.instance_type;
+								child.submitted_date = row.submitted_date;
+								child.refund_amount = row.refund_amount;
+								child.status = row.status;
+								child.reason = row.reason;
+								child.new_order_code = row.new_order_code;
+							});
+							frm.refresh_field("buyback_history");
+						}
+					}
+				});
+			}
+
 			frm.add_custom_button(
 				__("Accounts Receivable"),
 				function () {
@@ -364,7 +390,7 @@ frappe.ui.form.on("Customer", {
 						}
 
 						const display_order_number = order.order_number || order.name;
-						
+
 						let coupon_display = '';
 						if (order.haravan_coupon_code) {
 							// Split by newline and wrap in code/badge
