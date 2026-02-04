@@ -6,6 +6,7 @@
  "engine": "InnoDB",
  "field_order": [
   "buyback_exchange",
+  "instance_type",
   "submitted_date",
   "refund_amount",
   "status",
@@ -19,6 +20,13 @@
    "in_list_view": 1,
    "label": "Buyback ID",
    "options": "Buyback Exchange",
+   "read_only": 1
+  },
+  {
+   "fieldname": "instance_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Instance Type",
    "read_only": 1
   },
   {
