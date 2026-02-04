@@ -254,9 +254,8 @@
   },
   {
    "fieldname": "bank_account_branch",
-   "fieldtype": "Select",
+   "fieldtype": "Data",
    "label": "Branch",
-   "options": "C\\u1eeda h\\u00e0ng HCM\\nC\\u1eeda h\\u00e0ng C\\u1ea7n Th\\u01a1\\nC\\u1eeda h\\u00e0ng H\\u00e0 N\\u1ed9i",
    "read_only": 1
   }
  ],
