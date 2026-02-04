@@ -14,6 +14,10 @@
   "balance",
   "mode_of_payment",
   "gateway",
+  "bank_account",
+  "bank",
+  "bank_account_no",
+  "bank_account_branch",
   "payment_date",
   "payment_order_status",
   "due_date",
@@ -226,6 +230,33 @@
    "fieldname": "reconcile_effect_on",
    "fieldtype": "Date",
    "label": "Reconcile Effect On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bank_account",
+   "fieldtype": "Link",
+   "label": "Company Bank Account",
+   "options": "Bank Account",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "bank",
+   "fieldtype": "Data",
+   "label": "Bank",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bank_account_no",
+   "fieldtype": "Data",
+   "label": "Bank Account No",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bank_account_branch",
+   "fieldtype": "Select",
+   "label": "Branch",
+   "options": "C\\u1eeda h\\u00e0ng HCM\\nC\\u1eeda h\\u00e0ng C\\u1ea7n Th\\u01a1\\nC\\u1eeda h\\u00e0ng H\\u00e0 N\\u1ed9i",
    "read_only": 1
   }
  ],
