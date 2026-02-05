@@ -235,6 +235,7 @@
   "sales_team_tab",
   "section_break1",
   "primary_sales_person",
+  "commission_base_amount",
   "sales_team",
   "haravan_tab",
   "section_break_pulu",
@@ -1935,7 +1936,6 @@
    "label": "Payment Entries",
    "options": "Payment Entry Reference"
   },
-
   {
    "fieldname": "section_break_group_payment",
    "fieldtype": "Section Break"
@@ -2222,13 +2222,20 @@
    "fieldname": "payment_entries_tab",
    "fieldtype": "Tab Break",
    "label": "Payment Entries"
+  },
+  {
+   "fieldname": "commission_base_amount",
+   "fieldtype": "Currency",
+   "label": "Base Commission Amount",
+   "permlevel": 3,
+   "precision": "0"
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-05 04:41:59.264750",
+ "modified": "2026-02-05 11:36:30.967138",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
