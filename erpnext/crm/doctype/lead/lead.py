@@ -6,6 +6,7 @@ from frappe.contacts.address_and_contact import (
 	delete_contact_and_address,
 	load_address_and_contact,
 )
+from frappe.contacts.doctype.contact.contact import Contact
 from frappe.email.inbox import link_communication_to_document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import comma_and, get_link_to_form, has_gravatar, validate_email_address
@@ -513,7 +514,7 @@ class Lead(SellingController, CRMNote):
 		except Exception as e:
 			frappe.log_error(f"Error link_to_contacts {e}")
 
-	def update_contact(self, contact, pancake_data):
+	def update_contact(self, contact: Contact, pancake_data):
 		try:
 			if not contact or not pancake_data:
 				return
@@ -533,6 +534,27 @@ class Lead(SellingController, CRMNote):
 				value = pancake_data.get(pancake_field)
 				if value is not None and contact.get(contact_field) != value:
 					contact.set(contact_field, value)
+					has_changed = True
+
+			if self.phone:
+				phone_exists = False
+				has_primary_phone = False
+				has_primary_mobile = False
+
+				for d in contact.get("phone_nos", []):
+					if d.phone == self.phone:
+						phone_exists = True
+					if d.get("is_primary_phone"):
+						has_primary_phone = True
+					if d.get("is_primary_mobile_no"):
+						has_primary_mobile = True
+
+				if not phone_exists:
+					contact.append("phone_nos", {
+						"phone": self.phone,
+						"is_primary_phone": 0 if has_primary_phone else 1,
+						"is_primary_mobile_no": 0 if has_primary_mobile else 1
+					})
 					has_changed = True
 
 			if has_changed:
