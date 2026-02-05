@@ -557,6 +557,10 @@ frappe.ui.form.on("Payment Entry", {
 						[bt.allocated_amount, frm.doc.paid_amount]));
 				}
 			}
+
+			if (!bt.bank_transaction) {
+				frappe.throw(__("Dòng #{0}: Bắt buộc chọn Giao dịch ngân hàng", [bt.idx]));
+			}
 		}
 	},
 
