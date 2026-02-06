@@ -149,6 +149,9 @@ class BankTransaction(Document):
 			if pe_row.payment_document == "Payment Entry" and pe_row.payment_entry:
 				try:
 					payment_entry = frappe.get_doc("Payment Entry", pe_row.payment_entry)
+					if payment_entry.bank_account_no != self.sepay_account_number:
+						continue
+
 					existing = any(
 						bt.bank_transaction == self.name
 						for bt in payment_entry.bank_transactions
