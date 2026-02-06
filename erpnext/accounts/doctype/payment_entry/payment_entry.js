@@ -1615,7 +1615,7 @@ frappe.ui.form.on("Payment Entry", {
 			if (row.allocated_amount) {
 				total_allocated += flt(row.allocated_amount);
 				let max_amount = row.balance || row.outstanding_amount || 0;
-				if (flt(row.allocated_amount) > flt(max_amount)) {
+				if (flt(max_amount) > 0 && flt(row.allocated_amount) > flt(max_amount)) {
 					frappe.throw({
 						title: __("Phân bổ vượt số dư"),
 						indicator: "red",
