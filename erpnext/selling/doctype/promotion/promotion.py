@@ -42,20 +42,20 @@ def update_promotion_status():
 
 	frappe.db.sql("""
 		UPDATE `tabPromotion`
-		SET is_active = 0, is_expired = 1
-		WHERE end_date < %s AND (is_active = 1 OR is_expired = 0)
+		SET is_active = 0
+		WHERE end_date < %s AND is_active = 1
 	""", (today,))
 
 	frappe.db.sql("""
 		UPDATE `tabPromotion`
-		SET is_active = 1, is_expired = 0
+		SET is_active = 1
 		WHERE start_date <= %s
 		AND (end_date >= %s OR end_date IS NULL)
-		AND (is_active = 0 OR is_expired = 1)
+		AND is_active = 0
 	""", (today, today))
 
 	frappe.db.sql("""
 		UPDATE `tabPromotion`
-		SET is_active = 0, is_expired = 0
-		WHERE start_date > %s AND (is_active = 1 OR is_expired = 1)
+		SET is_active = 0
+		WHERE start_date > %s AND is_active = 1
 	""", (today,))
