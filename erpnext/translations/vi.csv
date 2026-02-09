@@ -8795,7 +8795,7 @@ Balance (Group),Số dư (Nhóm)
 Return Type,Loại thu mua / thu đổi
 Return Amount,Số tiền thu mua / thu đổi
 Select buyback/exchange items,Chọn sản phẩm thu đổi
-No available buyback items found for this customer phone.,Không tìm thấy sản phẩm thu đổi phù hợp cho số điện thoại này.
+No available buyback items found for this customer phone, Please create Lark Approval for Buyback,Không tìm thấy sản phẩm thu đổi phù hợp cho số điện thoại này, Vui lòng tạo phiếu thu đổi trên Lark Approval
 Select Buyback Items to Link,Chọn sản phẩm thu đổi để liên kết
 Link Selected Items,Liên kết sản phẩm
 Please select at least one item,Vui lòng chọn ít nhất một sản phẩm
