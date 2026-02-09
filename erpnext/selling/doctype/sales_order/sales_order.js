@@ -305,6 +305,14 @@ frappe.ui.form.on("Sales Order", {
 			});
 		}
 
+		// Add guidance message for promotion field
+		frm.fields_dict.items.grid.update_docfield_property("promotion", "description",
+			__("<b>Lưu ý:</b><br>" +
+			"Mỗi CTKM chỉ áp dụng cho sản phẩm đơn chiếc nên cần lưu ý trong trường hợp sản phẩm là <b>Bông Tai</b>:<br>" +
+			"- <b>Đối với Sản phẩm tạm:</b> Chọn 02 mã CTKM (tương ứng cho 02 chiếc đơn lẻ cấu thành một cặp). (ví dụ: với SPT giảm 2tr, chọn 2 voucher giảm 1tr)<br>" +
+			"- <b>Đối với Sản phẩm tồn kho:</b> Chỉ chọn duy nhất 01 CTKM. (ví dụ, với Bông Tai giảm 1tr, chỉ chọn 1 voucher giảm 500.000)<br><br>" +
+			"Nếu không tìm thấy, liên hệ Marketing để được hỗ trợ"));
+
 		frm.trigger('render_buyback_items');
 	},
 	
