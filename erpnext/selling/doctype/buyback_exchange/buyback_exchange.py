@@ -4,6 +4,10 @@ import re
 import frappe
 from frappe.model.document import Document
 
+from erpnext.selling.doctype.sales_order.sales_order import (
+	_update_sales_order_return_amount,
+)
+
 
 class BuybackExchange(Document):
 	lark_instance_id: str
@@ -33,6 +37,8 @@ class BuybackExchange(Document):
 		if sales_order:
 			for item in self.items:
 				item.current_sales_order = sales_order
+
+			_update_sales_order_return_amount(sales_order)
 
 	def process_products_info(self):
 		if not self.products_info:
