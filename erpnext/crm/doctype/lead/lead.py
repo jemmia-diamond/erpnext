@@ -527,7 +527,8 @@ class Lead(SellingController, CRMNote):
 				("updated_at", "updated_at"),
 				("customer_id", "pancake_customer_id"),
 				("inserted_at", "pancake_inserted_at"),
-				("inserted_at", "inserted_at")
+				("inserted_at", "inserted_at"),
+				("ad_ids", "ad_ids")
 			]
 
 			for pancake_field, contact_field in fields_map:
@@ -710,7 +711,8 @@ class Lead(SellingController, CRMNote):
 				"pancake_updated_at": pancake_dict.get("updated_at") or None,
 				"pancake_page_id": pancake_dict.get("page_id") or None,
 				"can_inbox": pancake_dict.get("can_inbox") or 0,
-				"last_message_time" :  pancake_dict.get("latest_message_at") or None
+				"last_message_time" :  pancake_dict.get("latest_message_at") or None,
+				"ad_ids": pancake_dict.get("ad_ids") or None
 			}
 		)
 
