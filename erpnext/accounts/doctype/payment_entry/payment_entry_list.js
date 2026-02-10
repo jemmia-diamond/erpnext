@@ -65,7 +65,7 @@ frappe.listview_settings["Payment Entry"] = {
 			$order_input.on('input', function() {
 				const order_number = $(this).val();
 				clearTimeout(order_timeout);
-				
+
 				order_timeout = setTimeout(() => {
 					custom_order_search = order_number || null;
 					listview.refresh();
@@ -102,6 +102,25 @@ frappe.listview_settings["Payment Entry"] = {
 			$my_entries_wrapper.append($my_entries_checkbox);
 
 			$filter_area.append($my_entries_wrapper).append($phone_wrapper).append($order_wrapper).append($reference_wrapper);
+
+			const $total_wrapper = $('<div class="form-group frappe-control input-max-width col-md-2" style="margin-top: 8px; font-weight: bold; color: var(--text-color);"></div>');
+			const $total_label = $('<span>' + __('Total Paid: ') + '</span><span id="total-paid-amount">0</span>');
+			$total_wrapper.append($total_label);
+			$filter_area.append($total_wrapper);
+
+			const original_refresh = listview.refresh.bind(listview);
+			listview.refresh = function() {
+				original_refresh();
+				frappe.call({
+					method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_payment_entry_list_total",
+					args: listview.get_args(),
+					callback: function(r) {
+						if (r.message != null) {
+							$('#total-paid-amount').text(format_currency(r.message));
+						}
+					}
+				});
+			};
 		}
 	},
 };

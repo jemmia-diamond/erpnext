@@ -4122,6 +4122,57 @@ def get_payment_entry_list(doctype=None, txt="", searchfield="name", start=0, pa
 
 	query += " WHERE 1=1"
 
+	if conditions:
+		query += " AND " + " AND ".join(conditions)
+
+	query += " ORDER BY pe.modified DESC LIMIT %(start)s, %(page_len)s"
+	values["start"] = int(start)
+	values["page_len"] = int(page_len) if page_len else 100
+
+	return frappe.db.sql(query, values, as_dict=True)
+
+@frappe.whitelist()
+def get_payment_entry_list_total(doctype=None, txt="", searchfield="name", filters=None, **kwargs):
+	phone_search = frappe.form_dict.get("phone_search") or kwargs.get("phone_search")
+	order_number_search = frappe.form_dict.get("order_number_search") or kwargs.get("order_number_search")
+	reference_filter = frappe.form_dict.get("reference_filter") or kwargs.get("reference_filter")
+
+	frappe.errprint(f"DEBUG: filters={filters}, phone={phone_search}, order={order_number_search}")
+
+	conditions, values = _get_payment_entry_list_query(phone_search, order_number_search, reference_filter, filters, txt)
+
+	frappe.errprint(f"DEBUG: conditions={conditions}")
+	frappe.errprint(f"DEBUG: values={values}")
+
+	# Use subquery to ensure we sum unique Payment Entries (avoiding duplicates from Joins)
+	subquery = """
+		SELECT DISTINCT pe.name, pe.paid_amount
+		FROM `tabPayment Entry` pe
+	"""
+
+	if order_number_search:
+		subquery += " INNER JOIN `tabPayment Entry Reference` per ON per.parent = pe.name"
+
+	if phone_search:
+		subquery += " INNER JOIN `tabCustomer` c ON c.name = pe.party AND pe.party_type = 'Customer'"
+
+	subquery += " WHERE 1=1"
+
+	if conditions:
+		subquery += " AND " + " AND ".join(conditions)
+
+	query = f"""
+		SELECT SUM(sub.paid_amount) as total_paid_amount
+		FROM ({subquery}) as sub
+	"""
+
+	result = frappe.db.sql(query, values, as_dict=True)
+	return result[0].total_paid_amount if result and result[0].total_paid_amount else 0
+
+def _get_payment_entry_list_query(phone_search, order_number_search, reference_filter, filters, txt):
+	conditions = []
+	values = {}
+
 	if phone_search:
 		conditions.append("(c.mobile_no LIKE %(phone)s OR c.phone LIKE %(phone)s)")
 		values["phone"] = f"%{phone_search}%"
@@ -4174,19 +4225,27 @@ def get_payment_entry_list(doctype=None, txt="", searchfield="name", start=0, pa
 						elif operator == "<=":
 							conditions.append(f"pe.{field} <= %(filter_{field})s")
 							values[f"filter_{field}"] = value
+						elif operator.lower() == "between":
+							if isinstance(value, (list, tuple)) and len(value) == 2:
+								conditions.append(f"pe.{field} BETWEEN %(filter_{field}_start)s AND %(filter_{field}_end)s")
+								values[f"filter_{field}_start"] = value[0]
+
+								end_date = value[1]
+								if isinstance(end_date, str) and len(end_date) == 10:
+									end_date += " 23:59:59.999999"
+								values[f"filter_{field}_end"] = end_date
+						elif operator.lower() == "is":
+							conditions.append(f"pe.{field} IS %(filter_{field})s")
+							values[f"filter_{field}"] = value
+						elif operator.lower() == "is not":
+							conditions.append(f"pe.{field} IS NOT %(filter_{field})s")
+							values[f"filter_{field}"] = value
 
 	if txt:
 		conditions.append("(pe.name LIKE %(txt)s OR pe.party_name LIKE %(txt)s)")
 		values["txt"] = f"%{txt}%"
 
-	if conditions:
-		query += " AND " + " AND ".join(conditions)
-
-	query += " ORDER BY pe.modified DESC LIMIT %(start)s, %(page_len)s"
-	values["start"] = int(start)
-	values["page_len"] = int(page_len) if page_len else 100
-
-	return frappe.db.sql(query, values, as_dict=True)
+	return conditions, values
 
 @frappe.whitelist()
 def recreate_payment_entry(payment_entry_name):
