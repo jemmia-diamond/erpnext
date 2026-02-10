@@ -1,5 +1,7 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
+import json
+
 import frappe
 from frappe import _
 from frappe.contacts.address_and_contact import (
@@ -533,6 +535,10 @@ class Lead(SellingController, CRMNote):
 
 			for pancake_field, contact_field in fields_map:
 				value = pancake_data.get(pancake_field)
+
+				if contact_field == "ad_ids" and isinstance(value, list):
+					value = json.dumps(value)
+
 				if value is not None and contact.get(contact_field) != value:
 					contact.set(contact_field, value)
 					has_changed = True
@@ -712,7 +718,7 @@ class Lead(SellingController, CRMNote):
 				"pancake_page_id": pancake_dict.get("page_id") or None,
 				"can_inbox": pancake_dict.get("can_inbox") or 0,
 				"last_message_time" :  pancake_dict.get("latest_message_at") or None,
-				"ad_ids": pancake_dict.get("ad_ids") or None
+				"ad_ids": json.dumps(pancake_dict.get("ad_ids")) if isinstance(pancake_dict.get("ad_ids"), list) else (pancake_dict.get("ad_ids") or None)
 			}
 		)
 
