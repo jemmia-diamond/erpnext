@@ -108,18 +108,16 @@ frappe.listview_settings["Payment Entry"] = {
 			$total_wrapper.append($total_label);
 			$filter_area.append($total_wrapper);
 
-			const original_refresh = listview.refresh.bind(listview);
-			listview.refresh = function() {
-				original_refresh();
-				frappe.call({
-					method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_payment_entry_list_total",
-					args: listview.get_args(),
-					callback: function(r) {
-						if (r.message != null) {
-							$('#total-paid-amount').text(format_currency(r.message));
-						}
-					}
-				});
+			const original_render = listview.render.bind(listview);
+			listview.render = function() {
+				original_render.apply(listview, arguments);
+
+				let total = 0;
+				if (listview.data && listview.data.length) {
+					total = listview.data.reduce((sum, item) => sum + flt(item.paid_amount), 0);
+				}
+
+				$('#total-paid-amount').text(format_currency(total, null, 0));
 			};
 		}
 	},

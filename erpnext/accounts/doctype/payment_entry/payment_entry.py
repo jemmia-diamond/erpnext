@@ -4137,12 +4137,7 @@ def get_payment_entry_list_total(doctype=None, txt="", searchfield="name", filte
 	order_number_search = frappe.form_dict.get("order_number_search") or kwargs.get("order_number_search")
 	reference_filter = frappe.form_dict.get("reference_filter") or kwargs.get("reference_filter")
 
-	frappe.errprint(f"DEBUG: filters={filters}, phone={phone_search}, order={order_number_search}")
-
 	conditions, values = _get_payment_entry_list_query(phone_search, order_number_search, reference_filter, filters, txt)
-
-	frappe.errprint(f"DEBUG: conditions={conditions}")
-	frappe.errprint(f"DEBUG: values={values}")
 
 	# Use subquery to ensure we sum unique Payment Entries (avoiding duplicates from Joins)
 	subquery = """
