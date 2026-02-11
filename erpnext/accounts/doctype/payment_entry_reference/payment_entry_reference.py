@@ -17,22 +17,35 @@ class PaymentEntryReference(Document):
 		account: DF.Link | None
 		account_type: DF.Data | None
 		allocated_amount: DF.Float
+		balance: DF.Currency
+		bank: DF.Data | None
+		bank_account: DF.Link | None
+		bank_account_branch: DF.Data | None
+		bank_account_no: DF.Data | None
 		bill_no: DF.Data | None
 		due_date: DF.Date | None
 		exchange_gain_loss: DF.Currency
 		exchange_rate: DF.Float
+		gateway: DF.Data | None
+		mode_of_payment: DF.Link | None
+		order_number: DF.Data | None
 		outstanding_amount: DF.Float
+		paid_amount: DF.Currency
 		parent: DF.Data
 		parentfield: DF.Data
 		parenttype: DF.Data
+		payment_date: DF.Datetime | None
+		payment_order_status: DF.Data | None
 		payment_request: DF.Link | None
-		payment_request_outstanding: DF.Float
 		payment_term: DF.Link | None
 		payment_term_outstanding: DF.Float
 		payment_type: DF.Data | None
 		reconcile_effect_on: DF.Date | None
+		ref_order_date: DF.Date | None
+		ref_order_number: DF.Data | None
 		reference_doctype: DF.Link
 		reference_name: DF.DynamicLink
+		split_order_group_name: DF.Data | None
 		total_amount: DF.Float
 	# end: auto-generated types
 
