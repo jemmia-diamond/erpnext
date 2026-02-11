@@ -358,6 +358,15 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 				WHERE link_doctype = 'Lead' AND link_name = %s AND parent = %s
 			""", (master_doc.name, loser_doc.name, lc.name))
 
+		if not master_doc.region and loser_doc.region:
+			master_doc.region = loser_doc.region
+
+		if not master_doc.province and loser_doc.province:
+			master_doc.province = loser_doc.province
+
+		if not master_doc.budget_lead and loser_doc.budget_lead:
+			master_doc.budget_lead = loser_doc.budget_lead
+
 		frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True, force=1)
 
 		master_doc.set_first_lead_source()
