@@ -364,6 +364,9 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 		if not master_doc.province and loser_doc.province:
 			master_doc.province = loser_doc.province
 
+		if not master_doc.budget_lead and loser_doc.budget_lead:
+			master_doc.budget_lead = loser_doc.budget_lead
+
 		frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True, force=1)
 
 		master_doc.set_first_lead_source()
