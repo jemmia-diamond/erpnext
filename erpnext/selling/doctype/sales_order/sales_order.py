@@ -1132,6 +1132,7 @@ class SalesOrder(SellingController):
 		self.update_customer_revenue_fields()
 		self.copy_from_reference_order()
 		self.auto_detect_split_orders()
+		self.update_ref_order_payment_entry_current_order_number()
 
 	def before_submit(self):
 		frappe.throw(_("Sales Order Submission is not allowed."))
@@ -1144,6 +1145,37 @@ class SalesOrder(SellingController):
 			"cumulative_revenue": cumulative,
 			"true_cumulative_revenue": true_cumulative
 		})
+
+	def update_ref_order_payment_entry_current_order_number(self):
+		"""
+		Update current order number for Payment Entry Reference linked to the original reference order
+		"""
+		try:
+			if not self.haravan_ref_order_id:
+				return
+
+			ref_order_name = frappe.db.get_value("Sales Order",
+				{"haravan_order_id": self.haravan_ref_order_id}, "name")
+
+			if not ref_order_name:
+				return
+
+			current_order_number = self.order_number
+			current_transaction_date = self.transaction_date
+
+			frappe.db.sql("""
+				UPDATE `tabPayment Entry Reference`
+				SET
+					ref_order_number = %s,
+					ref_order_date = %s
+				WHERE
+					parenttype = 'Sales Order'
+					AND parentfield = 'payment_entries'
+					AND parent = %s
+			""", (current_order_number, current_transaction_date, ref_order_name))
+
+		except Exception as e:
+			frappe.log_error(f"Error updating payment entry reference order number: {e!s}")
 
 	def calculate_customer_cumulative_revenue(self):
 		result = frappe.db.sql("""
