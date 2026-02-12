@@ -279,7 +279,7 @@ class SalesOrder(SellingController):
 			SELECT
 				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name,
 				pr.total_amount, pr.outstanding_amount, pr.order_number, pr.split_order_group_name,
-				pr.bank_account, pr.bank, pr.bank_account_no, pr.bank_account_branch,
+				pr.bank_account, pr.bank, pr.bank_account_no, pr.bank_account_branch, pr.ref_order_number, pr.ref_order_date,
 				CASE
 					WHEN pe.payment_type = 'Pay' THEN -pr.allocated_amount
 					ELSE pr.allocated_amount
@@ -324,6 +324,8 @@ class SalesOrder(SellingController):
 					"bank": pe_ref.bank,
 					"bank_account_no": pe_ref.bank_account_no,
 					"bank_account_branch": pe_ref.bank_account_branch,
+					"ref_order_number": pe_ref.ref_order_number,
+					"ref_order_date": pe_ref.ref_order_date,
 			})
 
 
@@ -345,7 +347,7 @@ class SalesOrder(SellingController):
 			SELECT
 				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name,
 				pr.total_amount, pr.outstanding_amount, pr.order_number, pr.split_order_group_name,
-				pr.bank_account, pr.bank, pr.bank_account_no, pr.bank_account_branch,
+				pr.bank_account, pr.bank, pr.bank_account_no, pr.bank_account_branch, pr.ref_order_number, pr.ref_order_date,
 				CASE
 					WHEN pe.payment_type = 'Pay' THEN -pr.allocated_amount
 					ELSE pr.allocated_amount
@@ -389,6 +391,8 @@ class SalesOrder(SellingController):
 						"bank": pe_ref.bank,
 						"bank_account_no": pe_ref.bank_account_no,
 						"bank_account_branch": pe_ref.bank_account_branch,
+						"ref_order_number": pe_ref.ref_order_number,
+						"ref_order_date": pe_ref.ref_order_date,
 				})
 
 	def get_all_related_sales_orders(self):
