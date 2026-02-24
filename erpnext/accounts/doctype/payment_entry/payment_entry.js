@@ -492,14 +492,14 @@ frappe.ui.form.on("Payment Entry", {
 		) {
 			let has_sales_order = frm.doc.references && frm.doc.references.some(ref => ref.reference_doctype === "Sales Order");
 
-			let btn = frm.add_custom_button(__("Verify"), () => {
+			let btn = frm.add_custom_button(__("Xác nhận giao dịch"), () => {
 				frm.events.get_payment_code(frm, (payment_code) => {
 					let requires_bank_transaction = payment_code === "banking";
 					if (requires_bank_transaction && (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0)) {
 						frappe.msgprint({
 							title: __("Không thể xác minh"),
 							indicator: "red",
-							message: __("Thanh toán chuyển khoản phải có ít nhất một giao dịch ngân hàng để xác minh.")
+							message: __("- Thanh toán chuyển khoản phải có ít nhất <b>một giao dịch</b> ngân hàng để xác minh.<br><br><b>Yêu cầu: Bổ sung giao dịch ngân hàng.</b>")
 						});
 						return;
 					}
@@ -508,7 +508,7 @@ frappe.ui.form.on("Payment Entry", {
 						frappe.msgprint({
 							title: __("Không thể xác minh"),
 							indicator: "red",
-							message: __("Phiếu thanh toán phải có ít nhất một đơn hàng để xác minh.")
+							message: __("- Phiếu thanh toán phải có ít nhất <b>một đơn hàng</b> tham chiếu để xác minh.<br><br><b>Yêu cầu: Bổ sung đơn hàng.</b>")
 						});
 						return;
 					}
