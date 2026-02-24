@@ -1616,25 +1616,24 @@ frappe.ui.form.on("Payment Entry", {
 				frappe.throw({
 					title: __("Phân bổ không hợp lệ"),
 					indicator: "red",
-					message: __("Dòng #{0}: Số tiền phân bổ bằng 0. Vui lòng nhập số tiền hoặc xóa dòng.", [row.idx])
+					message: __("- Dòng #{0}: Số tiền phân bổ bằng 0. <br><br><b>Yêu cầu: Nhập số tiền phân bổ hoặc xóa dòng.</b>", [row.idx])
 				});
 			}
 
 			if (row.allocated_amount) {
 				total_allocated += flt(row.allocated_amount);
-				let max_amount = row.balance || row.outstanding_amount || 0;
+				let max_amount = row.balance || 0;
 				if (flt(max_amount) > 0 && flt(row.allocated_amount) > flt(max_amount)) {
 					frappe.throw({
-						title: __("Phân bổ vượt số dư"),
+						title: __("Phân bổ không hợp lệ"),
 						indicator: "red",
 						message: __(
-							"Dòng #{0}: Số tiền phân bổ ({1}) vượt quá số dư còn lại ({2}) của {3} {4}.<br><br>Vui lòng điều chỉnh lại số tiền phân bổ.",
+							"- Dòng #{0}: Số tiền phân bổ ({1}) vượt quá số dư còn lại của đơn hàng <b>{3}</b>.<br><br><b>Yêu cầu: Điều chỉnh lại số tiền phân bổ.</b>",
 							[
 								row.idx,
 								format_currency(row.allocated_amount, frm.doc.paid_from_account_currency, 0),
 								format_currency(max_amount, frm.doc.paid_from_account_currency, 0),
-								row.reference_doctype,
-								row.reference_name
+								row.order_number
 							]
 						)
 					});
@@ -1647,15 +1646,14 @@ frappe.ui.form.on("Payment Entry", {
 
 		if (Math.abs(difference) > tolerance) {
 			frappe.throw({
-				title: __("Phân bổ không khớp"),
+				title: __("Phân bổ không hợp lệ"),
 				indicator: "red",
 				message: __(
-					"Tổng số tiền phân bổ ({0}) phải bằng số tiền thanh toán ({1}).<br><br>Chênh lệch: {2} (tối đa cho phép: {3})<br><br>Vui lòng điều chỉnh lại số tiền phân bổ.",
+					"- Số tiền thanh toán: {0}<br>- Đã phân bổ: {1}<br>- Chênh lệch: {2} (vượt mức cho phép)<br><br><b>Yêu cầu: Điều chỉnh tổng tiền phân bổ bằng với số tiền thanh toán.</b>",
 					[
-						format_currency(total_allocated, frm.doc.paid_from_account_currency, 0),
 						format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
-						format_currency(Math.abs(difference), frm.doc.paid_from_account_currency, 0),
-						format_currency(tolerance, frm.doc.paid_from_account_currency, 0)
+						format_currency(total_allocated, frm.doc.paid_from_account_currency, 0),
+						format_currency(Math.abs(difference), frm.doc.paid_from_account_currency, 0)
 					]
 				)
 			});
