@@ -2518,9 +2518,16 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 		if (row.allocated_amount && frm.doc.paid_amount) {
 			if (Math.abs(flt(row.allocated_amount) - flt(frm.doc.paid_amount)) > 0.01) {
 				frappe.msgprint({
-					title: __("Sai số tiền"),
-					message: __("Vui lòng kiểm tra và nhập <b>đúng số tiền thanh toán trước</b> khi tiếp tục.", [frm.doc.paid_amount]),
-					indicator: 'red'
+					title: __("Lỗi xác thực"),
+					indicator: 'red',
+					message: __(
+						"- Số tiền thanh toán: {0}<br>- Giao dịch ngân hàng: {1}<br>- Chênh lệch: {2}<br><br><b>Yêu cầu: Kiểm tra lại và nhập đúng số tiền trước khi tiếp tục.</b>",
+						[
+							format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
+							format_currency(row.allocated_amount, frm.doc.paid_from_account_currency, 0),
+							format_currency(Math.abs(flt(row.allocated_amount) - flt(frm.doc.paid_amount)), frm.doc.paid_from_account_currency, 0)
+						]
+					)
 				});
 
 				frappe.model.clear_doc(cdt, cdn);
@@ -2530,11 +2537,30 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 	},
 
 	bank_transactions_add: function(frm, cdt, cdn) {
+		if (frm.doc.payment_code !== 'banking') {
+			frappe.msgprint({
+				title: __("Lỗi xác thực"),
+				indicator: "red",
+				message: __("Chỉ áp dụng cho hình thức <b>Chuyển khoản</b>.<br><br>Hệ thống đã <b>tự động xoá dòng</b> vừa thêm.")
+			});
+
+			setTimeout(() => {
+				frm.get_field("bank_transactions").grid.grid_rows.forEach(r => {
+					if (r.doc.name === cdn) {
+						r.remove();
+					}
+				});
+				frm.refresh_field("bank_transactions");
+			}, 100);
+			return;
+		}
+
+
 		if (frm.doc.bank_transactions && frm.doc.bank_transactions.length > 1) {
 			frappe.msgprint({
 				title: __("Lỗi xác thực"),
 				indicator: "red",
-				message: __("Mỗi phiếu thanh toán chỉ được phép gắn <b>một giao dịch duy nhất</b>.")
+				message: __("Mỗi phiếu thanh toán chỉ được phép gắn <b>một giao dịch duy nhất</b>.<br><br>Hệ thống đã <b>tự động xoá dòng</b> vừa thêm.")
 			});
 
 			setTimeout(() => {
