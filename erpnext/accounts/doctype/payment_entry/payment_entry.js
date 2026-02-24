@@ -412,7 +412,7 @@ frappe.ui.form.on("Payment Entry", {
 				}
 
 				if (can_cancel) {
-					frm.add_custom_button(__("Cancel"), function () {
+					frm.add_custom_button(__("Huỷ phiếu"), function () {
 						frappe.confirm(
 							__("Bạn có chắc chắn muốn huỷ Phiếu thanh toán này không?"),
 							function () {
