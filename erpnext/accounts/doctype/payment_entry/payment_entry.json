@@ -973,7 +973,7 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval:!doc.__islocal && doc.payment_code == 'cash_on_delivery'",
+   "depends_on": "eval:doc.payment_code == 'cash_on_delivery'",
    "fieldname": "shipping_code",
    "fieldtype": "Data",
    "label": "Shipping Code"
