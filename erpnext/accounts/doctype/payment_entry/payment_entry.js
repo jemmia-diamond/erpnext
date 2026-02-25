@@ -492,14 +492,14 @@ frappe.ui.form.on("Payment Entry", {
 		) {
 			let has_sales_order = frm.doc.references && frm.doc.references.some(ref => ref.reference_doctype === "Sales Order");
 
-			let btn = frm.add_custom_button(__("Verify"), () => {
+			let btn = frm.add_custom_button(__("Xác nhận giao dịch"), () => {
 				frm.events.get_payment_code(frm, (payment_code) => {
 					let requires_bank_transaction = payment_code === "banking";
 					if (requires_bank_transaction && (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0)) {
 						frappe.msgprint({
 							title: __("Không thể xác minh"),
 							indicator: "red",
-							message: __("Thanh toán chuyển khoản phải có ít nhất một giao dịch ngân hàng để xác minh.")
+							message: __("- Thanh toán chuyển khoản phải có ít nhất <b>một giao dịch</b> ngân hàng để xác minh.<br><br><b>Yêu cầu: Bổ sung giao dịch ngân hàng.</b>")
 						});
 						return;
 					}
@@ -508,7 +508,7 @@ frappe.ui.form.on("Payment Entry", {
 						frappe.msgprint({
 							title: __("Không thể xác minh"),
 							indicator: "red",
-							message: __("Phiếu thanh toán phải có ít nhất một đơn hàng để xác minh.")
+							message: __("- Phiếu thanh toán phải có ít nhất <b>một đơn hàng</b> tham chiếu để xác minh.<br><br><b>Yêu cầu: Bổ sung đơn hàng.</b>")
 						});
 						return;
 					}
@@ -1616,25 +1616,24 @@ frappe.ui.form.on("Payment Entry", {
 				frappe.throw({
 					title: __("Phân bổ không hợp lệ"),
 					indicator: "red",
-					message: __("Dòng #{0}: Số tiền phân bổ bằng 0. Vui lòng nhập số tiền hoặc xóa dòng.", [row.idx])
+					message: __("- Dòng #{0}: Số tiền phân bổ bằng 0. <br><br><b>Yêu cầu: Nhập số tiền phân bổ hoặc xóa dòng.</b>", [row.idx])
 				});
 			}
 
 			if (row.allocated_amount) {
 				total_allocated += flt(row.allocated_amount);
-				let max_amount = row.balance || row.outstanding_amount || 0;
+				let max_amount = row.balance || 0;
 				if (flt(max_amount) > 0 && flt(row.allocated_amount) > flt(max_amount)) {
 					frappe.throw({
-						title: __("Phân bổ vượt số dư"),
+						title: __("Phân bổ không hợp lệ"),
 						indicator: "red",
 						message: __(
-							"Dòng #{0}: Số tiền phân bổ ({1}) vượt quá số dư còn lại ({2}) của {3} {4}.<br><br>Vui lòng điều chỉnh lại số tiền phân bổ.",
+							"- Dòng #{0}: Số tiền phân bổ ({1}) vượt quá số dư còn lại của đơn hàng <b>{3}</b>.<br><br><b>Yêu cầu: Điều chỉnh lại số tiền phân bổ.</b>",
 							[
 								row.idx,
 								format_currency(row.allocated_amount, frm.doc.paid_from_account_currency, 0),
 								format_currency(max_amount, frm.doc.paid_from_account_currency, 0),
-								row.reference_doctype,
-								row.reference_name
+								row.order_number
 							]
 						)
 					});
@@ -1647,15 +1646,14 @@ frappe.ui.form.on("Payment Entry", {
 
 		if (Math.abs(difference) > tolerance) {
 			frappe.throw({
-				title: __("Phân bổ không khớp"),
+				title: __("Phân bổ không hợp lệ"),
 				indicator: "red",
 				message: __(
-					"Tổng số tiền phân bổ ({0}) phải bằng số tiền thanh toán ({1}).<br><br>Chênh lệch: {2} (tối đa cho phép: {3})<br><br>Vui lòng điều chỉnh lại số tiền phân bổ.",
+					"- Số tiền thanh toán: {0}<br>- Đã phân bổ: {1}<br>- Chênh lệch: {2} (vượt mức cho phép)<br><br><b>Yêu cầu: Điều chỉnh tổng tiền phân bổ bằng với số tiền thanh toán.</b>",
 					[
-						format_currency(total_allocated, frm.doc.paid_from_account_currency, 0),
 						format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
-						format_currency(Math.abs(difference), frm.doc.paid_from_account_currency, 0),
-						format_currency(tolerance, frm.doc.paid_from_account_currency, 0)
+						format_currency(total_allocated, frm.doc.paid_from_account_currency, 0),
+						format_currency(Math.abs(difference), frm.doc.paid_from_account_currency, 0)
 					]
 				)
 			});
@@ -2521,8 +2519,15 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 			if (Math.abs(flt(row.allocated_amount) - flt(frm.doc.paid_amount)) > 0.01) {
 				frappe.msgprint({
 					title: __("Sai số tiền"),
-					message: __("Vui lòng kiểm tra và nhập <b>đúng số tiền thanh toán trước</b> khi tiếp tục.", [frm.doc.paid_amount]),
-					indicator: 'red'
+					indicator: 'red',
+					message: __(
+						"- Số tiền thanh toán: {0}<br>- Giao dịch ngân hàng: {1}<br>- Chênh lệch: {2}<br><br><b>Yêu cầu: Kiểm tra lại và nhập đúng số tiền trước khi tiếp tục.</b>",
+						[
+							format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
+							format_currency(row.allocated_amount, frm.doc.paid_from_account_currency, 0),
+							format_currency(Math.abs(flt(row.allocated_amount) - flt(frm.doc.paid_amount)), frm.doc.paid_from_account_currency, 0)
+						]
+					)
 				});
 
 				frappe.model.clear_doc(cdt, cdn);
@@ -2532,11 +2537,30 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 	},
 
 	bank_transactions_add: function(frm, cdt, cdn) {
+		if (frm.doc.payment_code !== 'banking') {
+			frappe.msgprint({
+				title: __("Sai hình thức thanh toán"),
+				indicator: "red",
+				message: __("Chỉ áp dụng cho hình thức <b>Chuyển khoản</b>.<br><br>Hệ thống đã <b>tự động xoá dòng</b> vừa thêm.")
+			});
+
+			setTimeout(() => {
+				frm.get_field("bank_transactions").grid.grid_rows.forEach(r => {
+					if (r.doc.name === cdn) {
+						r.remove();
+					}
+				});
+				frm.refresh_field("bank_transactions");
+			}, 100);
+			return;
+		}
+
+
 		if (frm.doc.bank_transactions && frm.doc.bank_transactions.length > 1) {
 			frappe.msgprint({
-				title: __("Lỗi xác thực"),
+				title: __("Sai số lượng giao dịch"),
 				indicator: "red",
-				message: __("Mỗi phiếu thanh toán chỉ được phép gắn <b>một giao dịch duy nhất</b>.")
+				message: __("Mỗi phiếu thanh toán chỉ được phép gắn <b>một giao dịch duy nhất</b>.<br><br>Hệ thống đã <b>tự động xoá dòng</b> vừa thêm.")
 			});
 
 			setTimeout(() => {
