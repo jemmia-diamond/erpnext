@@ -4024,7 +4024,7 @@ def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, fil
 def get_sales_orders_for_auto_populate(company, customer):
 	return frappe.db.sql(
 		"""
-		SELECT name, FORMAT(grand_total, 0) as grand_total, order_number, customer_name
+		SELECT name, FORMAT(grand_total, 0) as grand_total, order_number, customer_name, financial_status, balance
 		FROM `tabSales Order`
 		WHERE company = %(company)s
 		AND customer = %(customer)s
