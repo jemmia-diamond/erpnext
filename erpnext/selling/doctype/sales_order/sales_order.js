@@ -2011,10 +2011,15 @@ function render_promotion_pills(frm, cdt, cdn) {
 	$field.find(".promotion-pills").remove();
 	if (!promos.length) return;
 
+	var initial_price = locals[cdt][cdn].price_list_rate || 0;
+
 	var $pills = $('<div class="promotion-pills" style="display:flex;flex-direction:column;gap:10px;margin-top:6px;"></div>');
 	promos.forEach((promo, idx) => {
 		$pills.append($(`<div class="promo-pill" draggable="true" data-promo="${frappe.utils.escape_html(promo)}" data-idx="${idx}" style="background:#f5f5f5;color:#333;padding:8px 14px;border-radius:8px;font-size:13px;display:flex;align-items:center;justify-content:space-between;border:1px solid #d9d9d9;cursor:grab;">
-			<span class="promo-label">${frappe.utils.escape_html(promo)}</span>
+			<div style="display:flex;flex-direction:column;">
+				<span class="promo-label" style="font-weight:600;">${frappe.utils.escape_html(promo)}</span>
+				<span class="promo-price" style="font-size:12px;color:#d32f2f;margin-top:2px;">...</span>
+			</div>
 			<span class="remove-promo" data-idx="${idx}" style="cursor:pointer;font-size:16px;font-weight:bold;color:#999;margin-left:10px;">&times;</span>
 		</div>`));
 	});
@@ -2025,17 +2030,39 @@ function render_promotion_pills(frm, cdt, cdn) {
 		args: {
 			doctype: "Promotion",
 			filters: { name: ["in", promos] },
-			fields: ["name", "title"],
+			fields: ["name", "title", "priority", "discount_type", "discount_amount", "discount_percent"],
 			limit_page_length: 0
 		},
 		async: true,
 		callback: function(r) {
 			if (!r || !r.message) return;
-			var title_map = {};
-			r.message.forEach(p => { title_map[p.name] = p.title || p.name; });
-			$pills.find(".promo-label").each(function() {
-				var name = $(this).closest(".promo-pill").attr("data-promo");
-				if (title_map[name]) $(this).text(title_map[name]);
+			var promo_map = {};
+			r.message.forEach(p => { promo_map[p.name] = p; });
+			
+			var current_price = initial_price;
+
+			$pills.find(".promo-pill").each(function() {
+				var name = $(this).attr("data-promo");
+				var p = promo_map[name];
+				if (p) {
+					$(this).find(".promo-label").text(p.title || p.name);
+					
+					if (p.priority === "G1") {
+						current_price = current_price * (1 - (p.discount_percent || 0) / 100);
+					} else if (p.priority === "G2") {
+						current_price = current_price - (p.discount_amount || 0);
+					} else if (["G3", "G4", "G6", "G7"].includes(p.priority)) {
+						if (p.discount_type === "Percentage") {
+							current_price = current_price * (1 - (p.discount_percent || 0) / 100);
+						} else if (p.discount_type === "Fix Amount") {
+							current_price = current_price - (p.discount_amount || 0);
+						}
+					}
+					
+					$(this).find(".promo-price").text("Sau KM: " + format_currency(current_price, "VND"));
+				} else {
+					$(this).find(".promo-price").text("Không tìm thấy trợ giá");
+				}
 			});
 		}
 	});
