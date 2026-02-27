@@ -1206,20 +1206,22 @@ class SalesOrder(SellingController):
 			if not ref_rows:
 				return
 
-			for idx, row in enumerate(ref_rows, start=1):
+			def _build_row(parent_name):
 				new_row = frappe.new_doc("Payment Entry Reference")
-				row_dict = dict(row)
-
 				for field, value in row_dict.items():
 					if field not in ("name", "creation", "modified", "modified_by", "owner",
 									"parent", "parentfield", "parenttype", "idx"):
 						setattr(new_row, field, value)
-
-				new_row.parent = self.name
+				new_row.parent = parent_name
 				new_row.parentfield = "sales_order_payment_entries"
 				new_row.parenttype = "Sales Order"
 				new_row.idx = idx
-				new_row.insert(ignore_permissions=True)
+				return new_row
+
+			for idx, row in enumerate(ref_rows, start=1):
+				row_dict = dict(row)
+				_build_row(self.name).insert(ignore_permissions=True)
+				_build_row(ref_order_name).insert(ignore_permissions=True)
 
 		except Exception as e:
 			frappe.log_error(f"Error copying payment entry references to current order: {e!s}")
