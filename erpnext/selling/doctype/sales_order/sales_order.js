@@ -3,6 +3,8 @@
 
 cur_frm.cscript.tax_table = "Sales Taxes and Charges";
 
+const NEW_PROMOTIONS_CUTOFF_DATE = "2026-02-27T16:59:00Z";
+
 erpnext.accounts.taxes.setup_tax_filters("Sales Taxes and Charges");
 erpnext.accounts.taxes.setup_tax_validations("Sales Order");
 erpnext.sales_common.setup_selling_controller();
@@ -305,13 +307,19 @@ frappe.ui.form.on("Sales Order", {
 			});
 		}
 
-		// Add guidance message for promotion field
-		frm.fields_dict.items.grid.update_docfield_property("promotion", "description",
-			__("<b>Lưu ý:</b><br>" +
-			"Mỗi CTKM chỉ áp dụng cho sản phẩm đơn chiếc nên cần lưu ý trong trường hợp sản phẩm là <b>Bông Tai</b>:<br>" +
-			"- <b>Đối với Sản phẩm tạm:</b> Chọn 02 mã CTKM (tương ứng cho 02 chiếc đơn lẻ cấu thành một cặp). (ví dụ: với SPT giảm 2tr, chọn 2 voucher giảm 1tr)<br>" +
-			"- <b>Đối với Sản phẩm tồn kho:</b> Chỉ chọn duy nhất 01 CTKM. (ví dụ, với Bông Tai giảm 1tr, chỉ chọn 1 voucher giảm 500.000)<br><br>" +
-			"Nếu không tìm thấy, liên hệ Marketing để được hỗ trợ"));
+		var useNewPromotions = frm.doc.haravan_created_at
+			&& new Date(frm.doc.haravan_created_at) >= new Date(NEW_PROMOTIONS_CUTOFF_DATE);
+
+		var oldPromoFields = ["promotion_1", "promotion_2", "promotion_3", "promotion_4", "promotion_5", "promotion"];
+
+		var newPromoFields = ["select_promotions"];
+
+		oldPromoFields.forEach(function(f) {
+			frm.fields_dict.items.grid.update_docfield_property(f, "hidden", useNewPromotions ? 1 : 0);
+		});
+		newPromoFields.forEach(function(f) {
+			frm.fields_dict.items.grid.update_docfield_property(f, "hidden", useNewPromotions ? 0 : 1);
+		});
 
 		frm.trigger('render_buyback_items');
 	},
@@ -1979,15 +1987,17 @@ frappe.ui.form.on('Sales Order Item', {
 	form_render: function(frm, cdt, cdn) {
 		render_promotion_pills(frm, cdt, cdn);
 		var grid_row = frm.fields_dict.items.grid.grid_rows_by_docname[cdn];
-		if (grid_row && grid_row.grid_form) {
-			var $html = $(grid_row.grid_form.fields_dict.promotion_guidance.wrapper);
-			$html.html(
-				'<b>Lưu ý:</b><br>' +
-				'Mỗi CTKM chỉ áp dụng cho sản phẩm đơn chiếc nên cần lưu ý trong trường hợp sản phẩm là <b>Bông Tai</b>:<br>' +
-				'- <b>Đối với Sản phẩm tạm:</b> Chọn 02 mã CTKM (tương ứng cho 02 chiếc đơn lẻ cấu thành một cặp). (ví dụ: với SPT giảm 2tr, chọn 2 voucher giảm 1tr)<br>' +
-				'- <b>Đối với Sản phẩm tồn kho:</b> Chỉ chọn duy nhất 01 CTKM. (ví dụ, với Bông Tai giảm 1tr, chỉ chọn 1 voucher giảm 500.000)<br><br>' +
-				'Nếu không tìm thấy, liên hệ Marketing để được hỗ trợ'
-			);
+		if (grid_row && grid_row.grid_form && grid_row.grid_form.fields_dict.fetch_policy) {
+			var $wrapper = $(grid_row.grid_form.fields_dict.fetch_policy.wrapper);
+			if (!$wrapper.prev('.promo-guidance').length) {
+				$('<div class="promo-guidance" style="margin-bottom:20px;font-size:12px;color:#666;">' +
+					'<b>Lưu ý:</b><br>' +
+					'Mỗi CTKM chỉ áp dụng cho sản phẩm đơn chiếc nên cần lưu ý trong trường hợp sản phẩm là <b>Bông Tai</b>:<br>' +
+					'- <b>Đối với Sản phẩm tạm:</b> Chọn 02 mã CTKM (tương ứng cho 02 chiếc đơn lẻ cấu thành một cặp). (ví dụ: với SPT giảm 2tr, chọn 2 voucher giảm 1tr)<br>' +
+					'- <b>Đối với Sản phẩm tồn kho:</b> Chỉ chọn duy nhất 01 CTKM. (ví dụ, với Bông Tai giảm 1tr, chỉ chọn 1 voucher giảm 500.000)<br><br>' +
+					'Nếu không tìm thấy, liên hệ Marketing để được hỗ trợ' +
+				'</div>').insertBefore($wrapper);
+			}
 		}
 	}
 });
@@ -2033,7 +2043,7 @@ function render_promotion_pills(frm, cdt, cdn) {
 	$pills.on("click", ".remove-promo", function() {
 		var arr = parse_promos(locals[cdt][cdn]["new_promotions"]);
 		arr.splice(parseInt($(this).attr("data-idx")), 1);
-		locals[cdt][cdn]["new_promotions"] = JSON.stringify(arr);
+		frappe.model.set_value(cdt, cdn, "new_promotions", JSON.stringify(arr));
 		frm.dirty();
 		render_promotion_pills(frm, cdt, cdn);
 	});
@@ -2058,7 +2068,7 @@ function render_promotion_pills(frm, cdt, cdn) {
 		var arr = parse_promos(locals[cdt][cdn]["new_promotions"]);
 		var item = arr.splice(parseInt($(drag_src).attr("data-idx")), 1)[0];
 		arr.splice(parseInt($(this).attr("data-idx")), 0, item);
-		locals[cdt][cdn]["new_promotions"] = JSON.stringify(arr);
+		frappe.model.set_value(cdt, cdn, "new_promotions", JSON.stringify(arr));
 		frm.dirty();
 		render_promotion_pills(frm, cdt, cdn);
 	});
