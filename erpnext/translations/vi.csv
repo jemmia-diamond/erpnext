@@ -8826,3 +8826,8 @@ Buyback Percentage,Tỷ lệ thu đổi
 Calculated Buyback Price,Giá thu đổi đã tính
 Invalid products_info in BuybackExchange {0}: Expected a list of products.,Thông tin sản phẩm không hợp lệ trong Phiếu Thu Đổi {0}: Cần danh sách sản phẩm.
 Invalid products_info JSON in BuybackExchange {0}. Please check data from Lark.,Dữ liệu JSON sản phẩm không hợp lệ trong Phiếu Thu Đổi {0}. Vui lòng kiểm tra dữ liệu từ Lark.
+Search Promotion Title,Tìm kiếm khuyến mãi
+Add Selected,Thêm đã chọn
+Select Promotions,Chọn khuyến mãi
+New Promotions,Khuyến mãi mới
+Promotions,Khuyến mãi

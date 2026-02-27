@@ -35,6 +35,8 @@
   "promotion_3",
   "promotion_4",
   "promotion_5",
+  "select_promotions",
+  "new_promotions",
   "column_break_klcw",
   "promotion",
   "fetch_policy",
@@ -1124,6 +1126,19 @@
    "label": "Find Promotion",
    "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Line Item\"],[\"Promotion\",\"is_active\",\"=\",1]]",
    "options": "Promotion"
+  },
+  {
+   "fieldname": "select_promotions",
+   "fieldtype": "Button",
+   "label": "Select Promotions",
+   "depends_on": "eval:!doc.__islocal"
+  },
+  {
+   "fieldname": "new_promotions",
+   "fieldtype": "JSON",
+   "hidden": 1,
+   "label": "New Promotions",
+   "read_only": 1
   },
   {
    "fieldname": "product_availability_status",
