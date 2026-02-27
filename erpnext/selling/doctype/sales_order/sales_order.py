@@ -1137,6 +1137,7 @@ class SalesOrder(SellingController):
 		self.copy_from_reference_order()
 		self.auto_detect_split_orders()
 		self.update_ref_order_payment_entry_current_order_number()
+		self.copy_ref_order_payment_entries_to_current()
 
 	def before_submit(self):
 		frappe.throw(_("Sales Order Submission is not allowed."))
@@ -1180,6 +1181,50 @@ class SalesOrder(SellingController):
 
 		except Exception as e:
 			frappe.log_error(f"Error updating payment entry reference order number: {e!s}")
+
+	def copy_ref_order_payment_entries_to_current(self):
+		try:
+			if not self.haravan_ref_order_id:
+				return
+
+			ref_order_name = frappe.db.get_value("Sales Order",
+				{"haravan_order_id": self.haravan_ref_order_id}, "name")
+
+			if not ref_order_name:
+				return
+
+			ref_rows = frappe.db.get_all(
+				"Payment Entry Reference",
+				filters={
+					"parenttype": "Sales Order",
+					"parentfield": "payment_entries",
+					"parent": ref_order_name
+				},
+				fields=["*"]
+			)
+
+			if not ref_rows:
+				return
+
+			def _build_row(parent_name):
+				new_row = frappe.new_doc("Payment Entry Reference")
+				for field, value in row_dict.items():
+					if field not in ("name", "creation", "modified", "modified_by", "owner",
+									"parent", "parentfield", "parenttype", "idx"):
+						setattr(new_row, field, value)
+				new_row.parent = parent_name
+				new_row.parentfield = "sales_order_payment_entries"
+				new_row.parenttype = "Sales Order"
+				new_row.idx = idx
+				return new_row
+
+			for idx, row in enumerate(ref_rows, start=1):
+				row_dict = dict(row)
+				_build_row(self.name).insert(ignore_permissions=True)
+				_build_row(ref_order_name).insert(ignore_permissions=True)
+
+		except Exception as e:
+			frappe.log_error(f"Error copying payment entry references to current order: {e!s}")
 
 	def calculate_customer_cumulative_revenue(self):
 		result = frappe.db.sql("""
