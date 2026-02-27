@@ -38,6 +38,11 @@
   "column_break_klcw",
   "promotion",
   "fetch_policy",
+  "promotions_section",
+  "select_promotions",
+  "new_promotions",
+  "promotions_col_break",
+  "promotion_guidance",
   "item_policy",
   "is_policy_locked",
   "section_break_5",
@@ -1124,6 +1129,32 @@
    "label": "Find Promotion",
    "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Line Item\"],[\"Promotion\",\"is_active\",\"=\",1]]",
    "options": "Promotion"
+  },
+  {
+   "fieldname": "promotions_section",
+   "fieldtype": "Section Break",
+   "label": "Promotion Section"
+  },
+  {
+   "fieldname": "select_promotions",
+   "fieldtype": "Button",
+   "label": "Select Promotions",
+   "depends_on": "eval:!doc.__islocal"
+  },
+  {
+   "fieldname": "new_promotions",
+   "fieldtype": "JSON",
+   "hidden": 1,
+   "label": "New Promotions",
+   "read_only": 1
+  },
+  {
+   "fieldname": "promotions_col_break",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "promotion_guidance",
+   "fieldtype": "HTML"
   },
   {
    "fieldname": "product_availability_status",
