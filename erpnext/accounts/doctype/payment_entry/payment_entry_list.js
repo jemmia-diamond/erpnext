@@ -1,6 +1,24 @@
 frappe.listview_settings["Payment Entry"] = {
 	hide_name_column: true,
 	onload: function (listview) {
+		if (listview instanceof frappe.views.ReportView) {
+			listview.is_editable = () => false;
+			const _setup_datatable = listview.setup_datatable.bind(listview);
+			listview.setup_datatable = function (values) {
+				_setup_datatable(values);
+				if (!document.getElementById("pe-report-view-col-hide")) {
+					const style = document.createElement("style");
+					style.id = "pe-report-view-col-hide";
+					style.textContent = `
+						.report-view .dt-cell--checkbox,
+						.report-view .dt-cell--serialno,
+						.report-view .dt-cell--col-0 { display: none !important; }
+					`;
+					document.head.appendChild(style);
+				}
+			};
+		}
+
 		if (listview.page.fields_dict.party_type) {
 			listview.page.fields_dict.party_type.get_query = function () {
 				return {
@@ -65,7 +83,7 @@ frappe.listview_settings["Payment Entry"] = {
 			$order_input.on('input', function() {
 				const order_number = $(this).val();
 				clearTimeout(order_timeout);
-				
+
 				order_timeout = setTimeout(() => {
 					custom_order_search = order_number || null;
 					listview.refresh();
