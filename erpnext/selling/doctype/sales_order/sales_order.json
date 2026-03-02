@@ -170,6 +170,7 @@
   "column_break_cbgk",
   "delivery_location",
   "customer_type",
+  "tracking_number",
   "section_break_ctso",
   "ref_sales_orders",
   "section_break_78",
@@ -2229,13 +2230,18 @@
    "label": "Base Commission Amount",
    "permlevel": 3,
    "precision": "0"
+  },
+  {
+   "fieldname": "tracking_number",
+   "fieldtype": "Data",
+   "label": "Tracking number"
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-02-05 11:36:30.967138",
+ "modified": "2026-03-02 14:52:24.349544",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
