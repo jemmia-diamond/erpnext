@@ -197,6 +197,7 @@ class PaymentEntry(AccountsController):
 
 	def validate(self):
 		self.set_created_by_display()
+		self.set_shipping_code_from_sales_order()
 		self.set_total_order_amount()
 		self.setup_party_account_field()
 		self.set_missing_values()
@@ -523,6 +524,15 @@ class PaymentEntry(AccountsController):
 			# Check for negative outstanding invoices as well
 			if flt(d.allocated_amount) < 0 and flt(d.allocated_amount) < flt(d.outstanding_amount):
 				frappe.throw(fail_message.format(d.idx))
+
+	def set_shipping_code_from_sales_order(self):
+		if self.references:
+			for ref in self.references:
+				if ref.reference_doctype == "Sales Order" and ref.reference_name:
+					tracking_number = frappe.db.get_value("Sales Order", ref.reference_name, "tracking_number")
+					if tracking_number:
+						self.shipping_code = tracking_number
+					break
 
 	def validate_allocated_amount_as_per_payment_request(self):
 		"""
