@@ -2021,15 +2021,9 @@ function render_promotion_pills(frm, cdt, cdn) {
 
 	var $field = $(grid_row.grid_form.fields_dict.select_promotions.wrapper);
 	$field.find(".promotion-pills").remove();
-	
-	var initial_price = locals[cdt][cdn].price_list_rate || 0;
+	if (!promos.length) return;
 
-	if (!promos.length) {
-		if (locals[cdt][cdn].rate !== initial_price) {
-			frappe.model.set_value(cdt, cdn, "rate", initial_price);
-		}
-		return;
-	}
+	var initial_price = locals[cdt][cdn].price_list_rate || 0;
 
 	var $pills = $('<div class="promotion-pills" style="display:flex;flex-direction:column;gap:10px;margin-top:6px;"></div>');
 	promos.forEach((promo, idx) => {
