@@ -2077,7 +2077,7 @@ function render_promotion_pills(frm, cdt, cdn) {
 						}
 					}
 					
-					$(this).find(".promo-price").text("Sau khuyến mãi: " + format_currency(current_price, "VND").replace(/,00$/, ""));
+					$(this).find(".promo-price").text("Sau khuyến mãi: " + format_currency(current_price, frm.doc.currency).replace(/,00$/, ""));
 				} else {
 					$(this).find(".promo-price").text("Không tìm thấy trợ giá");
 				}
@@ -2088,7 +2088,7 @@ function render_promotion_pills(frm, cdt, cdn) {
 				var diff = Math.abs((locals[cdt][cdn].rate * locals[cdt][cdn].qty) - (current_price * locals[cdt][cdn].qty));
 				if (diff > 5000) {
 					var $warning = $(`<div class="promo-validation-warning" style="color:#d32f2f;font-size:12px;margin-top:5px;padding:6px 10px;background:#fdeaea;border-radius:4px;border:1px solid #f5c6c6;">
-						<i class="fa fa-exclamation-triangle"></i> Giá bị lệch ${format_currency(diff, "VND").replace(/,00$/, "")} so với thực tế
+						<i class="fa fa-exclamation-triangle"></i> Giá bị lệch ${format_currency(diff, frm.doc.currency).replace(/,00$/, "")} so với thực tế
 					</div>`);
 					$field.append($warning);
 				} else {
