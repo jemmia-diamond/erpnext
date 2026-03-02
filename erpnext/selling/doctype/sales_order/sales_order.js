@@ -1963,6 +1963,9 @@ frappe.ui.form.on('Sales Order Item', {
 				var grid_row = frm.fields_dict.items.grid.grid_rows_by_docname[cdn];
 				if (grid_row) {
 					grid_row.toggle_view(true);
+					if (grid_row.grid_form && grid_row.grid_form.fields_dict.select_promotions) {
+						$(grid_row.grid_form.fields_dict.select_promotions.wrapper).find(".promo-validation-warning").remove();
+					}
 					render_promotion_pills(frm, cdt, cdn);
 				}
 			}
@@ -1999,6 +2002,15 @@ frappe.ui.form.on('Sales Order Item', {
 				'</div>').insertBefore($wrapper);
 			}
 		}
+	},
+	rate: function(frm, cdt, cdn) {
+		render_promotion_pills(frm, cdt, cdn);
+	},
+	price_list_rate: function(frm, cdt, cdn) {
+		render_promotion_pills(frm, cdt, cdn);
+	},
+	qty: function(frm, cdt, cdn) {
+		render_promotion_pills(frm, cdt, cdn);
 	}
 });
 
@@ -2009,12 +2021,23 @@ function render_promotion_pills(frm, cdt, cdn) {
 
 	var $field = $(grid_row.grid_form.fields_dict.select_promotions.wrapper);
 	$field.find(".promotion-pills").remove();
-	if (!promos.length) return;
+	
+	var initial_price = locals[cdt][cdn].price_list_rate || 0;
+
+	if (!promos.length) {
+		if (locals[cdt][cdn].rate !== initial_price) {
+			frappe.model.set_value(cdt, cdn, "rate", initial_price);
+		}
+		return;
+	}
 
 	var $pills = $('<div class="promotion-pills" style="display:flex;flex-direction:column;gap:10px;margin-top:6px;"></div>');
 	promos.forEach((promo, idx) => {
 		$pills.append($(`<div class="promo-pill" draggable="true" data-promo="${frappe.utils.escape_html(promo)}" data-idx="${idx}" style="background:#f5f5f5;color:#333;padding:8px 14px;border-radius:8px;font-size:13px;display:flex;align-items:center;justify-content:space-between;border:1px solid #d9d9d9;cursor:grab;">
-			<span class="promo-label">${frappe.utils.escape_html(promo)}</span>
+			<div style="display:flex;flex-direction:column;">
+				<span class="promo-label" style="font-weight:600;">${frappe.utils.escape_html(promo)}</span>
+				<span class="promo-price" style="font-size:12px;color:#1976d2;margin-top:2px;">...</span>
+			</div>
 			<span class="remove-promo" data-idx="${idx}" style="cursor:pointer;font-size:16px;font-weight:bold;color:#999;margin-left:10px;">&times;</span>
 		</div>`));
 	});
@@ -2025,18 +2048,61 @@ function render_promotion_pills(frm, cdt, cdn) {
 		args: {
 			doctype: "Promotion",
 			filters: { name: ["in", promos] },
-			fields: ["name", "title"],
+			fields: ["name", "title", "priority", "discount_type", "discount_amount", "discount_percent"],
 			limit_page_length: 0
 		},
 		async: true,
 		callback: function(r) {
 			if (!r || !r.message) return;
-			var title_map = {};
-			r.message.forEach(p => { title_map[p.name] = p.title || p.name; });
-			$pills.find(".promo-label").each(function() {
-				var name = $(this).closest(".promo-pill").attr("data-promo");
-				if (title_map[name]) $(this).text(title_map[name]);
+			var promo_map = {};
+			r.message.forEach(p => { promo_map[p.name] = p; });
+			
+			var current_price = initial_price;
+
+			$pills.find(".promo-pill").each(function() {
+				var name = $(this).attr("data-promo");
+				var p = promo_map[name];
+				if (p) {
+					$(this).find(".promo-label").text(p.title || p.name);
+					
+					if (p.priority === "G1") {
+						current_price = current_price * (1 - (p.discount_percent || 0) / 100);
+					} else if (p.priority === "G2") {
+						current_price = current_price - (p.discount_amount || 0);
+					} else if (["G3", "G4", "G6", "G7"].includes(p.priority)) {
+						if (p.discount_type === "Percentage") {
+							current_price = current_price * (1 - (p.discount_percent || 0) / 100);
+						} else if (p.discount_type === "Fix Amount") {
+							current_price = current_price - (p.discount_amount || 0);
+						}
+					}
+					
+					$(this).find(".promo-price").text("Sau khuyến mãi: " + format_currency(current_price, frm.doc.currency).replace(/,00$/, ""));
+				} else {
+					$(this).find(".promo-price").text("Không tìm thấy trợ giá");
+				}
 			});
+
+			$field.find(".promo-validation-warning").remove();
+			if (locals[cdt][cdn].rate !== current_price && current_price >= 0) {
+				var diff = Math.abs((locals[cdt][cdn].rate * locals[cdt][cdn].qty) - (current_price * locals[cdt][cdn].qty));
+				if (diff > 5000) {
+					var $warning = $(`<div class="promo-validation-warning" style="color:#d32f2f;font-size:12px;margin-top:5px;padding:6px 10px;background:#fdeaea;border-radius:4px;border:1px solid #f5c6c6;">
+						<i class="fa fa-exclamation-triangle"></i> Giá bị lệch ${format_currency(diff, frm.doc.currency).replace(/,00$/, "")} so với thực tế
+					</div>`);
+					$field.append($warning);
+				} else {
+					var $success = $(`<div class="promo-validation-warning" style="color:#2e7d32;font-size:12px;margin-top:5px;padding:6px 10px;background:#e8f5e9;border-radius:4px;border:1px solid #c8e6c9;">
+						<i class="fa fa-check-circle"></i> Giá khớp với giá thực tế
+					</div>`);
+					$field.append($success);
+				}
+			} else if (current_price >= 0) {
+				var $success = $(`<div class="promo-validation-warning" style="color:#2e7d32;font-size:12px;margin-top:5px;padding:6px 10px;background:#e8f5e9;border-radius:4px;border:1px solid #c8e6c9;">
+					<i class="fa fa-check-circle"></i> Giá khớp với giá thực tế
+				</div>`);
+				$field.append($success);
+			}
 		}
 	});
 
@@ -2045,6 +2111,7 @@ function render_promotion_pills(frm, cdt, cdn) {
 		arr.splice(parseInt($(this).attr("data-idx")), 1);
 		frappe.model.set_value(cdt, cdn, "new_promotions", JSON.stringify(arr));
 		frm.dirty();
+		$field.find(".promo-validation-warning").remove();
 		render_promotion_pills(frm, cdt, cdn);
 	});
 
@@ -2070,6 +2137,7 @@ function render_promotion_pills(frm, cdt, cdn) {
 		arr.splice(parseInt($(this).attr("data-idx")), 0, item);
 		frappe.model.set_value(cdt, cdn, "new_promotions", JSON.stringify(arr));
 		frm.dirty();
+		$field.find(".promo-validation-warning").remove();
 		render_promotion_pills(frm, cdt, cdn);
 	});
 	$pills.on("dragend", ".promo-pill", function() {
