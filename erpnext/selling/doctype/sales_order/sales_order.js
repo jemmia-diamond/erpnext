@@ -341,12 +341,11 @@ frappe.ui.form.on("Sales Order", {
 	auto_fetch_item_policies: function(frm) {
 		if (frm.doc.docstatus !== 0 || frm.doc.__islocal) return;
 
-		let items_to_fetch = frm.doc.items.filter(item => 
-			item.name && 
-			!item.name.startsWith("New") && 
-			!item.item_policy && 
-			item.is_policy_locked !== 1
-		);
+		let items_to_fetch = frm.doc.items.filter(item => {
+			let is_new = item.__islocal || 
+						 (item.name && (item.name.startsWith("New ") || item.name.startsWith("new-")));
+			return !is_new && !item.item_policy && item.is_policy_locked !== 1;
+		});
 
 		if (items_to_fetch.length > 0) {
 			items_to_fetch.forEach(item => {
