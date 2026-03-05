@@ -1004,11 +1004,15 @@ frappe.ui.form.on("Payment Entry", {
 
 									frappe.db.get_value("Sales Order", so.name, [
 										"order_number",
-										"split_order_group_name"
+										"split_order_group_name",
+										"tracking_number"
 									], (so_data) => {
 										if (so_data) {
 											frappe.model.set_value(row.doctype, row.name, "order_number", so_data.order_number);
 											frappe.model.set_value(row.doctype, row.name, "split_order_group_name", so_data.split_order_group_name);
+											if (so_data.tracking_number) {
+												frm.set_value("shipping_code", so_data.tracking_number);
+											}
 										}
 									});
 								}
