@@ -283,6 +283,9 @@ def update_lead_by_batch(docs):
 				doc["first_name"] = existing_doc.lead_name
 				doc["lead_name"] = existing_doc.lead_name
 
+			if existing_doc.lead_owner:
+				doc["lead_owner"] = existing_doc.lead_owner
+
 			existing_doc.update(doc)
 			existing_doc.save(ignore_permissions=True)
 			frappe.db.commit()
@@ -366,6 +369,27 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 
 		if not master_doc.budget_lead and loser_doc.budget_lead:
 			master_doc.budget_lead = loser_doc.budget_lead
+
+		if not master_doc.lead_owner and loser_doc.lead_owner:
+			master_doc.lead_owner = loser_doc.lead_owner
+
+		master_todos = frappe.get_all("ToDo", filters={
+			"reference_type": "Lead",
+			"reference_name": master_doc.name,
+			"status": "Open"
+		}, fields=["name"])
+
+		if not master_todos:
+			loser_todos = frappe.get_all("ToDo", filters={
+				"reference_type": "Lead",
+				"reference_name": loser_doc.name,
+				"status": "Open"
+			}, fields=["name"])
+			for todo in loser_todos:
+				todo_doc = frappe.get_doc("ToDo", todo.name)
+				todo_doc.reference_name = master_doc.name
+				todo_doc.description = f"Assignment Rule for Lead {master_doc.name}"
+				todo_doc.save(ignore_permissions=True)
 
 		frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True, force=1)
 
