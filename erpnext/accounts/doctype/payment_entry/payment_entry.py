@@ -198,6 +198,7 @@ class PaymentEntry(AccountsController):
 	def validate(self):
 		self.set_created_by_display()
 		self.set_shipping_code_from_sales_order()
+		self.set_bank_account_from_mapping()
 		self.set_total_order_amount()
 		self.setup_party_account_field()
 		self.set_missing_values()
@@ -535,6 +536,41 @@ class PaymentEntry(AccountsController):
 			if ref.reference_name:
 				self.shipping_code = frappe.db.get_value("Sales Order", ref.reference_name, "tracking_number") or self.shipping_code
 				break
+
+	def set_bank_account_from_mapping(self):
+		if self.mode_of_payment not in ["COD", "Payment Link", "Cà thẻ (POS)"]:
+			return
+
+		target_account_no = None
+		if self.mode_of_payment in ["COD", "Payment Link"]:
+			target_account_no = "1054449999"
+
+		elif self.mode_of_payment == "Cà thẻ (POS)":
+			if self.gateway == "Vietcombank":
+				if self.bank_account_branch == "Cửa hàng HCM":
+					target_account_no = "1054449999"
+				elif self.bank_account_branch == "Cửa hàng Hà Nội":
+					target_account_no = "1063499999"
+				elif self.bank_account_branch == "Cửa hàng Cần Thơ":
+					target_account_no = "1054499999"
+			elif self.gateway == "Payoo":
+				if self.bank_account_branch == "Cửa hàng Hà Nội":
+					target_account_no = "1121699999"
+				elif self.bank_account_branch == "Cửa hàng HCM":
+					target_account_no = "1054449999"
+				elif self.bank_account_branch == "Cửa hàng Cần Thơ":
+					target_account_no = "1054499999"
+			elif self.gateway == "ACB":
+				if self.bank_account_branch == "Cửa hàng Hà Nội":
+					target_account_no = "33399968868"
+
+		if target_account_no:
+			bank_account_name = frappe.db.get_value("Bank Account", {"bank_account_no": target_account_no}, "name")
+			if bank_account_name:
+				bank_doc = frappe.get_doc("Bank Account", bank_account_name)
+				self.bank_account = bank_doc.name
+				self.bank = bank_doc.bank
+				self.bank_account_no = bank_doc.bank_account_no
 
 	def validate_allocated_amount_as_per_payment_request(self):
 		"""
