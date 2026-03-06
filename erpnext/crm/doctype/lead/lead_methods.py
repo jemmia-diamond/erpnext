@@ -493,6 +493,8 @@ def update_contact_summary_timestamp(conversation_id):
 
 def create_lead_todo(lead_name: str, allocated_to: str):
 	"""Create a ToDo assignment for a Lead."""
+	if not allocated_to:
+		return
 	todo_doc = frappe.new_doc("ToDo")
 	todo_doc.description = f"Assignment Rule for Lead {lead_name}"
 	todo_doc.priority = "Medium"
