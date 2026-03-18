@@ -180,6 +180,17 @@ class PaymentEntry(AccountsController):
 		if not self.is_new():
 			self.setup_party_account_field()
 
+	def after_insert(self):
+		try:
+			webhook = frappe.get_doc("Webhook", "create payment entries")
+			enqueue_webhook(self, webhook)
+		except Exception as e:
+			frappe.log_error(
+				f"Failed to trigger webhook for Payment Entry {self.name}: {str(e)}",
+				"Payment Entry Webhook Trigger Error"
+			)
+
+
 	def setup_party_account_field(self):
 		self.party_account_field = None
 		self.party_account = None
