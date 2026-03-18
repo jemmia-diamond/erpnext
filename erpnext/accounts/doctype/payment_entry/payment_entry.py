@@ -301,6 +301,13 @@ class PaymentEntry(AccountsController):
 			pe_name=self.name
 		)
 
+		if self.modified_by != "tech@jemmia.vn":
+			webhook1 = frappe.get_doc("Webhook", "UPDATE PAYMENT ENTRY")
+			enqueue_webhook(self, webhook1)
+		if self.custom_transfer_status == "pending" and self.payment_code == "banking":
+			webhook2 = frappe.get_doc("Webhook", "payment_entry_bank_transactions_verificaton")
+			enqueue_webhook(self, webhook2)
+
 	def sync_bank_transaction_payments(self):
 		if self.flags.get("updating_from_bank_transaction"):
 			return
