@@ -514,8 +514,7 @@ class Lead(SellingController, CRMNote):
 				self.set_first_lead_source()
 
 		except Exception as e:
-			frappe.log_error(f"Error
-			 {e}")
+			frappe.log_error(f"Error link_to_contacts {e}")
 
 	def update_contact(self, contact: Contact, pancake_data):
 		try:
