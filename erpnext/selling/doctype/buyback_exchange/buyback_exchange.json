@@ -33,8 +33,7 @@
   {
    "fieldname": "serial_number",
    "fieldtype": "Data",
-   "label": "Serial Number",
-   "unique": 1
+   "label": "Serial Number"
   },
   {
    "fieldname": "instance_type",
