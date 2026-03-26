@@ -1008,7 +1008,8 @@
    "fieldname": "return_amount",
    "fieldtype": "Currency",
    "label": "Exchange Amount",
-   "options": "currency"
+   "options": "currency",
+   "read_only": 1
   },
   {
    "fieldname": "buyback_items_html",
