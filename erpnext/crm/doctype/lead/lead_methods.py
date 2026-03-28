@@ -28,17 +28,21 @@ def normalize_phone_number(phone: str) -> str:
 		+84 955 555 555 -> 84955555555
 		0955555555 -> 84955555555
 		84955555555 -> 84955555555
+		840932344355 -> 84932344355 (edge case: removes extra 0)
 		+1 (555)-000-4321 -> 15550004321
+		+86 138 0013 8000 -> 8613800138000
 	"""
 	if not phone:
 		return ""
 	phone = re.sub(r'[\s\-\(\)]', '', phone.strip())
 	if phone.startswith('+'):
-		return phone[1:]
+		phone = phone[1:]
 	if phone.startswith('00'):
-		return phone[2:]
-	if phone.startswith('0'):
-		return '84' + phone[1:]
+		phone = phone[2:]
+	if phone.startswith('840') and len(phone) >= 12:
+		phone = '84' + phone[3:]
+	elif phone.startswith('0'):
+		phone = '84' + phone[1:]
 	
 	return phone
 
