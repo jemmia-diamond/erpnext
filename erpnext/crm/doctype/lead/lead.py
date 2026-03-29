@@ -112,11 +112,57 @@ class Lead(SellingController, CRMNote):
 				if contact:
 					self.contact_doc = frappe.get_doc("Contact", contact)
 					return
-			self.contact_doc = self.create_contact()
+
+			''' 
+			Pancake_data is not null when the leads are synced from Pancake
+			'''
+			if self.pancake_data:
+				lead_source = self.check_lead_source()
+				if lead_source:
+					self.contact_doc = self.create_contact(lead_source)
+			else:
+				self.contact_doc = self.create_contact()
 
 		# leads created by email inbox only have the full name set
 		if self.lead_name and not any([self.first_name, self.middle_name, self.last_name]):
 			self.first_name, self.middle_name, self.last_name = parse_full_name(self.lead_name)
+
+	def check_lead_source(self):
+		lead_source = None
+		parsed_pancake_data = None
+		try:
+			parsed_pancake_data = frappe.parse_json(self.pancake_data)
+		except Exception as e:
+			parsed_pancake_data = None
+		if parsed_pancake_data is None:
+			return 
+		if parsed_pancake_data.get("page_id", None):
+			lead_source = frappe.db.get_value("Lead Source", 
+			{"pancake_page_id": parsed_pancake_data.get("page_id")}, ["name", "source_name", "pancake_platform" ])
+			if lead_source is None or lead_source == "":
+				lead_source = frappe.new_doc("Lead Source")
+
+				pc_platform = parsed_pancake_data.get("platform", None)
+				lead_source_platform = None
+				if "facebook" in pc_platform:
+					lead_source_platform = "Facebook"
+				elif "zalo" in pc_platform:
+					lead_source_platform = "Zalo"
+				elif "instagram" in pc_platform:
+					lead_source_platform = "Instagram"
+				elif "tiktok" in pc_platform:
+					lead_source_platform = "Tiktok"	
+
+				lead_source.update({
+					"source_name": "Chưa rõ",
+					"pancake_page_id": parsed_pancake_data.get("page_id", None),
+					"pancake_platform": lead_source_platform
+				})
+				lead_source.insert(ignore_permissions=True)
+				lead_source.reload()
+				lead_source = frappe.db.get_value("Lead Source", {"name": lead_source.name}, ["name", "source_name", "pancake_platform"])
+		
+		return lead_source
 
 	def after_insert(self):
 		self.link_to_contact()
@@ -248,7 +294,7 @@ class Lead(SellingController, CRMNote):
 		if data.create_prospect:
 			self.create_prospect(data.prospect_name)
 
-	def create_contact(self):
+	def create_contact(self, lead_source=None):
 		if not self.lead_name:
 			self.set_full_name()
 			self.set_lead_name()
@@ -270,7 +316,6 @@ class Lead(SellingController, CRMNote):
 				"gender": self.gender,
 				"designation": self.job_title,
 				"company_name": self.company_name,
-				
 				"pancake_conversation_id": parsed_pancake_data.get("conversation_id") if parsed_pancake_data and parsed_pancake_data.get("conversation_id") else None,
 				"pancake_customer_id": parsed_pancake_data.get("customer_id") if parsed_pancake_data and parsed_pancake_data.get("customer_id") else None,
 				"inserted_at": parsed_pancake_data.get("inserted_at") if parsed_pancake_data and parsed_pancake_data.get("inserted_at") else None,
@@ -288,10 +333,26 @@ class Lead(SellingController, CRMNote):
 		if self.mobile_no:
 			contact.append("phone_nos", {"phone": self.mobile_no, "is_primary_mobile_no": 1})
 
-		contact.insert(ignore_permissions=True)
-		contact.reload()  # load changes by hooks on contact
-
-		return contact
+		if lead_source:
+			contact.update({
+				"source": lead_source[0],
+				"source_group": lead_source[2]
+			})
+		try:
+			contact.insert(
+				ignore_permissions=True,
+				raise_direct_exception=True,
+			)
+			contact.reload()
+			return contact    
+		
+		except frappe.LinkValidationError as e:
+			frappe.log_error(
+				f"Failed to create contact for lead (LinkValidationError): {str(e)}")
+			frappe.throw(_(f"Failed to create contact for lead (LinkValidationError): {str(e)}."))		
+		except Exception as e:
+			return None
+		return None
 
 	def create_prospect(self, company_name):
 		try:
