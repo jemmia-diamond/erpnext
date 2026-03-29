@@ -254,6 +254,14 @@ class Lead(SellingController, CRMNote):
 			self.set_lead_name()
 
 		contact = frappe.new_doc("Contact")
+
+		parsed_pancake_data = None
+		if self.pancake_data:
+			try:
+				parsed_pancake_data = frappe.parse_json(self.pancake_data)
+			except Exception as e:
+				parsed_pancake_data = None
+
 		contact.update(
 			{
 				"first_name": self.first_name or self.lead_name,
@@ -262,6 +270,12 @@ class Lead(SellingController, CRMNote):
 				"gender": self.gender,
 				"designation": self.job_title,
 				"company_name": self.company_name,
+				
+				"pancake_conversation_id": parsed_pancake_data.get("conversation_id") if parsed_pancake_data and parsed_pancake_data.get("conversation_id") else None,
+				"pancake_customer_id": parsed_pancake_data.get("customer_id") if parsed_pancake_data and parsed_pancake_data.get("customer_id") else None,
+				"inserted_at": parsed_pancake_data.get("inserted_at") if parsed_pancake_data and parsed_pancake_data.get("inserted_at") else None,
+				"pancake_page_id": parsed_pancake_data.get("page_id") if parsed_pancake_data and parsed_pancake_data.get("page_id") else None
+				
 			}
 		)
 
