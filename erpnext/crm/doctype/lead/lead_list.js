@@ -7,6 +7,38 @@ frappe.listview_settings["Lead"] = {
 		return indicator;
 	},
 	onload: function (listview) {
+
+		const original_get_args = listview.get_args.bind(listview);
+		listview.get_args = function() {
+			const args = original_get_args();
+
+			if (args.filters) {
+				const newFilters = [];
+				const phoneOrFilters = [];
+
+				args.filters.forEach(filter => {
+					if (Array.isArray(filter) && filter[1] === 'phone' && filter[3]) {
+						let phone = filter[3].replace(/%/g, '').trim();
+						phone = phone.replace(/[\s\-\(\)]/g, '');
+						if (phone.startsWith('0') && phone.length >= 4) {
+							phoneOrFilters.push(['Lead', 'phone', 'like', '%' + phone + '%']);
+							phoneOrFilters.push(['Lead', 'phone', 'like', '%84' + phone.substring(1) + '%']);
+						} else {
+							phoneOrFilters.push(['Lead', 'phone', 'like', '%' + phone + '%']);
+						}
+					} else {
+						newFilters.push(filter);
+					}
+				});
+				args.filters = newFilters;
+				if (phoneOrFilters.length > 0) {
+					args.or_filters = phoneOrFilters;
+				}
+			}
+			
+			return args;
+		};
+
 		if (frappe.boot.user.can_create.includes("Prospect")) {
 			listview.page.add_action_item(__("Create Prospect"), function () {
 				frappe.model.with_doctype("Prospect", function () {

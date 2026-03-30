@@ -815,6 +815,11 @@ class Lead(SellingController, CRMNote):
 			return "Qualified"
 
 		return self.qualification_status
+	
+	def normalize_phone(self):
+		if self.phone:
+			from erpnext.crm.doctype.lead.lead_methods import normalize_phone_number
+			self.phone = normalize_phone_number(self.phone)
 
 @frappe.whitelist()
 def make_customer(source_name, target_doc=None):
