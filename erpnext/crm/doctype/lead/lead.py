@@ -817,7 +817,6 @@ class Lead(SellingController, CRMNote):
 		return self.qualification_status
 	
 	def normalize_phone(self):
-		"""Normalize phone number to standard format"""
 		if self.phone:
 			from erpnext.crm.doctype.lead.lead_methods import normalize_phone_number
 			self.phone = normalize_phone_number(self.phone)

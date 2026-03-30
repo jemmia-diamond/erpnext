@@ -110,12 +110,12 @@ def insert_lead(doc) -> "Document":
 		parent.save()
 		return parent
 
-	pancake_phone = doc.get("phone", "")
+	pancake_phone = normalize_phone_number(doc.get("phone", ""))
+	doc["phone"] = pancake_phone
 	is_valid_phone = validate_phone_number(pancake_phone)
 	if is_valid_phone is False:
 		doc["phone"] = ""
-	else:
-		doc["phone"] = normalize_phone_number(pancake_phone)
+		pancake_phone = ""
 
 	pancake_data = doc.get("pancake_data", {})
 
@@ -270,12 +270,13 @@ def update_lead_by_batch(docs):
 		doc.pop("flags", None)
 		pancake_data = doc.get("pancake_data", {})
 		try:
-			pancake_phone = doc.get("phone", "")
+			pancake_phone = normalize_phone_number(doc.get("phone", ""))
+			doc["phone"] = pancake_phone
 			is_valid_phone = validate_phone_number(pancake_phone)
 			if is_valid_phone is False:
 				doc["phone"] = ""
-			else:
-				doc["phone"] = normalize_phone_number(pancake_phone)
+				pancake_phone = ""
+
 			existing_doc = None
 			try:
 				existing_doc = frappe.get_doc(doc["doctype"], doc["docname"])
