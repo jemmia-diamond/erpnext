@@ -111,7 +111,6 @@ class Lead(SellingController, CRMNote):
 		self.set_onload("linked_prospects", self.get_linked_prospects())
 
 	def validate(self):
-		self.normalize_phone()
 		self.set_full_name()
 		self.set_lead_name()
 		self.set_title()
