@@ -87,9 +87,12 @@ def insert_lead(doc) -> "Document":
 		return parent
 
 	pancake_phone = doc.get("phone", "")
+	pancake_phone = normalize_phone(pancake_phone)
+	doc["phone"] = pancake_phone
 	is_valid_phone = validate_phone_number(pancake_phone)
 	if is_valid_phone is False:
 		doc["phone"] = ""
+		pancake_phone = ""
 
 	pancake_data = doc.get("pancake_data", {})
 
@@ -111,7 +114,8 @@ def insert_lead(doc) -> "Document":
 
 	# Check if lead exists by phone
 	if is_valid_phone and is_non_empty(pancake_phone):
-		existing_lead_name = frappe.db.get_value("Lead", {"phone": pancake_phone}, "name")
+		search_pattern = f"%{pancake_phone.lstrip('0')}"
+		existing_lead_name = frappe.db.get_value("Lead", {"phone": ["like", search_pattern]}, "name")
 		if existing_lead_name:
 			existing_doc = frappe.get_doc("Lead", existing_lead_name)
 			if conversation_id and page_id:
@@ -245,6 +249,8 @@ def update_lead_by_batch(docs):
 		pancake_data = doc.get("pancake_data", {})
 		try:
 			pancake_phone = doc.get("phone", "")
+			pancake_phone = normalize_phone(pancake_phone)
+			doc["phone"] = pancake_phone
 			is_valid_phone = validate_phone_number(pancake_phone)
 			if is_valid_phone is False:
 				doc["phone"] = ""
@@ -319,7 +325,9 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 	if not is_non_empty(new_phone):
 		return existing_doc
 
-	conflicting_lead = frappe.db.get_value("Lead", {"phone": new_phone}, "name")
+	normalized_phone = normalize_phone(new_phone)
+	search_pattern = f"%{normalized_phone.lstrip('0')}"
+	conflicting_lead = frappe.db.get_value("Lead", {"phone": ["like", search_pattern]}, "name")
 
 	if not conflicting_lead or conflicting_lead == existing_doc.name:
 		return existing_doc
@@ -525,3 +533,15 @@ def transfer_lead_todos(from_lead_name: str, to_lead_name: str):
 		todo_doc.reference_name = to_lead_name
 		todo_doc.description = f"Assignment Rule for Lead {to_lead_name}"
 		todo_doc.save(ignore_permissions=True)
+
+def normalize_phone(phone: str) -> str:
+	if not phone:
+		return ""
+	digits = re.sub(r"\D", "", phone)
+	if not digits:
+		return ""
+	if digits.startswith("84") and len(digits) > 2:
+		digits = re.sub(r"^84", "0", digits)
+	if not digits.startswith("0"):
+		digits = "0" + digits
+	return digits
