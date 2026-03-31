@@ -356,6 +356,9 @@ class PaymentEntry(AccountsController):
 		self.sync_bank_transaction_payments()
 		self.update_sales_order_paid_amount()
 
+		if self.misa_synced:
+			validate_and_misa_field(self.name)
+
 	def sync_bank_transaction_payments(self):
 		if self.flags.get("updating_from_bank_transaction"):
 			return
@@ -2212,6 +2215,36 @@ class PaymentEntry(AccountsController):
 		self.save()
 
 		frappe.msgprint(_("Payment Entry verified successfully"))
+
+
+def validate_and_misa_field(payment_entry_name):
+	doc = frappe.get_doc("Payment Entry", payment_entry_name)
+
+	if not doc.misa_synced:
+		return
+
+	has_sales_order = any(ref.reference_doctype == "Sales Order" for ref in doc.references)
+
+	if not has_sales_order:
+		return
+
+	if doc.docstatus != 0:
+		return
+
+	if doc.payment_code == "banking":
+		if not doc.bank_transactions or len(doc.bank_transactions) == 0:
+			return
+	else:
+		if not doc.verified_by:
+			return
+
+	frappe.db.sql("""
+		UPDATE `tabPayment Entry`
+		SET docstatus = 1,
+			status = 'Submitted'
+		WHERE name = %s AND misa_synced = 1
+	""", payment_entry_name)
+	frappe.db.commit()
 
 	@frappe.whitelist()
 	def allocate_amount_to_references(self, paid_amount, paid_amount_change, allocate_payment_amount):
