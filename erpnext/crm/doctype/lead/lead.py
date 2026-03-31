@@ -553,11 +553,15 @@ class Lead(SellingController, CRMNote):
 		if not self.phone or not self.province:
 			return "Lead"
 
-		if not self.budget_lead or not self.purpose_lead or not self.preferred_product_type:
-			return "Qualified Lead"
+		#TODO 
+		# hide this feature
+		# if not self.budget_lead or not self.purpose_lead or not self.preferred_product_type:
+		# 	return "Qualified Lead"
 		
 
-		return "Opportunity"
+		# return "Opportunity"
+
+		return "Qualified Lead"
 
 @frappe.whitelist()
 def make_customer(source_name, target_doc=None):
