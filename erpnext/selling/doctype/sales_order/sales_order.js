@@ -99,11 +99,21 @@ frappe.ui.form.on("Sales Order", {
 				const btn = frm.custom_buttons[__("Send Order To Lark")];
 				$(btn).prop("disabled", true);
 
-				doc.attachments = frm.attachments.get_attachments();
+				let attachments = frm.attachments.get_attachments();
+				attachments = attachments.map(att => {
+					return {
+						file_url: frappe.urllib.get_full_url(att.file_url),
+					}
+				})
+
+				const docWithAttachments = {
+					...doc,
+					attachments: attachments
+				}
 
 				frappe.call({
 					method: "erpnext.selling.doctype.sales_order.sales_order.larksuite_notification",
-					args: { sales_order_doc: doc },
+					args: { sales_order_doc: docWithAttachments },
 					callback: (r) => {
 						if (r.message) frappe.msgprint(r.message);
 					},
