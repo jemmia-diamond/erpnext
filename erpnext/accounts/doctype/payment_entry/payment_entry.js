@@ -325,10 +325,12 @@ frappe.ui.form.on("Payment Entry", {
 
 		frm.events.get_payment_code(frm, (payment_code) => {
 			frm.toggle_display("gateway", ["payment_link", "pos", "cash", "cash_on_delivery"].includes(payment_code));
-			const show_bank_account = payment_code && payment_code !== "cash";
-			
+			const show_bank_account = payment_code && !["cash", "pos"].includes(payment_code);
 			frm.toggle_display("bank_account", show_bank_account);
-			frm.set_df_property("bank_account", "reqd", show_bank_account ? 1 : 0);
+			
+			const is_new_or_has_bank = frm.is_new() || frm.doc.bank_account;
+			const make_required = show_bank_account && frm.doc.docstatus === 0 && is_new_or_has_bank;
+			frm.set_df_property("bank_account", "reqd", make_required ? 1 : 0);
 			frm.toggle_display("qr_section_break", payment_code === "banking");
 		});
 	},
@@ -396,21 +398,21 @@ frappe.ui.form.on("Payment Entry", {
 		) {
 			frm.add_custom_button(__("Verify"), () => {
 				frm.events.get_payment_code(frm, (payment_code) => {
-					let skip_bank_check = ["cash", "cash_on_delivery"].includes(payment_code);
-					if (!skip_bank_check && (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0)) {
+					let requires_bank_transaction = payment_code === "banking";
+					if (requires_bank_transaction && (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0)) {
 						frappe.msgprint({
-							title: __("Cannot Verify"),
+							title: __("Không thể xác minh"),
 							indicator: "red",
-							message: __("Payment Entry must have at least one Bank Transaction to verify (unless Mode of Payment is Cash or COD).")
+							message: __("Thanh toán chuyển khoản phải có ít nhất một giao dịch ngân hàng để xác minh.")
 						});
 						return;
 					}
 
 					if (!frm.doc.references || !frm.doc.references.some(r => r.reference_doctype === "Sales Order")) {
 						frappe.msgprint({
-							title: __("Cannot Verify"),
+							title: __("Không thể xác minh"),
 							indicator: "red",
-							message: __("Payment Entry must have at least one Sales Order reference to verify.")
+							message: __("Phiếu thanh toán phải có ít nhất một đơn hàng để xác minh.")
 						});
 						return;
 					}
@@ -659,6 +661,15 @@ frappe.ui.form.on("Payment Entry", {
 		frm.set_value("gateway", "");
 		frm.events.update_gateway_options(frm);
 		frm.events.update_field_visibility(frm);
+		
+		if (frm.doc.mode_of_payment) {
+			frappe.db.get_value("Mode of Payment", frm.doc.mode_of_payment, "payment_code", (r) => {
+				if (r && r.payment_code) {
+					frm.set_value("payment_code", r.payment_code);
+				}
+			});
+		}
+		
 		erpnext.accounts.pos.get_payment_mode_account(frm, frm.doc.mode_of_payment, function (account) {
 			let payment_account_field = frm.doc.payment_type == "Receive" ? "paid_to" : "paid_from";
 			frm.set_value(payment_account_field, account);
@@ -2137,7 +2148,7 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 			if (Math.abs(flt(row.allocated_amount) - flt(frm.doc.paid_amount)) > 0.01) {
 				frappe.msgprint({
 					title: __("Sai số tiền"),
-					message: __("Không khớp số tiền. Số tiền phân bổ trong Giao dịch Ngân hàng phải bằng số tiền thanh toán trong Payment Entry. Hệ thống sẽ xóa dòng này", [frm.doc.paid_amount]),
+					message: __("Vui lòng kiểm tra và nhập <b>đúng số tiền thanh toán trước</b> khi tiếp tục.", [frm.doc.paid_amount]),
 					indicator: 'red'
 				});
 				
@@ -2152,7 +2163,7 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 			frappe.msgprint({
 				title: __("Lỗi xác thực"),
 				indicator: "red",
-				message: __("Chỉ được phép có một Giao dịch Ngân hàng cho mỗi Phiếu Thanh toán. Đang xóa hàng dư...")
+				message: __("Mỗi phiếu thanh toán chỉ được phép gắn <b>một giao dịch duy nhất</b>.")
 			});
 			
 			setTimeout(() => {

@@ -56,12 +56,9 @@
    "search_index": 1
   },
   {
-   "columns": 1,
    "depends_on": "eval:doc.reference_doctype=='Sales Order'",
-   "fetch_from": "reference_name.order_number",
    "fieldname": "order_number",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "Order Number",
    "read_only": 1
   },
@@ -113,12 +110,9 @@
    "fetch_from": "reference_name.payment_order_status"
   },
   {
-   "columns": 1,
    "depends_on": "eval:doc.reference_doctype=='Sales Order'",
-   "fetch_from": "reference_name.split_order_group_name",
    "fieldname": "split_order_group_name",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "Group Order",
    "read_only": 1
   },
