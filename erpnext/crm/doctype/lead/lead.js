@@ -240,16 +240,18 @@ frappe.ui.form.on('Lead', {
 			filters: [
 				["Dynamic Link", "link_doctype", "=", "Lead"],
 				["Dynamic Link", "link_name", "=", frm.doc.name]
-			]
+			],
+			fields: ["name", "pancake_conversation_id", "pancake_page_id", "source"]
 		}).then(data => {
-			if (data.length > 0) {
-				frappe.db.get_doc("Contact", data[0].name).then(doc => {
-					// Add web link to Pancake Conversation
-					if (doc.pancake_conversation_id) {
-						frm.add_web_link(`https://pancake.vn/${doc.pancake_page_id}?c_id=` + doc.pancake_conversation_id, "Pancake Conversation");
-					}
-				})
-			}
+			data.forEach(contact => {
+				if (contact.source) {
+					frappe.db.get_doc("Lead Source", contact.source).then(source => {
+						frm.add_web_link(`https://pancake.vn/${contact.pancake_page_id}?c_id=` + contact.pancake_conversation_id, `${source.source_name}`);
+					})
+				} else {
+					frm.add_web_link(`https://pancake.vn/${contact.pancake_page_id}?c_id=` + contact.pancake_conversation_id, `Pancake Conversation`);
+				}
+			})
 		});
 	}
 })
