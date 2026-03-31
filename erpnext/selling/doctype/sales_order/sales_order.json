@@ -2034,6 +2034,7 @@
   {
    "fieldname": "payment_records",
    "fieldtype": "Table",
+   "hidden": 1,
    "options": "Sales Order Payment Record",
    "read_only": 1
   },
