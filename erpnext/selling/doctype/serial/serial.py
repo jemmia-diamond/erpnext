@@ -14,6 +14,8 @@ class Serial(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		design_code: DF.Data | None
 		serial_number: DF.Data
+		sku: DF.Data | None
 	# end: auto-generated types
 	pass

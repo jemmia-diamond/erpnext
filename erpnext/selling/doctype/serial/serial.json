@@ -6,22 +6,34 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "serial_number"
+  "serial_number",
+  "sku",
+  "design_code"
  ],
  "fields": [
   {
    "fieldname": "serial_number",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "serial_number",
+   "label": "Serial Number",
    "reqd": 1,
    "unique": 1
+  },
+  {
+   "fieldname": "sku",
+   "fieldtype": "Data",
+   "label": "SKU"
+  },
+  {
+   "fieldname": "design_code",
+   "fieldtype": "Data",
+   "label": "Design Code"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-04-22 15:25:55.448069",
+ "modified": "2025-06-13 09:15:14.739718",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Serial",
@@ -42,6 +54,7 @@
   }
  ],
  "row_format": "Dynamic",
+ "search_fields": "design_code,sku",
  "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
