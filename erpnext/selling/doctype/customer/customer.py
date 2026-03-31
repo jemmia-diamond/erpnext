@@ -132,7 +132,11 @@ class Customer(TransactionBase):
 	# end: auto-generated types
 
 	def onload(self):
-		"""Load address and contacts in `__onload`"""
+		# Load customer cumulative revenue and true cumulative revenue
+		self.cumulative_revenue = self.update_customer_cumulative_revenue()
+		self.true_cumulative_revenue = self.update_customer_true_cumulative_revenue()
+
+		# Load address and contacts in `__onload`
 		load_address_and_contact(self)
 		self.load_dashboard_info()
 
@@ -453,6 +457,28 @@ class Customer(TransactionBase):
 					frappe.bold(self.customer_name)
 				)
 			)
+
+	def update_customer_cumulative_revenue(self):
+		result = frappe.db.sql("""
+		SELECT SUM(grand_total)
+		FROM `tabSales Order`
+		WHERE customer = %s AND cancelled_status = 'Uncancelled'
+		""", (self.name,), as_list=True)
+		total_revenue = result[0][0] if result and result[0][0] else 0
+		return total_revenue
+
+
+	def update_customer_true_cumulative_revenue(self):
+		result = frappe.db.sql("""
+		SELECT SUM(grand_total)
+		FROM `tabSales Order`
+		WHERE customer = %s
+		AND cancelled_status = 'Uncancelled'
+		AND financial_status = 'Paid'
+		AND fulfillment_status = 'Fulfilled'
+		""", (self.name,), as_list=True)
+		total_real_revenue = result[0][0] if result and result[0][0] else 0
+		return total_real_revenue
 
 
 @frappe.whitelist()
