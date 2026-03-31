@@ -123,7 +123,8 @@ def backfill_lead_info(docs):
         name_case_when_clauses = []
         phone_case_when_clauses = []
         ids_to_update = []
-        sql_params = []  # This will hold all parameters for the SQL query
+        sql_params_name = []  # Separate list for first_name parameters
+        sql_params_phone = []  # Separate list for phone parameters
 
         for doc in docs:
             lead_id = doc.get("docname")
@@ -137,42 +138,36 @@ def backfill_lead_info(docs):
             ids_to_update.append(lead_id)
 
             # Build CASE WHEN clauses for first_name with nested conditions
-            # Outer WHEN: identifies the specific lead by name
-            # Inner CASE: applies the update based on current first_name value
-            name_case_when_clauses.append(f"""
-                WHEN name = %s THEN
-                    CASE
-                        WHEN first_name IS NULL OR first_name = '' OR first_name = 'Chưa rõ' THEN %s
-                        ELSE first_name
-                    END
-            """)
-            # Parameters for this clause: lead_id (for outer WHEN) and new_name (for inner THEN)
-            sql_params.extend([lead_id, new_name])
+            if new_name:  # Only add clause if new_name is not empty
+                name_case_when_clauses.append(f"""
+                    WHEN name = %s THEN
+                        CASE
+                            WHEN first_name IS NULL OR first_name = '' OR first_name = 'Chưa rõ' THEN %s
+                            ELSE first_name
+                        END
+                """)
+                # Parameters for this clause: lead_id (for outer WHEN) and new_name (for inner THEN)
+                sql_params_name.extend([lead_id, new_name])
 
             # Build CASE WHEN clauses for phone with nested conditions
-            # Outer WHEN: identifies the specific lead by name
-            # Inner CASE: applies the update based on current phone value
-            phone_case_when_clauses.append(f"""
-                WHEN name = %s THEN
-                    CASE
-                        WHEN phone IS NULL OR phone = '' THEN %s
-                        ELSE phone
-                    END
-            """)
-            # Parameters for this clause: lead_id (for outer WHEN) and new_phone (for inner THEN)
-            sql_params.extend([lead_id, new_phone])
+            if new_phone:  # Only add clause if new_phone is not empty
+                phone_case_when_clauses.append(f"""
+                    WHEN name = %s THEN
+                        CASE
+                            WHEN phone IS NULL OR phone = '' THEN %s
+                            ELSE phone
+                        END
+                """)
+                # Parameters for this clause: lead_id (for outer WHEN) and new_phone (for inner THEN)
+                sql_params_phone.extend([lead_id, new_phone])
 
         # If no valid documents were processed to build clauses, return
         if not ids_to_update:
             return {"failed_docs": failed_docs}
-            
         # Add all lead IDs for the WHERE IN clause at the very end of the parameters list
-        sql_params.extend(ids_to_update)
+        ids_clause_placeholders = ", ".join(["%s"] * len(ids_to_update))
 
         # Construct SQL query dynamically
-        # The 'f-string' helps embed the dynamically generated CASE WHEN clauses and IN placeholders
-        in_clause_placeholders = ", ".join(["%s"] * len(ids_to_update))
-
         sql_query = f"""
             UPDATE `tabLead`
             SET
@@ -184,8 +179,9 @@ def backfill_lead_info(docs):
                     {' '.join(phone_case_when_clauses)}
                     ELSE phone -- Fallback: if name matches but no WHEN clause matched, keep current phone
                 END
-            WHERE name IN ({in_clause_placeholders})
+            WHERE name IN ({ids_clause_placeholders})
         """
+        sql_params = sql_params_name + sql_params_phone + ids_to_update
 
         frappe.db.sql(sql_query, tuple(sql_params))
 
