@@ -430,6 +430,8 @@ scheduler_events = {
 		],
 		"0/30 * * * *": [
 			"erpnext.stock.doctype.repost_item_valuation.repost_item_valuation.run_parallel_reposting",
+			"erpnext.utilities.doctype.video.video.update_youtube_data",
+            "erpnext.selling.doctype.customer.customer.update_all_customers_revenue",
 		],
 		# Hourly but offset by 30 minutes
 		"30 * * * *": [
