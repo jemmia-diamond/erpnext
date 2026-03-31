@@ -1010,6 +1010,7 @@ class SalesOrder(SellingController):
 		self.validate_primary_sales_team()
 		self.handle_order_cancellation()
 		self.process_debt_history()
+		self.handle_serial_numbers_changes()
 		
 	def before_insert(self):
 		self.handle_order_cancellation()
@@ -1131,6 +1132,97 @@ class SalesOrder(SellingController):
 		except Exception as e:
 			frappe.log_error(f"Error copying from reference order: {str(e)}")
 
+	def handle_serial_numbers_changes(self):
+		"""Handle serial_numbers changes and backfill from reference orders"""
+		try:
+			if not self.haravan_ref_order_id:
+				return
+			# Get current items with serial_numbers
+			current_items = self.get("items") or []
+			items_with_serial = [item for item in current_items if getattr(item, "serial_numbers", None)]
+			
+			if not items_with_serial:
+				return
+			
+			# Get previous serial_number data
+			previous_serial_data = self._get_previous_serial_numbers()
+			
+			# Process each item with serial_numbers that has changed
+			for current_item in items_with_serial:
+				# Check if serial_numbers changed
+				current_serial = getattr(current_item, "serial_numbers", None)
+				previous_serial = previous_serial_data.get(current_item.name)
+				
+				# Only process if serial_numbers changed
+				if current_serial != previous_serial and current_serial:
+					self._backfill_item_from_reference_by_serial(current_item)
+				
+		except Exception as e:
+			frappe.log_error(f"Error handling serial_numbers changes: {str(e)}")
+
+	def _get_previous_serial_numbers(self):
+		"""Get previous serial_numbers from database for comparison"""
+		try:
+			# Get current serial_numbers from database
+			serial_data = frappe.db.sql("""
+				SELECT name, serial_numbers 
+				FROM `tabSales Order Item` 
+				WHERE parent = %s
+			""", (self.name,), as_dict=True)
+			return {item.name: item.serial_numbers for item in serial_data}
+		except Exception as e:
+			frappe.log_error(f"Error getting previous serial_numbers: {str(e)}")
+			return {}
+
+	def _backfill_item_from_reference_by_serial(self, current_item):
+		"""Backfill current item from reference item with matching serial_numbers"""
+		try:
+			current_serial = getattr(current_item, "serial_numbers", None)
+			if not current_serial:
+				return
+			
+			# Get reference order based on Sales Order's haravan_ref_order_id
+			ref_order_name = frappe.db.get_value("Sales Order", 
+				{"haravan_order_id": self.haravan_ref_order_id}, "name")
+			
+			if not ref_order_name:
+				return
+			
+			ref_order_doc = frappe.get_doc("Sales Order", ref_order_name)
+			ref_items = ref_order_doc.get("items") or []
+			
+			# Find reference item with matching serial_numbers
+			matching_ref_item = self._find_matching_ref_item_by_serial(ref_items, current_serial)
+			
+			if not matching_ref_item:
+				return
+			
+			# Copy fields from reference item to current item
+			self._copy_item_fields(matching_ref_item, current_item)
+				
+		except Exception as e:
+			frappe.log_error(f"Error backfilling item {current_item.name}: {str(e)}")
+
+	def _find_matching_ref_item_by_serial(self, ref_items, current_serial):
+		"""Find reference item with matching serial_numbers"""
+		for ref_item in ref_items:
+			ref_serial = getattr(ref_item, "serial_numbers", None)
+			if ref_serial and ref_serial.strip() == current_serial.strip():
+				return ref_item
+		return None
+
+	def _copy_item_fields(self, ref_item, current_item):
+		"""Copy fields from reference item to current item"""
+		fields_to_copy = self._get_item_fields_to_copy()
+		
+		for field in fields_to_copy:
+			ref_value = getattr(ref_item, field, None)
+			current_value = getattr(current_item, field, None)
+			
+			# Only copy if reference has value and current doesn't
+			if ref_value and not current_value:
+				setattr(current_item, field, ref_value)
+
 	def _map_current_and_ref_items(self, current_items, ref_items):
 		"""Return (current_item, ref_item) pairs."""
 		def norm(v):
@@ -1195,39 +1287,51 @@ class SalesOrder(SellingController):
 		]
 
 	def copy_sales_order_items_from_reference(self, ref_order_doc):
-			"""Copy Sales Order Items from reference order based on haravan_variant_id mapping"""
-			try:
-				current_items = self.get("items") or []
-				ref_items = ref_order_doc.get("items") or []
+		"""Copy Sales Order Items from reference order based on haravan_variant_id mapping"""
+		try:
+			current_items = self.get("items") or []
+			ref_items = ref_order_doc.get("items") or []
 
-				if not current_items or not ref_items:
-					return
+			if not current_items or not ref_items:
+				return
 
 			# Build mapping pairs: current_item - ref_item
-				pairs = self._map_current_and_ref_items(current_items, ref_items)
-				if not pairs:
-					return
-
-				# Fields to copy from reference items
-				fields_to_copy = self._get_item_fields_to_copy()
+			pairs = self._map_current_and_ref_items(current_items, ref_items)
+			if not pairs:
+				return
 
 			# Update current items with reference data using frappe.db.set_value for child table
-				items_updated = False
-				for current_item, ref_item in pairs:
-					for field in fields_to_copy:
-						ref_value = getattr(ref_item, field, None)
-						current_value = getattr(current_item, field, None)
-						# Only copy if reference has value and current item doesn't have value
-						if ref_value and not current_value:
-							frappe.db.set_value("Sales Order Item", current_item.name, field, ref_value)
-							items_updated = True
+			items_updated = False
+			for current_item, ref_item in pairs:
+				# Copy fields using common method
+				items_updated = self._copy_item_fields_with_db_update(ref_item, current_item) or items_updated
 
-				if items_updated:
-					frappe.db.commit()
-					frappe.clear_document_cache("Sales Order", self.name)
+			if items_updated:       
+				frappe.db.commit()
+				frappe.clear_document_cache("Sales Order", self.name)
 
-			except Exception as e:
-				frappe.log_error(f"Error copying SO items: {str(e)[:100]}")
+		except Exception as e:
+			frappe.log_error(f"Error copying SO items: {str(e)[:100]}")
+
+	def _copy_item_fields_with_db_update(self, ref_item, current_item):
+		"""Copy fields from reference item to current item using frappe.db.set_value"""
+		fields_to_copy = self._get_item_fields_to_copy()
+		items_updated = False
+		
+		for field in fields_to_copy:
+			ref_value = getattr(ref_item, field, None)
+			current_value = getattr(current_item, field, None)
+			
+			# Special handling for uom field - always copy if reference has value
+			if field == 'uom' and ref_value:
+				frappe.db.set_value("Sales Order Item", current_item.name, field, ref_value)
+				items_updated = True
+			# For other fields, only copy if reference has value and current item doesn't have value
+			elif ref_value and not current_value:
+				frappe.db.set_value("Sales Order Item", current_item.name, field, ref_value)
+				items_updated = True
+		
+		return items_updated
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:
 	"""Returns the unreserved quantity for the Sales Order Item."""

@@ -74,7 +74,7 @@ class SalesOrderItem(Document):
 		price_list_rate: DF.Currency
 		pricing_rules: DF.SmallText | None
 		produced_qty: DF.Float
-		product_availability_status: DF.Literal["In Stock", "Pre-order"]
+		product_availability_status: DF.Literal["", "In Stock", "Pre-order"]
 		product_details: DF.Data | None
 		production_plan_qty: DF.Float
 		project: DF.Link | None

@@ -1175,11 +1175,10 @@
    "options": "Promotion"
   },
   {
-   "default": "In Stock",
    "fieldname": "product_availability_status",
    "fieldtype": "Select",
    "label": "Product Availability Status",
-   "options": "In Stock\nPre-order"
+   "options": "\nIn Stock\nPre-order"
   },
   {
    "fieldname": "type",
