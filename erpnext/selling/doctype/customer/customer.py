@@ -50,6 +50,8 @@ class Customer(TransactionBase):
 		bank_account_name: DF.Data | None
 		bank_name: DF.Literal["Agribank", "ACB", "BIDV", "Vietcombank", "VietinBank", "Techcombank", "Sacombank", "MB Bank", "Eximbank", "VPBank", "SHB", "NamABank", "OceanBank", "TPBank"]
 		birth_date: DF.Date | None
+		bizfly_code: DF.Data | None
+		bizfly_id: DF.Data | None
 		ceo_name: DF.Data | None
 		companies: DF.Table[AllowedToTransactWith]
 		company_name: DF.Data | None
@@ -76,6 +78,7 @@ class Customer(TransactionBase):
 		first_name: DF.ReadOnly | None
 		first_channel: DF.Data | None
 		gender: DF.Link | None
+		haravan_id: DF.Int
 		image: DF.AttachImage | None
 		industry: DF.Link | None
 		invoice_type: DF.Literal["Individual", "Company"]

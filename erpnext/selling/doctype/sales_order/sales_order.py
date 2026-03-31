@@ -42,6 +42,7 @@ from erpnext.stock.get_item_details import (
 	get_price_list_rate,
 )
 from erpnext.stock.stock_balance import get_reserved_qty, update_bin_qty
+from frappe.model.docstatus import DocStatus
 
 form_grid_templates = {"items": "templates/form_grid/item_grid.html"}
 
@@ -66,6 +67,7 @@ class SalesOrder(SellingController):
 		from erpnext.selling.doctype.sales_order_item.sales_order_item import SalesOrderItem
 		from erpnext.selling.doctype.sales_order_payment_record.sales_order_payment_record import SalesOrderPaymentRecord
 		from erpnext.selling.doctype.sales_order_promotion.sales_order_promotion import SalesOrderPromotion
+		from erpnext.selling.doctype.sales_order_reference.sales_order_reference import SalesOrderReference
 		from erpnext.selling.doctype.sales_team.sales_team import SalesTeam
 		from erpnext.stock.doctype.packed_item.packed_item import PackedItem
 
@@ -129,8 +131,6 @@ class SalesOrder(SellingController):
 		in_words: DF.Data | None
 		incoterm: DF.Link | None
 		inter_company_order_reference: DF.Link | None
-		invoice_date: DF.Datetime | None
-		invoice_location: DF.Literal[None]
 		is_internal_customer: DF.Check
 		is_subcontracted: DF.Check
 		item_wise_tax_details: DF.Table[ItemWiseTaxDetail]
@@ -162,6 +162,7 @@ class SalesOrder(SellingController):
 		product_category: DF.Literal[None]
 		project: DF.Link | None
 		promotions: DF.TableMultiSelect[SalesOrderPromotion]
+		ref_sales_orders: DF.Table[SalesOrderReference]
 		represents_company: DF.Link | None
 		reserve_stock: DF.Check
 		rounded_total: DF.Currency
@@ -966,28 +967,44 @@ class SalesOrder(SellingController):
 
 		query.run()
 
+	def handle_re_order(self):
+		# allow to link to cancelled documents
+		self.flags.ignore_links = True
+		if isinstance(self.haravan_ref_order_id, int):
+			# find sales order by haravan_ref_order_id
+			ref_sales_order = frappe.get_last_doc("Sales Order", filters=[["haravan_order_id", "=", self.haravan_ref_order_id]])
+			if not ref_sales_order or ref_sales_order.name == self.name:
+				return
+			# link to the reference sales order
+			self.append("ref_sales_orders", {"sales_order": ref_sales_order.name})
 
-	def cancel_sales_order(self):
-		if self.docstatus == 1:  # Only cancel submitted documents
-			self.cancel()
-		elif self.docstatus == 0:  # For draft documents
-			self.flags.ignore_permissions = True
-			self.docstatus = 2
-			self.flags.ignore_on_cancel = True
+			# update allocation
+			if len(ref_sales_order.sales_team) > 0:
+				self.sales_team = []  # Clear existing sales team entries
+				for team in ref_sales_order.sales_team:
+					self.append("sales_team", {
+						"sales_person": team.sales_person,
+						"allocated_percentage": team.allocated_percentage
+					})
+
+	def handle_order_cancellation(self):
+		"""If order from Haravan is cancelled, cancel the current order too"""
+
+		if self.cancelled_status == "Cancelled":
+			if self.docstatus == DocStatus.SUBMITTED:  # Only cancel submitted documents
+				self.cancel()
+				return
+			if self.docstatus == DocStatus.DRAFT:  # For draft documents
+				self.flags.ignore_permissions = True
+				self.docstatus = DocStatus.CANCELLED
+				self.flags.ignore_on_cancel = True
 
 	def before_save(self):
-		"""
-			If order from Haravan is cancelled, cancel the current order too
-		"""
-		if self.cancelled_status == "Cancelled":
-			self.cancel_sales_order()
+		self.handle_order_cancellation()
 
 	def before_insert(self):
-		"""
-			If order from Haravan is cancelled, cancel the current order too
-		"""
-		if self.cancelled_status == "Cancelled":
-			self.cancel_sales_order()
+		self.handle_re_order()
+		self.handle_order_cancellation()
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:
 	"""Returns the unreserved quantity for the Sales Order Item."""

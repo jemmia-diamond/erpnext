@@ -123,6 +123,9 @@
   "column_break_53",
   "disabled",
   "is_frozen",
+  "haravan_id",
+  "bizfly_id",
+  "bizfly_code",
   "portal_users_tab",
   "portal_users",
   "more_info_tab",
@@ -924,6 +927,24 @@
    "fieldname": "detail_tab",
    "fieldtype": "Tab Break",
    "label": "Details"
+  },
+  {
+   "fieldname": "haravan_id",
+   "fieldtype": "Int",
+   "label": "Haravan ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bizfly_id",
+   "fieldtype": "Data",
+   "label": "Bizfly ID",
+   "unique": 1
+  },
+  {
+   "fieldname": "bizfly_code",
+   "fieldtype": "Data",
+   "label": "Bizfly Code",
+   "unique": 1
   }
  ],
  "icon": "fa fa-user",
