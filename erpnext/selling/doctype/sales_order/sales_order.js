@@ -101,6 +101,24 @@ frappe.ui.form.on("Sales Order", {
 		// hide sales order item grid footer (buttons)
 		$('[data-fieldname="items"] .grid-footer').addClass('hidden');
 
+		// fetch customer details
+		frappe.db.get_doc("Customer", frm.doc.customer).then((doc) => {
+			frm.set_value("birth_date", doc.birth_date);
+			frm.set_value("place_of_issuance", doc.place_of_issuance);
+			frm.set_value("date_of_issuance", doc.date_of_issuance);
+			frm.set_value("customer_personal_id", doc.personal_id);
+			frm.set_value("gender", doc.gender);
+		})
+
+		// link filters for promotions
+		frm.set_query("promotions", function () {
+            return {
+                filters: {
+                    "scope": "Order"
+                }
+            };
+        });
+
 		if (frm.doc.docstatus === 1) {
 			if (
 				frm.doc.status !== "Closed" &&
