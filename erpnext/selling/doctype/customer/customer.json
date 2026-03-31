@@ -134,6 +134,8 @@
   "priority_bank_account",
   "section_break_dkbv",
   "coupon_table",
+  "sales_order_tab",
+  "sales_order_html",
   "sales_team_tab",
   "sales_team",
   "sales_team_section",
@@ -934,6 +936,16 @@
    "fieldname": "priority_tab",
    "fieldtype": "Tab Break",
    "label": "Priority"
+  },
+  {
+   "fieldname": "sales_order_tab",
+   "fieldtype": "Tab Break",
+   "label": "Orders"
+  },
+  {
+   "fieldname": "sales_order_html",
+   "fieldtype": "HTML",
+   "label": "Orders"
   },
   {
    "fieldname": "purchase_amount_last_12_months",

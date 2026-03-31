@@ -155,7 +155,8 @@ frappe.ui.form.on("Customer", {
 		if (!frm.doc.__islocal) {
 			frappe.contacts.render_address_and_contact(frm);
 
-			// custom buttons
+			// Load customer orders
+			frm.trigger("load_sales_orders");
 
 			frm.add_custom_button(
 				__("Accounts Receivable"),
@@ -292,4 +293,127 @@ frappe.ui.form.on("Customer", {
 			selling: 1,
 		});
 	},
+	load_sales_orders: function(frm) {
+		const sales_order_wrapper = frm.get_field("sales_order_html").$wrapper;
+		if (!sales_order_wrapper) return;
+
+		sales_order_wrapper.empty();
+
+		// Show loading message
+		sales_order_wrapper.html('<div class="text-center"><i class="fa fa-spinner fa-spin"></i> Loading Orders...</div>');
+
+		frappe.call({
+			method: 'frappe.client.get_list',
+			args: {
+				doctype: 'Sales Order',
+				filters: {
+					'customer': frm.doc.name
+				},
+				fields: ['name', 'order_number', 'transaction_date', 'status', 'grand_total', 'currency', 'haravan_order_id', 'cancelled_status'],
+				order_by: 'transaction_date desc',
+				limit_page_length: 20
+			},
+			callback: function(r) {
+				sales_order_wrapper.empty();
+
+				if (r.message && r.message.length > 0) {
+					let tabledHeadStyle = "padding: 12px 15px; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #6c757d; border: none;";
+					let tableDataStyle = "padding: 12px 15px; border: none; vertical-align: middle;";
+					let html = `
+						<div style="margin-bottom: 10px;">
+							<h6 class="text-muted" style="margin: 0; font-size: 13px;">Latest ${r.message.length} Orders</h6>
+						</div>
+						<div class="frappe-card">
+							<div class="frappe-card-body" style="max-height: 400px; overflow-y: auto; padding: 0;">
+								<table class="table table-hover" style="margin: 0; font-size: 13px;">
+									<thead style="background: #f8f9fa; position: sticky; top: 0; z-index: 10;">
+										<tr style="border-bottom: 1px solid #dee2e6;">
+											<th style="${tabledHeadStyle}">Order Number</th>
+											<th style="${tabledHeadStyle}">Order Date</th>
+											<th style="${tabledHeadStyle}">Cancelled Status</th>
+											<th style="${tabledHeadStyle}">Financial Status</th>
+											<th style="${tabledHeadStyle} text-align: right;">Grand Total</th>
+										</tr>
+									</thead>
+									<tbody>
+					`;
+
+					r.message.forEach(function(order) {
+						// Dynamic cancelled status badge
+						let cancelled_status_badge = '';
+						if (order.cancelled_status === 'Cancelled') {
+							cancelled_status_badge = '<span class="indicator-pill red no-indicator-dot filterable">Cancelled</span>';
+						} else {
+							cancelled_status_badge = '<span class="indicator-pill green no-indicator-dot filterable">Uncancelled</span>';
+						}
+
+						// Order number color based on cancelled status
+						let order_color = order.cancelled_status === 'Cancelled' ? 'rgb(219, 48, 48)' : 'rgb(35, 98, 235)';
+
+						// Dynamic financial status based on order status
+						let financial_status_badge = '';
+						if (order.financial_status = 'Paid') {
+							financial_status_badge = '<span class="indicator-pill green no-indicator-dot filterable">Paid</span>';
+						} else if (order.financial_status = 'Partially Paid') {
+							financial_status_badge = '<span class="indicator-pill gray no-indicator-dot filterable">Partially Paid</span>';
+						} else {
+							financial_status_badge = `<span class="indicator-pill blue no-indicator-dot filterable">${order.financial_status}</span>`;
+						}
+						const display_order_number = order.order_number || order.name;
+
+						html += `
+							<tr style="border-bottom: 1px solid #f1f3f4;">
+								<td style="${tableDataStyle}">
+									<a href="/app/sales-order/${order.name}" style="color: ${order_color}; font-weight: 500; text-decoration: none;">${display_order_number}</a>
+								</td>
+								<td style="${tableDataStyle} color: #6c757d;">
+									${frappe.datetime.str_to_user(order.transaction_date)}
+								</td>
+								<td style="${tableDataStyle}">
+									${cancelled_status_badge}
+								</td>
+								<td style="${tableDataStyle}">
+									${financial_status_badge}
+								</td>
+								<td style="${tableDataStyle} text-align: right; font-weight: 500; color: #495057;">
+									${format_currency(order.grand_total, order.currency)}
+								</td>
+							</tr>
+						`;
+					});
+
+					html += `
+							</tbody>
+								</table>
+							</div>
+							<div class="frappe-card-footer text-right">
+								<a href="/app/sales-order?customer=${encodeURIComponent(frm.doc.name)}" class="btn btn-primary btn-sm">
+									${__("View This Customer's Orders")}
+								</a>
+							</div>
+						</div>
+					`;
+
+					sales_order_wrapper.html(html);
+				} else {
+					sales_order_wrapper.html(`
+						<div class="text-center text-muted" style="padding: 40px;">
+							<p style="margin-top: 15px;">No Orders found for this customer.</p>
+							<a href="/app/sales-order/new-sales-order?customer=${encodeURIComponent(frm.doc.name)}" class="btn btn-primary btn-sm">
+								${__("Create Order")}
+							</a>
+						</div>
+					`);
+				}
+			},
+			error: function(r) {
+				sales_order_wrapper.html(`
+					<div class="text-center text-danger" style="padding: 20px;">
+						<i class="fa fa-exclamation-triangle"></i>
+						<p>Error loading Orders. Please check your permissions.</p>
+					</div>
+				`);
+			}
+		});
+	}
 });
