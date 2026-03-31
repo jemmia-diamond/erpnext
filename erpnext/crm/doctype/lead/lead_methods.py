@@ -142,6 +142,7 @@ def update_lead_by_batch(docs):
 
 			existing_doc.update(doc)
 			existing_doc.save()
+			frappe.db.commit()
 			
 			contact = None
 			try:

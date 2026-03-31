@@ -172,6 +172,7 @@ class Lead(SellingController, CRMNote):
 		self.update_lead_stage()
 		self.fetch_region_from_province()
 		self.update_first_reach_at()
+		self.upsert_lead_source()
 
 	def update_lead_stage(self):
 
@@ -224,6 +225,36 @@ class Lead(SellingController, CRMNote):
 			inserted_at = parsed_pancake_data.get("inserted_at", None)
 			if inserted_at:
 				self.first_reach_at = inserted_at
+
+	def upsert_lead_source(self):
+		# Update source if source is None
+		if self.source is None or self.source.strip() == "":
+			if not self.pancake_data:
+				return
+			
+			lead_source = self.check_lead_source()
+			if not lead_source:
+				return 
+			
+			parsed_pancake_data = frappe.parse_json(self.pancake_data)
+			check_contact = frappe.db.get_value(
+				"Contact",
+				{
+					"pancake_page_id": parsed_pancake_data.get("page_id", None),
+					"pancake_conversation_id": parsed_pancake_data.get("conversation_id", None),
+					"pancake_customer_id": parsed_pancake_data.get("customer_id", None)
+				},
+			)
+
+			if check_contact:
+				self.contact_doc = frappe.get_doc("Contact", check_contact)
+				self.source = self.contact_doc.source 
+				self.link_to_contact()
+			else:
+				self.contact_doc = self.create_contact(lead_source)
+				if self.contact_doc:
+					self.source = self.contact_doc.source 
+					self.link_to_contact()
 
 	def check_lead_source(self):
 		lead_source = None
