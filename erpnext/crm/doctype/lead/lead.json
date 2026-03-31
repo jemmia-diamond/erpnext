@@ -3,37 +3,44 @@
  "allow_events_in_timeline": 1,
  "allow_import": 1,
  "allow_rename": 1,
- "autoname": "naming_series:",
+ "autoname": "CRM-LEAD-.YYYY.-.#######",
  "creation": "2022-02-08 13:14:41.083327",
  "doctype": "DocType",
  "document_type": "Document",
  "email_append_to": 1,
  "engine": "InnoDB",
  "field_order": [
+  "information_tab",
+  "basic_information_section",
   "naming_series",
+  "type",
   "salutation",
   "first_name",
   "middle_name",
-  "last_name",
+  "territory",
   "column_break_1",
-  "lead_name",
+  "phone",
+  "email_id",
   "job_title",
+  "last_name",
   "gender",
   "col_break123",
   "lead_owner",
+  "source",
   "status",
   "customer",
-  "type",
   "request_type",
-  "contact_info_tab",
-  "email_id",
-  "website",
-  "column_break_20",
-  "mobile_no",
-  "whatsapp_no",
-  "column_break_16",
-  "phone",
-  "phone_ext",
+  "lead_name",
+  "lead_received_date",
+  "customer_demand_section",
+  "purpose_lead",
+  "expected_delivery_date",
+  "column_break_ugod",
+  "budget_lead",
+  "preferred_product_type",
+  "demand_notes",
+  "column_break_wsdb",
+  "preferred_diamond",
   "organization_section",
   "company_name",
   "no_of_employees",
@@ -42,29 +49,44 @@
   "industry",
   "market_segment",
   "column_break_31",
-  "territory",
   "fax",
+  "tax_number",
+  "ceo_name",
+  "contact_section",
+  "contact_html",
   "address_section",
   "address_html",
+  "advanced_information_selection",
+  "birth_date",
+  "address",
   "column_break_38",
   "city",
   "state",
   "country",
-  "column_break2",
-  "contact_html",
   "utm_analytics_section",
   "utm_source",
   "utm_medium",
   "column_break_gkxo",
   "utm_campaign",
   "utm_content",
-  "qualification_tab",
-  "qualification_status",
-  "column_break_64",
-  "qualified_by",
-  "qualified_on",
+  "personal_tax_id",
+  "first_channel",
+  "personal_id",
+  "place_of_issuance",
+  "date_of_issuance",
+  "website",
+  "column_break_bzqz",
+  "bank_name",
+  "bank_branch",
+  "account_number",
+  "bank_province",
+  "bank_district",
+  "bank_ward",
   "other_info_tab",
   "company",
+  "pancake_data",
+  "stringee_data",
+  "website_from_data",
   "column_break_22",
   "language",
   "image",
@@ -73,19 +95,36 @@
   "disabled",
   "unsubscribed",
   "blog_subscriber",
+  "contact_info_tab",
+  "column_break_kkvk",
+  "column_break_20",
+  "mobile_no",
+  "whatsapp_no",
+  "column_break_16",
+  "phone_ext",
+  "qualification_tab",
+  "qualification_status",
+  "column_break_64",
+  "qualified_by",
+  "qualified_on",
+  "note_tab",
+  "notes_html",
+  "notes",
   "activities_tab",
   "open_activities_html",
   "all_activities_section",
   "all_activities_html",
-  "notes_tab",
-  "notes_html",
-  "notes",
+  "column_break_bwya",
+  "table_uzxd",
+  "merge_lead_tab",
+  "check_duplicate",
   "dashboard_tab"
  ],
  "fields": [
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Series",
    "no_copy": 1,
    "oldfieldname": "naming_series",
@@ -97,6 +136,7 @@
    "depends_on": "eval:!doc.__islocal",
    "fieldname": "lead_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "in_global_search": 1,
    "label": "Full Name",
    "oldfieldname": "lead_name",
@@ -107,9 +147,7 @@
   {
    "fieldname": "company_name",
    "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Organization Name",
+   "label": "Company Name",
    "mandatory_depends_on": "eval: !(doc.first_name)",
    "oldfieldname": "company_name",
    "oldfieldtype": "Data"
@@ -144,15 +182,16 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Status",
+   "label": "Lead Status",
    "no_copy": 1,
    "oldfieldname": "status",
    "oldfieldtype": "Select",
-   "options": "Lead\nOpen\nReplied\nOpportunity\nQuotation\nLost Quotation\nInterested\nConverted\nDo Not Contact",
+   "options": "Lead\nOpen\nReplied\nOpportunity\nQuotation\nLost Quotation\nInterested\nConverted\nDo Not Contact\nSpam",
    "reqd": 1,
    "search_index": 1
   },
   {
+   "depends_on": "eval:doc.type==\"Individual\"",
    "fieldname": "salutation",
    "fieldtype": "Link",
    "label": "Salutation",
@@ -162,7 +201,18 @@
    "fieldname": "gender",
    "fieldtype": "Link",
    "label": "Gender",
+   "link_filters": "[]",
    "options": "Gender"
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Lead Source",
+   "oldfieldname": "source",
+   "oldfieldtype": "Select",
+   "options": "Lead Source"
   },
   {
    "depends_on": "eval:doc.source == 'Existing Customer'",
@@ -184,6 +234,7 @@
   {
    "fieldname": "contact_info_tab",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Contact Info"
   },
   {
@@ -191,10 +242,6 @@
    "fieldtype": "HTML",
    "label": "Address HTML",
    "read_only": 1
-  },
-  {
-   "fieldname": "column_break2",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "contact_html",
@@ -205,6 +252,8 @@
   {
    "fieldname": "phone",
    "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Phone",
    "oldfieldname": "contact_no",
    "oldfieldtype": "Data",
@@ -221,17 +270,19 @@
   {
    "fieldname": "fax",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Fax",
    "oldfieldname": "fax",
    "oldfieldtype": "Data"
   },
   {
+   "default": "Individual",
    "fieldname": "type",
    "fieldtype": "Select",
    "label": "Lead Type",
    "oldfieldname": "type",
    "oldfieldtype": "Select",
-   "options": "\nClient\nChannel Partner\nConsultant"
+   "options": "Individual\nCompany\nConsultant\nChannel Partner"
   },
   {
    "fieldname": "market_segment",
@@ -252,10 +303,11 @@
   {
    "fieldname": "request_type",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Request Type",
    "oldfieldname": "request_type",
    "oldfieldtype": "Select",
-   "options": "\nProduct Enquiry\nRequest for Information\nSuggestions\nOther"
+   "options": "Product Enquiry\nRequest for Information\nSuggestions\nOther"
   },
   {
    "fieldname": "company",
@@ -276,9 +328,11 @@
   {
    "fieldname": "territory",
    "fieldtype": "Link",
+   "hidden": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Territory",
+   "link_filters": "[[\"Territory\",\"name\",\"like\",\"%B\u1ed9%\"]]",
    "oldfieldname": "territory",
    "oldfieldtype": "Link",
    "options": "Territory",
@@ -311,19 +365,22 @@
    "options": "Language"
   },
   {
+   "bold": 1,
    "fieldname": "first_name",
    "fieldtype": "Data",
-   "label": "First Name",
+   "label": "Lead Name",
    "mandatory_depends_on": "eval: !(doc.company_name)"
   },
   {
    "fieldname": "middle_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Middle Name"
   },
   {
    "fieldname": "last_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Last Name"
   },
   {
@@ -359,23 +416,20 @@
    "collapsible": 1,
    "fieldname": "qualification_tab",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Qualification"
-  },
-  {
-   "depends_on": "eval:!doc.__islocal",
-   "fieldname": "notes_tab",
-   "fieldtype": "Tab Break",
-   "label": "Notes"
   },
   {
    "collapsible": 1,
    "fieldname": "other_info_tab",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Additional Information"
   },
   {
    "fieldname": "column_break_1",
-   "fieldtype": "Column Break"
+   "fieldtype": "Column Break",
+   "hidden": 1
   },
   {
    "fieldname": "qualified_by",
@@ -395,10 +449,9 @@
    "options": "Unqualified\nIn Process\nQualified"
   },
   {
-   "collapsible": 1,
    "fieldname": "address_section",
    "fieldtype": "Section Break",
-   "label": "Address & Contacts"
+   "label": "Address Information"
   },
   {
    "fieldname": "column_break_64",
@@ -411,25 +464,27 @@
   {
    "fieldname": "job_title",
    "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
+   "hidden": 1,
    "label": "Job Title"
   },
   {
    "fieldname": "annual_revenue",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Annual Revenue"
   },
   {
    "depends_on": "eval:!doc.__islocal",
    "fieldname": "activities_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Activities"
   },
   {
+   "depends_on": "eval:doc.type==\"Company\"",
    "fieldname": "organization_section",
    "fieldtype": "Section Break",
-   "label": "Organization"
+   "label": "Organization Section"
   },
   {
    "fieldname": "column_break_28",
@@ -462,7 +517,6 @@
   {
    "fieldname": "notes",
    "fieldtype": "Table",
-   "hidden": 1,
    "label": "Notes",
    "no_copy": 1,
    "options": "CRM Note"
@@ -496,6 +550,7 @@
   {
    "fieldname": "dashboard_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Connections",
    "show_dashboard": 1
   },
@@ -536,6 +591,214 @@
    "fieldname": "utm_analytics_section",
    "fieldtype": "Section Break",
    "label": "Analytics"
+  },
+  {
+   "fieldname": "merge_lead_tab",
+   "fieldtype": "Tab Break",
+   "hidden": 1,
+   "label": "Merge Lead"
+  },
+  {
+   "fieldname": "birth_date",
+   "fieldtype": "Date",
+   "label": "Birth Date"
+  },
+  {
+   "fieldname": "column_break_kkvk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Now",
+   "fieldname": "lead_received_date",
+   "fieldtype": "Datetime",
+   "label": "Lead Received Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "basic_information_section",
+   "fieldtype": "Section Break",
+   "label": "Information"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "advanced_information_selection",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Advanced Information Selection"
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Data",
+   "label": "Address"
+  },
+  {
+   "fieldname": "column_break_bzqz",
+   "fieldtype": "Column Break",
+   "hidden": 1
+  },
+  {
+   "fieldname": "personal_id",
+   "fieldtype": "Data",
+   "label": "CMND/CCCD"
+  },
+  {
+   "fieldname": "place_of_issuance",
+   "fieldtype": "Select",
+   "label": "Place of Issuance",
+   "options": "Ministry of Public Security\nDepartment of Police for Administrative Management of Social Order\nDepartment of Police for Registration, Residency Management, and National Population Data"
+  },
+  {
+   "fieldname": "date_of_issuance",
+   "fieldtype": "Date",
+   "label": "Date of Issuance"
+  },
+  {
+   "fieldname": "information_tab",
+   "fieldtype": "Tab Break",
+   "label": "Detail"
+  },
+  {
+   "fieldname": "table_uzxd",
+   "fieldtype": "Table",
+   "options": "Lead Channel"
+  },
+  {
+   "fieldname": "bank_name",
+   "fieldtype": "Link",
+   "label": "Bank Name",
+   "options": "Bank"
+  },
+  {
+   "fieldname": "bank_branch",
+   "fieldtype": "Select",
+   "label": "Bank Branch"
+  },
+  {
+   "fieldname": "account_number",
+   "fieldtype": "Data",
+   "label": "Account Number"
+  },
+  {
+   "fieldname": "bank_province",
+   "fieldtype": "Select",
+   "label": "Bank Province"
+  },
+  {
+   "fieldname": "bank_district",
+   "fieldtype": "Select",
+   "label": "Bank District"
+  },
+  {
+   "fieldname": "bank_ward",
+   "fieldtype": "Select",
+   "label": "Bank Ward"
+  },
+  {
+   "fieldname": "tax_number",
+   "fieldtype": "Data",
+   "label": "Tax Number"
+  },
+  {
+   "fieldname": "ceo_name",
+   "fieldtype": "Data",
+   "label": "CEO"
+  },
+  {
+   "fieldname": "first_channel",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "First Channel",
+   "options": "Lead Source"
+  },
+  {
+   "fieldname": "personal_tax_id",
+   "fieldtype": "Data",
+   "label": "Personal Tax ID"
+  },
+  {
+   "fieldname": "column_break_bwya",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "purpose_lead",
+   "fieldtype": "Link",
+   "label": "Purpose Lead ",
+   "options": "Lead Demand"
+  },
+  {
+   "fieldname": "budget_lead",
+   "fieldtype": "Link",
+   "label": "Budget Lead",
+   "options": "Lead Budget"
+  },
+  {
+   "fieldname": "column_break_ugod",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "preferred_product_type",
+   "fieldtype": "Table MultiSelect",
+   "label": "Preferred Product Type",
+   "options": "Lead Product Item"
+  },
+  {
+   "fieldname": "preferred_diamond",
+   "fieldtype": "Table",
+   "label": "Preferred Diamond",
+   "options": "Lead Diamond"
+  },
+  {
+   "fieldname": "demand_notes",
+   "fieldtype": "Small Text",
+   "hidden": 1,
+   "label": "Demand Notes"
+  },
+  {
+   "fieldname": "customer_demand_section",
+   "fieldtype": "Section Break",
+   "label": "Customer Demand"
+  },
+  {
+   "fieldname": "expected_delivery_date",
+   "fieldtype": "Date",
+   "label": "Expected Delivery Date"
+  },
+  {
+   "fieldname": "column_break_wsdb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pancake_data",
+   "fieldtype": "JSON",
+   "hidden": 1,
+   "label": "Pancake Data"
+  },
+  {
+   "fieldname": "stringee_data",
+   "fieldtype": "JSON",
+   "hidden": 1,
+   "label": "Stringeex Data"
+  },
+  {
+   "fieldname": "website_from_data",
+   "fieldtype": "JSON",
+   "label": "Website Form Data"
+  },
+  {
+   "fieldname": "check_duplicate",
+   "fieldtype": "Link",
+   "label": "Check Duplicate",
+   "options": "Lead"
+  },
+  {
+   "fieldname": "contact_section",
+   "fieldtype": "Section Break",
+   "label": "Contact Information"
+  },
+  {
+   "fieldname": "note_tab",
+   "fieldtype": "Tab Break",
+   "label": "Notes"
   }
  ],
  "grid_page_length": 50,
@@ -547,7 +810,7 @@
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
- "naming_rule": "By \"Naming Series\" field",
+ "naming_rule": "By script",
  "owner": "Administrator",
  "permissions": [
   {

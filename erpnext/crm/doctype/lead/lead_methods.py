@@ -55,6 +55,22 @@ def insert_lead(doc) -> "Document":
 	if is_valid_phone is False:
 		doc["phone"] = ""
 	
+	pancake_list_tags = [transform_price_label(tag) for tag in pancake_list_tags]
+
+	purpose_lead = find_purpose_tag(pancake_list_tags)
+	if not purpose_lead:
+		purpose_lead = "Unspecified"
+	if purpose_lead:
+		purpose_lead_name = frappe.get_doc("Lead Demand", {"demand_label": purpose_lead}, "name")
+		doc["purpose_lead"] = purpose_lead_name.name
+
+	budget_lead = find_budget_tag(pancake_list_tags)
+	if not budget_lead:
+		budget_lead = "Unspecified"
+	if budget_lead:
+		budget_lead_name = frappe.get_doc("Lead Budget", {"budget_label": budget_lead}, "name")
+		doc["budget_lead"] = budget_lead_name.name
+
 	frappe_doc = frappe.get_doc(doc)
 	try:
 		"""
@@ -63,7 +79,7 @@ def insert_lead(doc) -> "Document":
 		frappe_doc = frappe_doc.insert()
 		if len(pancake_list_tags) > 0:
 			for tag in pancake_list_tags:
-				frappe_doc.add_tag(transform_price_label(tag))
+				frappe_doc.add_tag(tag)
 		return frappe_doc
 	except Exception as e:
 		try: 
@@ -94,15 +110,31 @@ def update_lead_by_batch(docs):
 			if is_valid_phone is False:
 				doc["phone"] = ""
 
+			pancake_list_tags = doc.get("pancake_tags", [])
+			pancake_list_tags = [transform_price_label(tag) for tag in pancake_list_tags]
+
+			purpose_lead = find_purpose_tag(pancake_list_tags)
+			if not purpose_lead:
+				purpose_lead = "Unspecified"
+			if purpose_lead:
+				purpose_lead_name = frappe.get_doc("Lead Demand", {"demand_label": purpose_lead}, "name")
+				doc["purpose_lead"] = purpose_lead_name.name
+
+			budget_lead = find_budget_tag(pancake_list_tags)
+			if not budget_lead:
+				budget_lead = "Unspecified"
+			if budget_lead:
+				budget_lead_name = frappe.get_doc("Lead Budget", {"budget_label": budget_lead}, "name")
+				doc["budget_lead"] = budget_lead_name.name
+
 			existing_doc = frappe.get_doc(doc["doctype"], doc["docname"])
 			existing_doc.update(doc)
 			existing_doc.save()
-			pancake_list_tags = doc.get("pancake_tags", [])
-			
+
 			try: 
 				if pancake_list_tags:
 					for tag in pancake_list_tags:
-						existing_doc.add_tag(transform_price_label(tag))
+						existing_doc.add_tag(tag)
 			except Exception as e:
 				pass
 
@@ -113,3 +145,48 @@ def update_lead_by_batch(docs):
 
 def transform_price_label(label: str) -> str:
     return label.replace('<', 'dưới ').replace('>', 'trên ').strip()
+
+def find_purpose_tag(tags):
+    VALID_PURPOSE_TAGS = [
+		"Unspecified",
+        "NC Cưới",
+        "NC Khiếu nại",
+        "NC TMTĐ",
+        "NC Cầu hôn",
+        "NC Tặng",
+        "NC Bản thân",
+        "NC trên 6.3 Ly",
+        "NC Mã cạnh đẹp",
+    ]
+
+    if not tags:
+        return None
+
+    for tag in tags:
+        if tag in VALID_PURPOSE_TAGS:
+            return tag
+    return None
+
+def find_budget_tag(tags):
+    VALID_BUDGET_TAGS = [
+		"Unspecified",
+        "dưới 15 TRIỆU",
+        "15-30 TRIỆU",
+        "30-50 TRIỆU",
+        "50-80 TRIỆU",
+        "80-120 TRIỆU",
+        "120-200 TRIỆU",
+        "200-300 TRIỆU",
+        "300-500 TRIỆU",
+        "500-800 TRIỆU",
+        "800 TRIỆU - 1 TỶ",
+        "trên 1 TỶ"
+    ]
+
+    if not tags:
+        return None
+
+    for tag in tags:
+        if tag in VALID_BUDGET_TAGS:
+            return tag
+    return None

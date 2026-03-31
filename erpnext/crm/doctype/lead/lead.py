@@ -1,6 +1,5 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
-
 import frappe
 from frappe import _
 from frappe.contacts.address_and_contact import (
@@ -26,20 +25,37 @@ class Lead(SellingController, CRMNote):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
+		from erpnext.crm.doctype.crm_note.crm_note import CRMNote
+		from erpnext.crm.doctype.lead_channel.lead_channel import LeadChannel
+		from erpnext.crm.doctype.lead_diamond.lead_diamond import LeadDiamond
+		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from frappe.types import DF
 
-		from erpnext.crm.doctype.crm_note.crm_note import CRMNote
-
+		account_number: DF.Data | None
+		address: DF.Data | None
 		annual_revenue: DF.Currency
+		bank_branch: DF.Literal[None]
+		bank_district: DF.Literal[None]
+		bank_name: DF.Link | None
+		bank_province: DF.Literal[None]
+		bank_ward: DF.Literal[None]
+		birth_date: DF.Date | None
 		blog_subscriber: DF.Check
 		city: DF.Data | None
+		budget_lead: DF.Link | None
+		campaign_name: DF.Link | None
+		ceo_name: DF.Data | None
+		check_duplicate: DF.Link | None
 		company: DF.Link | None
 		company_name: DF.Data | None
-		country: DF.Link | None
 		customer: DF.Link | None
+		date_of_issuance: DF.Date | None
+		demand_notes: DF.SmallText | None
 		disabled: DF.Check
 		email_id: DF.Data | None
+		expected_delivery_date: DF.Date | None
 		fax: DF.Data | None
+		first_channel: DF.Link | None
 		first_name: DF.Data | None
 		gender: DF.Link | None
 		image: DF.AttachImage | None
@@ -49,18 +65,26 @@ class Lead(SellingController, CRMNote):
 		last_name: DF.Data | None
 		lead_name: DF.Data | None
 		lead_owner: DF.Link | None
+		lead_received_date: DF.Datetime | None
 		market_segment: DF.Link | None
 		middle_name: DF.Data | None
 		mobile_no: DF.Data | None
 		naming_series: DF.Literal["CRM-LEAD-.YYYY.-"]
 		no_of_employees: DF.Literal["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"]
 		notes: DF.Table[CRMNote]
+		pancake_data: DF.JSON | None
+		personal_id: DF.Data | None
+		personal_tax_id: DF.Data | None
 		phone: DF.Data | None
 		phone_ext: DF.Data | None
+		place_of_issuance: DF.Literal["Ministry of Public Security", "Department of Police for Administrative Management of Social Order", "Department of Police for Registration, Residency Management, and National Population Data"]
+		preferred_diamond: DF.Table[LeadDiamond]
+		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
+		purpose_lead: DF.Link | None
 		qualification_status: DF.Literal["Unqualified", "In Process", "Qualified"]
 		qualified_by: DF.Link | None
 		qualified_on: DF.Date | None
-		request_type: DF.Literal["", "Product Enquiry", "Request for Information", "Suggestions", "Other"]
+		request_type: DF.Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
 		salutation: DF.Link | None
 		state: DF.Data | None
 		status: DF.Literal[
@@ -74,15 +98,21 @@ class Lead(SellingController, CRMNote):
 			"Converted",
 			"Do Not Contact",
 		]
+		source: DF.Link | None
+		status: DF.Literal["Lead", "Open", "Replied", "Opportunity", "Quotation", "Lost Quotation", "Interested", "Converted", "Do Not Contact", "Spam"]
+		stringee_data: DF.JSON | None
+		table_uzxd: DF.Table[LeadChannel]
+		tax_number: DF.Data | None
 		territory: DF.Link | None
 		title: DF.Data | None
-		type: DF.Literal["", "Client", "Channel Partner", "Consultant"]
+		type: DF.Literal["Individual", "Company", "Consultant", "Channel Partner"]
 		unsubscribed: DF.Check
 		utm_campaign: DF.Link | None
 		utm_content: DF.Data | None
 		utm_medium: DF.Link | None
 		utm_source: DF.Link | None
 		website: DF.Data | None
+		website_from_data: DF.JSON | None
 		whatsapp_no: DF.Data | None
 	# end: auto-generated types
 
@@ -98,6 +128,7 @@ class Lead(SellingController, CRMNote):
 		self.set_title()
 		self.set_status()
 		self.check_email_id_is_unique()
+		self.check_phone_is_unique()
 		self.validate_email_id()
 
 	def before_insert(self):
@@ -120,6 +151,8 @@ class Lead(SellingController, CRMNote):
 				lead_source = self.check_lead_source()
 				if lead_source:
 					self.contact_doc = self.create_contact(lead_source)
+					if self.contact_doc:
+						self.source = self.contact_doc.source
 			else:
 				self.contact_doc = self.create_contact()
 
@@ -154,7 +187,7 @@ class Lead(SellingController, CRMNote):
 					lead_source_platform = "Tiktok"	
 
 				lead_source.update({
-					"source_name": "Chưa rõ",
+					"source_name": "Unspecified",
 					"pancake_page_id": parsed_pancake_data.get("page_id", None),
 					"pancake_platform": lead_source_platform
 				})
@@ -223,6 +256,25 @@ class Lead(SellingController, CRMNote):
 
 			if self.is_new() or not self.image:
 				self.image = has_gravatar(self.email_id)
+
+	def check_phone_is_unique(self):
+		if self.phone:
+			# Validate phone number is unique
+			filters = {"phone": self.phone}
+			if self.name:
+				filters["name"] = ["!=", self.name]
+
+			duplicate_leads = frappe.get_all("Lead", filters=filters)
+			duplicate_leads = [
+				frappe.bold(get_link_to_form("Lead", lead.name)) for lead in duplicate_leads
+			]
+			if duplicate_leads:
+				frappe.throw(
+					_("Phone Number must be unique, it is already used in {0}").format(
+						comma_and(duplicate_leads)
+					),
+					frappe.DuplicateEntryError,
+				)
 
 	def link_to_contact(self):
 		# update contact links
@@ -313,14 +365,16 @@ class Lead(SellingController, CRMNote):
 				"first_name": self.first_name or self.lead_name,
 				"last_name": self.last_name,
 				"salutation": self.salutation,
+				"source": self.source,
 				"gender": self.gender,
 				"designation": self.job_title,
 				"company_name": self.company_name,
 				"pancake_conversation_id": parsed_pancake_data.get("conversation_id") if parsed_pancake_data and parsed_pancake_data.get("conversation_id") else None,
 				"pancake_customer_id": parsed_pancake_data.get("customer_id") if parsed_pancake_data and parsed_pancake_data.get("customer_id") else None,
 				"inserted_at": parsed_pancake_data.get("inserted_at") if parsed_pancake_data and parsed_pancake_data.get("inserted_at") else None,
-				"pancake_page_id": parsed_pancake_data.get("page_id") if parsed_pancake_data and parsed_pancake_data.get("page_id") else None
-				
+				"pancake_updated_at": parsed_pancake_data.get("updated_at") if parsed_pancake_data and parsed_pancake_data.get("updated_at") else None,
+				"pancake_page_id": parsed_pancake_data.get("page_id") if parsed_pancake_data and parsed_pancake_data.get("page_id") else None,
+				"can_inbox": parsed_pancake_data.get("can_inbox") if parsed_pancake_data and parsed_pancake_data.get("can_inbox") else 0,
 			}
 		)
 

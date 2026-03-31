@@ -31,17 +31,6 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 		if (!this.frm.is_new() && doc.__onload && !doc.__onload.is_customer) {
 			this.frm.add_custom_button(__("Customer"), this.make_customer.bind(this), __("Create"));
 			this.frm.add_custom_button(__("Opportunity"), this.make_opportunity.bind(this), __("Create"));
-			this.frm.add_custom_button(__("Quotation"), this.make_quotation.bind(this), __("Create"));
-			if (!doc.__onload.linked_prospects.length) {
-				this.frm.add_custom_button(__("Prospect"), this.make_prospect.bind(this), __("Create"));
-				this.frm.add_custom_button(
-					__("Add to Prospect"),
-					() => {
-						this.add_lead_to_prospect(this.frm);
-					},
-					__("Action")
-				);
-			}
 		}
 
 		if (!this.frm.is_new()) {

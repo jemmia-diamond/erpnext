@@ -5,7 +5,7 @@
 from frappe.model.document import Document
 
 
-class TaxWithholdingGroup(Document):
+class LeadDiamond(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
 
@@ -14,11 +14,12 @@ class TaxWithholdingGroup(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
-		group_name: DF.Data
-		details: DF.TextEditor | None
-		pancake_page_id: DF.Data | None
-		pancake_platform: DF.Data | None
-		source_name: DF.Data
+		clarity: DF.Literal["IF", "VS1", "VS2", "VVS1", "VVS2"]
+		color: DF.Literal["D", "E", "F", "G", "H"]
+		parent: DF.Data
+		parentfield: DF.Data
+		parenttype: DF.Data
+		shape: DF.Literal["Round", "Princess", "Cushion", "Emerald", "Asscher", "Oval", "Marquise", "Radiant", "Pear", "Heart", "Trillion", "Baguette"]
+		size: DF.Float
 	# end: auto-generated types
-
 	pass

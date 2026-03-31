@@ -31,20 +31,21 @@ class Opportunity(TransactionBase, CRMNote):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from frappe.types import DF
-
 		from erpnext.crm.doctype.competitor_detail.competitor_detail import CompetitorDetail
 		from erpnext.crm.doctype.crm_note.crm_note import CRMNote
+		from erpnext.crm.doctype.lead_diamond.lead_diamond import LeadDiamond
+		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from erpnext.crm.doctype.opportunity_item.opportunity_item import OpportunityItem
-		from erpnext.crm.doctype.opportunity_lost_reason_detail.opportunity_lost_reason_detail import (
-			OpportunityLostReasonDetail,
-		)
+		from erpnext.crm.doctype.opportunity_lost_reason_detail.opportunity_lost_reason_detail import OpportunityLostReasonDetail
+		from frappe.types import DF
 
 		address_display: DF.TextEditor | None
 		amended_from: DF.Link | None
 		annual_revenue: DF.Currency
 		base_opportunity_amount: DF.Currency
 		base_total: DF.Currency
+		budget_lead: DF.Link | None
+		campaign: DF.Link | None
 		city: DF.Data | None
 		company: DF.Link
 		competitors: DF.TableMultiSelect[CompetitorDetail]
@@ -58,7 +59,9 @@ class Opportunity(TransactionBase, CRMNote):
 		customer_address: DF.Link | None
 		customer_group: DF.Link | None
 		customer_name: DF.Data | None
+		demand_notes: DF.SmallText | None
 		expected_closing: DF.Date | None
+		expected_delivery_date: DF.Date | None
 		first_response_time: DF.Duration | None
 		industry: DF.Link | None
 		items: DF.Table[OpportunityItem]
@@ -77,7 +80,10 @@ class Opportunity(TransactionBase, CRMNote):
 		party_name: DF.DynamicLink
 		phone: DF.Data | None
 		phone_ext: DF.Data | None
+		preferred_diamond: DF.Table[LeadDiamond]
+		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
 		probability: DF.Percent
+		purpose_lead: DF.Link | None
 		sales_stage: DF.Link | None
 		state: DF.Data | None
 		status: DF.Literal["Open", "Quotation", "Converted", "Lost", "Replied", "Closed"]
