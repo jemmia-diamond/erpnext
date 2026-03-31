@@ -85,6 +85,7 @@ class SalesOrderItem(Document):
 		promotion_2: DF.Link | None
 		promotion_3: DF.Link | None
 		promotion_4: DF.Link | None
+		promotion_5: DF.Link | None
 		purchase_order: DF.Link | None
 		purchase_order_item: DF.Data | None
 		qty: DF.Float

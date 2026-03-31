@@ -36,6 +36,7 @@
   "promotion_2",
   "promotion_3",
   "promotion_4",
+  "promotion_5",
   "column_break_klcw",
   "promotion",
   "section_break_5",
@@ -1196,6 +1197,13 @@
    "fieldname": "discount_rate",
    "fieldtype": "Data",
    "label": "Discount Rate"
+  },
+  {
+   "fieldname": "promotion_5",
+   "fieldtype": "Link",
+   "label": "Promotion 5",
+   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"NONE\"]]",
+   "options": "Promotion"
   }
  ],
  "grid_page_length": 50,
