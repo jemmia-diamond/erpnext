@@ -12,10 +12,11 @@ from erpnext.crm.doctype.lead_demand.lead_demand_dao import get_lead_purpose
 from erpnext.config.config import config
 from frappe.www.contact import get_contacts_by_conversation_id
 
-import frappe 
+import frappe
 from frappe import _
 from frappe.utils import validate_phone_number, get_datetime
 import re
+import time
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
@@ -30,7 +31,7 @@ def insert_lead_by_batch(docs=None):
 
 	if len(docs) > 200:
 		frappe.throw(_("Only 200 inserts allowed in one request"))
-	
+
 	result = []
 	for doc in docs:
 		try:
@@ -65,7 +66,7 @@ def insert_lead(doc) -> "Document":
 	is_valid_phone = validate_phone_number(pancake_phone)
 	if is_valid_phone is False:
 		doc["phone"] = ""
-	
+
 	pancake_list_tags = [transform_price_label(tag) for tag in pancake_list_tags]
 
 	frappe_doc = frappe.get_doc(doc)
@@ -93,24 +94,24 @@ def insert_lead(doc) -> "Document":
 				todo_doc.insert()
 			except Exception as e :
 				print(e)
-		
+
 		return frappe_doc
 	except Exception as e:
-		try: 
+		try:
 			existing_doc = frappe.get_doc(frappe_doc.doctype, frappe_doc.name)
 			if existing_doc:
-				return existing_doc 
-			return None 
+				return existing_doc
+			return None
 		except Exception as get_exception:
 			pattern = r'CRM-LEAD-\d+-\d+'
 			match = re.search(pattern, str(e))
 			if match:
 				reference_frappe_doc_name = match.group(0)
 				existing_doc : Lead = frappe.get_doc(frappe_doc.doctype, reference_frappe_doc_name)
-				
+
 				'''
 				Check if contact exists by (pancake) conversation_id
-				If not, create a new one and link 
+				If not, create a new one and link
 				'''
 
 				page_id = doc.get("pancake_data", {}).get("page_id", None)
@@ -118,14 +119,14 @@ def insert_lead(doc) -> "Document":
 
 				if page_id is None or conversation_id is None:
 					return existing_doc
-				
+
 				existing_doc.link_to_contacts(
 					page_id=page_id,
 					conversation_id=conversation_id,
 				)
 				return existing_doc
 			return None
-		
+
 @frappe.whitelist(methods=["PUT", "PATCH"])
 def backfill_lead_info(docs):
     """Bulk update leads"""
@@ -238,7 +239,7 @@ def update_lead_by_batch(docs):
 			existing_doc.update(doc)
 			existing_doc.save()
 			frappe.db.commit()
-			
+
 			contact = None
 			try:
 				contact = frappe.get_value(
@@ -248,16 +249,16 @@ def update_lead_by_batch(docs):
 						"pancake_conversation_id": doc.get("pancake_data", {}).get("conversation_id", None)
 					},
 				)
-			
+
 			except Exception as e:
 				contact = None
 
-			if contact: 
+			if contact:
 				contact_doc = frappe.get_doc("Contact", contact)
 				contact_doc.last_message_time =  doc.get("pancake_data", {}).get("latest_message_at")
 				contact_doc.save(ignore_permissions=True)
 
-			try: 
+			try:
 				if pancake_list_tags:
 					for tag in pancake_list_tags:
 						existing_doc.add_tag(tag)
@@ -331,21 +332,24 @@ def get_lead_province(province : str):
 @frappe.whitelist(methods=["POST"])
 def update_lead_from_summary(data):
 	if isinstance(data, str):
-		data = json.loads(data)
+		data = frappe.parse_json(data)
 
 	conversation_id = data.get("conversation_id", None)
 	if conversation_id is None:
 		return
 	lead_name = get_lead_name_by_conversation_id(conversation_id)
 
+	if lead_name is None:
+		return
+
 	# lead not found return not update
 	lead = get_lead_by_name(lead_name)
-	
-	if lead is None: 
+
+	if lead is None:
 		contacts = get_contacts_by_conversation_id(conversation_id)
 		if contacts is not None:
 			for contact in contacts:
-				try: 
+				try:
 					contact_doc = frappe.get_doc('Contact', {'name': contact.name})
 					contact_doc.last_summarize_time = frappe.utils.now_datetime()
 					contact_doc.save()
@@ -353,8 +357,6 @@ def update_lead_from_summary(data):
 					pass
 
 		return
-	
-	lead.reload()
 
 	budget_to = data.get("budget_to", None)
 	budget_from =  None if budget_to else data.get("budget_from", None)
@@ -363,21 +365,10 @@ def update_lead_from_summary(data):
 	province = data.get("province", None)
 	expected_receiving_date = data.get("expected_receiving_date", None)
 
-	lead_budget = find_range_budget(budget_from, budget_to)
-	if lead_budget is not None:
-		lead.budget_lead = lead_budget.name
-
-	lead_purpose = get_lead_purpose(purpose)
-	if lead_purpose:
-		lead.purpose_lead = lead_purpose.name
-
-	if expected_receiving_date:
-		lead.expected_delivery_date	= expected_receiving_date
-
-	lead_province = get_lead_province(province)
-	if lead_province:
-		lead.province = lead_province.name
-
+	new_lead_budget = find_range_budget(budget_from, budget_to)
+	new_lead_purpose = get_lead_purpose(purpose)
+	new_expected_receiving_date = expected_receiving_date
+	new_lead_province = get_lead_province(province)
 	products = []
 	if product_names is not None:
 		for product_name in product_names:
@@ -389,18 +380,48 @@ def update_lead_from_summary(data):
 				if new_lead_product:
 					products.append(new_lead_product)
 
-	for product in products:
-		if lead.preferred_product_type is not None:
-			existing_products = {item.product_type for item in lead.preferred_product_type}
-			if product.name not in existing_products:
-				lead.append("preferred_product_type", {
-                    "product_type": product.name
-                })
+	max_retries = 3
+	for attempt in range(max_retries):
+		try:
+			if new_lead_budget:
+				lead.budget_lead = new_lead_budget.name
 
-	lead.save()
-	lead.reload()
+			if new_lead_purpose:
+				lead.purpose_lead = new_lead_purpose.name
 
-	#update last summarize at 
+			if new_expected_receiving_date:
+				lead.expected_delivery_date	= new_expected_receiving_date
+
+			if new_lead_province:
+				lead.province = new_lead_province.name
+
+			for product in products:
+				if lead.preferred_product_type is not None:
+					existing_products = {item.product_type for item in lead.preferred_product_type}
+					if product.name not in existing_products:
+						lead.append("preferred_product_type", {
+							"product_type": product.name
+						})
+
+			lead.save()
+			break
+		except Exception as e:
+			if e is frappe.TimestampMismatchError:
+				frappe.log_error(
+					f"Attempt {attempt + 1}/{max_retries}: Timestamp mismatch for Lead {lead_name}. Retrying...",
+					frappe.get_traceback(),
+				)
+			else:
+				frappe.log_error(
+					"An unexpected error occurred while updating contact summary time.",
+					frappe.get_traceback(),
+				)
+			if attempt < max_retries - 1:
+				time.sleep(1)
+				lead.reload()
+			else:
+				break
+	#update last summarize at
 	contacts = get_contacts_by_conversation_id(conversation_id)
 	if contacts is not None:
 		for contact in contacts:
