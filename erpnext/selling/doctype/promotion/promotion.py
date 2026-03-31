@@ -23,6 +23,8 @@ class Promotion(Document):
 		is_active: DF.Check
 		is_expired: DF.Check
 		priority: DF.Literal["", "G0", "G1", "G2", "G3", "G4", "G5", "G6", "G7"]
+		promotion_group: DF.Link | None
+		promotion_month: DF.Link | None
 		scope: DF.Literal["Line Item", "Order"]
 		start_date: DF.Date
 		title: DF.Data
