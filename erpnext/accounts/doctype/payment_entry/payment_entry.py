@@ -283,6 +283,7 @@ class PaymentEntry(AccountsController):
 		self.set_amounts_after_tax()
 		self.clear_unallocated_reference_document_rows()
 		self.validate_transaction_reference()
+		self.validate_bank_transactions()
 		self.set_title()
 		self.set_remarks()
 		self.validate_duplicate_entry()
@@ -954,6 +955,28 @@ class PaymentEntry(AccountsController):
 								d.reference_name, _(dr_or_cr)
 							)
 						)
+
+	def validate_bank_transactions(self):
+		"""
+		Validate bank transactions:
+		1. Only allow 1 bank transaction per payment entry
+		2. Allocated amount must match payment entry's paid amount
+		"""
+		if not self.bank_transactions:
+			return
+
+		if len(self.bank_transactions) > 1:
+			frappe.throw(_("Only one Bank Transaction is allowed per Payment Entry"))
+
+		for bt in self.bank_transactions:
+			if bt.allocated_amount and self.paid_amount:
+				if abs(flt(bt.allocated_amount) - flt(self.paid_amount)) > 0.01:
+					frappe.throw(
+						_("Bank Transaction allocated amount {0} must match Payment Entry paid amount {1}").format(
+							frappe.bold(bt.allocated_amount),
+							frappe.bold(self.paid_amount)
+						)
+					)
 
 	def update_payment_schedule(self, cancel=0):
 		invoice_payment_amount_map = {}
@@ -2060,10 +2083,18 @@ class PaymentEntry(AccountsController):
 
 		frappe.response["matched_payment_requests"] = matched_payment_requests
 
+	def get_payment_code(self):
+		"""Get payment code from mode of payment"""
+		if not self.mode_of_payment:
+			return None
+		
+		return frappe.db.get_value("Mode of Payment", self.mode_of_payment, "payment_code")
+
 	@frappe.whitelist()
 	def verify_payment(self):
 		"""Verify payment entry after bank transaction matching"""
-		skip_bank_check = self.mode_of_payment in ["Cash", "COD"]
+		payment_code = self.get_payment_code()
+		skip_bank_check = payment_code in ["cash", "cash_on_delivery"]
 		if not skip_bank_check and (not self.bank_transactions or len(self.bank_transactions) == 0):
 			frappe.throw(_("Cannot verify: Payment Entry must have at least one Bank Transaction (unless Mode of Payment is Cash or COD)"))
 		has_sales_order = any(ref.reference_doctype == "Sales Order" for ref in self.references)

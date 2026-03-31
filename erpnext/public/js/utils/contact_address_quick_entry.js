@@ -21,9 +21,10 @@ frappe.ui.form.ContactAddressQuickEntryForm = class ContactAddressQuickEntryForm
 		const map_field_names = {
 			email_address: "email_id",
 			mobile_number: "mobile_no",
-			map_to_first_name: "first_name",
-			map_to_last_name: "last_name",
-			country_address: "country",
+			// map_to_first_name: "first_name",
+			// map_to_last_name: "last_name",
+			// country_address: "country",
+			gender: "gender"
 		};
 
 		Object.entries(map_field_names).forEach(([fieldname, new_fieldname]) => {
@@ -39,21 +40,19 @@ frappe.ui.form.ContactAddressQuickEntryForm = class ContactAddressQuickEntryForm
 			{
 				fieldtype: "Section Break",
 				label: __("Primary Contact Details"),
-				collapsible: 1,
 			},
-			{
-				label: __("First Name"),
-				fieldname: "map_to_first_name",
-				fieldtype: "Data",
-				depends_on: "eval:doc.customer_type=='Company' || doc.supplier_type=='Company'",
-			},
-			{
-				label: __("Last Name"),
-				fieldname: "map_to_last_name",
-				fieldtype: "Data",
-				depends_on: "eval:doc.customer_type=='Company' || doc.supplier_type=='Company'",
-			},
-
+			// {
+			// 	label: __("First Name"),
+			// 	fieldname: "map_to_first_name",
+			// 	fieldtype: "Data",
+			// 	depends_on: "eval:doc.customer_type=='Company' || doc.supplier_type=='Company'",
+			// },
+			// {
+			// 	label: __("Last Name"),
+			// 	fieldname: "map_to_last_name",
+			// 	fieldtype: "Data",
+			// 	depends_on: "eval:doc.customer_type=='Company' || doc.supplier_type=='Company'",
+			// },
 			{
 				fieldtype: "Column Break",
 			},
@@ -70,14 +69,22 @@ frappe.ui.form.ContactAddressQuickEntryForm = class ContactAddressQuickEntryForm
 				reqd: 1
 			},
 			{
+				label: __("Gender"),
+				fieldname: "gender",
+				fieldtype: "Link",
+				options: "Gender"
+			},
+			{
 				fieldtype: "Section Break",
 				label: __("Primary Address Details"),
+				collapsible: 1,
+				hidden: 1
 			},
 			{
 				label: __("Address Line 1"),
 				fieldname: "address_line1",
 				fieldtype: "Data",
-				mandatory_depends_on: "eval:doc.city || doc.country_address",
+				// mandatory_depends_on: "eval:doc.city || doc.country_address",
 			},
 			{
 				label: __("Address Line 2"),
@@ -96,7 +103,7 @@ frappe.ui.form.ContactAddressQuickEntryForm = class ContactAddressQuickEntryForm
 				label: __("City"),
 				fieldname: "city",
 				fieldtype: "Data",
-				mandatory_depends_on: "eval:doc.country_address || doc.address_line1",
+				// mandatory_depends_on: "eval:doc.country_address || doc.address_line1",
 			},
 			{
 				label: __("State/Province"),
@@ -108,7 +115,7 @@ frappe.ui.form.ContactAddressQuickEntryForm = class ContactAddressQuickEntryForm
 				fieldname: "country_address",
 				fieldtype: "Link",
 				options: "Country",
-				mandatory_depends_on: "eval:doc.city || doc.address_line1",
+				// mandatory_depends_on: "eval:doc.city || doc.address_line1",
 			},
 		];
 
