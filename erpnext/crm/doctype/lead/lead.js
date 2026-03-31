@@ -244,12 +244,14 @@ frappe.ui.form.on('Lead', {
 			fields: ["name", "pancake_conversation_id", "pancake_page_id", "source"]
 		}).then(data => {
 			data.forEach(contact => {
-				if (contact.source) {
-					frappe.db.get_doc("Lead Source", contact.source).then(source => {
-						frm.add_web_link(`https://pancake.vn/${contact.pancake_page_id}?c_id=` + contact.pancake_conversation_id, `${source.source_name}`);
-					})
-				} else {
-					frm.add_web_link(`https://pancake.vn/${contact.pancake_page_id}?c_id=` + contact.pancake_conversation_id, `Pancake Conversation`);
+				if (contact.pancake_conversation_id && contact.pancake_page_id) {
+					if (contact.source) {
+						frappe.db.get_doc("Lead Source", contact.source).then(source => {
+							frm.add_web_link(`https://pancake.vn/${contact.pancake_page_id}?c_id=` + contact.pancake_conversation_id, `${source.source_name}`);
+						})
+					} else {
+						frm.add_web_link(`https://pancake.vn/${contact.pancake_page_id}?c_id=` + contact.pancake_conversation_id, `Pancake Conversation`);
+					}
 				}
 			})
 		});
