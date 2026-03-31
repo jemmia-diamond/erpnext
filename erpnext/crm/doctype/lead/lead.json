@@ -263,7 +263,8 @@
    "label": "Phone",
    "oldfieldname": "contact_no",
    "oldfieldtype": "Data",
-   "options": "Phone"
+   "options": "Phone",
+   "unique": 1
   },
   {
    "fieldname": "mobile_no",
