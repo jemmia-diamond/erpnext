@@ -1,3 +1,5 @@
+const VISIBLE_PHONE_DIGITS = 5;
+
 frappe.listview_settings["Lead"] = {
 	hide_name_column: true,
 	get_indicator: function (doc) {
@@ -50,7 +52,16 @@ frappe.listview_settings["Lead"] = {
 		$(".list-row-container .list-row .level-right .mx-2").remove();
 		$(".list-row-container .list-row .level-right .list-row-like").remove();
 
-		$(`.result .list-row-container .list-row .level-right .list-row-activity .btn-pancake`).remove();
+		// Mask phone numbers in list view
+		const phoneCells = $('.list-row-container [data-filter^="phone,="]');
+		phoneCells.each(function () {
+			const phoneCell = $(this);
+			const phone = phoneCell.text().trim();
+			if (phone && phone.length > VISIBLE_PHONE_DIGITS) {
+				phoneCell.text(maskPhoneNumber(phone, VISIBLE_PHONE_DIGITS));
+			}
+		});
+
 		// Add Pancake button to each row
 		for (let i = 0; i < listview.data.length; i++) {
 			const row = $(`.result .list-row-container:nth-child(${i + 3}) .list-row .level-right .list-row-activity`);
@@ -77,3 +88,9 @@ frappe.listview_settings["Lead"] = {
 		}
 	},
 };
+
+function maskPhoneNumber(phone, visibleDigits) {
+	const maskedPart = '*'.repeat(phone.length - visibleDigits);
+	const visiblePart = phone.slice(-visibleDigits);
+	return maskedPart + visiblePart;
+}
