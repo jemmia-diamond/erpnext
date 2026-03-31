@@ -1012,6 +1012,9 @@ class SalesOrder(SellingController):
 	def after_insert(self):
 		self.update_customer_revenue_fields()
 
+	def before_submit(self):
+		frappe.throw(_("Sales Order Submission is not allowed."))
+
 	def update_customer_revenue_fields(self):
 		cumulative = self.calculate_customer_cumulative_revenue()
 		true_cumulative = self.calculate_customer_true_cumulative_revenue()
