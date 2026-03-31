@@ -57,20 +57,6 @@ def insert_lead(doc) -> "Document":
 	
 	pancake_list_tags = [transform_price_label(tag) for tag in pancake_list_tags]
 
-	purpose_lead = find_purpose_tag(pancake_list_tags)
-	if not purpose_lead:
-		purpose_lead = "Unspecified"
-	if purpose_lead:
-		purpose_lead_name = frappe.get_doc("Lead Demand", {"demand_label": purpose_lead}, "name")
-		doc["purpose_lead"] = purpose_lead_name.name
-
-	budget_lead = find_budget_tag(pancake_list_tags)
-	if not budget_lead:
-		budget_lead = "Unspecified"
-	if budget_lead:
-		budget_lead_name = frappe.get_doc("Lead Budget", {"budget_label": budget_lead}, "name")
-		doc["budget_lead"] = budget_lead_name.name
-
 	frappe_doc = frappe.get_doc(doc)
 	try:
 		"""
@@ -112,20 +98,6 @@ def update_lead_by_batch(docs):
 
 			pancake_list_tags = doc.get("pancake_tags", [])
 			pancake_list_tags = [transform_price_label(tag) for tag in pancake_list_tags]
-
-			purpose_lead = find_purpose_tag(pancake_list_tags)
-			if not purpose_lead:
-				purpose_lead = "Unspecified"
-			if purpose_lead:
-				purpose_lead_name = frappe.get_doc("Lead Demand", {"demand_label": purpose_lead}, "name")
-				doc["purpose_lead"] = purpose_lead_name.name
-
-			budget_lead = find_budget_tag(pancake_list_tags)
-			if not budget_lead:
-				budget_lead = "Unspecified"
-			if budget_lead:
-				budget_lead_name = frappe.get_doc("Lead Budget", {"budget_label": budget_lead}, "name")
-				doc["budget_lead"] = budget_lead_name.name
 
 			existing_doc = frappe.get_doc(doc["doctype"], doc["docname"])
 			existing_doc.update(doc)
@@ -190,3 +162,26 @@ def find_budget_tag(tags):
         if tag in VALID_BUDGET_TAGS:
             return tag
     return None
+
+def find_range_budget(budget_from: int | None, budget_to:int | None):
+
+	lead_budgets = None
+	filters = {
+	}
+	if budget_to:
+		filters["budget_to"] = ["<=", budget_to]
+
+	if budget_from:
+		filters["budget_from"] = [">=", budget_from]
+
+	lead_budgets = frappe.get_all(
+		"Lead Budget",
+		filters = filters,
+		limit_page_length=1,
+		fields=["name", "budget_label"]
+	)
+
+	if len(lead_budgets) > 0:
+		return lead_budgets[0]
+
+	return None
