@@ -68,6 +68,7 @@
   "promotions",
   "sales_order_purposes",
   "product_categories",
+  "policies",
   "column_break_bscz",
   "total_qty",
   "total",
@@ -160,6 +161,11 @@
   "tc_name",
   "terms",
   "more_info",
+  "deposit_location",
+  "column_break_cbgk",
+  "delivery_location",
+  "section_break_ctso",
+  "ref_sales_orders",
   "section_break_78",
   "status",
   "delivery_status",
@@ -169,8 +175,6 @@
   "per_picked",
   "billing_status",
   "advance_payment_status",
-  "section_break_jhtj",
-  "policies",
   "sales_team_section_break",
   "sales_partner",
   "column_break7",
@@ -231,8 +235,6 @@
   "column_break_phue",
   "haravan_created_at",
   "source_name",
-  "section_break_ctso",
-  "ref_sales_orders",
   "connections_tab"
  ],
  "fields": [
@@ -353,7 +355,7 @@
    "hide_seconds": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Date",
+   "label": "Order Date",
    "no_copy": 1,
    "oldfieldname": "transaction_date",
    "oldfieldtype": "Date",
@@ -2082,11 +2084,6 @@
    "options": "\nNew Customer\nReturning Customer"
   },
   {
-   "fieldname": "section_break_jhtj",
-   "fieldtype": "Section Break",
-   "label": "Order Policies"
-  },
-  {
    "fieldname": "policies",
    "fieldtype": "Table MultiSelect",
    "label": "Policies",
@@ -2097,6 +2094,22 @@
    "fieldtype": "Link",
    "label": "Primary Sales Person",
    "options": "Sales Person"
+  },
+  {
+   "fieldname": "deposit_location",
+   "fieldtype": "Link",
+   "label": "Deposit location",
+   "options": "Lead Source"
+  },
+  {
+   "fieldname": "column_break_cbgk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "delivery_location",
+   "fieldtype": "Select",
+   "label": "Delivery location ",
+   "options": "\n209, \u0110 30 th\u00e1ng 4, Xu\u00e2n Kh\u00e1nh, Ninh Ki\u1ec1u, C\u1ea7n Th\u01a1\n63 Kim M\u00e3, Qu\u1eadn Ba \u0110\u00ecnh, H\u00e0 N\u1ed9i\n72 Nguy\u1ec5n C\u01b0 Trinh, Qu\u1eadn 1, Th\u00e0nh Ph\u1ed1 H\u1ed3 Ch\u00ed Minh\nGiao v\u1ec1 \u0111\u1ecba ch\u1ec9 kh\u00e1ch"
   },
   {
    "fieldname": "consultation_date",

@@ -120,7 +120,9 @@ class SalesOrder(SellingController):
 		customer_type: DF.Literal["", "New Customer", "Returning Customer"]
 		date_of_issuance: DF.Date | None
 		delivery_date: DF.Date | None
+		delivery_location: DF.Literal["", "209, \u0110 30 th\u00e1ng 4, Xu\u00e2n Kh\u00e1nh, Ninh Ki\u1ec1u, C\u1ea7n Th\u01a1", "63 Kim M\u00e3, Qu\u1eadn Ba \u0110\u00ecnh, H\u00e0 N\u1ed9i", "72 Nguy\u1ec5n C\u01b0 Trinh, Qu\u1eadn 1, Th\u00e0nh Ph\u1ed1 H\u1ed3 Ch\u00ed Minh", "Giao v\u1ec1 \u0111\u1ecba ch\u1ec9 kh\u00e1ch"]
 		delivery_status: DF.Literal["Not Delivered", "Fully Delivered", "Partially Delivered", "Closed", "Not Applicable"]
+		deposit_location: DF.Link | None
 		disable_rounded_total: DF.Check
 		discount_amount: DF.Currency
 		dispatch_address: DF.TextEditor | None
