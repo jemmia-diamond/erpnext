@@ -13,6 +13,7 @@
   "item_name",
   "variant_title",
   "product_details",
+  "product_availability_status",
   "column_break_ggzz",
   "sku",
   "barcode",
@@ -1168,6 +1169,13 @@
    "label": "Find Promotion",
    "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Line Item\"]]",
    "options": "Promotion"
+  },
+  {
+   "default": "In Stock",
+   "fieldname": "product_availability_status",
+   "fieldtype": "Select",
+   "label": "Product Availability Status",
+   "options": "In Stock\nPre-order"
   }
  ],
  "grid_page_length": 50,
