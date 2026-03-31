@@ -174,18 +174,31 @@ class Lead(SellingController, CRMNote):
 				lead_source = frappe.new_doc("Lead Source")
 
 				pc_platform = parsed_pancake_data.get("platform", None)
+				lead_source_prefix = ''
 				lead_source_platform = None
 				if "facebook" in pc_platform:
 					lead_source_platform = "Facebook"
+					lead_source_prefix = "FB"
 				elif "zalo" in pc_platform:
 					lead_source_platform = "Zalo"
+					lead_source_prefix = "ZNS"
 				elif "instagram" in pc_platform:
 					lead_source_platform = "Instagram"
+					lead_source_prefix = "IG"
 				elif "tiktok" in pc_platform:
 					lead_source_platform = "Tiktok"	
+					lead_source_prefix = "TT"
+				
+				source_name = None
+				if lead_source_prefix:
+					source_name = f"{lead_source_prefix} {parsed_pancake_data.get('page_name', '')}"
+				else:
+					source_name = parsed_pancake_data.get("page_name", '')
+
+
 
 				lead_source.update({
-					"source_name": "Unspecified",
+					"source_name": source_name,
 					"pancake_page_id": parsed_pancake_data.get("page_id", None),
 					"pancake_platform": lead_source_platform
 				})
