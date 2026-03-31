@@ -28,15 +28,12 @@
   "column_break_lnqd",
   "serial",
   "promotion_section",
-  "g0",
-  "g1",
-  "g2",
-  "g3",
+  "promotion_1",
+  "promotion_2",
+  "promotion_3",
+  "promotion_4",
   "column_break_klcw",
-  "g4",
-  "g5",
-  "g6",
-  "g7",
+  "promotion",
   "section_break_5",
   "description",
   "item_group",
@@ -185,7 +182,6 @@
    "oldfieldtype": "Data",
    "print_hide": 1,
    "print_width": "150",
-   "read_only": 1,
    "reqd": 1,
    "width": "150"
   },
@@ -244,7 +240,6 @@
    "oldfieldtype": "Currency",
    "precision": "0",
    "print_width": "100px",
-   "read_only": 1,
    "reqd": 1,
    "width": "100px"
   },
@@ -1131,69 +1126,48 @@
    "options": "Serial"
   },
   {
-   "fieldname": "g1",
-   "fieldtype": "Link",
-   "label": "G1",
-   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Line Item\"],[\"Promotion\",\"priority\",\"=\",\"G1\"]]",
-   "options": "Promotion"
-  },
-  {
    "fieldname": "column_break_klcw",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "g2",
-   "fieldtype": "Link",
-   "label": "G2",
-   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Line Item\"],[\"Promotion\",\"priority\",\"=\",\"G2\"]]",
-   "options": "Promotion"
-  },
-  {
-   "fieldname": "g3",
-   "fieldtype": "Link",
-   "label": "G3",
-   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Line Item\"],[\"Promotion\",\"priority\",\"=\",\"G3\"]]",
-   "options": "Promotion"
-  },
-  {
-   "fieldname": "g4",
-   "fieldtype": "Link",
-   "label": "G4",
-   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Line Item\"],[\"Promotion\",\"priority\",\"=\",\"G4\"]]",
-   "options": "Promotion"
-  },
-  {
-   "fieldname": "g5",
-   "fieldtype": "Link",
-   "label": "G5",
-   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Line Item\"],[\"Promotion\",\"priority\",\"=\",\"G5\"]]",
-   "options": "Promotion"
-  },
-  {
-   "fieldname": "g6",
-   "fieldtype": "Link",
-   "label": "G6",
-   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Line Item\"],[\"Promotion\",\"priority\",\"=\",\"G6\"]]",
-   "options": "Promotion"
-  },
-  {
-   "fieldname": "g7",
-   "fieldtype": "Link",
-   "label": "G7",
-   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Line Item\"],[\"Promotion\",\"priority\",\"=\",\"G7\"]]",
-   "options": "Promotion"
-  },
-  {
-   "fieldname": "g0",
-   "fieldtype": "Link",
-   "label": "G0",
-   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Line Item\"],[\"Promotion\",\"priority\",\"=\",\"G0\"]]",
-   "options": "Promotion"
   },
   {
    "fieldname": "promotion_section",
    "fieldtype": "Section Break",
    "label": "Promotion Section"
+  },
+  {
+   "fieldname": "promotion_1",
+   "fieldtype": "Link",
+   "label": "Promotion 1",
+   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"NONE\"]]",
+   "options": "Promotion"
+  },
+  {
+   "fieldname": "promotion_2",
+   "fieldtype": "Link",
+   "label": "Promotion 2",
+   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"NONE\"]]",
+   "options": "Promotion"
+  },
+  {
+   "fieldname": "promotion_3",
+   "fieldtype": "Link",
+   "label": "Promotion 3",
+   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"NONE\"]]",
+   "options": "Promotion"
+  },
+  {
+   "fieldname": "promotion_4",
+   "fieldtype": "Link",
+   "label": "Promotion 4",
+   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"NONE\"]]",
+   "options": "Promotion"
+  },
+  {
+   "fieldname": "promotion",
+   "fieldtype": "Link",
+   "label": "Find Promotion",
+   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Line Item\"]]",
+   "options": "Promotion"
   }
  ],
  "grid_page_length": 50,
