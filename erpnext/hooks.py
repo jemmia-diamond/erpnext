@@ -436,10 +436,9 @@ scheduler_events = {
 			"erpnext.accounts.doctype.gl_entry.gl_entry.rename_gle_sle_docs",
 		],
 		# Daily but offset by 45 minutes
-		"45 0 * * *": [],
-        "*/15 * * * *": [
-            "erpnext.crm.doctype.lead.lead_methods.get_leads_to_summary_from_pancake"
-		],
+		"45 0 * * *": [
+			"erpnext.stock.reorder_item.reorder_item",
+		]
 	},
 	"hourly": [
 		"erpnext.projects.doctype.project.project.hourly_reminder",
