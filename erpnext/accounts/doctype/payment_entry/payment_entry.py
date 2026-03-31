@@ -67,6 +67,96 @@ class PaymentEntry(AccountsController):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
+		from erpnext.accounts.doctype.advance_taxes_and_charges.advance_taxes_and_charges import AdvanceTaxesandCharges
+		from erpnext.accounts.doctype.payment_entry_bank_transaction.payment_entry_bank_transaction import PaymentEntryBankTransaction
+		from erpnext.accounts.doctype.payment_entry_deduction.payment_entry_deduction import PaymentEntryDeduction
+		from erpnext.accounts.doctype.payment_entry_reference.payment_entry_reference import PaymentEntryReference
+		from frappe.types import DF
+
+		amended_from: DF.Link | None
+		apply_tax_withholding_amount: DF.Check
+		auto_repeat: DF.Link | None
+		bank: DF.ReadOnly | None
+		bank_account: DF.Link | None
+		bank_account_branch: DF.Literal["C\u1eeda h\u00e0ng HCM", "C\u1eeda h\u00e0ng C\u1ea7n Th\u01a1", "C\u1eeda h\u00e0ng H\u00e0 N\u1ed9i"]
+		bank_account_no: DF.ReadOnly | None
+		bank_transactions: DF.Table[PaymentEntryBankTransaction]
+		base_in_words: DF.SmallText | None
+		base_paid_amount: DF.Currency
+		base_paid_amount_after_tax: DF.Currency
+		base_received_amount: DF.Currency
+		base_received_amount_after_tax: DF.Currency
+		base_total_allocated_amount: DF.Currency
+		base_total_taxes_and_charges: DF.Currency
+		book_advance_payments_in_separate_party_account: DF.Check
+		clearance_date: DF.Date | None
+		company: DF.Link | None
+		contact_email: DF.Data | None
+		contact_person: DF.Link | None
+		cost_center: DF.Link | None
+		created_by_display: DF.Link | None
+		custom_remarks: DF.Check
+		custom_transaction_id: DF.Data | None
+		custom_transfer_note: DF.SmallText | None
+		custom_transfer_status: DF.Literal["", "pending", "success", "cancel"]
+		deductions: DF.Table[PaymentEntryDeduction]
+		difference_amount: DF.Currency
+		in_words: DF.SmallText | None
+		is_opening: DF.Literal["No", "Yes"]
+		letter_head: DF.Link | None
+		misa_sync_error_msg: DF.Data | None
+		misa_sync_guid: DF.Data | None
+		misa_synced: DF.Check
+		misa_synced_at: DF.Datetime | None
+		mode_of_payment: DF.Link | None
+		name_display: DF.Data | None
+		naming_series: DF.Literal["ACC-PAY-.YYYY.-"]
+		paid_amount: DF.Currency
+		paid_amount_after_tax: DF.Currency
+		paid_from: DF.Link | None
+		paid_from_account_balance: DF.Currency
+		paid_from_account_currency: DF.Link | None
+		paid_from_account_type: DF.Data | None
+		paid_to: DF.Link | None
+		paid_to_account_balance: DF.Currency
+		paid_to_account_currency: DF.Link | None
+		paid_to_account_type: DF.Data | None
+		party: DF.DynamicLink | None
+		party_balance: DF.Currency
+		party_bank_account: DF.Link | None
+		party_name: DF.Data | None
+		party_type: DF.Link | None
+		payment_order: DF.Link | None
+		payment_order_status: DF.Literal["Pending", "Success", "Cancel"]
+		payment_type: DF.Literal["Receive", "Pay", "Internal Transfer"]
+		posting_date: DF.Date
+		print_heading: DF.Link | None
+		project: DF.Link | None
+		purchase_taxes_and_charges_template: DF.Link | None
+		qr_url: DF.Data | None
+		received_amount: DF.Currency
+		received_amount_after_tax: DF.Currency
+		reconcile_on_advance_payment_date: DF.Check
+		reference_date: DF.Date | None
+		reference_no: DF.Data | None
+		references: DF.Table[PaymentEntryReference]
+		remarks: DF.SmallText | None
+		sales_taxes_and_charges_template: DF.Link | None
+		source_exchange_rate: DF.Float
+		status: DF.Literal["", "Draft", "Submitted", "Cancelled"]
+		target_exchange_rate: DF.Float
+		tax_withholding_category: DF.Link | None
+		taxes: DF.Table[AdvanceTaxesandCharges]
+		title: DF.Data | None
+		total_allocated_amount: DF.Currency
+		total_order_amount: DF.Currency
+		total_taxes_and_charges: DF.Currency
+		unallocated_amount: DF.Currency
+		verified_by: DF.Link | None
+	# end: auto-generated types
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
 		from frappe.types import DF
 
 		from erpnext.accounts.doctype.advance_taxes_and_charges.advance_taxes_and_charges import (
@@ -174,6 +264,8 @@ class PaymentEntry(AccountsController):
 			self.party_account_currency = self.paid_to_account_currency
 
 	def validate(self):
+		self.set_created_by_display()
+		self.set_total_order_amount()
 		self.setup_party_account_field()
 		self.set_missing_values()
 		self.set_liability_account()
@@ -199,6 +291,58 @@ class PaymentEntry(AccountsController):
 		PaymentTaxWithholding(self).on_validate()
 		self.set_status()
 		self.set_total_in_words()
+
+	def onload(self):
+		self.set_created_by_display()
+		self.set_total_order_amount()
+		self.load_bank_transactions()
+		if self.name:
+			self.name_display = self.name
+
+	def load_bank_transactions(self):
+		"""Fetch and populate linked Bank Transactions"""
+		if not self.name:
+			return
+
+
+		if self.bank_transactions:
+			return
+
+		linked_transactions = frappe.db.sql("""
+			SELECT
+				btp.parent as bank_transaction,
+				bt.date,
+				btp.allocated_amount,
+				btp.clearance_date
+			FROM `tabBank Transaction Payments` btp
+			INNER JOIN `tabBank Transaction` bt ON bt.name = btp.parent
+			WHERE btp.payment_entry = %s
+			ORDER BY bt.date DESC
+		""", (self.name,), as_dict=True)
+
+		for row in linked_transactions:
+			self.append("bank_transactions", row)
+
+	def set_created_by_display(self):
+		if self.owner:
+			self.created_by_display = self.owner
+
+	def set_total_order_amount(self):
+		"""Fetch grand_total from linked Sales Order if exists"""
+		self.total_order_amount = 0
+
+		if not self.references:
+			return
+
+		for ref in self.references:
+			if ref.reference_doctype == "Sales Order" and ref.reference_name:
+				try:
+					grand_total = frappe.db.get_value("Sales Order", ref.reference_name, "grand_total")
+					if grand_total:
+						self.total_order_amount = grand_total
+						break
+				except Exception:
+					pass
 
 	def before_save(self):
 		self.set_matched_unset_payment_requests_to_response()
@@ -463,9 +607,10 @@ class PaymentEntry(AccountsController):
 			latest = latest.get(d.payment_term) or latest.get(None)
 			# The reference has already been fully paid
 			if not latest:
-				frappe.throw(
-					_("{0} {1} has already been fully paid.").format(_(d.reference_doctype), d.reference_name)
-				)
+				return
+				# frappe.throw(
+				# 	_("{0} {1} has already been fully paid.").format(_(d.reference_doctype), d.reference_name)
+				# )
 			# The reference has already been partly paid
 			elif (
 				latest.outstanding_amount < latest.invoice_amount
@@ -1222,12 +1367,13 @@ class PaymentEntry(AccountsController):
 			self.title = self.paid_from + " - " + self.paid_to
 
 	def validate_transaction_reference(self):
-		bank_account = self.paid_to if self.payment_type == "Receive" else self.paid_from
-		bank_account_type = frappe.get_cached_value("Account", bank_account, "account_type")
-
-		if bank_account_type == "Bank":
-			if not self.reference_no or not self.reference_date:
-				frappe.throw(_("Reference No and Reference Date is mandatory for Bank transaction"))
+		# Removed Bank-only validation - reference_no and reference_date are now always optional
+		pass
+		# bank_account = self.paid_to if self.payment_type == "Receive" else self.paid_from
+		# bank_account_type = frappe.get_cached_value("Account", bank_account, "account_type")
+		# if bank_account_type == "Bank":
+		# 	if not self.reference_no or not self.reference_date:
+		# 		frappe.throw(_("Reference No and Reference Date is mandatory for Bank transaction"))
 
 	def set_remarks(self):
 		if self.custom_remarks:
@@ -1886,6 +2032,26 @@ class PaymentEntry(AccountsController):
 			return
 
 		frappe.response["matched_payment_requests"] = matched_payment_requests
+
+	@frappe.whitelist()
+	def verify_payment(self):
+		"""Verify payment entry after bank transaction matching"""
+		skip_bank_check = self.mode_of_payment in ["Cash", "COD"]
+		if not skip_bank_check and (not self.bank_transactions or len(self.bank_transactions) == 0):
+			frappe.throw(_("Cannot verify: Payment Entry must have at least one Bank Transaction (unless Mode of Payment is Cash or COD)"))
+		has_sales_order = any(ref.reference_doctype == "Sales Order" for ref in self.references)
+		if not has_sales_order:
+			frappe.throw(_("Cannot verify: Payment Entry must have at least one Sales Order reference"))
+
+		if self.payment_order_status == "Success":
+			frappe.throw(_("Cannot verify: Payment has already been marked as Success"))
+
+		if self.payment_order_status == "Pending":
+			self.payment_order_status = "Success"
+		self.verified_by = frappe.session.user
+		self.save()
+
+		frappe.msgprint(_("Payment Entry verified successfully"))
 
 	@frappe.whitelist()
 	def allocate_amount_to_references(self, paid_amount, paid_amount_change, allocate_payment_amount):
@@ -2855,6 +3021,14 @@ def get_reference_details(
 			"payment_type": payment_type,
 		}
 	)
+
+	if reference_doctype == "Sales Order":
+		res.update({
+			"balance": flt(ref_doc.get("balance")),
+			"order_number": ref_doc.get("order_number")
+		})
+
+
 	if account:
 		res.update({"account": account})
 	return res
@@ -3570,6 +3744,69 @@ def make_payment_order(source_name, target_doc=None):
 	return doclist
 
 
+
 @erpnext.allow_regional
 def add_regional_gl_entries(gl_entries, doc):
 	return
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_bank_transactions(doctype, txt, searchfield, start, page_len, filters):
+	"""Custom query to search Bank Transactions by name, bank_account, and sepay_transaction_content"""
+	return frappe.db.sql(
+		"""
+		SELECT name, bank_account, sepay_transaction_content
+		FROM `tabBank Transaction`
+		WHERE (
+			name LIKE %(txt)s
+			OR bank_account LIKE %(txt)s
+			OR sepay_transaction_content LIKE %(txt)s
+		)
+		{conditions}
+		ORDER BY
+			CASE WHEN name LIKE %(txt)s THEN 0 ELSE 1 END,
+			modified DESC
+		LIMIT %(page_len)s OFFSET %(start)s
+		""".format(
+			conditions=("AND company = %(company)s" if filters.get("company") else "Jemmia Diamond")
+		),
+		{
+			"txt": f"%{txt}%",
+			"company": filters.get("company"),
+			"start": start,
+			"page_len": page_len,
+		},
+	)
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, filters):
+	"""Custom query to search Sales Orders by name and order_number"""
+	return frappe.db.sql(
+		"""
+		SELECT name, order_number, customer_name
+		FROM `tabSales Order`
+		WHERE (
+			name LIKE %(txt)s
+			OR order_number LIKE %(txt)s
+			OR customer_name Like %(txt)s
+		)
+		AND company = %(company)s
+		ORDER BY
+			CASE
+				WHEN name LIKE %(txt)s THEN 0
+				WHEN order_number LIKE %(txt)s THEN 1
+				ELSE 2
+			END,
+			modified DESC
+		LIMIT %(page_len)s OFFSET %(start)s
+		""",
+		{
+			"txt": f"%{txt}%",
+			"company": filters.get("company"),
+			"start": start,
+			"page_len": page_len,
+		},
+	)
