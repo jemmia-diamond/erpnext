@@ -132,10 +132,6 @@ class Customer(TransactionBase):
 	# end: auto-generated types
 
 	def onload(self):
-		# Load customer cumulative revenue and true cumulative revenue
-		self.cumulative_revenue = self.update_customer_cumulative_revenue()
-		self.true_cumulative_revenue = self.update_customer_true_cumulative_revenue()
-
 		# Load address and contacts in `__onload`
 		load_address_and_contact(self)
 		self.load_dashboard_info()
@@ -458,27 +454,22 @@ class Customer(TransactionBase):
 				)
 			)
 
-	def update_customer_cumulative_revenue(self):
-		result = frappe.db.sql("""
-		SELECT SUM(grand_total)
-		FROM `tabSales Order`
-		WHERE customer = %s AND cancelled_status = 'Uncancelled'
-		""", (self.name,), as_list=True)
-		total_revenue = result[0][0] if result and result[0][0] else 0
-		return total_revenue
-
-
-	def update_customer_true_cumulative_revenue(self):
-		result = frappe.db.sql("""
-		SELECT SUM(grand_total)
-		FROM `tabSales Order`
-		WHERE customer = %s
-		AND cancelled_status = 'Uncancelled'
-		AND financial_status = 'Paid'
-		AND fulfillment_status = 'Fulfilled'
-		""", (self.name,), as_list=True)
-		total_real_revenue = result[0][0] if result and result[0][0] else 0
-		return total_real_revenue
+@deprecated
+def create_contact(contact, party_type, party, email):
+	"""Create contact based on given contact name"""
+	first, middle, last = parse_full_name(contact)
+	doc = frappe.get_doc(
+		{
+			"doctype": "Contact",
+			"first_name": first,
+			"middle_name": middle,
+			"last_name": last,
+			"is_primary_contact": 1,
+		}
+	)
+	doc.append("email_ids", dict(email_id=email, is_primary=1))
+	doc.append("links", dict(link_doctype=party_type, link_name=party))
+	return doc.insert()
 
 
 @frappe.whitelist()
