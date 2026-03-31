@@ -138,7 +138,7 @@ frappe.ui.form.on("Sales Order", {
 						});
 						
 						let html = '<div class="split-orders-info" style="margin-top: 10px; padding: 10px; background-color: #f0f4f7; border-radius: 5px;">';
-						html += '<h6 style="margin-bottom: 10px; color: #3498db;"><i class="fa fa-link"></i> All Orders in Split Group:</h6>';
+						html += `<h6 style="margin-bottom: 10px; color: #3498db; font-size: 13px;"><i class="fa fa-link"></i> All Orders in Split Group: <b>${all_orders.length}</b></h6>`;
 						html += '<ul style="margin: 0; padding-left: 20px;">';
 						
 						all_orders.forEach(function(order) {
@@ -149,9 +149,6 @@ frappe.ui.form.on("Sales Order", {
 							if (is_original) {
 								badge = '<span style="background: #95a5a6; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 5px;">ORIGINAL</span>';
 							}
-							if (is_current) {
-								badge += '<span style="background: #27ae60; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 5px;">THIS</span>';
-							}
 							
 							const style = is_current ? 'font-weight: bold;' : '';
 							html += `<li style="${style}"><a href="/app/sales-order/${order.name}" target="_blank">${order.order_number}</a> - ${format_currency(order.grand_total, frm.doc.currency)}${badge}</li>`;
@@ -159,7 +156,6 @@ frappe.ui.form.on("Sales Order", {
 						
 						html += '</ul>';
 						html += '<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #d1d8dd;">';
-						html += `<p style="margin: 5px 0; font-size: 12px; color: #666;">Orders in group: <b>${all_orders.length}</b></p>`;
 						html += `<p style="margin: 5px 0; font-size: 13px; color: #2c3e50;"><b>Total Amount (All Split Orders): ${format_currency(total_group_amount, frm.doc.currency)}</b></p>`;
 						html += '</div>';
 						html += '</div>';

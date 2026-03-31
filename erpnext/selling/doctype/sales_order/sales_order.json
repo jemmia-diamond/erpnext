@@ -1924,7 +1924,7 @@
    "fieldname": "is_split_order",
    "fieldtype": "Check",
    "label": "Is Split Order",
-   "permlevel": 1,
+   "permlevel": 2,
    "print_hide": 1
   },
   {
@@ -1933,6 +1933,7 @@
    "fieldtype": "Select",
    "label": "Split Reason",
    "options": "\nGold Regulation\nCustomer Request\nOther",
+   "permlevel": 2,
    "print_hide": 1
   },
   {

@@ -1386,8 +1386,13 @@ class SalesOrder(SellingController):
 		# Only look for new orders (not reorders) to avoid grouping unrelated orders
 		previous_orders = frappe.db.sql("""
 			SELECT 
-				name, haravan_order_id, haravan_created_at,
-				split_order_group, is_split_order
+				name,
+				haravan_order_id,
+				haravan_created_at,
+				split_order_group,
+				split_order_group_name,
+				is_split_order,
+				order_number
 			FROM `tabSales Order`
 			WHERE customer = %s
 				AND haravan_created_at >= %s
