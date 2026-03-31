@@ -282,7 +282,8 @@ class Lead(SellingController, CRMNote):
 				if not self.first_reach_at:
 					self.first_reach_at = inserted_at_dt
 				else:
-					if inserted_at_dt < self.first_reach_at:
+					first_reach_at_dt = frappe.utils.get_datetime(self.first_reach_at)
+					if inserted_at_dt < first_reach_at_dt:
 						self.first_reach_at = inserted_at_dt
 						
 	def upsert_lead_source(self):
