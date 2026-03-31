@@ -13,17 +13,19 @@
   "item_name",
   "variant_title",
   "product_details",
+  "diamond_details",
   "product_availability_status",
   "column_break_ggzz",
   "sku",
   "barcode",
-  "haravan_variant_id",
   "item_code",
   "delivery_date",
   "customer_item_code",
   "ensure_delivery_based_on_produced_serial_no",
   "is_stock_item",
   "reserve_stock",
+  "type",
+  "haravan_variant_id",
   "section_break_eour",
   "serial_numbers",
   "column_break_lnqd",
@@ -39,19 +41,21 @@
   "description",
   "item_group",
   "brand",
-  "image_section",
-  "image",
-  "image_view",
   "quantity_and_rate",
   "column_break_plpb",
   "qty",
   "stock_uom",
   "subcontracted_qty",
-  "col_break2",
   "uom",
+  "col_break2",
+  "weight_per_unit",
+  "weight_uom",
   "conversion_factor",
   "stock_qty",
   "stock_reserved_qty",
+  "item_weight_details",
+  "total_weight",
+  "column_break_21",
   "section_break_16",
   "price_list_rate",
   "base_price_list_rate",
@@ -88,11 +92,6 @@
   "drop_ship_section",
   "delivered_by_supplier",
   "supplier",
-  "item_weight_details",
-  "weight_per_unit",
-  "total_weight",
-  "column_break_21",
-  "weight_uom",
   "warehouse_and_reference",
   "warehouse",
   "target_warehouse",
@@ -108,6 +107,9 @@
   "company_total_stock",
   "sales_order_schedule_section",
   "add_schedule",
+  "image_section",
+  "image",
+  "image_view",
   "manufacturing_section_section",
   "bom_no",
   "planning_section",
@@ -215,7 +217,6 @@
    "fetch_from": "item_code.image",
    "fieldname": "image",
    "fieldtype": "Attach",
-   "hidden": 1,
    "label": "Image"
   },
   {
@@ -248,6 +249,7 @@
    "depends_on": "eval:doc.uom != doc.stock_uom",
    "fieldname": "stock_uom",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Stock UOM",
    "oldfieldname": "stock_uom",
    "oldfieldtype": "Data",
@@ -264,7 +266,6 @@
    "default": "Nos",
    "fieldname": "uom",
    "fieldtype": "Link",
-   "hidden": 1,
    "label": "UOM",
    "options": "UOM"
   },
@@ -272,18 +273,20 @@
    "depends_on": "eval:doc.uom != doc.stock_uom",
    "fieldname": "conversion_factor",
    "fieldtype": "Float",
+   "hidden": 1,
    "label": "UOM Conversion Factor",
    "print_hide": 1,
    "read_only": 1
   },
   {
-   "depends_on": "eval:doc.uom != doc.stock_uom",
    "fieldname": "stock_qty",
    "fieldtype": "Float",
+   "hidden": 1,
    "label": "Qty as per Stock UOM",
    "no_copy": 1,
    "print_hide": 1,
-   "read_only": 1
+   "read_only": 1,
+   "read_only_depends_on": "eval:doc.uom != doc.stock_uom"
   },
   {
    "fieldname": "section_break_16",
@@ -531,7 +534,6 @@
    "depends_on": "eval:!parent.is_subcontracted",
    "fieldname": "item_weight_details",
    "fieldtype": "Section Break",
-   "hidden": 1,
    "label": "Item Weight Details"
   },
   {
@@ -542,6 +544,7 @@
   {
    "fieldname": "total_weight",
    "fieldtype": "Float",
+   "hidden": 1,
    "label": "Total Weight",
    "read_only": 1
   },
@@ -820,7 +823,6 @@
   {
    "fieldname": "image_section",
    "fieldtype": "Section Break",
-   "hidden": 1,
    "label": "Image"
   },
   {
@@ -940,6 +942,7 @@
    "depends_on": "eval: doc.stock_reserved_qty",
    "fieldname": "stock_reserved_qty",
    "fieldtype": "Float",
+   "hidden": 1,
    "label": "Stock Reserved Qty (in Stock UOM)",
    "no_copy": 1,
    "non_negative": 1,
@@ -1109,7 +1112,8 @@
   },
   {
    "fieldname": "section_break_eour",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Serial Section"
   },
   {
    "fieldname": "serial_numbers",
@@ -1176,6 +1180,16 @@
    "fieldtype": "Select",
    "label": "Product Availability Status",
    "options": "In Stock\nPre-order"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Data",
+   "label": "Product Type"
+  },
+  {
+   "fieldname": "diamond_details",
+   "fieldtype": "Data",
+   "label": "Diamond Details"
   }
  ],
  "grid_page_length": 50,

@@ -39,6 +39,7 @@ class SalesOrderItem(Document):
 		delivered_qty: DF.Float
 		delivery_date: DF.Date | None
 		description: DF.TextEditor | None
+		diamond_details: DF.Data | None
 		discount_amount: DF.Currency
 		discount_percentage: DF.Percent
 		distributed_discount_amount: DF.Currency
@@ -104,7 +105,8 @@ class SalesOrderItem(Document):
 		target_warehouse: DF.Link | None
 		total_weight: DF.Float
 		transaction_date: DF.Date | None
-		uom: DF.Link
+		type: DF.Data | None
+		uom: DF.Link | None
 		valuation_rate: DF.Currency
 		variant_title: DF.Data | None
 		warehouse: DF.Link | None
