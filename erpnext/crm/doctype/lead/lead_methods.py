@@ -110,6 +110,43 @@ def insert_lead(doc) -> "Document":
 				reference_frappe_doc_name = match.group(0)
 				return frappe.get_doc(frappe_doc.doctype, reference_frappe_doc_name)
 			return None
+		
+@frappe.whitelist(methods=["PUT", "PATCH"])
+def backfill_lead_info(docs):
+    """Bulk update leads"""
+    if isinstance(docs, str):
+        docs = json.loads(docs)
+
+    failed_docs = []
+    try:
+        # Prepare data for batch update
+        update_data = []
+        ids_to_update = []
+        for doc in docs:
+            lead_id = doc.get("docname")  # Assuming docname refers to the ID (name)
+            new_first_name = doc.get("new_name")
+            new_phone = doc.get("new_phone")
+            ids_to_update.append(lead_id)
+            update_data.append((new_first_name, new_phone, lead_id))
+
+        # Construct SQL query dynamically
+        frappe.db.sql("""
+            UPDATE `tabLead`
+            SET 
+                first_name = CASE 
+                    WHEN first_name IS NULL OR first_name = '' OR first_name = 'Chưa rõ' THEN %s
+                    ELSE first_name
+                END,
+                phone = CASE 
+                    WHEN phone IS NULL OR phone = '' THEN %s
+                    ELSE phone
+                END
+            WHERE name IN ({})
+        """.format(", ".join(["%s"] * len(ids_to_update))), tuple([item for sublist in update_data for item in sublist]))
+    except Exception as e:
+        failed_docs.append({"doc": doc, "exc": frappe.utils.get_traceback()})
+
+    return {"failed_docs": failed_docs}
 
 @frappe.whitelist(methods=["POST", "PUT"])
 def update_lead_by_batch(docs):
