@@ -1194,5 +1194,6 @@
  "states": [],
  "title_field": "customer_name",
  "track_changes": 1,
- "translated_doctype": 1
+ "translated_doctype": 1,
+ "custom": 1
 }

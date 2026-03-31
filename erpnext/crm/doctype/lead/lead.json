@@ -920,5 +920,6 @@
  "states": [],
  "subject_field": "title",
  "title_field": "first_name",
- "track_changes": 1
+ "track_changes": 1,
+ "custom": 1
 }
