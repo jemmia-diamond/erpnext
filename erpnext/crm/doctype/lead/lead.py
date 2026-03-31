@@ -49,7 +49,6 @@ class Lead(SellingController, CRMNote):
 		company_name: DF.Data | None
 		customer: DF.Link | None
 		date_of_issuance: DF.Date | None
-		demand_notes: DF.SmallText | None
 		disabled: DF.Check
 		email_id: DF.Data | None
 		expected_delivery_date: DF.Date | None
@@ -78,13 +77,13 @@ class Lead(SellingController, CRMNote):
 		phone: DF.Data | None
 		phone_ext: DF.Data | None
 		place_of_issuance: DF.Literal["Ministry of Public Security", "Department of Police for Administrative Management of Social Order", "Department of Police for Registration, Residency Management, and National Population Data"]
-		preferred_diamond: DF.Table[LeadDiamond]
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
 		province: DF.Link | None
 		purpose_lead: DF.Link | None
 		qualification_status: DF.Literal["Unqualified", "In Process", "Qualified"]
 		qualified_by: DF.Link | None
 		qualified_on: DF.Date | None
+		region: DF.Link | None
 		request_type: DF.Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
 		salutation: DF.Link | None
 		state: DF.Data | None
