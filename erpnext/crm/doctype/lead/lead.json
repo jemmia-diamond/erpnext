@@ -718,13 +718,13 @@
   {
    "fieldname": "purpose_lead",
    "fieldtype": "Link",
-   "label": "Purpose Lead ",
+   "label": "Lead Purpose",
    "options": "Lead Demand"
   },
   {
    "fieldname": "budget_lead",
    "fieldtype": "Link",
-   "label": "Budget Lead",
+   "label": "Lead Budget",
    "options": "Lead Budget"
   },
   {

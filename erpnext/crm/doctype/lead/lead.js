@@ -104,24 +104,6 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 		).message?.name;
 
 		let fields = [];
-		if (!existing_prospect) {
-			fields.push(
-				{
-					label: "Create Prospect",
-					fieldname: "create_prospect",
-					fieldtype: "Check",
-					default: 1,
-				},
-				{
-					label: "Prospect Name",
-					fieldname: "prospect_name",
-					fieldtype: "Data",
-					default: frm.doc.company_name,
-					depends_on: "create_prospect",
-					mandatory_depends_on: "create_prospect",
-				}
-			);
-		}
 
 		await frm.reload_doc();
 

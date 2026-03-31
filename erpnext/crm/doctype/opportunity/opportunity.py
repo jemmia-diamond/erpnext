@@ -71,6 +71,7 @@ class Opportunity(TransactionBase, CRMNote):
 		no_of_employees: DF.Literal["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"]
 		notes: DF.Table[CRMNote]
 		opportunity_amount: DF.Currency
+		opportunity_date: DF.Datetime | None
 		opportunity_from: DF.Link
 		opportunity_owner: DF.Link | None
 		opportunity_type: DF.Link | None
@@ -80,10 +81,12 @@ class Opportunity(TransactionBase, CRMNote):
 		phone_ext: DF.Data | None
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
 		probability: DF.Percent
+		province: DF.Link | None
 		purpose_lead: DF.Link | None
+		region: DF.Link | None
 		sales_stage: DF.Link | None
 		state: DF.Data | None
-		status: DF.Literal["Opportunity", "Hot Opportunity", "Warm Opportunity", "Cold Opportunity"]
+		status: DF.Literal["Open", "Quotation", "Converted", "Lost", "Negotiation", "Closed"]
 		territory: DF.Link | None
 		title: DF.Data | None
 		total: DF.Currency
@@ -160,6 +163,9 @@ class Opportunity(TransactionBase, CRMNote):
 		if self.is_new() and not self.opportunity_type:
 			self.opportunity_type = _("Sales")
 
+	def before_save(self):
+		self.opportunity_date = self.creation
+		
 	def set_exchange_rate(self):
 		company_currency = frappe.get_cached_value("Company", self.company, "default_currency")
 		if self.currency == company_currency:
@@ -363,41 +369,6 @@ class Opportunity(TransactionBase, CRMNote):
 				if not d.get(key):
 					d.set(key, item.get(key))
 
-
-	def before_save(self):
-		# every save check status opportunity 
-
-		self.status = self.get_opportunity_status()
-
-	def get_opportunity_status(self):
-		
-		lead = None
-		try:
-			lead = frappe.get_doc(
-				"Lead", 
-				{
-				'name': self.party_name,
-				},
-				["name", "qualified_lead_date"]
-			)
-		except: 
-			lead = None
-
-		if not lead or (lead and  not lead.qualified_lead_date):
-			return "Opportunity"
-		
-		diff_day = date_diff(frappe.utils.now_datetime(), lead.qualified_lead_date)
-
-		if diff_day < 30:
-			return "Hot Opportunity"
-		
-		if diff_day >= 30 and diff_day< 90:
-			return "Warm Opportunity"
-		
-		return "Cold Opportunity"
-
-		
-
 @frappe.whitelist()
 def get_item_details(item_code):
 	item = frappe.db.sql(
@@ -584,29 +555,3 @@ def make_opportunity_from_communication(communication, company, ignore_communica
 	link_communication_to_document(doc, "Opportunity", opportunity.name, ignore_communication_links)
 
 	return opportunity.name
-
-@frappe.whitelist()
-def schedule_to_update_opportunity():
-	"""
-	from opportunity to cold opportunity stage
-	"""
-
-	opportunities = frappe.get_all("Opportunity", filters= {
-		"status" : ["in", ["Opportunity", "Hot Opportunity", "Warm Opportunity"] ],
-		"opportunity_from" : "Lead",
-	})
-
-	for opportunity in opportunities:
-		# this code below will trigger before save  hooks
-		# before save hooks will update  status
-		opportunity_doc = None
-
-		try:
-			opportunity_doc = frappe.get_doc("Opportunity", {
-				"name" : opportunity.name
-			})
-		except Exception:
-			opportunity_doc = None
-		
-		if opportunity_doc:
-			opportunity_doc.save()
