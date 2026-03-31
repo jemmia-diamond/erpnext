@@ -131,7 +131,6 @@ class Lead(SellingController, CRMNote):
 		self.set_title()
 		self.set_status()
 		self.check_email_id_is_unique()
-		self.check_phone_is_unique()
 		self.validate_email_id()
 
 	def before_insert(self):
