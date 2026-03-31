@@ -526,7 +526,7 @@ class Lead(SellingController, CRMNote):
 					contact_name = linked_contacts_data[0].get('parent', None)
 					contact = frappe.get_doc("Contact", contact_name)
 					self.source = contact.source
-					self.save()
+					self.save(ignore_permissions=True)
 
 		except Exception as e:
 			print(f"Error set_first_lead_source {e}")

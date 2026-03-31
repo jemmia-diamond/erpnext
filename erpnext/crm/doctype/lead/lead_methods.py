@@ -237,7 +237,7 @@ def update_lead_by_batch(docs):
 				doc["lead_name"] = existing_doc.lead_name
 
 			existing_doc.update(doc)
-			existing_doc.save()
+			existing_doc.save(ignore_permissions=True)
 			frappe.db.commit()
 
 			contact = None
@@ -403,7 +403,7 @@ def update_lead_from_summary(data):
 							"product_type": product.name
 						})
 
-			lead.save()
+			lead.save(ignore_permissions=True)
 			break
 		except Exception as e:
 			if e is frappe.TimestampMismatchError:
