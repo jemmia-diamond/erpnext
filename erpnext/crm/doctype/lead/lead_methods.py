@@ -69,6 +69,32 @@ def insert_lead(doc) -> "Document":
 
 	pancake_list_tags = [transform_price_label(tag) for tag in pancake_list_tags]
 
+	# Check if lead exists by conversation_id
+	page_id = doc.get("pancake_data", {}).get("page_id")
+	conversation_id = doc.get("pancake_data", {}).get("conversation_id")
+
+	if conversation_id:
+		existing_lead_name = get_lead_name_by_conversation_id(conversation_id)
+		if existing_lead_name:
+			existing_doc = frappe.get_doc("Lead", existing_lead_name)
+			existing_doc.link_to_contacts(
+				page_id=page_id,
+				conversation_id=conversation_id,
+			)
+			return existing_doc
+
+	# Check if lead exists by phone
+	if is_valid_phone and pancake_phone:
+		existing_lead_name = frappe.db.get_value("Lead", {"phone": pancake_phone}, "name")
+		if existing_lead_name:
+			existing_doc = frappe.get_doc("Lead", existing_lead_name)
+			if conversation_id and page_id:
+				existing_doc.link_to_contacts(
+					page_id=page_id,
+					conversation_id=conversation_id,
+				)
+			return existing_doc
+
 	frappe_doc = frappe.get_doc(doc)
 	try:
 		"""
@@ -102,29 +128,7 @@ def insert_lead(doc) -> "Document":
 			if existing_doc:
 				return existing_doc
 			return None
-		except Exception as get_exception:
-			pattern = r'CRM-LEAD-\d+-\d+'
-			match = re.search(pattern, str(e))
-			if match:
-				reference_frappe_doc_name = match.group(0)
-				existing_doc : Lead = frappe.get_doc(frappe_doc.doctype, reference_frappe_doc_name)
-
-				'''
-				Check if contact exists by (pancake) conversation_id
-				If not, create a new one and link
-				'''
-
-				page_id = doc.get("pancake_data", {}).get("page_id", None)
-				conversation_id = doc.get("pancake_data", {}).get("conversation_id", None)
-
-				if page_id is None or conversation_id is None:
-					return existing_doc
-
-				existing_doc.link_to_contacts(
-					page_id=page_id,
-					conversation_id=conversation_id,
-				)
-				return existing_doc
+		except Exception:
 			return None
 
 @frappe.whitelist(methods=["PUT", "PATCH"])
