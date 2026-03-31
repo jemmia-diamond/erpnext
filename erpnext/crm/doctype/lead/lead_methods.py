@@ -264,7 +264,6 @@ def update_lead_from_summary(data):
 	budget_from =  None if budget_to else data.get("budget_from", None)
 	purpose = data.get("purpose", None)
 	product_names = data.get("interested_products", [])
-	phone = data.get("phone", None)
 	province = data.get("province", None)
 	expected_receiving_date = data.get("expected_receiving_date", None)
 
@@ -275,9 +274,6 @@ def update_lead_from_summary(data):
 	lead_purpose = get_lead_purpose(purpose)
 	if lead_purpose:
 		lead.purpose_lead = lead_purpose.name
-
-	if phone:
-		lead.phone = phone
 
 	if expected_receiving_date:
 		lead.expected_delivery_date	= expected_receiving_date
@@ -294,6 +290,7 @@ def update_lead_from_summary(data):
 			lead.append("preferred_product_type", {
 				"product_type": product.name
 			})
+	lead.reload()
 	lead.save()
 
 	#update last summarize at
