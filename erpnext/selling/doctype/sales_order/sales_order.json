@@ -67,7 +67,6 @@
   "section_break_31",
   "column_break_33a",
   "promotions",
-  "sales_order_purposes",
   "product_categories",
   "policies",
   "column_break_bscz",
@@ -163,6 +162,7 @@
   "terms",
   "more_info",
   "deposit_location",
+  "sales_order_purposes",
   "column_break_cbgk",
   "delivery_location",
   "section_break_ctso",
@@ -2087,7 +2087,7 @@
   {
    "fieldname": "policies",
    "fieldtype": "Table MultiSelect",
-   "label": "Policies",
+   "label": "Order Policies",
    "options": "Sales Order Policy"
   },
   {
