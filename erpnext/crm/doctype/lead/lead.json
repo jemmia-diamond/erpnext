@@ -793,7 +793,8 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Lead Stage",
-   "options": "Lead\nQualified Lead\nOpportunity\nCustomer"
+   "options": "Lead\nQualified Lead\nOpportunity\nCustomer",
+   "read_only": 1
   },
   {
    "fieldname": "province",
@@ -805,7 +806,7 @@
    "fieldname": "qualified_lead_date",
    "fieldtype": "Datetime",
    "hidden": 1,
-   "label": "Qualified Date Date"
+   "label": "Qualified Lead Date"
   },
   {
    "fieldname": "region",
