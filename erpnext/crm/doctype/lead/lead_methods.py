@@ -294,8 +294,9 @@ def update_lead_from_summary(data):
 			lead.append("preferred_product_type", {
 				"product_type": product.name
 			})
-	lead.reload()
+
 	lead.save()
+	frappe.db.commit()
 
 	#update last summarize at
 	contact = get_contact_by_conversation_id(conversation_id)
