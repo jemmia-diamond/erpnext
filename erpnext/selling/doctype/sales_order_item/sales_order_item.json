@@ -26,6 +26,7 @@
   "reserve_stock",
   "type",
   "haravan_variant_id",
+  "discount_rate",
   "section_break_eour",
   "serial_numbers",
   "column_break_lnqd",
@@ -1189,6 +1190,11 @@
    "fieldname": "diamond_details",
    "fieldtype": "Data",
    "label": "Diamond Details"
+  },
+  {
+   "fieldname": "discount_rate",
+   "fieldtype": "Data",
+   "label": "Discount Rate"
   }
  ],
  "grid_page_length": 50,

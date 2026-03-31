@@ -95,6 +95,7 @@ class SalesOrder(SellingController):
 		base_rounding_adjustment: DF.Currency
 		base_total: DF.Currency
 		base_total_taxes_and_charges: DF.Currency
+		billing_address: DF.Literal["", "H\u1ed3 Ch\u00ed Minh: 72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh", "H\u00e0 N\u1ed9i: 63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5", "C\u1ea7n Th\u01a1: 209 \u0110\u01b0\u1eddng 30 th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u"]
 		billing_status: DF.Literal["Not Billed", "Fully Billed", "Partly Billed", "Closed"]
 		birth_date: DF.Date | None
 		campaign: DF.Link | None
@@ -126,7 +127,10 @@ class SalesOrder(SellingController):
 		delivery_date: DF.Date | None
 		delivery_location: DF.Literal["", "209, \u0110 30 th\u00e1ng 4, Xu\u00e2n Kh\u00e1nh, Ninh Ki\u1ec1u, C\u1ea7n Th\u01a1", "63 Kim M\u00e3, Qu\u1eadn Ba \u0110\u00ecnh, H\u00e0 N\u1ed9i", "72 Nguy\u1ec5n C\u01b0 Trinh, Qu\u1eadn 1, Th\u00e0nh Ph\u1ed1 H\u1ed3 Ch\u00ed Minh", "Giao v\u1ec1 \u0111\u1ecba ch\u1ec9 kh\u00e1ch"]
 		delivery_status: DF.Literal["Not Delivered", "Fully Delivered", "Partially Delivered", "Closed", "Not Applicable"]
+		deposit_amount: DF.Currency
+		deposit_in_words: DF.SmallText | None
 		deposit_location: DF.Link | None
+		deposit_method: DF.Literal["", "Cash", "Bank Transfer", "Card"]
 		disable_rounded_total: DF.Check
 		discount_amount: DF.Currency
 		dispatch_address: DF.TextEditor | None
@@ -159,6 +163,7 @@ class SalesOrder(SellingController):
 		named_place: DF.Data | None
 		naming_series: DF.Literal["SAL-ORD-.YYYY.-"]
 		net_total: DF.Currency
+		order_currency: DF.Link | None
 		order_number: DF.Data | None
 		order_type: DF.Literal["Sales", "Maintenance", "Shopping Cart"]
 		other_charges_calculation: DF.TextEditor | None

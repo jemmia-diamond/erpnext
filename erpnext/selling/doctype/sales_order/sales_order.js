@@ -218,6 +218,12 @@ frappe.ui.form.on("Sales Order", {
 		if (frm.doc.docstatus > 0) {
 			frm.set_df_property("reserve_stock", "description", null);
 		}
+
+		// Ensure deposit_amount shows currency in label and formats using SO currency
+		if (frm.doc.currency) {
+			frm.set_currency_labels(["deposit_amount"], frm.doc.order_currency);
+			frm.set_df_property("deposit_amount", "options", "currency");
+		}
 	},
 
 	get_items_from_internal_purchase_order(frm) {
@@ -291,6 +297,21 @@ frappe.ui.form.on("Sales Order", {
 			"Unreconcile Payment Entries",
 			"Delivery Schedule Item",
 		];
+	},
+
+	// Update deposit_amount label and currency formatting when currency changes
+	currency: function (frm) {
+		if (frm.doc.currency) {
+			frm.set_currency_labels(["deposit_amount"], frm.doc.order_currency);
+			frm.set_df_property("deposit_amount", "options", "currency");
+		}
+	},
+
+	delivery_date: function (frm) {
+		$.each(frm.doc.items || [], function (i, d) {
+			if (!d.delivery_date) d.delivery_date = frm.doc.delivery_date;
+		});
+		refresh_field("items");
 	},
 
 	create_stock_reservation_entries(frm) {
