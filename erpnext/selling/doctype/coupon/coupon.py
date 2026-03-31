@@ -135,9 +135,9 @@ def update_customers_coupons(customer_name, customer_haravan_id):
 			return
 
 		# Early return if coupon count matches
-		current_coupon_count = frappe.db.count("Coupon", {"customer": customer_name})
-		if len(customer_coupons) == current_coupon_count:
-			return
+		# current_coupon_count = frappe.db.count("Coupon", {"customer": customer_name})
+		# if len(customer_coupons) == current_coupon_count:
+		# 	return
 
 		for result in customer_coupons:
 			if not result.get("couponHaravanCode"):
@@ -162,7 +162,14 @@ def _map_coupon_from_api(result, customer_name):
 	"""Map API response to Coupon document fields"""
 	haravan_coupon_id = result.get("couponHaravanId")
 	user_haravan_id = result.get("userHaravanId")
+	order_haravan_id = result.get("orderHaravanId")
+
 	user = frappe.get_value("Customer", {"haravan_id": user_haravan_id}, "name") if user_haravan_id else None
+
+	sales_order = None
+	if order_haravan_id:
+		sales_order = frappe.get_value("Sales Order", {"haravan_order_id": str(order_haravan_id)}, "name")
+
 	existing_coupon = frappe.get_value("Coupon", {"haravan_coupon_id": haravan_coupon_id}, "name")
 
 	if existing_coupon:
@@ -174,6 +181,7 @@ def _map_coupon_from_api(result, customer_name):
 	coupon_doc.coupon_name = result.get("couponHaravanCode")
 	coupon_doc.customer = customer_name
 	coupon_doc.user = user
+	coupon_doc.sales_order = sales_order
 	coupon_doc.coupon_type = result.get("couponType", "Invite")
 	coupon_doc.total_price = flt(result.get("totalPrice", 0))
 	coupon_doc.cashback_ref = flt(result.get("cashBackRef", 0))
