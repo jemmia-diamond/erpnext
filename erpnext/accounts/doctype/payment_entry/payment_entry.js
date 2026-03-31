@@ -409,7 +409,9 @@ frappe.ui.form.on("Payment Entry", {
 			(frm.doc.payment_order_status === "Draft" || frm.doc.payment_order_status === "Pending" || frm.doc.payment_order_status === "Success") &&
 			(frappe.user.has_role("Accounts User") || frappe.user.has_role("Accounts Manager"))
 		) {
-			frm.add_custom_button(__("Verify"), () => {
+			let has_sales_order = frm.doc.references && frm.doc.references.some(ref => ref.reference_doctype === "Sales Order");
+			
+			let btn = frm.add_custom_button(__("Verify"), () => {
 				frm.events.get_payment_code(frm, (payment_code) => {
 					let requires_bank_transaction = payment_code === "banking";
 					if (requires_bank_transaction && (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0)) {
@@ -441,6 +443,10 @@ frappe.ui.form.on("Payment Entry", {
 					});
 				});
 			});
+			
+			if (!has_sales_order) {
+				btn.addClass('disabled').prop('disabled', true);
+			}
 		}
 	},
 
