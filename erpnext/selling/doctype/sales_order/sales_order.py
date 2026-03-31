@@ -62,17 +62,16 @@ class SalesOrder(SellingController):
 		from erpnext.accounts.doctype.item_wise_tax_detail.item_wise_tax_detail import ItemWiseTaxDetail
 		from erpnext.accounts.doctype.payment_schedule.payment_schedule import PaymentSchedule
 		from erpnext.accounts.doctype.pricing_rule_detail.pricing_rule_detail import PricingRuleDetail
-		from erpnext.accounts.doctype.sales_taxes_and_charges.sales_taxes_and_charges import (
-			SalesTaxesandCharges,
-		)
+		from erpnext.accounts.doctype.sales_taxes_and_charges.sales_taxes_and_charges import SalesTaxesandCharges
 		from erpnext.selling.doctype.sales_order_item.sales_order_item import SalesOrderItem
+		from erpnext.selling.doctype.sales_order_payment_record.sales_order_payment_record import SalesOrderPaymentRecord
+		from erpnext.selling.doctype.sales_order_promotion.sales_order_promotion import SalesOrderPromotion
 		from erpnext.selling.doctype.sales_team.sales_team import SalesTeam
 		from erpnext.stock.doctype.packed_item.packed_item import PackedItem
 
 		additional_discount_percentage: DF.Float
 		address_display: DF.TextEditor | None
 		advance_paid: DF.Currency
-		advance_payment_status: DF.Literal["Not Requested", "Requested", "Partially Paid", "Fully Paid"]
 		amended_from: DF.Link | None
 		amount_eligible_for_commission: DF.Currency
 		apply_discount_on: DF.Literal["", "Grand Total", "Net Total"]
@@ -86,6 +85,9 @@ class SalesOrder(SellingController):
 		base_total: DF.Currency
 		base_total_taxes_and_charges: DF.Currency
 		billing_status: DF.Literal["Not Billed", "Fully Billed", "Partly Billed", "Closed"]
+		birth_date: DF.Date | None
+		campaign: DF.Link | None
+		cancelled_status: DF.Literal["", "Uncancelled", "Cancelled"]
 		commission_rate: DF.Float
 		company: DF.Link
 		company_address: DF.Link | None
@@ -104,23 +106,31 @@ class SalesOrder(SellingController):
 		customer_address: DF.Link | None
 		customer_group: DF.Link | None
 		customer_name: DF.Data | None
+		customer_personal_id: DF.Data | None
+		date_of_issuance: DF.Date | None
 		delivery_date: DF.Date | None
-		delivery_status: DF.Literal[
-			"Not Delivered", "Fully Delivered", "Partly Delivered", "Closed", "Not Applicable"
-		]
+		delivery_status: DF.Literal["Not Delivered", "Fully Delivered", "Partially Delivered", "Closed", "Not Applicable"]
 		disable_rounded_total: DF.Check
 		discount_amount: DF.Currency
 		dispatch_address: DF.TextEditor | None
 		dispatch_address_name: DF.Link | None
+		financial_status: DF.Literal["", "Paid", "Partially Paid", "Partially Refunded", "Refunded", "Pending"]
 		from_date: DF.Date | None
+		fulfillment_status: DF.Literal["", "Fulfilled", "Not Fulfilled"]
+		gender: DF.Data | None
 		grand_total: DF.Currency
 		group_same_items: DF.Check
 		has_unit_price_items: DF.Check
 		ignore_default_payment_terms_template: DF.Check
+		haravan_created_at: DF.Datetime | None
+		haravan_order_id: DF.Int
+		haravan_ref_order_id: DF.Int
 		ignore_pricing_rule: DF.Check
 		in_words: DF.Data | None
 		incoterm: DF.Link | None
 		inter_company_order_reference: DF.Link | None
+		invoice_date: DF.Datetime | None
+		invoice_location: DF.Literal[None]
 		is_internal_customer: DF.Check
 		is_subcontracted: DF.Check
 		item_wise_tax_details: DF.Table[ItemWiseTaxDetail]
@@ -132,21 +142,26 @@ class SalesOrder(SellingController):
 		named_place: DF.Data | None
 		naming_series: DF.Literal["SAL-ORD-.YYYY.-"]
 		net_total: DF.Currency
-		order_type: DF.Literal["", "Sales", "Maintenance", "Shopping Cart"]
+		order_number: DF.Data | None
+		order_type: DF.Literal["Sales", "Maintenance", "Shopping Cart"]
 		other_charges_calculation: DF.TextEditor | None
 		packed_items: DF.Table[PackedItem]
 		party_account_currency: DF.Link | None
+		payment_records: DF.Table[SalesOrderPaymentRecord]
 		payment_schedule: DF.Table[PaymentSchedule]
 		payment_terms_template: DF.Link | None
 		per_billed: DF.Percent
 		per_delivered: DF.Percent
 		per_picked: DF.Percent
+		place_of_issuance: DF.Data | None
 		plc_conversion_rate: DF.Float
 		po_date: DF.Date | None
 		po_no: DF.Data | None
 		price_list_currency: DF.Link
 		pricing_rules: DF.Table[PricingRuleDetail]
+		product_category: DF.Literal[None]
 		project: DF.Link | None
+		promotions: DF.TableMultiSelect[SalesOrderPromotion]
 		represents_company: DF.Link | None
 		reserve_stock: DF.Check
 		rounded_total: DF.Currency
@@ -161,6 +176,8 @@ class SalesOrder(SellingController):
 		shipping_address_name: DF.Link | None
 		shipping_rule: DF.Link | None
 		skip_delivery_note: DF.Check
+		source: DF.Link | None
+		source_name: DF.Data | None
 		status: DF.Literal[
 			"",
 			"Draft",
@@ -949,6 +966,28 @@ class SalesOrder(SellingController):
 
 		query.run()
 
+
+	def cancel_sales_order(self):
+		if self.docstatus == 1:  # Only cancel submitted documents
+			self.cancel()
+		elif self.docstatus == 0:  # For draft documents
+			self.flags.ignore_permissions = True
+			self.docstatus = 2
+			self.flags.ignore_on_cancel = True
+
+	def before_save(self):
+		"""
+			If order from Haravan is cancelled, cancel the current order too
+		"""
+		if self.cancelled_status == "Cancelled":
+			self.cancel_sales_order()
+
+	def before_insert(self):
+		"""
+			If order from Haravan is cancelled, cancel the current order too
+		"""
+		if self.cancelled_status == "Cancelled":
+			self.cancel_sales_order()
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:
 	"""Returns the unreserved quantity for the Sales Order Item."""
