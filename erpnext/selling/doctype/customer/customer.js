@@ -153,6 +153,37 @@ frappe.ui.form.on("Customer", {
 		}
 
 		if (!frm.doc.__islocal) {
+			if (frm.doc.haravan_id && !frm._priority_loaded) {
+				frm._priority_loaded = true;
+				setTimeout(() => {
+					frappe.call({
+						method: "erpnext.selling.doctype.customer.customer.update_customer_priority_data",
+						args: {
+							customer_name: frm.doc.name,
+							haravan_id: frm.doc.haravan_id
+						},
+						callback: function(r) {
+							frm.reload_doc();
+						}
+					});
+				}, 1000);
+			}
+
+			if (frm.doc.phone && !frm._buyback_loaded) {
+				frm._buyback_loaded = true;
+				setTimeout(() => {
+					frappe.call({
+						method: "erpnext.selling.doctype.customer.customer.load_buyback_records_async",
+						args: { customer: frm.doc.name },
+						callback: function(r) {
+							if (r.message && r.message.length > 0) {
+								frm.doc.__onload.buyback_records = r.message;
+							}
+						}
+					});
+				}, 1500);
+			}
+
 			frappe.contacts.render_address_and_contact(frm);
 
 			// Load customer orders
