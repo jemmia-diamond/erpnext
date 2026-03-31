@@ -211,6 +211,7 @@
   {
    "fieldname": "source",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Lead Source",
    "oldfieldname": "source",
@@ -809,8 +810,6 @@
    "label": "Qualified Lead Date"
   },
   {
-   "fetch_from": "province.region",
-   "fetch_if_empty": 1,
    "fieldname": "region",
    "fieldtype": "Link",
    "label": "Region",

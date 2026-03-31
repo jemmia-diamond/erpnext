@@ -213,7 +213,8 @@ class Lead(SellingController, CRMNote):
 
 	def update_first_reach_at(self):
 		if self.pancake_data:
-			inserted_at = self.pancake_data.get("inserted_at", None)
+			parsed_pancake_data = frappe.parse_json(self.pancake_data)
+			inserted_at = parsed_pancake_data.get("inserted_at", None)
 			if inserted_at:
 				self.first_reach_at = inserted_at
 
