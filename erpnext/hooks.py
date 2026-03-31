@@ -407,6 +407,10 @@ doc_events = {
 	"Integration Request": {
 		"validate": "erpnext.accounts.doctype.payment_request.payment_request.validate_payment"
 	},
+	"File": {
+		"after_insert": "erpnext.r2_storage.upload_to_r2",
+		"on_trash": "erpnext.r2_storage.delete_from_r2"
+	},
 }
 
 # function should expect the variable and doc as arguments
@@ -706,3 +710,5 @@ ignore_translatable_strings_from = ["frappe"]
 fixtures = [
     "Lead Budget"
 ]
+
+# Cloudflare R2 Storage Integration configured in doc_events above
