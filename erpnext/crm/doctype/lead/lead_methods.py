@@ -131,6 +131,11 @@ def update_lead_by_batch(docs):
 			pancake_list_tags = [transform_price_label(tag) for tag in pancake_list_tags]
 
 			existing_doc = frappe.get_doc(doc["doctype"], doc["docname"])
+
+			# exist phone not update
+			if existing_doc.phone and existing_doc.phone != "":
+				doc["phone"] = existing_doc.phone
+
 			existing_doc.update(doc)
 			existing_doc.save()
 			
