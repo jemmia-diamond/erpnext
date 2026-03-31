@@ -1,5 +1,6 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
+from erpnext.config.config import config
 import frappe
 from frappe import _
 from frappe.contacts.address_and_contact import (
@@ -54,6 +55,7 @@ class Lead(SellingController, CRMNote):
 		fax: DF.Data | None
 		first_channel: DF.Link | None
 		first_name: DF.Data | None
+		first_reach_at: DF.Datetime | None
 		gender: DF.Link | None
 		image: DF.AttachImage | None
 		industry: DF.Link | None
@@ -147,6 +149,7 @@ class Lead(SellingController, CRMNote):
 			Pancake_data is not null when the leads are synced from Pancake
 			'''
 			if self.pancake_data:
+
 				lead_source = self.check_lead_source()
 				if lead_source:
 					self.contact_doc = self.create_contact(lead_source)
@@ -158,9 +161,16 @@ class Lead(SellingController, CRMNote):
 		# leads created by email inbox only have the full name set
 		if self.lead_name and not any([self.first_name, self.middle_name, self.last_name]):
 			self.first_name, self.middle_name, self.last_name = parse_full_name(self.lead_name)
+
+		if self.pancake_data:
+			pancake_user_id = self.pancake_data.get("pancake_user_id", None)
+			self.update_lead_owner(pancake_user_id)
+		
 		
 	def before_save(self):
 		self.update_lead_stage()
+
+		self.update_first_reach_at()
 
 	def update_lead_stage(self):
 
@@ -174,6 +184,35 @@ class Lead(SellingController, CRMNote):
 			and self.lead_stage != "Lead" :
 			self.qualified_lead_date = frappe.utils.now_datetime()
 		
+	def update_lead_owner(self, pancake_user_id:str | None):
+		"""
+		update lead owner 
+		"""
+		user = None 
+
+		filters = {}
+		
+		if not pancake_user_id and pancake_user_id != "":
+			filters = {
+				"pancake_id" : pancake_user_id
+			}
+		else: 
+			filters = {
+				"email" : config.DEFAULT_MAIL_OWNER
+			}
+		try:
+			user = frappe.get_doc('User',filters, "name")
+		except Exception:
+			user =None
+		if user:
+			self.lead_owner = user.name
+
+	def update_first_reach_at(self):
+		if self.pancake_data:
+			inserted_at = self.pancake_data.get("inserted_at", None)
+			if inserted_at:
+				self.first_reach_at = inserted_at
+
 	def check_lead_source(self):
 		lead_source = None
 		parsed_pancake_data = None

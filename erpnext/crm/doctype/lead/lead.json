@@ -28,6 +28,7 @@
   "last_name",
   "gender",
   "qualified_lead_date",
+  "first_reach_at",
   "col_break123",
   "lead_owner",
   "source",
@@ -809,11 +810,18 @@
   },
   {
    "fetch_from": "province.region",
+   "fetch_if_empty": 1,
    "fieldname": "region",
    "fieldtype": "Link",
    "label": "Region",
    "options": "Region",
    "read_only": 1
+  },
+  {
+   "fieldname": "first_reach_at",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "label": "First Reach At"
   }
  ],
  "grid_page_length": 50,
