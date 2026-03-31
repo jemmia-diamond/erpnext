@@ -15,10 +15,12 @@
   "commission_rate",
   "is_group",
   "enabled",
+  "assigned_lead",
   "sales_region",
   "bizfly_id",
   "cb0",
   "employee",
+  "employee_email",
   "department",
   "lft",
   "rgt",
@@ -84,6 +86,7 @@
    "fieldname": "employee",
    "fieldtype": "Link",
    "label": "Employee",
+   "mandatory_depends_on": "eval:doc.assigned_lead",
    "options": "Employee"
   },
   {
@@ -146,19 +149,33 @@
    "fieldname": "sales_region",
    "fieldtype": "Link",
    "label": "Sales Region",
+   "mandatory_depends_on": "eval:doc.assigned_lead",
    "options": "Region"
   },
   {
    "fieldname": "bizfly_id",
    "fieldtype": "Data",
    "label": "Bizfly ID"
+  },
+  {
+   "default": "0",
+   "description": "If checked, This sales user will be assigned to leads by assignment rules",
+   "fieldname": "assigned_lead",
+   "fieldtype": "Check",
+   "label": "Assigned Lead"
+  },
+  {
+   "fetch_from": "employee.user_email",
+   "fieldname": "employee_email",
+   "fieldtype": "Data",
+   "label": "Employee Email"
   }
  ],
  "icon": "icon-user",
  "idx": 1,
  "is_tree": 1,
  "links": [],
- "modified": "2025-06-02 16:14:09.978272",
+ "modified": "2025-06-05 10:06:39.955247",
  "modified_by": "Administrator",
  "module": "Setup",
  "name": "Sales Person",

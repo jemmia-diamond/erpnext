@@ -26,10 +26,12 @@ class SalesPerson(NestedSet):
 		from erpnext.setup.doctype.target_detail.target_detail import TargetDetail
 		from frappe.types import DF
 
+		assigned_lead: DF.Check
 		bizfly_id: DF.Data | None
 		commission_rate: DF.Data | None
 		department: DF.Link | None
 		employee: DF.Link | None
+		employee_email: DF.Data | None
 		enabled: DF.Check
 		is_group: DF.Check
 		lft: DF.Int
