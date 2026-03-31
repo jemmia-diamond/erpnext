@@ -166,6 +166,7 @@ class SalesOrder(SellingController):
 		product_categories: DF.TableMultiSelect[SalesOrderProductCategory]
 		project: DF.Link | None
 		promotions: DF.TableMultiSelect[SalesOrderPromotion]
+		real_order_date: DF.Date | None
 		ref_sales_orders: DF.Table[SalesOrderReference]
 		represents_company: DF.Link | None
 		reserve_stock: DF.Check

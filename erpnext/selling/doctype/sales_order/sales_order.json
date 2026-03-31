@@ -30,6 +30,7 @@
   "customer_name",
   "order_number",
   "transaction_date",
+  "real_order_date",
   "column_break_dqxa",
   "cancelled_status",
   "financial_status",
@@ -2052,6 +2053,11 @@
    "fieldtype": "Table MultiSelect",
    "label": "Product Category",
    "options": "Sales Order Product Category"
+  },
+  {
+   "fieldname": "real_order_date",
+   "fieldtype": "Date",
+   "label": "Real Order Date"
   }
  ],
  "grid_page_length": 50,
