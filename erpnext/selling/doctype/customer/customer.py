@@ -15,7 +15,8 @@ from frappe.model.mapper import get_mapped_doc
 from frappe.model.naming import set_name_by_naming_series, set_name_from_naming_options
 from frappe.model.utils.rename_doc import update_linked_doctypes
 from frappe.query_builder import Field, functions
-from frappe.utils import cint, cstr, flt, get_formatted_email, today
+from frappe.utils import cint, cstr, flt, get_formatted_email, today, getdate, add_months, nowdate
+from frappe.utils.deprecations import deprecated
 from frappe.utils.user import get_users_with_role
 
 from erpnext.accounts.party import (
@@ -1048,8 +1049,6 @@ def evaluate_and_update_customer_rank(customer_name, auto_commit=True):
 	- Phase 2: Replay all orders chronologically for upgrades
 	- Phase 3: Check 12-month downgrades
 	"""
-	from frappe.utils import getdate, nowdate
-
 	customer = frappe.get_doc("Customer", customer_name)
 
 	if not customer.rank_updated_at:
@@ -1071,8 +1070,6 @@ def _get_first_paid_order_date(customer_name):
 	Criteria: financial_status IN ('Paid', 'Partially Paid') AND cancelled_status = 'Uncancelled'
 	Excludes: Pending, Refunded, Partially Refunded
 	"""
-	from frappe.utils import getdate
-
 	first_order = frappe.db.sql("""
 		SELECT transaction_date
 		FROM `tabSales Order`
@@ -1110,8 +1107,6 @@ def _determine_rank_from_cumulative(revenue, referral_revenue):
 def _calculate_12_month_score(customer_name, rank_updated_at):
 	"""Calculate purchasing activity in the 12 months since rank_updated_at
 	Only counts orders (grand_total), no buyback subtraction"""
-	from frappe.utils import add_months, getdate
-
 	start_date = getdate(rank_updated_at)
 	end_date = add_months(start_date, 12)
 
@@ -1133,8 +1128,6 @@ def _calculate_12_month_score(customer_name, rank_updated_at):
 def _get_referral_revenue_in_12_month_period(customer_name, rank_updated_at):
 	"""Get referral revenue earned in the 12-month period after rank_updated_at
 	Uses coupon end_date to determine when referral was earned"""
-	from frappe.utils import add_months, getdate
-
 	start_date = getdate(rank_updated_at)
 	end_date = add_months(start_date, 12)
 
@@ -1269,11 +1262,15 @@ def load_buyback_records_async(customer):
 def _initialize_customer_rank(customer_name, auto_commit=True):
 	"""Phase 1: Initialize rank_updated_at and initial rank"""
 	customer = frappe.get_doc("Customer", customer_name)
-
-	# Find first paid order date
 	first_order_date = _get_first_paid_order_date(customer_name)
+
 	if not first_order_date:
-		frappe.logger().info(f"No paid orders found for {customer_name}")
+		creation_date = getdate(customer.creation)
+		customer.db_set("rank", CustomerRank.NO_RANK, update_modified=True)
+		customer.db_set("rank_updated_at", creation_date, update_modified=True)
+
+		if auto_commit:
+			frappe.db.commit()
 		return
 
 	# Set rank_updated_at to first order date
@@ -1313,16 +1310,15 @@ def _replay_rank_upgrades(customer_name, auto_commit=True):
 		return
 
 	current_rank = customer.rank
+	current_rank_updated_at = customer.rank_updated_at
 
 	for order in orders:
 		order_date = order.transaction_date
 
-		# Calculate cumulative revenue up to this order date
-		cumulative_at_date = _get_cumulative_revenue_at_date(customer_name, order_date)
+		cumulative_in_period = _get_cumulative_revenue_in_period(customer_name, current_rank_updated_at, order_date)
 
-		# Get referral revenue at this date (for threshold logic only)
-		referral_at_date = _get_referral_revenue_up_to_date(customer_name, order_date)
-		qualified_rank = _determine_rank_from_cumulative(cumulative_at_date, referral_at_date)
+		referral_in_period = _get_referral_revenue_in_period(customer_name, current_rank_updated_at, order_date)
+		qualified_rank = _determine_rank_from_cumulative(cumulative_in_period, referral_in_period)
 
 		if _is_rank_higher(qualified_rank, current_rank):
 			# Upgrade found! Update rank and rank_updated_at
@@ -1332,13 +1328,11 @@ def _replay_rank_upgrades(customer_name, auto_commit=True):
 			if auto_commit:
 				frappe.db.commit()
 
-			frappe.logger().info(f"Upgraded {customer_name} from {current_rank} to {qualified_rank} on {order_date}")
 			current_rank = qualified_rank
+			current_rank_updated_at = order_date  # Update for next iteration
 
 def _check_12_month_downgrades(customer_name, auto_commit=True):
 	"""Phase 3: Check if 12-month downgrade evaluation is needed"""
-	from frappe.utils import add_months, getdate, nowdate
-
 	customer = frappe.get_doc("Customer", customer_name)
 	rank_updated_at = customer.rank_updated_at
 	current_rank = customer.rank
@@ -1417,6 +1411,34 @@ def _get_cumulative_revenue_at_date(customer_name, target_date):
 	# For historical replay, use gross revenue (no buyback subtraction)
 	# Buybacks are only considered in 12-month evaluations, not for upgrade qualifications
 	return flt(actual_revenue) + flt(referral_revenue)
+
+def _get_cumulative_revenue_in_period(customer_name, start_date, end_date):
+	"""Calculate cumulative revenue in a specific period (from start_date to end_date, inclusive)"""
+	actual_revenue = frappe.db.sql("""
+		SELECT SUM(grand_total) as total
+		FROM `tabSales Order`
+		WHERE customer = %s
+		AND financial_status IN ('Paid', 'Partially Paid')
+		AND cancelled_status = 'Uncancelled'
+		AND transaction_date > %s
+		AND transaction_date <= %s
+	""", (customer_name, start_date, end_date), as_dict=True)[0].total or 0
+
+	referral_revenue = _get_referral_revenue_in_period(customer_name, start_date, end_date)
+	return flt(actual_revenue) + flt(referral_revenue)
+
+def _get_referral_revenue_in_period(customer_name, start_date, end_date):
+	"""Get referral revenue from coupons in a specific period (using end_date)"""
+	referral_revenue = frappe.db.sql("""
+		SELECT SUM(total_price) as total
+		FROM `tabCoupon`
+		WHERE customer = %s
+		AND end_date IS NOT NULL
+		AND end_date > %s
+		AND end_date <= %s
+		AND payment_status IN ('Paid', 'Pending')
+	""", (customer_name, start_date, end_date), as_dict=True)
+	return flt(referral_revenue[0].total if referral_revenue else 0)
 
 def _get_referral_revenue_up_to_date(customer_name, target_date):
 	"""Get referral revenue from coupons up to a specific date (using end_date)"""
