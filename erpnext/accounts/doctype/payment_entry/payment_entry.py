@@ -101,6 +101,7 @@ class PaymentEntry(AccountsController):
 		custom_transfer_status: DF.Literal["", "pending", "success", "cancel"]
 		deductions: DF.Table[PaymentEntryDeduction]
 		difference_amount: DF.Currency
+		gateway: DF.Literal[None]
 		in_words: DF.SmallText | None
 		is_opening: DF.Literal["No", "Yes"]
 		letter_head: DF.Link | None
@@ -126,6 +127,7 @@ class PaymentEntry(AccountsController):
 		party_bank_account: DF.Link | None
 		party_name: DF.Data | None
 		party_type: DF.Link | None
+		payment_date: DF.Datetime | None
 		payment_order: DF.Link | None
 		payment_order_status: DF.Literal["Pending", "Success", "Cancel"]
 		payment_type: DF.Literal["Receive", "Pay", "Internal Transfer"]
@@ -351,6 +353,9 @@ class PaymentEntry(AccountsController):
 		self.sync_bank_transaction_payments()
 
 	def sync_bank_transaction_payments(self):
+		if self.flags.get("updating_from_bank_transaction"):
+			return
+
 		for bt_row in self.bank_transactions:
 			if bt_row.bank_transaction:
 				bank_transaction = frappe.get_doc("Bank Transaction", bt_row.bank_transaction)
@@ -360,6 +365,7 @@ class PaymentEntry(AccountsController):
 				)
 
 				if not existing:
+					bank_transaction.flags.updating_linked_bank_transaction = True
 					bank_transaction.append("payment_entries", {
 						"payment_document": "Payment Entry",
 						"payment_entry": self.name,
@@ -3821,6 +3827,7 @@ def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, fil
 		)
 		AND company = %(company)s
 		AND customer = %(customer)s
+		AND cancelled_status = "Uncancelled"
 		ORDER BY
 			CASE
 				WHEN name LIKE %(txt)s THEN 0

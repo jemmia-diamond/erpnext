@@ -84,7 +84,6 @@
    "default": "Pending",
    "fieldname": "status",
    "fieldtype": "Select",
-   "in_standard_filter": 1,
    "label": "Status",
    "options": "\nPending\nSettled\nUnreconciled\nReconciled\nCancelled"
   },
@@ -99,7 +98,6 @@
    "fetch_from": "bank_account.company",
    "fieldname": "company",
    "fieldtype": "Link",
-   "in_standard_filter": 1,
    "label": "Company",
    "options": "Company",
    "read_only": 1
@@ -257,21 +255,25 @@
   {
    "fieldname": "sepay_id",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Sepay ID"
   },
   {
    "fieldname": "sepay_order_number",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Sepay Order Number"
   },
   {
    "fieldname": "sepay_order_description",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Sepay Order Description"
   },
   {
    "fieldname": "sepay_bank_brand_name",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Sepay Bank Brand Name"
   },
   {
@@ -311,6 +313,7 @@
   {
    "fieldname": "sepay_reference_number",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Sepay Reference Number"
   },
   {

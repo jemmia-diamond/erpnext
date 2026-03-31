@@ -51,7 +51,7 @@
    "search_index": 1
   },
   {
-   "columns": 2,
+   "columns": 1,
    "depends_on": "eval:doc.reference_doctype=='Sales Order'",
    "fetch_from": "reference_name.order_number",
    "fieldname": "order_number",
@@ -61,7 +61,7 @@
    "read_only": 1
   },
   {
-   "columns": 2,
+   "columns": 1,
    "depends_on": "eval:doc.reference_doctype=='Sales Order'",
    "fetch_from": "reference_name.split_order_group_name",
    "fieldname": "split_order_group_name",
@@ -94,6 +94,7 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Total Amount",
+   "precision": "0",
    "print_hide": 1,
    "read_only": 1
   },
@@ -106,20 +107,22 @@
    "read_only": 1
   },
   {
-   "columns": 1,
+   "columns": 2,
    "depends_on": "eval:doc.reference_doctype=='Sales Order'",
    "fieldname": "balance",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Balance",
-   "read_only": 1
+   "read_only": 1,
+   "precision": "0"
   },
   {
-   "columns": 1,
+   "columns": 2,
    "fieldname": "allocated_amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Allocated"
+   "label": "Allocated",
+   "precision": "0"
   },
   {
    "depends_on": "eval:(doc.reference_doctype=='Purchase Invoice')",
