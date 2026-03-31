@@ -13,25 +13,19 @@
   "detail_tab",
   "basic_info",
   "naming_series",
-  "customer_type",
+  "salutation",
   "customer_name",
-  "column_break0",
   "customer_group",
+  "bizfly_customer_number",
   "column_break_eofp",
   "is_internal_customer",
+  "customer_type",
   "customer_rank",
   "account_manager",
   "lead_name",
   "opportunity_name",
   "territory",
   "prospect_name",
-  "address_section",
-  "customer_primary_address",
-  "primary_address",
-  "image",
-  "column_break_aqyz",
-  "address_list",
-  "address_html",
   "organization_section",
   "company_name",
   "no_of_employees",
@@ -43,8 +37,8 @@
   "ceo_name",
   "advanced_information_selection",
   "personal_document_type",
-  "gender",
   "birth_date",
+  "gender",
   "column_break_bjiq",
   "personal_id",
   "place_of_issuance",
@@ -74,8 +68,12 @@
   "contact_and_address_tab",
   "primary_address_and_contact_detail",
   "column_break_26",
+  "customer_primary_address",
+  "primary_address",
+  "image",
   "column_break_nwor",
   "customer_primary_contact",
+  "primary_contact",
   "mobile_no",
   "email_id",
   "first_name",
@@ -86,6 +84,8 @@
   "phone",
   "address_contacts",
   "column_break_cgqq",
+  "address_html",
+  "address_list",
   "column_break1",
   "contact_list",
   "contact_html",
@@ -107,6 +107,24 @@
   "loyalty_program",
   "column_break_54",
   "loyalty_program_tier",
+  "priority_tab",
+  "rank_management_section",
+  "rank",
+  "purchase_amount_last_12_months",
+  "column_break_qwps",
+  "rank_expired_date",
+  "priority_login_date",
+  "cumulative_revenue_management_section",
+  "cumulative_revenue",
+  "cashback",
+  "column_break_ebsn",
+  "true_cumulative_revenue",
+  "withdraw_cashback",
+  "column_break_qgzr",
+  "referrals_revenue",
+  "pending_cashback",
+  "section_break_waiv",
+  "priority_bank_account",
   "sales_team_tab",
   "sales_team",
   "sales_team_section",
@@ -121,7 +139,6 @@
   "is_frozen",
   "haravan_id",
   "bizfly_id",
-  "bizfly_code",
   "portal_users_tab",
   "portal_users",
   "more_info_tab",
@@ -216,6 +233,7 @@
   {
    "fieldname": "account_manager",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Account Manager",
    "options": "User"
   },
@@ -380,7 +398,7 @@
   },
   {
    "fieldname": "primary_address",
-   "fieldtype": "Text Editor",
+   "fieldtype": "Small Text",
    "label": "Primary Address",
    "read_only": 1
   },
@@ -735,8 +753,9 @@
   },
   {
    "fieldname": "first_channel",
-   "fieldtype": "Data",
-   "label": "First Channel"
+   "fieldtype": "Select",
+   "label": "First Channel",
+   "options": "\nFacebook\nZalo\nTikTok\nCall Center\nWebsite Form\nVisiting Guests\nEmail"
   },
   {
    "fieldname": "personal_id",
@@ -757,6 +776,7 @@
   {
    "fieldname": "customer_website",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Website"
   },
   {
@@ -782,7 +802,7 @@
    "fieldname": "customer_rank",
    "fieldtype": "Select",
    "label": "Customer Rank",
-   "options": "Silver\nGold\nPlatinum"
+   "options": "No Rank\nSilver\nGold\nPlatinum"
   },
   {
    "depends_on": "eval:doc.customer_type==\"Company\"",
@@ -798,7 +818,7 @@
   {
    "fieldname": "no_of_employees",
    "fieldtype": "Data",
-   "label": "No Of Employees"
+   "label": "No of Employees"
   },
   {
    "fieldname": "column_break_rwpe",
@@ -877,22 +897,13 @@
    "label": "VAT Address"
   },
   {
-   "fieldname": "address_section",
-   "fieldtype": "Section Break",
-   "label": "Address"
-  },
-  {
-   "fieldname": "column_break_aqyz",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "column_break_cgqq",
    "fieldtype": "Column Break"
   },
   {
    "fieldname": "person_name",
    "fieldtype": "Data",
-   "label": "Customer Name"
+   "label": "Customer Personal Name"
   },
   {
    "fieldname": "detail_tab",
@@ -912,15 +923,108 @@
    "unique": 1
   },
   {
-   "fieldname": "bizfly_code",
+   "fieldname": "priority_tab",
+   "fieldtype": "Tab Break",
+   "label": "Priority"
+  },
+  {
+   "fieldname": "purchase_amount_last_12_months",
+   "fieldtype": "Currency",
+   "label": "Purchase Amount Last 12 Months"
+  },
+  {
+   "fieldname": "rank",
    "fieldtype": "Data",
-   "label": "Bizfly Code",
+   "label": "Rank"
+  },
+  {
+   "fieldname": "column_break_qwps",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rank_expired_date",
+   "fieldtype": "Date",
+   "label": "Rank Expired Date"
+  },
+  {
+   "fieldname": "priority_login_date",
+   "fieldtype": "Date",
+   "label": "Priority Login Date"
+  },
+  {
+   "fieldname": "rank_management_section",
+   "fieldtype": "Section Break",
+   "label": "Rank Management"
+  },
+  {
+   "fieldname": "cumulative_revenue_management_section",
+   "fieldtype": "Section Break",
+   "label": "Cumulative Revenue Management"
+  },
+  {
+   "fieldname": "cumulative_revenue",
+   "fieldtype": "Currency",
+   "label": "Cumulative Revenue"
+  },
+  {
+   "fieldname": "column_break_ebsn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "true_cumulative_revenue",
+   "fieldtype": "Currency",
+   "label": "True Cumulative Revenue"
+  },
+  {
+   "fieldname": "column_break_qgzr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "referrals_revenue",
+   "fieldtype": "Currency",
+   "label": "Referrals Revenue"
+  },
+  {
+   "fieldname": "cashback",
+   "fieldtype": "Currency",
+   "label": "Cashback"
+  },
+  {
+   "fieldname": "withdraw_cashback",
+   "fieldtype": "Currency",
+   "label": "Withdraw Cashback"
+  },
+  {
+   "fieldname": "pending_cashback",
+   "fieldtype": "Currency",
+   "label": "Pending Cashback"
+  },
+  {
+   "fieldname": "bizfly_customer_number",
+   "fieldtype": "Data",
+   "label": "Bizfly Customer Number",
    "unique": 1
+  },
+  {
+   "fieldname": "primary_contact",
+   "fieldtype": "Small Text",
+   "label": "Primary Contact"
+  },
+  {
+   "fieldname": "section_break_waiv",
+   "fieldtype": "Section Break",
+   "label": "Priority Bank Account"
   },
   {
    "fieldname": "bank_account",
    "fieldtype": "Link",
    "label": "Bank Account",
+   "options": "Bank Account"
+  },
+  {
+   "fieldname": "priority_bank_account",
+   "fieldtype": "Link",
+   "label": "Priority Bank Account",
    "options": "Bank Account"
   }
  ],
