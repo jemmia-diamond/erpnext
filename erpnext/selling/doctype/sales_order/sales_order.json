@@ -26,6 +26,12 @@
   "has_unit_price_items",
   "is_subcontracted",
   "amended_from",
+  "group_order_section",
+  "split_order_group_name",
+  "split_order_group",
+  "column_break_wcaf",
+  "is_split_order",
+  "split_reason",
   "section_break_uceh",
   "customer_name",
   "order_number",
@@ -1905,6 +1911,31 @@
    "read_only": 1
   },
   {
+   "description": "Group ID for orders splitt",
+   "fieldname": "split_order_group",
+   "fieldtype": "Data",
+   "label": "Split Order Group ID",
+   "permlevel": 1,
+   "print_hide": 1
+  },
+  {
+   "default": "0",
+   "description": "Check if this order is part of a split group",
+   "fieldname": "is_split_order",
+   "fieldtype": "Check",
+   "label": "Is Split Order",
+   "permlevel": 1,
+   "print_hide": 1
+  },
+  {
+   "depends_on": "eval:doc.is_split_order==1",
+   "fieldname": "split_reason",
+   "fieldtype": "Select",
+   "label": "Split Reason",
+   "options": "\nGold Regulation\nCustomer Request\nOther",
+   "print_hide": 1
+  },
+  {
    "fieldname": "haravan_created_at",
    "fieldtype": "Datetime",
    "label": "Haravan Created At",
@@ -2190,6 +2221,23 @@
    "fieldname": "custom_all_images_html",
    "fieldtype": "HTML",
    "label": "Attached images"
+  },
+  {
+   "fieldname": "group_order_section",
+   "fieldtype": "Section Break",
+   "label": "Group Order"
+  },
+  {
+   "fieldname": "column_break_wcaf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "split_order_group_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Split Order Group Name",
+   "permlevel": 1
   }
  ],
  "grid_page_length": 50,
