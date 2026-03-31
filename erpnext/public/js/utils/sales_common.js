@@ -602,12 +602,6 @@ erpnext.pre_sales = {
 							reqd: 1,
 						},
 						{
-							fieldtype: "Table MultiSelect",
-							label: __("Competitors"),
-							fieldname: "competitors",
-							options: "Competitor Detail",
-						},
-						{
 							fieldtype: "Small Text",
 							label: __("Detailed Reason"),
 							fieldname: "detailed_reason",

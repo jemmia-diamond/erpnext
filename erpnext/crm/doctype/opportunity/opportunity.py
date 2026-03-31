@@ -133,6 +133,7 @@ class Opportunity(TransactionBase, CRMNote):
 				copy_comments(self.opportunity_from, self.party_name, self)
 				link_communications(self.opportunity_from, self.party_name, self)
 		self.opportunity_date = self.creation
+		self.opportunity_owner = self.owner
 
 	def validate(self):
 		self.set_opportunity_type()

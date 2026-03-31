@@ -457,6 +457,7 @@
   {
    "fieldname": "competitors",
    "fieldtype": "Table MultiSelect",
+   "hidden": 1,
    "label": "Competitors",
    "options": "Competitor Detail",
    "read_only": 1
@@ -738,8 +739,7 @@
   {
    "fieldname": "opportunity_date",
    "fieldtype": "Datetime",
-   "label": "Opportunity Date",
-   "read_only": 1
+   "label": "Opportunity Date"
   }
  ],
  "grid_page_length": 50,
