@@ -26,7 +26,6 @@ class Lead(SellingController, CRMNote):
 
 	if TYPE_CHECKING:
 		from erpnext.crm.doctype.crm_note.crm_note import CRMNote
-		from erpnext.crm.doctype.lead_diamond.lead_diamond import LeadDiamond
 		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from frappe.types import DF
 
