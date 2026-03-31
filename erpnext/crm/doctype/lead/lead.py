@@ -406,7 +406,21 @@ class Lead(SellingController, CRMNote):
 
 	def on_trash(self):
 		frappe.db.set_value("Issue", {"lead": self.name}, "lead", None)
-		delete_contact_and_address(self.doctype, self.name)
+		try:
+			delete_contact_and_address(self.doctype, self.name)
+		except Exception:
+			frappe.log_error(
+				title=f"Error deleting contact/address for Lead {self.name}",
+				message=frappe.get_traceback()
+			)
+		finally:
+			frappe.db.delete(
+				"Dynamic Link",
+				{
+					"link_doctype": self.doctype,
+					"link_name": self.name,
+				}
+			)
 		self.remove_link_from_prospect()
 
 	def set_full_name(self):
