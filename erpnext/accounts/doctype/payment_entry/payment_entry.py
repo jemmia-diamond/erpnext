@@ -432,7 +432,20 @@ class PaymentEntry(AccountsController):
 			""", (so_name))
 
 			# Handle None result if no records match (return 0.0)
-			total_paid = result[0][0] if result and result[0][0] else 0.0
+			payment_entries_total = result[0][0] if result and result[0][0] else 0.0
+
+			# Fetch payment_records sum
+			payment_records_total = frappe.db.sql("""
+				SELECT SUM(amount) FROM `tabSales Order Payment Record`
+				WHERE parent = %s AND kind IN ('capture', 'authorization')
+			""", (so_name))[0][0] or 0.0
+
+			sales_order_grand_total = frappe.db.get_value("Sales Order", so_name, "grand_total")
+
+			if flt(payment_records_total) >= flt(sales_order_grand_total):
+				total_paid = flt(payment_records_total)
+			else:
+				total_paid = flt(payment_entries_total) + flt(payment_records_total)
 
 			current_paid_amount = frappe.db.get_value("Sales Order", so_name, "paid_amount")
 
