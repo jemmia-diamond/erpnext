@@ -31,6 +31,7 @@
   "order_number",
   "transaction_date",
   "column_break_dqxa",
+  "cancelled_status",
   "financial_status",
   "fulfillment_status",
   "accounting_dimensions_section",
@@ -219,7 +220,6 @@
   "section_break_pulu",
   "haravan_order_id",
   "haravan_ref_order_id",
-  "cancelled_status",
   "column_break_phue",
   "haravan_created_at",
   "source_name",
@@ -343,6 +343,7 @@
    "fieldtype": "Date",
    "hide_days": 1,
    "hide_seconds": 1,
+   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Date",
    "no_copy": 1,
@@ -1834,6 +1835,8 @@
   {
    "fieldname": "cancelled_status",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Cancelled Status",
    "options": "\nUncancelled\nCancelled",
    "read_only": 1

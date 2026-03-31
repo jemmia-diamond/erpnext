@@ -70,6 +70,17 @@ frappe.ui.form.on("Sales Order", {
 			"hidden",
 			frm.is_new() || frm.doc.docstatus === 1 ? true : false
 		);
+		// Disable Submit button
+		$(".primary-action").prop("disabled", true);
+		// Indicate cancelled status
+		const $statusSpan = $(".page-head-content .title-area span");
+		$statusSpan.text(__(frm.doc.cancelled_status));
+		// Set color based on cancelled_status value
+		if (frm.doc.cancelled_status === "Uncancelled") {
+			$statusSpan.css("color", "green").css("background-color", "whitesmoke");
+		} else if (frm.doc.cancelled_status === "Cancelled") {
+			$statusSpan.css("color", "tomato").css("background-color", "whitesmoke");
+		}
 
 		if (frm.doc.docstatus === 1) {
 			if (
@@ -449,7 +460,7 @@ frappe.ui.form.on("Sales Order", {
 	cancel_stock_reservation_entries(frm) {
 		const dialog = new frappe.ui.Dialog({
 			title: __("Stock Unreservation"),
-			size: "extra-large",
+		 size: "extra-large",
 			fields: [
 				{
 					fieldname: "sr_entries",
@@ -1454,7 +1465,7 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 						fieldname: "required_qty",
 						reqd: 1,
 						label: __("Qty"),
-						in_list_view: 1,
+					 in_list_view: 1,
 					},
 				],
 				data: r.message,
