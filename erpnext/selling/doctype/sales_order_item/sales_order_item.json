@@ -1173,7 +1173,7 @@
    "fieldname": "promotion",
    "fieldtype": "Link",
    "label": "Find Promotion",
-   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Line Item\"]]",
+   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Line Item\"],[\"Promotion\",\"is_active\",\"=\",1]]",
    "options": "Promotion"
   },
   {

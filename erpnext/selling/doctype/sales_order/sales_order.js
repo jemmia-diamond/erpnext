@@ -140,7 +140,8 @@ frappe.ui.form.on("Sales Order", {
 		frm.set_query("promotions", function () {
             return {
                 filters: {
-                    "scope": "Order"
+                    "scope": "Order",
+					"is_active": 1
                 }
             };
         });
