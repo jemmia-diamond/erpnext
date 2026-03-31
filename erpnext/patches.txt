@@ -480,3 +480,7 @@ erpnext.seeds.item_group.create_default_lead_demand
 erpnext.seeds.lead.update_region
 # 2025-06-17
 erpnext.seeds.lead.backfill_qualified_lead_date
+# 2025-07-08
+erpnext.seeds.lead.backfill_qualification_status
+# 2025-07-08
+erpnext.seeds.lead.backfill_qualified_on

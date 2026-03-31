@@ -39,6 +39,11 @@
   "lead_received_date",
   "lead_source_name",
   "lead_source_platform",
+  "qualification_tab",
+  "qualification_status",
+  "column_break_64",
+  "qualified_by",
+  "qualified_on",
   "qualified_information_section",
   "purpose_lead",
   "expected_delivery_date",
@@ -109,11 +114,6 @@
   "whatsapp_no",
   "column_break_16",
   "phone_ext",
-  "qualification_tab",
-  "qualification_status",
-  "column_break_64",
-  "qualified_by",
-  "qualified_on",
   "note_tab",
   "notes_html",
   "notes",
@@ -418,10 +418,8 @@
    "label": "Phone Ext."
   },
   {
-   "collapsible": 1,
    "fieldname": "qualification_tab",
    "fieldtype": "Section Break",
-   "hidden": 1,
    "label": "Qualification"
   },
   {
@@ -444,14 +442,14 @@
   },
   {
    "fieldname": "qualified_on",
-   "fieldtype": "Date",
+   "fieldtype": "Datetime",
    "label": "Qualified on"
   },
   {
    "fieldname": "qualification_status",
    "fieldtype": "Select",
    "label": "Qualification Status",
-   "options": "Unqualified\nIn Process\nQualified"
+   "options": "Unqualified\nQualified"
   },
   {
    "fieldname": "address_section",

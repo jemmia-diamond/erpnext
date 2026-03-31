@@ -83,10 +83,10 @@ class Lead(SellingController, CRMNote):
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
 		province: DF.Link | None
 		purpose_lead: DF.Link | None
-		qualification_status: DF.Literal["Unqualified", "In Process", "Qualified"]
+		qualification_status: DF.Literal["Unqualified", "Qualified"]
 		qualified_by: DF.Link | None
 		qualified_lead_date: DF.Datetime | None
-		qualified_on: DF.Date | None
+		qualified_on: DF.Datetime | None
 		region: DF.Link | None
 		request_type: DF.Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
 		salutation: DF.Link | None
@@ -158,7 +158,7 @@ class Lead(SellingController, CRMNote):
 					if not existing_contact:
 						self.contact_doc = self.create_contact(lead_source)
 					else:
-						self.contact_doc = existing_contact 
+						self.contact_doc = existing_contact
 					if self.contact_doc:
 						self.source = self.contact_doc.source
 			else:
@@ -175,6 +175,7 @@ class Lead(SellingController, CRMNote):
 
 	def before_save(self):
 		self.update_lead_stage()
+		self.update_qualification_status()
 		self.fetch_region_from_province()
 		self.update_first_reach_at()
 		self.upsert_lead_source()
@@ -190,6 +191,35 @@ class Lead(SellingController, CRMNote):
 			and  not self.qualified_lead_date \
 			and self.lead_stage != "Lead" :
 			self.qualified_lead_date = frappe.utils.now_datetime()
+
+	def update_qualification_status(self):
+		"""
+		Update qualification status based on phone and province
+		Only auto-qualifies when conditions are met, never auto-disqualifies
+		Also set qualified_by and qualified_on when manually changed to Qualified
+		"""
+		# User manually changed to Qualified
+		if self.has_value_changed("qualification_status") and self.qualification_status == "Qualified":
+			if not self.qualified_by:
+				self.qualified_by = frappe.session.user
+			self.qualified_on = frappe.utils.now_datetime()
+			return
+
+
+		new_qualification_status = self.get_qualification_status()
+
+		# Auto-qualification logic based on phone and province
+		if (new_qualification_status == "Qualified" and self.qualification_status != "Qualified") or \
+		   (self.qualification_status != "Qualified"):
+
+			old_status = self.qualification_status
+			self.qualification_status = new_qualification_status
+
+			# Set qualified_by and qualified_on when moving to Qualified
+			if self.qualification_status == "Qualified" and old_status != "Qualified":
+				if not self.qualified_by:
+					self.qualified_by = frappe.session.user
+				self.qualified_on = frappe.utils.now_datetime()
 
 	def update_lead_owner(self, pancake_user_id:str | None):
 		"""
@@ -267,7 +297,7 @@ class Lead(SellingController, CRMNote):
 		If contact with pancake data exists, do not create again
 		'''
 		existing_contact_name = frappe.db.get_value(
-			"Contact", 
+			"Contact",
 			{
 				"pancake_page_id": parsed_pancake_data.get("page_id"),
 				"pancake_conversation_id": parsed_pancake_data.get("conversation_id"),
@@ -276,9 +306,9 @@ class Lead(SellingController, CRMNote):
 		)
 		if existing_contact_name:
 			return frappe.get_doc("Contact", existing_contact_name)
-		
+
 		return None
-		
+
 	def check_lead_source(self):
 		lead_source = None
 		parsed_pancake_data = None
@@ -627,6 +657,15 @@ class Lead(SellingController, CRMNote):
 		# return "Opportunity"
 
 		return "Qualified Lead"
+	def get_qualification_status(self):
+		"""
+		Determine qualification status based on phone and province
+		Only auto-qualifies, never auto-disqualifies
+		"""
+		if self.phone and self.province:
+			return "Qualified"
+
+		return self.qualification_status
 
 @frappe.whitelist()
 def make_customer(source_name, target_doc=None):
