@@ -324,8 +324,8 @@ class PaymentEntry(AccountsController):
 			self.append("bank_transactions", row)
 
 	def set_created_by_display(self):
-		if self.owner:
-			self.created_by_display = self.owner
+		if not self.created_by_display:
+			self.created_by_display = frappe.session.user
 
 	def set_total_order_amount(self):
 		"""Fetch grand_total from linked Sales Order if exists"""
@@ -346,6 +346,27 @@ class PaymentEntry(AccountsController):
 
 	def before_save(self):
 		self.set_matched_unset_payment_requests_to_response()
+
+	def on_update(self):
+		self.sync_bank_transaction_payments()
+
+	def sync_bank_transaction_payments(self):
+		for bt_row in self.bank_transactions:
+			if bt_row.bank_transaction:
+				bank_transaction = frappe.get_doc("Bank Transaction", bt_row.bank_transaction)
+				existing = any(
+					pe.payment_document == "Payment Entry" and pe.payment_entry == self.name
+					for pe in bank_transaction.payment_entries
+				)
+
+				if not existing:
+					bank_transaction.append("payment_entries", {
+						"payment_document": "Payment Entry",
+						"payment_entry": self.name,
+						"allocated_amount": bt_row.allocated_amount
+					})
+					bank_transaction.save(ignore_permissions=True)
+
 
 	def on_submit(self):
 		if self.difference_amount:
@@ -3025,7 +3046,8 @@ def get_reference_details(
 	if reference_doctype == "Sales Order":
 		res.update({
 			"balance": flt(ref_doc.get("balance")),
-			"order_number": ref_doc.get("order_number")
+			"order_number": ref_doc.get("order_number"),
+			"split_order_group_name": ref_doc.get("split_order_group_name")
 		})
 
 
@@ -3756,12 +3778,16 @@ def get_bank_transactions(doctype, txt, searchfield, start, page_len, filters):
 	"""Custom query to search Bank Transactions by name, bank_account, and sepay_transaction_content"""
 	return frappe.db.sql(
 		"""
-		SELECT name, bank_account, sepay_transaction_content
+		SELECT name, sepay_amount_in, bank_account, sepay_transaction_content
 		FROM `tabBank Transaction`
 		WHERE (
 			name LIKE %(txt)s
 			OR bank_account LIKE %(txt)s
 			OR sepay_transaction_content LIKE %(txt)s
+			OR sepay_reference_number LIKE %(txt)s
+			OR sepay_order_description LIKE %(txt)s
+			OR sepay_order_number LIKE %(txt)s
+			OR sepay_amount_in LIKE %(txt)s
 		)
 		{conditions}
 		ORDER BY
@@ -3794,6 +3820,7 @@ def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, fil
 			OR customer_name Like %(txt)s
 		)
 		AND company = %(company)s
+		AND customer = %(customer)s
 		ORDER BY
 			CASE
 				WHEN name LIKE %(txt)s THEN 0
@@ -3806,6 +3833,7 @@ def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, fil
 		{
 			"txt": f"%{txt}%",
 			"company": filters.get("company"),
+			"customer": filters.get("customer"),
 			"start": start,
 			"page_len": page_len,
 		},
