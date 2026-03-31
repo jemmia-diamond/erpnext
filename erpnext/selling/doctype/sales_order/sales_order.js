@@ -185,8 +185,9 @@ frappe.ui.form.on("Sales Order", {
 
 				let attachments = frm.attachments.get_attachments();
 				attachments = attachments.map(att => {
+					const file_url = frm.attachments.get_file_url(att);
 					return {
-						file_url: frappe.urllib.get_full_url(frm.attachments.get_file_url(att)),
+						file_url: frappe.urllib.get_full_url(decodeURIComponent(file_url)), // Decode first to avoid double encoding
 						is_private: att.is_private
 					}
 				})
