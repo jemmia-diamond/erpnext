@@ -102,7 +102,7 @@ frappe.ui.form.on("Sales Order", {
 				let attachments = frm.attachments.get_attachments();
 				attachments = attachments.map(att => {
 					return {
-						file_url: frappe.urllib.get_full_url(att.file_url),
+						file_url: frappe.urllib.get_full_url(frm.attachments.get_file_url(att)),
 					}
 				})
 
