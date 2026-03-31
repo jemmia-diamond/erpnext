@@ -43,6 +43,7 @@ class Lead(SellingController, CRMNote):
 		birth_date: DF.Date | None
 		blog_subscriber: DF.Check
 		budget_lead: DF.Link | None
+		propose_lead_budget: DF.Link | None
 		campaign_name: DF.Link | None
 		ceo_name: DF.Data | None
 		check_duplicate: DF.Link | None
