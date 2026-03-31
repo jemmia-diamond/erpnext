@@ -41,7 +41,9 @@
   "column_break_dqxa",
   "cancelled_status",
   "financial_status",
+  "payment_completion_date",
   "fulfillment_status",
+  "fulfillment_completion_date",
   "carrier_status",
   "expected_delivery_date",
   "accounting_dimensions_section",
@@ -2266,6 +2268,20 @@
    "fieldname": "payment_entries_tab",
    "fieldtype": "Tab Break",
    "label": "Payment Entries"
+  },
+  {
+   "fieldname": "payment_completion_date",
+   "fieldtype": "Datetime",
+   "in_standard_filter": 1,
+   "label": "Payment Completion Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fulfillment_completion_date",
+   "fieldtype": "Datetime",
+   "in_standard_filter": 1,
+   "label": "Fulfillment Completion Date",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
