@@ -69,6 +69,7 @@ class SalesOrder(SellingController):
 		from erpnext.accounts.doctype.sales_taxes_and_charges.sales_taxes_and_charges import SalesTaxesandCharges
 		from erpnext.selling.doctype.sales_order_item.sales_order_item import SalesOrderItem
 		from erpnext.selling.doctype.sales_order_payment_record.sales_order_payment_record import SalesOrderPaymentRecord
+		from erpnext.selling.doctype.sales_order_policy.sales_order_policy import SalesOrderPolicy
 		from erpnext.selling.doctype.sales_order_product_category.sales_order_product_category import SalesOrderProductCategory
 		from erpnext.selling.doctype.sales_order_promotion.sales_order_promotion import SalesOrderPromotion
 		from erpnext.selling.doctype.sales_order_reference.sales_order_reference import SalesOrderReference
@@ -114,6 +115,7 @@ class SalesOrder(SellingController):
 		customer_group: DF.Link | None
 		customer_name: DF.Data | None
 		customer_personal_id: DF.Data | None
+		customer_type: DF.Literal["", "New Customer", "Returning Customer"]
 		date_of_issuance: DF.Date | None
 		delivery_date: DF.Date | None
 		delivery_status: DF.Literal["Not Delivered", "Fully Delivered", "Partially Delivered", "Closed", "Not Applicable"]
@@ -121,6 +123,7 @@ class SalesOrder(SellingController):
 		discount_amount: DF.Currency
 		dispatch_address: DF.TextEditor | None
 		dispatch_address_name: DF.Link | None
+		expected_delivery_date: DF.Date | None
 		expected_payment_date: DF.Date | None
 		financial_status: DF.Literal["", "Paid", "Partially Paid", "Partially Refunded", "Refunded", "Pending"]
 		from_date: DF.Date | None
@@ -164,6 +167,7 @@ class SalesOrder(SellingController):
 		plc_conversion_rate: DF.Float
 		po_date: DF.Date | None
 		po_no: DF.Data | None
+		policies: DF.TableMultiSelect[SalesOrderPolicy]
 		price_list_currency: DF.Link
 		pricing_rules: DF.Table[PricingRuleDetail]
 		product_categories: DF.TableMultiSelect[SalesOrderProductCategory]

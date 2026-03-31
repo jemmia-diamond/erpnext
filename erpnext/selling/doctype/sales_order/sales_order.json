@@ -35,6 +35,7 @@
   "cancelled_status",
   "financial_status",
   "fulfillment_status",
+  "expected_delivery_date",
   "accounting_dimensions_section",
   "cost_center",
   "dimension_col_break",
@@ -135,6 +136,7 @@
   "column_break_xnxx",
   "customer",
   "gender",
+  "customer_type",
   "column_break_93",
   "customer_personal_id",
   "birth_date",
@@ -165,6 +167,8 @@
   "per_picked",
   "billing_status",
   "advance_payment_status",
+  "section_break_jhtj",
+  "policies",
   "sales_team_section_break",
   "sales_partner",
   "column_break7",
@@ -2062,6 +2066,28 @@
    "fieldtype": "Date",
    "label": "Real Order Date",
    "read_only": 1
+  },
+  {
+   "fieldname": "expected_delivery_date",
+   "fieldtype": "Date",
+   "label": "Expected Delivery Date"
+  },
+  {
+   "fieldname": "customer_type",
+   "fieldtype": "Select",
+   "label": "Customer Type",
+   "options": "\nNew Customer\nReturning Customer"
+  },
+  {
+   "fieldname": "section_break_jhtj",
+   "fieldtype": "Section Break",
+   "label": "Order Policies"
+  },
+  {
+   "fieldname": "policies",
+   "fieldtype": "Table MultiSelect",
+   "label": "Policies",
+   "options": "Sales Order Policy"
   }
  ],
  "grid_page_length": 50,
