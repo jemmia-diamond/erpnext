@@ -809,10 +809,12 @@
    "label": "Qualified Lead Date"
   },
   {
+   "fetch_from": "province.region",
    "fieldname": "region",
    "fieldtype": "Link",
    "label": "Region",
-   "options": "Region"
+   "options": "Region",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

@@ -20,7 +20,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-20 07:10:41.805971",
+ "modified": "2025-06-10 05:29:24.405691",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Region",
@@ -46,5 +46,6 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "title_field": "region_name"
+ "title_field": "region_name",
+ "translated_doctype": 1
 }
