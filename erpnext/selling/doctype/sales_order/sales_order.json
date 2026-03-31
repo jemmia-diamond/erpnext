@@ -328,7 +328,6 @@
    "fieldtype": "Link",
    "hide_days": 1,
    "hide_seconds": 1,
-   "in_standard_filter": 1,
    "label": "Company",
    "oldfieldname": "company",
    "oldfieldtype": "Link",
@@ -1382,7 +1381,6 @@
    "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
-   "in_standard_filter": 1,
    "label": "Billing Status",
    "no_copy": 1,
    "options": "Not Billed\nFully Billed\nPartly Billed\nClosed",
@@ -1856,6 +1854,8 @@
   {
    "fieldname": "financial_status",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Financial Status",
    "options": "\nPaid\nPartially Paid\nPartially Refunded\nRefunded\nPending",
    "read_only": 1
@@ -1863,19 +1863,21 @@
   {
    "fieldname": "fulfillment_status",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Fulfillment Status",
    "options": "\nFulfilled\nNot Fulfilled",
    "read_only": 1
   },
   {
    "fieldname": "haravan_order_id",
-   "fieldtype": "Int",
+   "fieldtype": "Data",
    "label": "Haravan Order ID",
    "read_only": 1
   },
   {
    "fieldname": "haravan_ref_order_id",
-   "fieldtype": "Int",
+   "fieldtype": "Data",
    "label": "Haravan Ref Order ID",
    "read_only": 1
   },
@@ -2130,7 +2132,7 @@
  "sort_order": "DESC",
  "states": [],
  "timeline_field": "customer",
- "title_field": "customer_name",
+ "title_field": "order_number",
  "track_changes": 1,
  "track_seen": 1
 }
