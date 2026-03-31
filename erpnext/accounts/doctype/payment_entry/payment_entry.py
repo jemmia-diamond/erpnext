@@ -1404,11 +1404,19 @@ class PaymentEntry(AccountsController):
 
 	# Paid amount is auto allocated in the reference document by default.
 	# Clear the reference document which doesn't have allocated amount on validate so that form can be loaded fast
+	# Exception: Keep Sales Orders with 0 amount
 	def clear_unallocated_reference_document_rows(self):
-		self.set("references", self.get("references", {"allocated_amount": ["not in", [0, None, ""]]}))
+		# Keep references that are Sales Orders even if allocated_amount is 0 (for gift orders)
+		filtered_references = []
+		for ref in self.get("references"):
+			if ref.allocated_amount or ref.reference_doctype == "Sales Order":
+				filtered_references.append(ref)
+		
+		self.set("references", filtered_references)
+		
 		frappe.db.sql(
 			"""delete from `tabPayment Entry Reference`
-			where parent = %s and allocated_amount = 0""",
+			where parent = %s and allocated_amount = 0 and reference_doctype != 'Sales Order'""",
 			self.name,
 		)
 
