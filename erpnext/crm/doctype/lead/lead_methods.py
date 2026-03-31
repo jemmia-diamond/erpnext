@@ -106,7 +106,24 @@ def insert_lead(doc) -> "Document":
 			match = re.search(pattern, str(e))
 			if match:
 				reference_frappe_doc_name = match.group(0)
-				return frappe.get_doc(frappe_doc.doctype, reference_frappe_doc_name)
+				existing_doc : Lead = frappe.get_doc(frappe_doc.doctype, reference_frappe_doc_name)
+				
+				'''
+				Check if contact exists by (pancake) conversation_id
+				If not, create a new one and link 
+				'''
+
+				page_id = doc.get("pancake_data", {}).get("page_id", None)
+				conversation_id = doc.get("pancake_data", {}).get("conversation_id", None)
+
+				if page_id is None or conversation_id is None:
+					return existing_doc
+				
+				existing_doc.link_to_contacts(
+					page_id=page_id,
+					conversation_id=conversation_id,
+				)
+				return existing_doc
 			return None
 		
 @frappe.whitelist(methods=["PUT", "PATCH"])
