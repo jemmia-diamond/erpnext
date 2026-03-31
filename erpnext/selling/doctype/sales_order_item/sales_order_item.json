@@ -824,6 +824,7 @@
   {
    "fieldname": "image_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Image"
   },
   {

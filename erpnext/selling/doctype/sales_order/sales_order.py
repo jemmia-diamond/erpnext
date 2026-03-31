@@ -1081,7 +1081,10 @@ class SalesOrder(SellingController):
 			simple_fields = [
 				'consultation_date', 'primary_sales_person',
 				'deposit_location', 'delivery_location', 'expected_delivery_date',
-				'customer_type', 'expected_payment_date'
+				'customer_type', 'expected_payment_date',
+				'deposit_amount', 'deposit_method',
+				'order_currency', 'billing_address',
+				'deposit_in_words'
 			]
 					
 			# Copy simple fields
@@ -1133,9 +1136,39 @@ class SalesOrder(SellingController):
 
 			# Copy Sales Order Items
 			self.copy_sales_order_items_from_reference(ref_order_doc)
-			
+		
+			# Copy Attachments
+			self.copy_attachments_from_reference(ref_order_name)
+		
 		except Exception as e:
 			frappe.log_error(f"Error copying from reference order: {str(e)}")
+
+	def copy_attachments_from_reference(self, ref_order_name):
+		"""Copy attachments from reference order to current order"""
+		try:
+			# Get all attachments from reference order
+			attachments = frappe.get_all(
+				"File",
+				filters={
+					"attached_to_doctype": "Sales Order",
+					"attached_to_name": ref_order_name
+				},
+				fields=["name"]
+			)
+			
+			if not attachments:
+				return
+			
+			# Update each attachment to point to the new order
+			for attachment in attachments:
+				frappe.db.set_value("File", attachment.name, {
+					"attached_to_name": self.name
+				})
+			
+			frappe.db.commit()
+					
+		except Exception as e:
+			frappe.log_error(f"Error copying attachments from reference order: {str(e)}")
 
 	def handle_serial_numbers_changes(self):
 		"""Handle serial_numbers changes and backfill from reference orders"""
@@ -1289,6 +1322,7 @@ class SalesOrder(SellingController):
 			'weight_per_unit',
 			'weight_uom',
 			'image',
+			'discount_rate'
 		]
 
 	def copy_sales_order_items_from_reference(self, ref_order_doc):
