@@ -69,20 +69,21 @@ frappe.listview_settings["Lead"] = {
 			frappe.db.get_list("Contact", {
 				filters: [
 					["Dynamic Link", "link_doctype", "=", "Lead"],
-					["Dynamic Link", "link_name", "=", doc.name]
-				]
+					["Dynamic Link", "link_name", "=", doc.name],
+					["pancake_conversation_id", "!=", null]
+				],
+				fields: ["name", "pancake_conversation_id", "pancake_page_id"]
 			}).then((contacts) => {
-				if (contacts.length > 0) {
-					frappe.db.get_doc("Contact", contacts[0].name).then((contact) => {
-						if (contact.pancake_conversation_id) {
-							var btn = $('<button class="btn btn-primary btn-pancake">P</button>');
-							btn.on('click', function (e) {
-								e.stopPropagation();
-								window.open(`https://pancake.vn/${contact.pancake_page_id}?c_id=` + contact.pancake_conversation_id, '_blank');
-							});
-							row.append(btn);
-						}
-					})
+				if (contacts.length) {
+					const contact = contacts[0];
+					if (contact.pancake_conversation_id && contact.pancake_page_id) {
+						var btn = $('<button class="btn btn-primary btn-pancake">P</button>');
+						btn.on('click', function (e) {
+							e.stopPropagation();
+							window.open(`https://pancake.vn/${contact.pancake_page_id}?c_id=` + contact.pancake_conversation_id, '_blank');
+						});
+						row.append(btn);
+					}
 				}
 			});
 		}
