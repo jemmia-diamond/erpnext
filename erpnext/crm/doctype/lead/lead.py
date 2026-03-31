@@ -65,8 +65,8 @@ class Lead(SellingController, CRMNote):
 		lead_name: DF.Data | None
 		lead_owner: DF.Link | None
 		lead_received_date: DF.Datetime | None
-		lead_source_name: DF.Link | None
-		lead_source_platform: DF.Link | None
+		lead_source_name: DF.Data | None
+		lead_source_platform: DF.Data | None
 		lead_stage: DF.Literal["Lead", "Qualified Lead", "Opportunity", "Customer"]
 		market_segment: DF.Link | None
 		middle_name: DF.Data | None
@@ -202,6 +202,7 @@ class Lead(SellingController, CRMNote):
 			filters = {
 				"email" : config.DEFAULT_MAIL_OWNER
 			}
+		print(filters)
 		try:
 			user = frappe.get_doc('User',filters, "name")
 		except Exception:
