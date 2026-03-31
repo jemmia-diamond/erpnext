@@ -484,3 +484,5 @@ erpnext.seeds.lead.backfill_qualified_lead_date
 erpnext.seeds.lead.backfill_qualification_status
 # 2025-07-08
 erpnext.seeds.lead.backfill_qualified_on
+# 2025-07-08
+erpnext.seeds.contact.backfill_inserted_at
