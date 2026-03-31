@@ -27,8 +27,6 @@
   "job_title",
   "last_name",
   "gender",
-  "province",
-  "region",
   "qualified_lead_date",
   "col_break123",
   "lead_owner",
@@ -45,6 +43,8 @@
   "budget_lead",
   "preferred_product_type",
   "column_break_wsdb",
+  "province",
+  "region",
   "organization_section",
   "company_name",
   "no_of_employees",
@@ -189,7 +189,7 @@
    "no_copy": 1,
    "oldfieldname": "status",
    "oldfieldtype": "Select",
-   "options": "Lead\nOpen\nReplied\nOpportunity\nQuotation\nLost Quotation\nInterested\nConverted\nDo Not Contact\nSpam",
+   "options": "Lead\nContacted\nReplied\nInterested\nQualified\nOpportunity\nConverted\nDo Not Contact\nSpam",
    "reqd": 1,
    "search_index": 1
   },
@@ -477,7 +477,6 @@
    "depends_on": "eval:!doc.__islocal",
    "fieldname": "activities_tab",
    "fieldtype": "Tab Break",
-   "hidden": 1,
    "label": "Activities"
   },
   {

@@ -99,7 +99,7 @@ class Lead(SellingController, CRMNote):
 			"Do Not Contact",
 		]
 		source: DF.Link | None
-		status: DF.Literal["Lead", "Open", "Replied", "Opportunity", "Quotation", "Lost Quotation", "Interested", "Converted", "Do Not Contact", "Spam"]
+		status: DF.Literal["Lead", "Contacted", "Replied", "Interested", "Qualified", "Opportunity", "Converted", "Do Not Contact", "Spam"]
 		stringee_data: DF.JSON | None
 		tax_number: DF.Data | None
 		territory: DF.Link | None
