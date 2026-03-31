@@ -1023,24 +1023,33 @@ def update_customer_priority_data(customer_name, haravan_id):
 
 	evaluate_and_update_customer_rank(customer_name)
 
-def calculate_customer_rank(true_cumulative, cumulative, referrals_revenue):
-	"""Calculate customer rank based on revenue thresholds (standalone function for background jobs)"""
-	revenue = cumulative if referrals_revenue > RankThreshold.NO_REVENUE else true_cumulative
+@frappe.whitelist()
+def reevaluate_customer_rank(customer_name):
+	try:
+		customer = frappe.get_doc("Customer", customer_name)
 
-	if revenue == RankThreshold.NO_REVENUE:
-		return CustomerRank.NO_RANK
+		if not customer.haravan_id:
+			frappe.throw("Customer must have a Haravan ID to evaluate rank")
 
-	if referrals_revenue > RankThreshold.NO_REVENUE:
-		if revenue >= RankThreshold.PLATINUM_WITH_REFERRAL:
-			return CustomerRank.PLATINUM
-		if revenue >= RankThreshold.GOLD_WITH_REFERRAL:
-			return CustomerRank.GOLD
-	else:
-		if revenue >= RankThreshold.PLATINUM_PURCHASE:
-			return CustomerRank.PLATINUM
-		if revenue >= RankThreshold.GOLD_PURCHASE:
-			return CustomerRank.GOLD
-	return CustomerRank.SILVER
+		frappe.db.set_value("Customer", customer_name, {
+			"rank": None,
+			"rank_updated_at": None
+		})
+		frappe.db.commit()
+
+		update_customers_coupons(customer.name, customer.haravan_id)
+		load_buyback_records_async(customer.name)
+		update_customer_priority_data(customer.name, customer.haravan_id)
+
+		frappe.msgprint(f"Successfully reevaluated rank for {customer.customer_name}")
+
+	except Exception as e:
+		frappe.log_error(
+			f"Error reevaluating rank for {customer_name}: {str(e)}",
+			"Customer Rank Re-evaluation Error"
+		)
+		frappe.throw(f"Failed to reevaluate customer rank: {str(e)}")
+
 
 def evaluate_and_update_customer_rank(customer_name, auto_commit=True):
 	"""
@@ -1063,6 +1072,46 @@ def evaluate_and_update_customer_rank(customer_name, auto_commit=True):
 	# Update total_cumulative_revenue
 	_update_total_cumulative_revenue(customer_name, auto_commit)
 
+def evaluate_all_customer_ranks():
+	"""
+	Scheduled job: Evaluate and update ranks for all customers
+	Runs every 2 hours via cron
+	"""
+
+	customers = frappe.db.sql("""
+		SELECT c.name, c.haravan_id, c.rank_updated_at, c.rank, c.total_cumulative_revenue
+		FROM `tabCustomer` c
+		WHERE c.haravan_id IS NOT NULL
+		AND (
+			EXISTS (
+				SELECT 1 FROM `tabSales Order` so
+				WHERE so.customer = c.name
+			)
+			OR EXISTS (
+				SELECT 1 FROM `tabCoupon` cp
+				WHERE cp.customer = c.name
+			)
+		)
+		ORDER BY
+			CASE WHEN c.rank_updated_at IS NULL THEN 0 ELSE 1 END,
+			c.name
+		LIMIT 1000
+	""", as_dict=True)
+
+	for customer in customers:
+		try:
+			if customer.rank_updated_at and customer.rank != "No Rank" and customer.total_cumulative_revenue > 0:
+				continue
+
+			update_customers_coupons(customer.name, customer.haravan_id)
+			load_buyback_records_async(customer.name)
+			update_customer_priority_data(customer.name, customer.haravan_id)
+		except Exception as e:
+			frappe.log_error(
+				f"Error updating priority data for {customer.name}: {str(e)}",
+				"Priority Data Update Error"
+			)
+
 def _get_first_paid_order_date(customer_name):
 	"""
 	Get the date of the first paid order for a customer
@@ -1082,6 +1131,25 @@ def _get_first_paid_order_date(customer_name):
 
 	if first_order:
 		return getdate(first_order[0].transaction_date)
+	return None
+
+def _get_first_coupon_date(customer_name):
+	"""
+	Get the date of the first coupon for a customer
+	Returns the end_date of the first coupon (when referral was earned)
+	"""
+	first_coupon = frappe.db.sql("""
+		SELECT end_date
+		FROM `tabCoupon`
+		WHERE customer = %s
+		AND end_date IS NOT NULL
+		AND payment_status IN ('Paid', 'Pending')
+		ORDER BY end_date ASC
+		LIMIT 1
+	""", (customer_name,), as_dict=True)
+
+	if first_coupon:
+		return getdate(first_coupon[0].end_date)
 	return None
 
 def _determine_rank_from_cumulative(revenue, referral_revenue):
@@ -1266,8 +1334,19 @@ def _initialize_customer_rank(customer_name, auto_commit=True):
 
 	if not first_order_date:
 		creation_date = getdate(customer.creation)
-		customer.db_set("rank", CustomerRank.NO_RANK, update_modified=True)
-		customer.db_set("rank_updated_at", creation_date, update_modified=True)
+		referral_revenue = _get_referral_revenue_up_to_date(customer_name, nowdate())
+
+		if referral_revenue > 0:
+			first_coupon_date = _get_first_coupon_date(customer_name)
+			rank_date = first_coupon_date if first_coupon_date else creation_date
+
+			initial_rank = _determine_rank_from_cumulative(referral_revenue, referral_revenue)
+			customer.db_set("rank", initial_rank, update_modified=True)
+			customer.db_set("rank_updated_at", rank_date, update_modified=True)
+			frappe.logger().info(f"Initialized {customer_name} (coupon-only): rank={initial_rank}, referral_revenue={referral_revenue}, rank_updated_at={rank_date}")
+		else:
+			customer.db_set("rank", CustomerRank.NO_RANK, update_modified=True)
+			customer.db_set("rank_updated_at", creation_date, update_modified=True)
 
 		if auto_commit:
 			frappe.db.commit()

@@ -236,6 +236,14 @@ frappe.ui.form.on("Customer", {
 				__("Actions")
 			);
 
+			frm.add_custom_button(
+				__("Evaluate Customer Rank"),
+				function () {
+					frm.trigger("evaluate_customer_rank");
+				},
+				__("Actions")
+			);
+
 			if (
 				cint(frappe.defaults.get_default("enable_common_party_accounting")) &&
 				frappe.model.can_create("Party Link")
@@ -468,5 +476,28 @@ frappe.ui.form.on("Customer", {
 				`);
 			}
 		});
-	}
+	},
+
+	evaluate_customer_rank: function (frm) {
+		if (!frm.doc.haravan_id) {
+			frappe.msgprint({
+				message: __("Customer must have a Haravan ID to evaluate rank"),
+				title: __("Missing Haravan ID"),
+				indicator: "red"
+			});
+			return;
+		}
+
+		frappe.call({
+			method: "erpnext.selling.doctype.customer.customer.reevaluate_customer_rank",
+			args: {
+				customer_name: frm.doc.name
+			},
+			freeze: true,
+			freeze_message: __("Reevaluating customer rank..."),
+			callback: function (r) {
+				frm.reload_doc();
+			}
+		});
+	},
 });
