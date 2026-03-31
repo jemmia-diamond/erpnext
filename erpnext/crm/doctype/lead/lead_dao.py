@@ -1,4 +1,5 @@
 import frappe
+from erpnext.config.config import config
 
 def get_leads_to_summary():
     # condition to summary pancake
@@ -7,19 +8,19 @@ def get_leads_to_summary():
 	# last_message_customer > last_migration  | last_migration is null
 	# lead does not own opportunity -> lead has opportunity dont need to convert 
 	
-	sql=f"""
-	SELECT
+    sql=f"""
+    SELECT
     c.pancake_conversation_id,
     c.pancake_page_id
-	FROM
-    	tabContact c
-	WHERE 
+    FROM
+        tabContact c
+    WHERE 
     c.pancake_conversation_id IS NOT NULL
     AND c.pancake_page_id IS NOT NULL
     AND c.last_message_time IS NOT NULL
     AND (c.last_summarize_time IS NULL
-         OR c.last_message_time > c.last_summarize_time)
-    AND c.name IN (
+        OR c.last_message_time > c.last_summarize_time)
+    AND c.name  NOT IN (
         SELECT
             tdl.parent
         FROM
@@ -39,14 +40,15 @@ def get_leads_to_summary():
                         WHERE
                             tOp.opportunity_from = 'Lead'
                     )
+                AND tl.first_reach_at < '{config.FIRST_REACH_AT_LIMIT_SUMMARY}'
             )
             AND tdl.parenttype = 'Contact'
     )
     GROUP BY
         c.pancake_conversation_id;
-	"""
-	pancakes = frappe.db.sql(sql, as_dict=True)
-	return pancakes
+    """
+    pancakes = frappe.db.sql(sql, as_dict=True)
+    return pancakes
 
 def get_lead_name_by_conversation_id(conversation_id: str):
 	query = """

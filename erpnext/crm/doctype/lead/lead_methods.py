@@ -12,7 +12,7 @@ from erpnext.crm.doctype.lead_budget.lead_budget_dao import find_range_budget
 from erpnext.crm.doctype.lead_demand.lead_demand_dao import get_lead_purpose
 from erpnext.config.config import config
 from erpnext.packages.ai_hub.ai_hub import AIHubClient
-from frappe.www.contact import get_contact_by_conversation_id
+from frappe.www.contact import get_contacts_by_conversation_id
 
 import frappe 
 from frappe import _
@@ -298,10 +298,11 @@ def update_lead_from_summary(data):
 	lead.save()
 	frappe.db.commit()
 
-	#update last summarize at
-	contact = get_contact_by_conversation_id(conversation_id)
-	if contact:
-		contact.last_summarize_time = frappe.utils.now_datetime()
-		contact.save()
+	#update last summarize at 
+	contacts = get_contacts_by_conversation_id(conversation_id)
+	for contact in contacts:
+		contact_doc = frappe.get_doc('Contact', {'name': contact.name})
+		contact_doc.last_summarize_time = frappe.utils.now_datetime()
+		contact_doc.save()
 
 	return True

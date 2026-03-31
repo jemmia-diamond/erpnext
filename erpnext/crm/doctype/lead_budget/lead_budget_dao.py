@@ -1,6 +1,9 @@
 import frappe
 def find_range_budget(budget_from: int | None, budget_to:int | None):
 
+	if budget_from is None and budget_to is None: 
+		return None
+	
 	lead_budgets = None
 	filters = {
 	}
