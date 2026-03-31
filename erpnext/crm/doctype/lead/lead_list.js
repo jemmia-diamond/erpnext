@@ -71,13 +71,13 @@ frappe.listview_settings["Lead"] = {
 			const select = row.find(".list-subject .select-like");
 			if(doc.image) {
 				avatar = `
-				<span class="avatar avatar-small  filterable" title="${doc.first_name}" style="margin-right: 4px; padding: 3px;">
-					<span class="avatar-frame" style="background-image: url(&quot;${doc.image}&quot;)" <="" span="" title="${doc.first_name}"></span>
+				<span class="avatar avatar-small level-item filterable" title="${doc.first_name}" style="margin-right: 4px; padding: 3px;">
+     				<span class="avatar-frame" style="background-image: url(&quot;${doc.image}&quot;)" title="${doc.first_name}"></span>
 				</span>
 				`
 			} else {
 				avatar = `
-				<span class="avatar avatar-small  filterable" title="${doc.first_name}" style="margin-right: 4px; padding: 3px;">
+				<span class="avatar avatar-small level-item filterable" title="${doc.first_name}" style="margin-right: 4px; padding: 3px;">
 					<div class="avatar-frame standard-image" style="background-color: var(--red-avatar-bg); color: var(--red-avatar-color)" title="${doc.first_name}">${doc.first_name.charAt(0).toUpperCase()}</div>
 				</span>
 				`
