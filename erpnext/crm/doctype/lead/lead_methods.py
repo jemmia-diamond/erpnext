@@ -119,32 +119,79 @@ def backfill_lead_info(docs):
 
     failed_docs = []
     try:
-        # Prepare data for batch update
-        update_data = []
+        # Prepare parts for the dynamic SQL query
+        name_case_when_clauses = []
+        phone_case_when_clauses = []
         ids_to_update = []
+        sql_params = []  # This will hold all parameters for the SQL query
+
         for doc in docs:
-            lead_id = doc.get("docname")  # Assuming docname refers to the ID (name)
-            new_first_name = doc.get("new_name")
+            lead_id = doc.get("docname")
+            new_name = doc.get("new_name")
             new_phone = doc.get("new_phone")
+
+            if not lead_id:
+                failed_docs.append({"doc": doc, "exc": "Missing 'docname' (lead ID). Skipping this document."})
+                continue # Skip this document if docname is missing
+
             ids_to_update.append(lead_id)
-            update_data.append((new_first_name, new_phone, lead_id))
+
+            # Build CASE WHEN clauses for first_name with nested conditions
+            # Outer WHEN: identifies the specific lead by name
+            # Inner CASE: applies the update based on current first_name value
+            name_case_when_clauses.append(f"""
+                WHEN name = %s THEN
+                    CASE
+                        WHEN first_name IS NULL OR first_name = '' OR first_name = 'Chưa rõ' THEN %s
+                        ELSE first_name
+                    END
+            """)
+            # Parameters for this clause: lead_id (for outer WHEN) and new_name (for inner THEN)
+            sql_params.extend([lead_id, new_name])
+
+            # Build CASE WHEN clauses for phone with nested conditions
+            # Outer WHEN: identifies the specific lead by name
+            # Inner CASE: applies the update based on current phone value
+            phone_case_when_clauses.append(f"""
+                WHEN name = %s THEN
+                    CASE
+                        WHEN phone IS NULL OR phone = '' THEN %s
+                        ELSE phone
+                    END
+            """)
+            # Parameters for this clause: lead_id (for outer WHEN) and new_phone (for inner THEN)
+            sql_params.extend([lead_id, new_phone])
+
+        # If no valid documents were processed to build clauses, return
+        if not ids_to_update:
+            return {"failed_docs": failed_docs}
+            
+        # Add all lead IDs for the WHERE IN clause at the very end of the parameters list
+        sql_params.extend(ids_to_update)
 
         # Construct SQL query dynamically
-        frappe.db.sql("""
+        # The 'f-string' helps embed the dynamically generated CASE WHEN clauses and IN placeholders
+        in_clause_placeholders = ", ".join(["%s"] * len(ids_to_update))
+
+        sql_query = f"""
             UPDATE `tabLead`
-            SET 
-                first_name = CASE 
-                    WHEN first_name IS NULL OR first_name = '' OR first_name = 'Chưa rõ' THEN %s
-                    ELSE first_name
+            SET
+                first_name = CASE
+                    {' '.join(name_case_when_clauses)}
+                    ELSE first_name -- Fallback: if name matches but no WHEN clause matched, keep current first_name
                 END,
-                phone = CASE 
-                    WHEN phone IS NULL OR phone = '' THEN %s
-                    ELSE phone
+                phone = CASE
+                    {' '.join(phone_case_when_clauses)}
+                    ELSE phone -- Fallback: if name matches but no WHEN clause matched, keep current phone
                 END
-            WHERE name IN ({})
-        """.format(", ".join(["%s"] * len(ids_to_update))), tuple([item for sublist in update_data for item in sublist]))
+            WHERE name IN ({in_clause_placeholders})
+        """
+
+        frappe.db.sql(sql_query, tuple(sql_params))
+
     except Exception as e:
-        failed_docs.append({"doc": doc, "exc": frappe.utils.get_traceback()})
+        for doc in docs:
+            failed_docs.append({"doc": doc, "exc": frappe.utils.get_traceback()})
 
     return {"failed_docs": failed_docs}
 
