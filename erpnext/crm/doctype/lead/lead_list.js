@@ -1,4 +1,5 @@
 frappe.listview_settings["Lead"] = {
+	hide_name_column: true,
 	get_indicator: function (doc) {
 		var indicator = [__(doc.status), frappe.utils.guess_colour(doc.status), "status,=," + doc.status];
 		return indicator;
@@ -40,6 +41,38 @@ frappe.listview_settings["Lead"] = {
 						}
 					);
 				});
+			});
+		}
+	},
+
+	refresh: function (listview) {
+		$(".list-row-container .list-row .level-right .comment-count").remove();
+		$(".list-row-container .list-row .level-right .mx-2").remove();
+		$(".list-row-container .list-row .level-right .list-row-like").remove();
+
+		$(`.result .list-row-container .list-row .level-right .list-row-activity .btn-pancake`).remove();
+		// Add Pancake button to each row
+		for (let i = 0; i < listview.data.length; i++) {
+			const row = $(`.result .list-row-container:nth-child(${i + 3}) .list-row .level-right .list-row-activity`);
+			const doc = listview.data[i];
+			frappe.db.get_list("Contact", {
+				filters: [
+					["Dynamic Link", "link_doctype", "=", "Lead"],
+					["Dynamic Link", "link_name", "=", doc.name]
+				]
+			}).then((contacts) => {
+				if (contacts.length > 0) {
+					frappe.db.get_doc("Contact", contacts[0].name).then((contact) => {
+						if (contact.pancake_conversation_id) {
+							var btn = $('<button class="btn btn-primary btn-pancake">P</button>');
+							btn.on('click', function (e) {
+								e.stopPropagation();
+								window.open(`https://pancake.vn/${contact.pancake_page_id}?c_id=` + contact.pancake_conversation_id, '_blank');
+							});
+							row.append(btn);
+						}
+					})
+				}
 			});
 		}
 	},

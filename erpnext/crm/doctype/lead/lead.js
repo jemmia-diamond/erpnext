@@ -232,3 +232,24 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 if (cur_frm) {
 	extend_cscript(cur_frm.cscript, new erpnext.LeadController({ frm: cur_frm }));
 }
+
+frappe.ui.form.on('Lead', {
+	refresh(frm) {
+		// Check Contact associated with this Lead
+		frappe.db.get_list("Contact", {
+			filters: [
+				["Dynamic Link", "link_doctype", "=", "Lead"],
+				["Dynamic Link", "link_name", "=", frm.doc.name]
+			]
+		}).then(data => {
+			if (data.length > 0) {
+				frappe.db.get_doc("Contact", data[0].name).then(doc => {
+					// Add web link to Pancake Conversation
+					if (doc.pancake_conversation_id) {
+						frm.add_web_link(`https://pancake.vn/${doc.pancake_page_id}?c_id=` + doc.pancake_conversation_id, "Pancake Conversation");
+					}
+				})
+			}
+		});
+	}
+})
