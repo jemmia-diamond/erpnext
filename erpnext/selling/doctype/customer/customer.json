@@ -908,7 +908,7 @@
   },
   {
    "fieldname": "haravan_id",
-   "fieldtype": "Int",
+   "fieldtype": "Data",
    "label": "Haravan ID",
    "read_only": 1
   },

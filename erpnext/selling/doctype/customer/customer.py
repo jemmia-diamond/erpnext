@@ -79,7 +79,7 @@ class Customer(TransactionBase):
 		first_channel: DF.Literal["", "Facebook", "Zalo", "TikTok", "Call Center", "Website Form", "Visiting Guests", "Email"]
 		first_source: DF.Link | None
 		gender: DF.Link | None
-		haravan_id: DF.Int
+		haravan_id: DF.Data | None
 		image: DF.AttachImage | None
 		industry: DF.Link | None
 		invoice_type: DF.Literal["Individual", "Company"]
