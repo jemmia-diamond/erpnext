@@ -3876,3 +3876,27 @@ def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, fil
 			"page_len": page_len,
 		},
 	)
+
+def cancel_pending_transfers():
+	from frappe.utils import add_to_date, now_datetime
+
+	# Calculate threshold time (24 hours ago)
+	threshold_time = add_to_date(now_datetime(), hours=-24)
+
+	allowed_modes = frappe.get_all("Mode of Payment", filters={"payment_code": "banking"}, pluck="name")
+
+	if not allowed_modes:
+		return
+
+	payment_entries = frappe.get_all(
+		"Payment Entry",
+		filters={
+			"custom_transfer_status": "pending",
+			"creation": ("<", threshold_time),
+			"mode_of_payment": ["in", allowed_modes]
+		},
+		fields=["name"]
+	)
+
+	for entry in payment_entries:
+		frappe.db.set_value("Payment Entry", entry.name, "custom_transfer_status", "cancel")
