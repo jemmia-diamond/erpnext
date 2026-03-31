@@ -2,7 +2,7 @@ import asyncio
 import json
 from typing import TYPE_CHECKING
 
-from erpnext.crm.doctype.lead_product.lead_product_dao import get_products_in_names
+from erpnext.crm.doctype.lead_product.lead_product_dao import get_lead_product, create_lead_product
 from erpnext.crm.doctype.lead.lead_dao import (
 	get_lead_by_name,
 	get_lead_name_by_conversation_id
@@ -360,8 +360,16 @@ def update_lead_from_summary(data):
 	if lead_province:
 		lead.province = lead_province.name
 
+	products = []
+	for product_name in product_names:
+		lead_product = get_lead_product(product_name)
+		if lead_product:
+			products.append(lead_product)
+		else:
+			new_lead_product = create_lead_product(product_name)
+			if new_lead_product:
+				products.append(new_lead_product)
 
-	products = get_products_in_names(product_names)
 	for product in products:
 		existing_products = {item.product_type for item in lead.preferred_product_type}
 		if product.name not in existing_products:
