@@ -22,7 +22,10 @@ class Promotion(Document):
 		end_date: DF.Date | None
 		is_active: DF.Check
 		is_expired: DF.Check
+		max_value: DF.Float
+		min_value: DF.Float
 		priority: DF.Literal["", "G0", "G1", "G2", "G3", "G4", "G5", "G6", "G7"]
+		product_category: DF.Literal["Kim Cương Viên", "Vỏ Trang Sức", "Khác"]
 		promotion_group: DF.Link | None
 		promotion_month: DF.Link | None
 		scope: DF.Literal["Line Item", "Order"]
