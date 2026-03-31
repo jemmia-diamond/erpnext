@@ -37,7 +37,7 @@
   "request_type",
   "lead_name",
   "lead_received_date",
-  "customer_demand_section",
+  "qualified_information_section",
   "purpose_lead",
   "expected_delivery_date",
   "column_break_ugod",
