@@ -320,6 +320,7 @@ frappe.ui.form.on("Payment Entry", {
 			frm.toggle_display("bank_account", false);
 			frm.toggle_display("qr_section_break", false);
 			frm.set_df_property("bank_account", "reqd", 0);
+			frm.set_df_property("payment_date", "reqd", 1);
 			return;
 		}
 
@@ -333,6 +334,9 @@ frappe.ui.form.on("Payment Entry", {
 			const make_required = show_bank_account && frm.doc.docstatus === 0 && is_new_or_has_bank;
 			frm.set_df_property("bank_account", "reqd", make_required ? 1 : 0);
 			frm.toggle_display("qr_section_break", payment_code === "banking");
+			
+			const payment_date_required = !["cash_on_delivery"].includes(payment_code);
+			frm.set_df_property("payment_date", "reqd", payment_date_required ? 1 : 0);
 		});
 	},
 
@@ -695,6 +699,10 @@ frappe.ui.form.on("Payment Entry", {
 					filters: {
 						company: frm.doc.company,
 					},
+				};
+			} else if (frm.doc.party_type == "Customer") {
+				return {
+					query: "erpnext.accounts.doctype.payment_entry.payment_entry.get_customer_with_phone",
 				};
 			}
 		});
