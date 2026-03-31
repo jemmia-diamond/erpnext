@@ -241,7 +241,7 @@ def update_lead_from_summary(data):
 	budget_to = data.get("budget_to", None)
 	budget_from =  None if budget_to else data.get("budget_from", None)
 	purpose = data.get("purpose", None)
-	product_names = data.get("product_names", [])
+	product_names = data.get("interested_products", [])
 	phone = data.get("phone", None)
 	province = data.get("province", None)
 	expected_receiving_date = data.get("expected_receiving_date", None)
