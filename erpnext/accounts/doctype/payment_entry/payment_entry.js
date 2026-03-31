@@ -257,6 +257,21 @@ frappe.ui.form.on("Payment Entry", {
 		}
 		erpnext.accounts.unreconcile_payment.add_unreconcile_btn(frm);
 		frappe.flags.allocate_payment_amount = true;
+
+		if (frm.doc.qr_url) {
+			const qr_group = __("Mã QR");
+			frm.add_custom_button(__("Copy URL"), () => {
+				frappe.utils.copy_to_clipboard(frm.doc.qr_url);
+			}, qr_group);
+
+			frm.add_custom_button(__("Tải mã xuống"), () => {
+				window.open(`${frm.doc.qr_url}&download=true`);
+			}, qr_group);
+
+			frm.add_custom_button(__("Mở mã QR"), () => {
+				window.open(frm.doc.qr_url);
+			}, qr_group);
+		}
 	},
 
 	validate: async function (frm) {

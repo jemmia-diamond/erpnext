@@ -147,6 +147,10 @@ class PaymentEntry(AccountsController):
 		total_allocated_amount: DF.Currency
 		total_taxes_and_charges: DF.Currency
 		unallocated_amount: DF.Currency
+		custom_transaction_id: DF.Data | None
+		custom_transfer_note: DF.SmallText | None
+		custom_transfer_status: DF.Literal["", "pending", "success", "cancel"]
+		qr_url: DF.Data | None
 	# end: auto-generated types
 
 	def __init__(self, *args, **kwargs):
