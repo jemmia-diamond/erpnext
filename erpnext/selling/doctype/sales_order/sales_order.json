@@ -2019,7 +2019,8 @@
   {
    "fieldname": "total_amount",
    "fieldtype": "Currency",
-   "label": "Total Amount"
+   "label": "Total Amount",
+   "read_only": 1
   },
   {
    "fieldname": "expected_payment_date",
@@ -2033,7 +2034,8 @@
   {
    "fieldname": "paid_amount",
    "fieldtype": "Currency",
-   "label": "Paid Amount"
+   "label": "Paid Amount",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_ptow",
@@ -2042,7 +2044,8 @@
   {
    "fieldname": "balance",
    "fieldtype": "Currency",
-   "label": "Balance"
+   "label": "Balance",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_ujjh",
@@ -2057,7 +2060,8 @@
   {
    "fieldname": "real_order_date",
    "fieldtype": "Date",
-   "label": "Real Order Date"
+   "label": "Real Order Date",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

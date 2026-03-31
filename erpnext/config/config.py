@@ -9,4 +9,7 @@ class BaseConfig:
     STRINGEE_API_KEY_SECRET: str = frappe.conf.get("stringee_api_key_secret")
     PRIORITY_BEARER_TOKEN: str = frappe.conf.get("priority_bearer_token")
     PRIORITY_BASE_URL: str = frappe.conf.get("priority_base_url")
+    FN_BEARER_TOKEN: str = frappe.conf.get("fn_bearer_token")
+    FN_BASE_URL: str = frappe.conf.get("fn_base_url")
+
 config = BaseConfig()

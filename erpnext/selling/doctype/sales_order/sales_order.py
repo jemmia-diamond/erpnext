@@ -4,6 +4,7 @@
 
 import json
 from typing import Literal
+import requests
 
 import frappe
 import frappe.utils
@@ -43,6 +44,8 @@ from erpnext.stock.get_item_details import (
 )
 from erpnext.stock.stock_balance import get_reserved_qty, update_bin_qty
 from frappe.model.docstatus import DocStatus
+
+from erpnext.config.config import config
 
 form_grid_templates = {"items": "templates/form_grid/item_grid.html"}
 
@@ -2110,8 +2113,18 @@ def get_work_order_items(sales_order, for_raw_material_request=0):
 
 @frappe.whitelist()
 def get_stock_reservation_status():
-	return frappe.get_single_value("Stock Settings", "enable_stock_reservation")
+	return frappe.db.get_single_value("Stock Settings", "enable_stock_reservation")
 
+@frappe.whitelist()
+def larksuite_notification(sales_order_doc):
+	sales_order = json.loads(sales_order_doc)
+	response = requests.post(
+		url=f"{config.FN_BASE_URL}/api/erp/sales_orders/{sales_order["name"]}/notifications",
+		headers={"Content-Type": "application/json", "Authorization": "Bearer " + config.FN_BEARER_TOKEN},
+		data=sales_order_doc,
+	)
+	message = response.json()["message"]
+	return message
 
 @frappe.whitelist()
 def make_subcontracting_inward_order(source_name, target_doc=None):

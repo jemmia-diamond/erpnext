@@ -82,6 +82,14 @@ frappe.ui.form.on("Sales Order", {
 			$statusSpan.css("color", "tomato").css("background-color", "whitesmoke");
 		}
 
+		frm.add_custom_button(__('Send Order To Lark'), function() {
+			frappe.call({
+				method: 'erpnext.selling.doctype.sales_order.sales_order.larksuite_notification',
+				args: {sales_order_doc: frm.doc},
+				callback: function(r) {frappe.msgprint(r);}
+			})
+       	});
+
 		if (frm.doc.docstatus === 1) {
 			if (
 				frm.doc.status !== "Closed" &&
