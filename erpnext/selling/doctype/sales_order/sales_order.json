@@ -58,6 +58,7 @@
   "reserve_stock",
   "items_section",
   "items",
+  "custom_all_images_html",
   "section_break_48",
   "apply_discount_on",
   "base_discount_amount",
@@ -2184,6 +2185,11 @@
    "fieldtype": "Link",
    "label": "Currency",
    "options": "Currency"
+  },
+  {
+   "fieldname": "custom_all_images_html",
+   "fieldtype": "HTML",
+   "label": "Attached images"
   }
  ],
  "grid_page_length": 50,
