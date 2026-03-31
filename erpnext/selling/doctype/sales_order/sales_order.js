@@ -175,7 +175,7 @@ frappe.ui.form.on("Sales Order", {
 			frappe.db.get_doc("Sales Order", frm.doc.name).then((doc) => {
 
 				// Show warning requiring user to input personal ID
-				if (!doc.customer_personal_id && !doc.custom_passport_id) {
+				if (!doc.customer_personal_id && !doc.customer_passport_id) {
 					frappe.msgprint(__("Vui lòng nhập số CMND/CCCD/Hộ chiếu của khách hàng trước khi gửi đơn hàng đến Lark."));
 					return;
 				}
@@ -219,6 +219,7 @@ frappe.ui.form.on("Sales Order", {
 			frm.set_value("place_of_issuance", doc.place_of_issuance);
 			frm.set_value("date_of_issuance", doc.date_of_issuance);
 			frm.set_value("customer_personal_id", doc.personal_id);
+			frm.set_value("customer_passport_id", doc.passport_id);
 			frm.set_value("gender", doc.gender);
 		})
 
