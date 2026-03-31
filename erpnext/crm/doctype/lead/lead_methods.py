@@ -86,7 +86,8 @@ def update_lead_by_batch(docs):
 	"""Bulk update leads
 
 	:param docs: JSON list of documents to be updated remotely. Each document must have `docname` property"""
-	docs = json.loads(docs)
+	if isinstance(docs, str):
+		docs = json.loads(docs)
 	failed_docs = []
 	for doc in docs:
 		doc.pop("flags", None)
@@ -102,6 +103,24 @@ def update_lead_by_batch(docs):
 			existing_doc = frappe.get_doc(doc["doctype"], doc["docname"])
 			existing_doc.update(doc)
 			existing_doc.save()
+			
+			contact = None
+			try:
+				contact = frappe.get_value(
+					"Contact",
+					{
+						"pancake_page_id": doc.get("pancake_data", {}).get("page_id", None),
+						"pancake_conversation_id": doc.get("pancake_data", {}).get("conversation_id", None)
+					},
+				)
+			
+			except Exception as e:
+				contact = None
+
+			if contact: 
+				contact_doc = frappe.get_doc("Contact", contact)
+				contact_doc.last_message_time =  doc.get("pancake_data", {}).get("latest_message_at")
+				contact_doc.save(ignore_permissions=True)
 
 			try: 
 				if pancake_list_tags:
