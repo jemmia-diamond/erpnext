@@ -887,7 +887,6 @@ class SalesOrder(SellingController):
 		cancel_stock_reservation_entries(
 			voucher_type=self.doctype, voucher_no=self.name, sre_list=sre_list, notify=notify
 		)
-
 	def set_missing_values(self, for_validate=False):
 		super().set_missing_values(for_validate)
 
@@ -972,26 +971,6 @@ class SalesOrder(SellingController):
 
 		query.run()
 
-	def handle_re_order(self):
-		# allow to link to cancelled documents
-		self.flags.ignore_links = True
-		if isinstance(self.haravan_ref_order_id, int):
-			# find sales order by haravan_ref_order_id
-			ref_sales_order = frappe.get_last_doc("Sales Order", filters=[["haravan_order_id", "=", self.haravan_ref_order_id]])
-			if not ref_sales_order or ref_sales_order.name == self.name:
-				return
-			# link to the reference sales order
-			self.append("ref_sales_orders", {"sales_order": ref_sales_order.name})
-
-			# update allocation
-			if len(ref_sales_order.sales_team) > 0:
-				self.sales_team = []  # Clear existing sales team entries
-				for team in ref_sales_order.sales_team:
-					self.append("sales_team", {
-						"sales_person": team.sales_person,
-						"allocated_percentage": team.allocated_percentage
-					})
-
 	def handle_order_cancellation(self):
 		"""If order from Haravan is cancelled, cancel the current order too"""
 
@@ -1008,7 +987,6 @@ class SalesOrder(SellingController):
 		self.handle_order_cancellation()
 
 	def before_insert(self):
-		self.handle_re_order()
 		self.handle_order_cancellation()
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:
