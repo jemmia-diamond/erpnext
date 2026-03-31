@@ -170,6 +170,7 @@ class SalesOrder(SellingController):
 		policies: DF.TableMultiSelect[SalesOrderPolicy]
 		price_list_currency: DF.Link
 		pricing_rules: DF.Table[PricingRuleDetail]
+		primary_sales_person: DF.Link | None
 		product_categories: DF.TableMultiSelect[SalesOrderProductCategory]
 		project: DF.Link | None
 		promotions: DF.TableMultiSelect[SalesOrderPromotion]
@@ -991,7 +992,13 @@ class SalesOrder(SellingController):
 				self.docstatus = DocStatus.CANCELLED
 				self.flags.ignore_on_cancel = True
 
+	def validate_primary_sales_team(self):
+		if self.sales_team and self.primary_sales_person:
+			if len([t for t in self.sales_team if t.sales_person == self.primary_sales_person]) == 0:
+				frappe.throw(_("Primary Sales Person must be part of the Sales Team."))
+
 	def before_save(self):
+		self.validate_primary_sales_team()
 		self.handle_order_cancellation()
 
 	def before_insert(self):

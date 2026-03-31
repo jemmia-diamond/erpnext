@@ -220,6 +220,7 @@
   "terms",
   "sales_team_tab",
   "section_break1",
+  "primary_sales_person",
   "sales_team",
   "haravan_tab",
   "section_break_pulu",
@@ -2088,6 +2089,12 @@
    "fieldtype": "Table MultiSelect",
    "label": "Policies",
    "options": "Sales Order Policy"
+  },
+  {
+   "fieldname": "primary_sales_person",
+   "fieldtype": "Link",
+   "label": "Primary Sales Person",
+   "options": "Sales Person"
   }
  ],
  "grid_page_length": 50,
