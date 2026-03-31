@@ -415,6 +415,18 @@ frappe.ui.form.on("Sales Order", {
 		}
 	},
 
+	birth_date: function (frm) {
+		if (frm.doc.birth_date) {
+			const year = parseInt(frm.doc.birth_date.split("-")[0]);
+			const current_year = new Date().getFullYear();
+
+			if (year < 1900 || year > current_year) {
+				frappe.msgprint(__("Năm sinh phải nằm trong khoảng 1900 đến {0}", [current_year]));
+				frm.set_value("birth_date", "");
+			}
+		}
+	},
+
 	delivery_date: function (frm) {
 		$.each(frm.doc.items || [], function (i, d) {
 			if (!d.delivery_date) d.delivery_date = frm.doc.delivery_date;
