@@ -37,6 +37,8 @@
   "request_type",
   "lead_name",
   "lead_received_date",
+  "lead_source_name",
+  "lead_source_platform",
   "qualified_information_section",
   "purpose_lead",
   "expected_delivery_date",
@@ -821,6 +823,22 @@
    "fieldtype": "Datetime",
    "hidden": 1,
    "label": "First Reach At"
+  },
+  {
+   "fetch_from": "source.source_name",
+   "fieldname": "lead_source_name",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Lead Source Name",
+   "options": "Lead"
+  },
+  {
+   "fetch_from": "source.pancake_platform",
+   "fieldname": "lead_source_platform",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Lead Source Platform",
+   "options": "Lead"
   }
  ],
  "grid_page_length": 50,
