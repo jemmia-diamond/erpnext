@@ -1125,9 +1125,109 @@ class SalesOrder(SellingController):
 						child = self.append(parentfield, row)
 						child.db_insert()
 
+			# Copy Sales Order Items
+			self.copy_sales_order_items_from_reference(ref_order_doc)
 			
 		except Exception as e:
 			frappe.log_error(f"Error copying from reference order: {str(e)}")
+
+	def _map_current_and_ref_items(self, current_items, ref_items):
+		"""Return (current_item, ref_item) pairs."""
+		def norm(v):
+			return str(v).strip() if v is not None else None
+
+		def get_gia_from_sku(item):
+			sku = getattr(item, "sku", None)
+			if not sku:
+				return None
+			sku = str(sku)
+			pos = sku.find("GIA")
+			if pos < 0:
+				return None
+			start = pos + 3
+			end = start + 10
+			return sku[start:end] if end <= len(sku) else None
+
+		ref_by_variant = {}
+		ref_by_gia = {}
+		for ref in ref_items:
+			vid = norm(getattr(ref, "haravan_variant_id", None))
+			if vid:
+				ref_by_variant[vid] = ref
+			gia = get_gia_from_sku(ref)
+			if gia and gia not in ref_by_gia:
+				ref_by_gia[gia] = ref
+
+		pairs = []
+		matched = set()
+
+		for cur in current_items:
+			vid = norm(getattr(cur, "haravan_variant_id", None))
+			if vid and vid in ref_by_variant:
+				pairs.append((cur, ref_by_variant[vid]))
+				matched.add(cur.name)
+
+		for cur in current_items:
+			if cur.name in matched:
+				continue
+			gia = get_gia_from_sku(cur)
+			if gia and gia in ref_by_gia:
+				pairs.append((cur, ref_by_gia[gia]))
+				matched.add(cur.name)
+
+		return pairs
+
+	def _get_item_fields_to_copy(self):
+		"""Central place to define manual fields to copy between items."""
+		return [
+			'product_details',
+			'diamond_details',
+			'product_availability_status',
+			'serial_numbers',
+			'promotion_1',
+			'promotion_2',
+			'promotion_3',
+			'promotion_4',
+			'uom',
+			'weight_per_unit',
+			'weight_uom',
+			'image',
+		]
+
+	def copy_sales_order_items_from_reference(self, ref_order_doc):
+			"""Copy Sales Order Items from reference order based on haravan_variant_id mapping"""
+			try:
+				current_items = self.get("items") or []
+				ref_items = ref_order_doc.get("items") or []
+
+				if not current_items or not ref_items:
+					return
+
+			# Build mapping pairs: current_item - ref_item
+				pairs = self._map_current_and_ref_items(current_items, ref_items)
+				if not pairs:
+					return
+
+				# Fields to copy from reference items
+				fields_to_copy = self._get_item_fields_to_copy()
+
+			# Update current items with reference data using frappe.db.set_value for child table
+				items_updated = False
+				for current_item, ref_item in pairs:
+					for field in fields_to_copy:
+						ref_value = getattr(ref_item, field, None)
+						current_value = getattr(current_item, field, None)
+						# Only copy if reference has value and current item doesn't have value
+						if ref_value and not current_value:
+							frappe.db.set_value("Sales Order Item", current_item.name, field, ref_value)
+							items_updated = True
+
+				if items_updated:
+					frappe.db.commit()
+					frappe.clear_document_cache("Sales Order", self.name)
+
+			except Exception as e:
+				frappe.log_error(f"Error copying SO items: {str(e)[:100]}")
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:
 	"""Returns the unreserved quantity for the Sales Order Item."""
