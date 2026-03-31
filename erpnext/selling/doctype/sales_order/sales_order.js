@@ -98,6 +98,9 @@ frappe.ui.form.on("Sales Order", {
     		})
        	});
 
+		// hide sales order item grid footer (buttons)
+		$('[data-fieldname="items"] .grid-footer').addClass('hidden');
+
 		if (frm.doc.docstatus === 1) {
 			if (
 				frm.doc.status !== "Closed" &&
@@ -1243,41 +1246,6 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 				}
 				this.frm.page.set_inner_btn_group_as_primary(__("Create"));
 			}
-		}
-
-		if (
-			this.frm.doc.docstatus === 0 &&
-			frappe.model.can_read("Quotation") &&
-			!this.frm.doc.is_subcontracted
-		) {
-			this.frm.add_custom_button(
-				__("Quotation"),
-				function () {
-					let d = erpnext.utils.map_current_doc({
-						method: "erpnext.selling.doctype.quotation.quotation.make_sales_order",
-						source_doctype: "Quotation",
-						target: me.frm,
-						setters: [
-							{
-								label: __("Customer"),
-								fieldname: "party_name",
-								fieldtype: "Link",
-								options: "Customer",
-								default: me.frm.doc.customer || undefined,
-							},
-						],
-						get_query_filters: {
-							company: me.frm.doc.company,
-							docstatus: 1,
-							status: ["not in", ["Lost", "Ordered"]],
-						},
-						allow_child_item_selection: true,
-						child_fieldname: "items",
-						child_columns: ["item_code", "item_name", "qty", "rate", "amount"],
-					});
-				},
-				__("Get Items From")
-			);
 		}
 
 		this.order_type(doc);
