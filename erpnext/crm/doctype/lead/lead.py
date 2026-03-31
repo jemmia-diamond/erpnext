@@ -81,6 +81,7 @@ class Lead(SellingController, CRMNote):
 		purpose_lead: DF.Link | None
 		qualification_status: DF.Literal["Unqualified", "In Process", "Qualified"]
 		qualified_by: DF.Link | None
+		qualified_lead_date: DF.Datetime | None
 		qualified_on: DF.Date | None
 		region: DF.Link | None
 		request_type: DF.Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
@@ -157,7 +158,22 @@ class Lead(SellingController, CRMNote):
 		# leads created by email inbox only have the full name set
 		if self.lead_name and not any([self.first_name, self.middle_name, self.last_name]):
 			self.first_name, self.middle_name, self.last_name = parse_full_name(self.lead_name)
+		
+	def before_save(self):
+		self.update_lead_stage()
 
+	def update_lead_stage(self):
+
+		lead_stage = self.get_lead_stage()
+		
+		if lead_stage: 
+			self.lead_stage = lead_stage
+
+		if  self.has_value_changed("lead_stage") \
+			and  not self.qualified_lead_date \
+			and self.lead_stage != "Lead" :
+			self.qualified_lead_date = frappe.utils.now_datetime()
+		
 	def check_lead_source(self):
 		lead_source = None
 		parsed_pancake_data = None
@@ -348,6 +364,30 @@ class Lead(SellingController, CRMNote):
 	def has_lost_quotation(self):
 		return frappe.db.get_value("Quotation", {"party_name": self.name, "docstatus": 1, "status": "Lost"})
 
+
+	def create_opportunity(self):
+		"""
+		every lead stage convert to opportunity will create opportunity if not exist
+		"""
+
+		if self.lead_stage != "Opportunity":
+			return 
+		
+		opportunity = None 
+		try:
+			opportunity = frappe.get_doc("Lead", {
+				"party_name" : self.name,
+				"opportunity_from" : "Lead"
+			})
+		except Exception:
+			opportunity = None
+		
+		if opportunity: 
+			return
+
+		opportunity = make_opportunity(self.name)
+
+		opportunity.insert()
 	@frappe.whitelist()
 	def create_prospect_and_contact(self, data):
 		data = frappe._dict(data)
@@ -453,6 +493,16 @@ class Lead(SellingController, CRMNote):
 		except frappe.DuplicateEntryError:
 			frappe.throw(_("Prospect {0} already exists").format(company_name or self.company_name))
 
+	def get_lead_stage(self):
+
+		if not self.phone or not self.province:
+			return "Lead"
+
+		if not self.budget_lead or not self.purpose_lead or not self.preferred_product_type:
+			return "Qualified Lead"
+		
+
+		return "Opportunity"
 
 @frappe.whitelist()
 def make_customer(source_name, target_doc=None):

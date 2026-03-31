@@ -29,6 +29,7 @@
   "gender",
   "province",
   "region",
+  "qualified_lead_date",
   "col_break123",
   "lead_owner",
   "source",
@@ -799,6 +800,12 @@
    "fieldtype": "Link",
    "label": "Province",
    "options": "Province"
+  },
+  {
+   "fieldname": "qualified_lead_date",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "label": "Qualified Date Date"
   },
   {
    "fieldname": "region",

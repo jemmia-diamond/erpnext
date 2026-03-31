@@ -35,9 +35,7 @@
   "column_break_pfyx",
   "budget_lead",
   "preferred_product_type",
-  "demand_notes",
   "column_break_rirs",
-  "preferred_diamond",
   "organization_details_section",
   "no_of_employees",
   "annual_revenue",
@@ -181,7 +179,7 @@
    "options": "Opportunity Type"
   },
   {
-   "default": "Open",
+   "default": "Opportunity",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -190,7 +188,7 @@
    "no_copy": 1,
    "oldfieldname": "status",
    "oldfieldtype": "Select",
-   "options": "Open\nQuotation\nConverted\nLost\nReplied\nClosed",
+   "options": "Opportunity\nHot Opportunity\nWarm Opportunity\nCold Opportunity",
    "print_hide": 1,
    "reqd": 1
   },
@@ -701,18 +699,6 @@
   {
    "fieldname": "column_break_pfyx",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "preferred_diamond",
-   "fieldtype": "Table",
-   "label": "Preferred Diamond",
-   "options": "Lead Diamond"
-  },
-  {
-   "fieldname": "demand_notes",
-   "fieldtype": "Small Text",
-   "hidden": 1,
-   "label": "Demand Notes"
   },
   {
    "fieldname": "expected_delivery_date",
