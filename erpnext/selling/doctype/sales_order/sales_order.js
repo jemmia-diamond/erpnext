@@ -89,6 +89,13 @@ frappe.ui.form.on("Sales Order", {
 
 		frm.add_custom_button(__("Send Order To Lark"), frappe.utils.debounce(() => {
 			frappe.db.get_doc("Sales Order", frm.doc.name).then((doc) => {
+
+				// Show warning requiring user to input personal ID 
+				if (!doc.customer_personal_id) {
+					frappe.msgprint(__("Vui lòng nhập số CMND/CCCD/Hộ chiếu của khách hàng trước khi gửi đơn hàng đến Lark."));
+					return;
+				}
+
 				const btn = frm.custom_buttons[__("Send Order To Lark")];
 				$(btn).prop("disabled", true);
 
