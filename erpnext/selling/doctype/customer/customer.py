@@ -77,6 +77,7 @@ class Customer(TransactionBase):
 		email_id: DF.ReadOnly | None
 		first_name: DF.ReadOnly | None
 		first_channel: DF.Literal["", "Facebook", "Zalo", "TikTok", "Call Center", "Website Form", "Visiting Guests", "Email"]
+		first_source: DF.Link | None
 		gender: DF.Link | None
 		haravan_id: DF.Int
 		image: DF.AttachImage | None
@@ -103,14 +104,10 @@ class Customer(TransactionBase):
 		phone: DF.ReadOnly | None
 		place_of_issuance: DF.Literal["Ministry of Public Security", "Department of Police for Administrative Management of Social Order", "Department of Police for Registration, Residency Management, and National Population Data"]
 		portal_users: DF.Table[PortalUser]
-<<<<<<< HEAD
-		primary_address: DF.TextEditor | None
-=======
 		primary_address: DF.SmallText | None
 		primary_contact: DF.SmallText | None
 		priority_bank_account: DF.Link | None
 		priority_login_date: DF.Date | None
->>>>>>> 7331870b75 (Merge pull request #13 from jemmia-diamond/sales_order_settings)
 		prospect_name: DF.Link | None
 		purchase_amount_last_12_months: DF.Currency
 		rank: DF.Data | None

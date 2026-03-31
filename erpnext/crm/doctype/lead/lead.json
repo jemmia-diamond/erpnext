@@ -119,7 +119,6 @@
   "all_activities_section",
   "all_activities_html",
   "column_break_bwya",
-  "table_uzxd",
   "merge_lead_tab",
   "check_duplicate",
   "dashboard_tab"
@@ -658,11 +657,6 @@
    "fieldname": "information_tab",
    "fieldtype": "Tab Break",
    "label": "Detail"
-  },
-  {
-   "fieldname": "table_uzxd",
-   "fieldtype": "Table",
-   "options": "Lead Channel"
   },
   {
    "fieldname": "bank_name",
