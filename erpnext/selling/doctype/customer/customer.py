@@ -47,6 +47,7 @@ class Customer(TransactionBase):
 
 		account_manager: DF.Link | None
 		accounts: DF.Table[PartyAccount]
+		back_image: DF.AttachImage | None
 		bank_account: DF.Link | None
 		birth_date: DF.Date | None
 		bizfly_customer_number: DF.Data | None
@@ -69,6 +70,7 @@ class Customer(TransactionBase):
 		customer_type: DF.Literal["Company", "Individual", "Partnership"]
 		customer_website: DF.Data | None
 		date_of_issuance: DF.Date | None
+		date_of_passport_issuance: DF.Date | None
 		default_bank_account: DF.Link | None
 		default_commission_rate: DF.Float
 		default_currency: DF.Link | None
@@ -76,10 +78,12 @@ class Customer(TransactionBase):
 		default_sales_partner: DF.Link | None
 		disabled: DF.Check
 		dn_required: DF.Check
+		doc_image: DF.AttachImage | None
 		email_id: DF.ReadOnly | None
 		first_name: DF.ReadOnly | None
 		first_channel: DF.Literal["", "Facebook", "Zalo", "TikTok", "Call Center", "Website Form", "Visiting Guests", "Email"]
 		first_source: DF.Link | None
+		front_image: DF.AttachImage | None
 		gender: DF.Link | None
 		haravan_id: DF.Data | None
 		image: DF.AttachImage | None
@@ -97,14 +101,17 @@ class Customer(TransactionBase):
 		naming_series: DF.Literal["CUST-.YYYY.-"]
 		no_of_employees: DF.Data | None
 		opportunity_name: DF.Link | None
+		passport_expiry_date: DF.Date | None
+		passport_id: DF.Data | None
 		payment_terms: DF.Link | None
 		pending_cashback: DF.Currency
 		person_name: DF.Data | None
-		personal_document_type: DF.Literal["CCCD", "CMND", "Passport"]
+		personal_document_type: DF.Literal["CCCD", "Passport"]
 		personal_id: DF.Data | None
 		personal_tax_id: DF.Data | None
 		phone: DF.ReadOnly | None
 		place_of_issuance: DF.Literal["Ministry of Public Security", "Department of Police for Administrative Management of Social Order", "Department of Police for Registration, Residency Management, and National Population Data"]
+		place_of_passport_issuance: DF.Link | None
 		portal_users: DF.Table[PortalUser]
 		primary_address: DF.SmallText | None
 		primary_contact: DF.SmallText | None
