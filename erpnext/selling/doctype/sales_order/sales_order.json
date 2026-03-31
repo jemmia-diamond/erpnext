@@ -31,12 +31,13 @@
   "order_number",
   "transaction_date",
   "real_order_date",
+  "consultation_date",
   "column_break_dqxa",
   "cancelled_status",
   "financial_status",
   "fulfillment_status",
+  "carrier_status",
   "expected_delivery_date",
-  "consultation_date",
   "accounting_dimensions_section",
   "cost_center",
   "dimension_col_break",
@@ -2121,6 +2122,12 @@
    "fieldtype": "Table MultiSelect",
    "label": "Sales Order Purposes",
    "options": "Sales Order Purpose"
+  },
+  {
+   "fieldname": "carrier_status",
+   "fieldtype": "Select",
+   "label": "Carrier Status",
+   "options": "\nNot Delivered\nReady To Pick\nDelivering\nDelivered"
   }
  ],
  "grid_page_length": 50,
