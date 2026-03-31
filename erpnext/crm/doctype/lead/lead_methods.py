@@ -263,6 +263,18 @@ def update_lead_from_summary(data):
 
 	# lead not found return not update
 	lead = get_lead_by_name(lead_name)
+	
+	if lead is None: 
+		contacts = get_contacts_by_conversation_id(conversation_id)
+		for contact in contacts:
+			try: 
+				contact_doc = frappe.get_doc('Contact', {'name': contact.name})
+				contact_doc.last_summarize_time = frappe.utils.now_datetime()
+				contact_doc.save()
+			except:
+				pass
+
+		return
 
 	budget_to = data.get("budget_to", None)
 	budget_from =  None if budget_to else data.get("budget_from", None)
@@ -272,7 +284,7 @@ def update_lead_from_summary(data):
 	expected_receiving_date = data.get("expected_receiving_date", None)
 
 	lead_budget = find_range_budget(budget_from, budget_to)
-	if lead_budget:
+	if lead_budget is not None:
 		lead.budget_lead = lead_budget.name
 
 	lead_purpose = get_lead_purpose(purpose)
