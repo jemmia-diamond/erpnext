@@ -20,13 +20,14 @@
    "fieldname": "region",
    "fieldtype": "Link",
    "label": "Region",
-   "options": "Region"
+   "options": "Region",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-20 07:26:36.968995",
+ "modified": "2025-06-11 16:32:49.579302",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Province",

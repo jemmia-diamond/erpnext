@@ -15,6 +15,6 @@ class Province(Document):
 		from frappe.types import DF
 
 		province_name: DF.SmallText
-		region: DF.Link | None
+		region: DF.Link
 	# end: auto-generated types
 	pass
