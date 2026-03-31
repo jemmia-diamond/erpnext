@@ -192,21 +192,24 @@ class Lead(SellingController, CRMNote):
 		"""
 		user = None 
 
-		filters = {}
-		
-		if pancake_user_id and pancake_user_id != "":
-			filters = {
-				"pancake_id" : pancake_user_id
-			}
-		else: 
-			filters = {
-				"email" : config.DEFAULT_MAIL_OWNER
-			}
-		print(filters)
+		filters = {
+			"pancake_id" : pancake_user_id
+		}
 		try:
 			user = frappe.get_doc('User',filters, "name")
 		except Exception:
-			user =None
+			user = None 
+
+		# pancake id not  exist == user off board 
+		# assign default mail config
+		if not user: 
+			try:
+				user = frappe.get_doc('User',{
+					"email":config.DEFAULT_MAIL_OWNER
+				}, "name")
+			except Exception:
+				user = None 
+			
 		if user:
 			self.lead_owner = user.name
 

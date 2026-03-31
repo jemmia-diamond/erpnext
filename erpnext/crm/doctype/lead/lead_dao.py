@@ -42,6 +42,8 @@ def get_leads_to_summary():
             )
             AND tdl.parenttype = 'Contact'
     )
+    GROUP BY
+        c.pancake_conversation_id;
 	"""
 	pancakes = frappe.db.sql(sql, as_dict=True)
 	return pancakes
