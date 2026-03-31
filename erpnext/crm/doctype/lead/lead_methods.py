@@ -1,5 +1,18 @@
+import asyncio
 import json
 from typing import TYPE_CHECKING
+
+from erpnext.crm.doctype.lead_product.lead_product_dao import get_products_in_names
+from erpnext.crm.doctype.lead.lead_dao import (
+	get_lead_by_name,
+	get_lead_name_by_conversation_id,
+	get_leads_to_summary
+)
+from erpnext.crm.doctype.lead_budget.lead_budget_dao import find_range_budget
+from erpnext.crm.doctype.lead_demand.lead_demand_dao import get_lead_purpose
+from erpnext.config.config import config
+from erpnext.packages.ai_hub.ai_hub import AIHubClient
+from frappe.www.contact import get_contact_by_conversation_id
 
 import frappe 
 from frappe import _
@@ -182,25 +195,89 @@ def find_budget_tag(tags):
             return tag
     return None
 
-def find_range_budget(budget_from: int | None, budget_to:int | None):
+def get_leads_to_summary_from_pancake():
 
-	lead_budgets = None
-	filters = {
-	}
-	if budget_to:
-		filters["budget_to"] = ["<=", budget_to]
-
-	if budget_from:
-		filters["budget_from"] = [">=", budget_from]
-
-	lead_budgets = frappe.get_all(
-		"Lead Budget",
-		filters = filters,
-		limit_page_length=1,
-		fields=["name", "budget_label"]
+	print("Start cron summary")
+	pancakes = get_leads_to_summary()
+	ai_hub_client  = AIHubClient(
+		url=config.AI_HUB_URL,
+		token = config.AI_HUB_ACCESS_TOKEN,
+		webhook_url= config.AI_HUB_WEBHOOK
 	)
 
-	if len(lead_budgets) > 0:
-		return lead_budgets[0]
+	print("pancakes conversation", pancakes)
+	for pancake in pancakes:
+		data = asyncio.run(
+			ai_hub_client.summary_lead_conversation(
+				pancake.pancake_conversation_id,
+				pancake.pancake_page_id
+			)
+		)
 
-	return None
+def get_lead_province(province : str):
+	lead_province = None
+
+	try:
+		lead_province = frappe.get_doc("Province", {
+			"province_name" : province
+		})
+	except:
+		return None
+	return lead_province
+
+@frappe.whitelist(methods=["POST"])
+def update_lead_from_summary(data):
+	if isinstance(data, str):
+		data = json.loads(data)
+
+	conversation_id = data.get("conversation_id", None)
+	if conversation_id is None:
+		return
+	lead_name = get_lead_name_by_conversation_id(conversation_id)
+
+	# lead not found return not update
+	lead = get_lead_by_name(lead_name)
+
+	budget_to = data.get("budget_to", None)
+	budget_from =  None if budget_to else data.get("budget_from", None)
+	purpose = data.get("purpose", None)
+	product_names = data.get("product_names", [])
+	phone = data.get("phone", None)
+	province = data.get("province", None)
+	expected_receiving_date = data.get("expected_receiving_date", None)
+
+	lead_budget = find_range_budget(budget_from, budget_to)
+	if lead_budget:
+		lead.budget_lead = lead_budget.name
+
+	lead_purpose = get_lead_purpose(purpose)
+	if lead_purpose:
+		lead.purpose_lead = lead_purpose.name
+
+	if phone:
+		lead.phone = phone
+
+	if expected_receiving_date:
+		lead.expected_delivery_date	= expected_receiving_date
+
+	lead_province = get_lead_province(province)
+	if lead_province:
+		lead.province = lead_province.name
+
+
+	products = get_products_in_names(product_names)
+	for product in products:
+		existing_products = {item.product_type for item in lead.preferred_product_type}
+		if product.name not in existing_products:
+			lead.append("preferred_product_type", {
+				"product_type": product.name
+			})
+	lead.save()
+
+	#update last summarize at
+	contact = get_contact_by_conversation_id(conversation_id)
+	if contact:
+		contact.last_summarize_time = frappe.utils.now_datetime()
+		contact.save()
+
+	return True
