@@ -1928,6 +1928,26 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 	}
 };
 
+// Sales Team event handlers
+frappe.ui.form.on("Sales Team", {
+	merator: function(frm, cdt, cdn) {
+		calculate_allocated_percentage(frm, cdt, cdn);
+	},
+	denominator: function(frm, cdt, cdn) {
+		calculate_allocated_percentage(frm, cdt, cdn);
+	}
+});
+
+function calculate_allocated_percentage(frm, cdt, cdn) {
+	var row = locals[cdt][cdn];
+	
+	if (row.merator && row.denominator && row.denominator > 0) {
+		// Calculate percentage from merator/denominator
+		var percentage = (row.merator / row.denominator) * 100;
+		frappe.model.set_value(cdt, cdn, "allocated_percentage", percentage);
+	}
+}
+
 extend_cscript(cur_frm.cscript, new erpnext.selling.SalesOrderController({ frm: cur_frm }));
 
 function prevent_past_delivery_dates(frm) {

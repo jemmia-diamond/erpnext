@@ -239,8 +239,15 @@ class SellingController(StockController):
 		for sales_person in sales_team:
 			self.round_floats_in(sales_person)
 
+			allocated_percentage = 0.0
+
+			if (sales_person.merator and sales_person.denominator):
+				allocated_percentage = flt(sales_person.merator / sales_person.denominator * 100.0, self.precision("allocated_percentage", sales_person))
+			else:
+				allocated_percentage = flt(sales_person.allocated_percentage, self.precision("allocated_percentage", sales_person))
+
 			sales_person.allocated_amount = flt(
-				flt(self.amount_eligible_for_commission) * sales_person.allocated_percentage / 100.0,
+				flt(self.amount_eligible_for_commission) * allocated_percentage / 100.0,
 				self.precision("allocated_amount", sales_person),
 			)
 
@@ -250,7 +257,7 @@ class SellingController(StockController):
 					self.precision("incentives", sales_person),
 				)
 
-			total += sales_person.allocated_percentage
+			total += allocated_percentage
 
 		if sales_team and round(total) != 100.0:
 			throw(_("Total allocated percentage for sales team should be 100"))

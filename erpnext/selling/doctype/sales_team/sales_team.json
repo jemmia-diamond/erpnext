@@ -11,7 +11,9 @@
   "allocated_percentage",
   "allocated_amount",
   "commission_rate",
-  "incentives"
+  "incentives",
+  "merator",
+  "denominator"
  ],
  "fields": [
   {
@@ -81,12 +83,28 @@
    "oldfieldname": "incentives",
    "oldfieldtype": "Currency",
    "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "merator",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Merator",
+   "print_width": "100px",
+   "width": "100px"
+  },
+  {
+   "fieldname": "denominator",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Denominator",
+   "print_width": "100px",
+   "width": "100px"
   }
  ],
  "idx": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-10-15 15:36:49.231466",
+ "modified": "2025-10-24 09:33:35.952697",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Team",
