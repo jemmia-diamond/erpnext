@@ -387,6 +387,47 @@ frappe.ui.form.on("Payment Entry", {
 		erpnext.accounts.unreconcile_payment.add_unreconcile_btn(frm);
 		frappe.flags.allocate_payment_amount = true;
 
+		if (frm.doc.docstatus === 0 && !frm.is_new()) {
+			frm.events.get_payment_code(frm, (payment_code) => {
+				let can_cancel = true;
+				if (payment_code === "banking") {
+					if (frm.doc.bank_transactions && frm.doc.bank_transactions.length > 0) {
+						can_cancel = false;
+					}
+				}
+
+				if (["cash_on_delivery", "cash", "pos", "payment_link"].includes(payment_code)) {
+					if (frm.doc.verified_by) {
+						can_cancel = false;
+					}
+				}
+
+				if (can_cancel) {
+					frm.add_custom_button(__("Cancel"), function () {
+						frappe.confirm(
+							__("Bạn có chắc chắn muốn huỷ Phiếu thanh toán này không?"),
+							function () {
+								frappe.call({
+									method: "cancel_draft_payment_entry",
+									doc: frm.doc,
+									callback: function (r) {
+										if (!r.exc) {
+											frappe.show_alert({
+												message: __("Huỷ Phiếu thanh toán thành công"),
+												indicator: "green"
+											});
+											frm.reload_doc();
+										}
+									}
+								});
+							}
+						);
+					}).addClass("btn-danger");
+				}
+			});
+		}
+
+
 		if (frm.doc.qr_url) {
 			const qr_group = __("Mã QR");
 			frm.add_custom_button(__("Copy URL"), () => {
