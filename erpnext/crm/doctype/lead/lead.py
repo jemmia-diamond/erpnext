@@ -200,6 +200,8 @@ class Lead(SellingController, CRMNote):
 			pass
 
 	def update_lead_stage(self):
+		if self.lead_stage=="Customer":
+			return
 
 		lead_stage = self.get_lead_stage()
 
