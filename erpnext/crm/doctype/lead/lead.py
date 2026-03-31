@@ -252,6 +252,9 @@ class Lead(SellingController, CRMNote):
 				elif pc_platform == "personal_zalo":
 					lead_source_platform = "Zalo"
 					lead_source_prefix = "ZL"
+				elif pc_platform == "personal_zalo_koc":
+					lead_source_platform = "ZaloKOC"
+					lead_source_prefix = "ZOA"
 				elif "instagram" in pc_platform:
 					lead_source_platform = "Instagram"
 					lead_source_prefix = "IG"
