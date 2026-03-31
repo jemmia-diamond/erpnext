@@ -194,7 +194,7 @@ class Lead(SellingController, CRMNote):
 
 		filters = {}
 		
-		if not pancake_user_id and pancake_user_id != "":
+		if pancake_user_id and pancake_user_id != "":
 			filters = {
 				"pancake_id" : pancake_user_id
 			}

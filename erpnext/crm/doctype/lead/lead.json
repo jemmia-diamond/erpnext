@@ -827,7 +827,7 @@
   {
    "fetch_from": "source.source_name",
    "fieldname": "lead_source_name",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "hidden": 1,
    "label": "Lead Source Name",
    "options": "Lead"
@@ -835,10 +835,10 @@
   {
    "fetch_from": "source.pancake_platform",
    "fieldname": "lead_source_platform",
-   "fieldtype": "Link",
-   "hidden": 1,
+   "fieldtype": "Data",
    "label": "Lead Source Platform",
-   "options": "Lead"
+   "options": "Lead",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
