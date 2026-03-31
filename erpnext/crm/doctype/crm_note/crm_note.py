@@ -1,7 +1,7 @@
 # Copyright (c) 2022, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-# import frappe
+import frappe
 from frappe.model.document import Document
 
 
@@ -18,9 +18,12 @@ class CRMNote(Document):
 		added_on: DF.Datetime | None
 		name: DF.Int | None
 		note: DF.TextEditor | None
+		notify_to: DF.Link | None
 		parent: DF.Data
 		parentfield: DF.Data
 		parenttype: DF.Data
 	# end: auto-generated types
 
-	pass
+	def update_added_by(self):
+		if not self.added_by:
+			self.added_by = frappe.session.user

@@ -521,7 +521,8 @@
    "fieldtype": "Table",
    "label": "Notes",
    "no_copy": 1,
-   "options": "CRM Note"
+   "options": "CRM Note",
+   "read_only": 1
   },
   {
    "default": "0",
