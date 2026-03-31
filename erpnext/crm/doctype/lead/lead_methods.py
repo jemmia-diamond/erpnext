@@ -1,7 +1,7 @@
 import asyncio
 import json
 from typing import TYPE_CHECKING
-
+from erpnext.crm.doctype.lead.lead import Lead
 from erpnext.crm.doctype.lead_product.lead_product_dao import get_lead_product, create_lead_product
 from erpnext.crm.doctype.lead.lead_dao import (
 	get_lead_by_name,
@@ -395,6 +395,7 @@ def update_lead_from_summary(data):
 			})
 
 	lead.save()
+	lead.reload()
 
 	#update last summarize at 
 	contacts = get_contacts_by_conversation_id(conversation_id)
