@@ -62,10 +62,30 @@ frappe.listview_settings["Lead"] = {
 			}
 		});
 
-		// Add Pancake button to each row
 		for (let i = 0; i < listview.data.length; i++) {
-			const row = $(`.result .list-row-container:nth-child(${i + 3}) .list-row .level-right .list-row-activity`);
+			const row = $(`.result .list-row-container:nth-child(${i + 3}) .list-row`);
 			const doc = listview.data[i];
+
+			// Add Avatar
+			var avatar = "";
+			const select = row.find(".list-subject .select-like");
+			if(doc.image) {
+				avatar = `
+				<span class="avatar avatar-small  filterable" title="${doc.first_name}" style="margin-right: 4px; padding: 3px;">
+					<span class="avatar-frame" style="background-image: url(&quot;${doc.image}&quot;)" <="" span="" title="${doc.first_name}"></span>
+				</span>
+				`
+			} else {
+				avatar = `
+				<span class="avatar avatar-small  filterable" title="${doc.first_name}" style="margin-right: 4px; padding: 3px;">
+					<div class="avatar-frame standard-image" style="background-color: var(--red-avatar-bg); color: var(--red-avatar-color)" title="${doc.first_name}">${doc.first_name.charAt(0).toUpperCase()}</div>
+				</span>
+				`
+			}
+			select.after($(avatar));
+
+			// Add Pancake button
+			const activity = row.find(".level-right .list-row-activity");
 			frappe.db.get_list("Contact", {
 				filters: [
 					["Dynamic Link", "link_doctype", "=", "Lead"],
@@ -82,7 +102,7 @@ frappe.listview_settings["Lead"] = {
 							e.stopPropagation();
 							window.open(`https://pancake.vn/${contact.pancake_page_id}?c_id=` + contact.pancake_conversation_id, '_blank');
 						});
-						row.append(btn);
+						activity.append(btn);
 					}
 				}
 			});
