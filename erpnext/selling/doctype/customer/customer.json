@@ -99,11 +99,7 @@
   "column_break_ikkg",
   "personal_tax_id",
   "bank_section",
-  "bank_name",
-  "column_break_kufu",
-  "account_number",
-  "column_break_kqch",
-  "bank_account_name",
+  "bank_account",
   "credit_limit_section",
   "payment_terms",
   "credit_limits",
@@ -764,17 +760,6 @@
    "label": "Website"
   },
   {
-   "fieldname": "bank_name",
-   "fieldtype": "Select",
-   "label": "Bank Name",
-   "options": "Agribank\nACB\nBIDV\nVietcombank\nVietinBank\nTechcombank\nSacombank\nMB Bank\nEximbank\nVPBank\nSHB\nNamABank\nOceanBank\nTPBank"
-  },
-  {
-   "fieldname": "account_number",
-   "fieldtype": "Data",
-   "label": "Account Number"
-  },
-  {
    "fieldname": "personal_tax_id",
    "fieldtype": "Data",
    "label": "Personal Tax ID"
@@ -873,8 +858,7 @@
   },
   {
    "fieldname": "bank_section",
-   "fieldtype": "Section Break",
-   "label": "Bank Account"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "vat_name",
@@ -891,19 +875,6 @@
    "fieldname": "vat_address",
    "fieldtype": "Data",
    "label": "VAT Address"
-  },
-  {
-   "fieldname": "column_break_kufu",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_kqch",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "bank_account_name",
-   "fieldtype": "Data",
-   "label": "Bank Account Name"
   },
   {
    "fieldname": "address_section",
@@ -945,6 +916,12 @@
    "fieldtype": "Data",
    "label": "Bizfly Code",
    "unique": 1
+  },
+  {
+   "fieldname": "bank_account",
+   "fieldtype": "Link",
+   "label": "Bank Account",
+   "options": "Bank Account"
   }
  ],
  "icon": "fa fa-user",
