@@ -31,5 +31,6 @@ class Promotion(Document):
 		scope: DF.Literal["Line Item", "Order"]
 		start_date: DF.Date
 		title: DF.Data
+		promotion_type: DF.Literal["Khuyến mãi nền", "Khác"]
 	# end: auto-generated types
 	pass
