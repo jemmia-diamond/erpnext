@@ -3110,7 +3110,7 @@ def get_mapped_subcontracting_inward_order(source_name, target_doc=None):
 def _update_sales_order_return_amount(sales_order):
 	"""
 	Recalculate and update the return_amount for the sales order based on linked buyback items.
-	Logic: Sum of (calculated_buyback_price IF exists ELSE buyback_price)
+	Logic: Sum of (buyback_price IF exists ELSE calculated_buyback_price)
 	"""
 	if not sales_order:
 		return
@@ -3123,10 +3123,10 @@ def _update_sales_order_return_amount(sales_order):
 
 	total_return_amount = 0.0
 	for item in buyback_items:
-		if item.calculated_buyback_price is not None:
-			price = flt(item.calculated_buyback_price)
-		else:
+		if item.buyback_price is not None and flt(item.buyback_price) > 0:
 			price = flt(item.buyback_price)
+		else:
+			price = flt(item.calculated_buyback_price)
 		total_return_amount += price
 
 	frappe.db.set_value("Sales Order", sales_order, "return_amount", total_return_amount)
