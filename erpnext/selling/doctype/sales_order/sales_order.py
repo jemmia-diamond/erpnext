@@ -901,6 +901,31 @@ class SalesOrder(SellingController):
 
 	def on_update(self):
 		self.check_status_changes_for_rank()
+		self.sync_tracking_number_to_payment_entry()
+
+	def sync_tracking_number_to_payment_entry(self):
+		if not self.tracking_number:
+			return
+
+		if not self.has_value_changed("tracking_number"):
+			return
+
+		payment_entries = frappe.db.sql("""
+			SELECT parent
+			FROM `tabPayment Entry Reference`
+			WHERE reference_doctype = 'Sales Order'
+			AND reference_name = %s
+			AND parenttype = 'Payment Entry'
+			AND parentfield = 'references'
+		""", (self.name,), as_dict=True)
+
+		if not payment_entries:
+			return
+
+		for pe in payment_entries:
+			pe_docstatus = frappe.db.get_value("Payment Entry", pe.parent, "docstatus")
+			if pe_docstatus == 0:
+				frappe.db.set_value("Payment Entry", pe.parent, "shipping_code", self.tracking_number)
 
 	def validate_sensitive_coupons(self):
 		"""
