@@ -80,7 +80,6 @@
   "product_categories",
   "policies",
   "order_policies",
-  "return_type",
   "return_amount",
   "column_break_bscz",
   "total_qty",
@@ -1010,15 +1009,9 @@
    "read_only": 1
   },
   {
-   "fieldname": "return_type",
-   "fieldtype": "Select",
-   "label": "Return Type",
-   "options": "\nBuyback\nExchange"
-  },
-  {
    "fieldname": "return_amount",
    "fieldtype": "Currency",
-   "label": "Return Amount",
+   "label": "Exchange Amount",
    "options": "currency"
   },
   {
