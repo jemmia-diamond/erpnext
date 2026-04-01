@@ -391,7 +391,7 @@ frappe.ui.form.on("Sales Order", {
 
 		if (items_to_fetch.length > 0) {
 			items_to_fetch.forEach(item => {
-				frm.trigger('trigger_fetch_policy', item.name, item.item_code, false);
+				frm.events.trigger_fetch_policy(frm, item.name, item.item_code, false);
 			});
 		}
 	},
@@ -1452,7 +1452,7 @@ frappe.ui.form.on("Sales Order Item", {
 
 	fetch_policy: function(frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
-		frm.trigger('trigger_fetch_policy', row.name, row.item_code, true);
+		frm.events.trigger_fetch_policy(frm, row.name, row.item_code, true);
 	},
 
 	serial: function (frm, cdt, cdn) {
