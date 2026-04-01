@@ -27,6 +27,7 @@
   "payment_order_status",
   "party",
   "shipping_code",
+  "notification_sent",
   "qr_section_break",
   "custom_transaction_id",
   "custom_transfer_status",
@@ -987,6 +988,14 @@
    "fieldname": "shipping_code",
    "fieldtype": "Data",
    "label": "Shipping Code"
+  },
+  {
+   "default": "0",
+   "fieldname": "notification_sent",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Notification Sent",
+   "print_hide": 1
   }
  ],
  "grid_page_length": 50,
