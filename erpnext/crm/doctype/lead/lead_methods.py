@@ -217,6 +217,7 @@ def update_lead_by_batch(docs):
 	if isinstance(docs, str):
 		docs = json.loads(docs)
 	failed_docs = []
+	results = []
 	for doc in docs:
 		doc.pop("flags", None)
 		try:
@@ -227,13 +228,27 @@ def update_lead_by_batch(docs):
 
 			pancake_list_tags = doc.get("pancake_tags", [])
 			pancake_list_tags = [transform_price_label(tag) for tag in pancake_list_tags]
-
-			existing_doc = frappe.get_doc(doc["doctype"], doc["docname"])
+			
+			try:
+				existing_doc = frappe.get_doc(doc["doctype"], doc["docname"])
+			except (frappe.DoesNotExistError, Exception):
+				conversation_id = doc.get("pancake_data", {}).get("conversation_id")
+				lead_name = get_lead_name_by_conversation_id(conversation_id) if conversation_id else None
+				
+				if lead_name:
+					existing_doc = frappe.get_doc(doc["doctype"], lead_name)
+				else:
+					raise
 
 			# exist phone not update
 			if existing_doc.phone and existing_doc.phone != "":
 				doc["phone"] = existing_doc.phone
 
+			# Check if the new phone number already exists in another lead
+			new_phone = doc.get("phone")
+			if new_phone:
+				existing_doc = handle_duplicate_and_merge(existing_doc, new_phone)
+			
 			if existing_doc.lead_name  and existing_doc.lead_name != "" and existing_doc.lead_name != "Chưa rõ":
 				doc["first_name"] = existing_doc.lead_name
 				doc["lead_name"] = existing_doc.lead_name
@@ -266,11 +281,74 @@ def update_lead_by_batch(docs):
 						existing_doc.add_tag(tag)
 			except Exception as e:
 				pass
+			
+			results.append({
+				"conversation_id": doc.get("pancake_data", {}).get("conversation_id"),
+				"name": existing_doc.name
+			})
 
 		except Exception:
+			results.append({
+				"conversation_id": doc.get("pancake_data", {}).get("conversation_id"),
+				"name": None
+			})
 			failed_docs.append({"doc": doc, "exc": frappe.utils.get_traceback()})
 
-	return {"failed_docs": failed_docs}
+	return {"results": results, "failed_docs": failed_docs}
+
+
+def handle_duplicate_and_merge(existing_doc, new_phone):
+	"""
+	Check if new_phone belongs to another lead.
+	If so, keep the oldest lead (by first_reach_at), merge contacts, and delete the duplicate.
+	Returns the 'master' document that survived.
+	"""
+	conflicting_lead = frappe.db.get_value("Lead", {"phone": new_phone}, "name")
+	
+	if not conflicting_lead or conflicting_lead == existing_doc.name:
+		return existing_doc
+
+	conflicting_doc = frappe.get_doc("Lead", conflicting_lead)
+	
+	# Determine which lead is older (Master) and which is newer (Loser)
+	is_existing_older = False
+	if existing_doc.first_reach_at and conflicting_doc.first_reach_at:
+		if get_datetime(existing_doc.first_reach_at) < get_datetime(conflicting_doc.first_reach_at):
+			is_existing_older = True
+	elif existing_doc.first_reach_at: # conflicting has no date
+		is_existing_older = True
+	
+	if is_existing_older:
+		master_doc = existing_doc
+		loser_doc = conflicting_doc
+	else:
+		master_doc = conflicting_doc
+		loser_doc = existing_doc
+
+	# Re-link loser's contacts to master
+	loser_contacts = frappe.get_all("Contact", filters=[
+		["Dynamic Link", "link_doctype", "=", "Lead"],
+		["Dynamic Link", "link_name", "=", loser_doc.name]
+	], fields=["name"])
+
+	try:
+		for lc in loser_contacts:
+			frappe.db.sql("""
+				UPDATE `tabDynamic Link`
+				SET link_name = %s
+				WHERE link_doctype = 'Lead' AND link_name = %s AND parent = %s
+			""", (master_doc.name, loser_doc.name, lc.name))
+		
+		frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True, force=1)
+		
+	except Exception as e:
+		frappe.log_error(
+			f"Failed to merge lead {loser_doc.name} into {master_doc.name}: {str(e)}. All changes rolled back.",
+			"Lead Merge Error"
+		)
+		raise
+	
+	return master_doc
 
 def transform_price_label(label: str) -> str:
     return label.replace('<', 'dưới ').replace('>', 'trên ').strip()
