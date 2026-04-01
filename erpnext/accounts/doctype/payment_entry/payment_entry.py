@@ -440,7 +440,8 @@ class PaymentEntry(AccountsController):
 			# Fetch payment_records sum
 			payment_records_total = frappe.db.sql("""
 				SELECT SUM(amount) FROM `tabSales Order Payment Record`
-				WHERE parent = %s AND kind IN ('capture', 'authorization')
+				WHERE parent = %s AND kind IN ('capture', 'authorization') 
+			AND gateway != 'Thanh toán qua ERP'
 			""", (so_name))[0][0] or 0.0
 
 			sales_order_grand_total, current_paid_amount, current_balance = frappe.db.get_value("Sales Order", so_name, ["grand_total", "paid_amount", "balance"])
