@@ -533,7 +533,8 @@ class Lead(SellingController, CRMNote):
 				self.set_first_lead_source()
 
 		except Exception as e:
-			frappe.log_error(f"Error link_to_contacts {e}")
+			frappe.log_error(f"Error
+			 {e}")
 
 	def update_contact(self, contact: Contact, pancake_data):
 		try:
@@ -576,12 +577,18 @@ class Lead(SellingController, CRMNote):
 						has_primary_mobile = True
 
 				if not phone_exists:
-					contact.append("phone_nos", {
-						"phone": self.phone,
-						"is_primary_phone": 0 if has_primary_phone else 1,
-						"is_primary_mobile_no": 0 if has_primary_mobile else 1
-					})
-					has_changed = True
+					phone_owner = frappe.db.get_value("Lead", {"phone": self.phone}, "name")
+					if phone_owner and phone_owner != self.name:
+						frappe.logger().warning(
+							f"update_contact: skipping phone {self.phone} — already owned by lead {phone_owner}"
+						)
+					else:
+						contact.append("phone_nos", {
+							"phone": self.phone,
+							"is_primary_phone": 0 if has_primary_phone else 1,
+							"is_primary_mobile_no": 0 if has_primary_mobile else 1
+						})
+						has_changed = True
 
 			if has_changed:
 				contact.save(ignore_permissions=True)
