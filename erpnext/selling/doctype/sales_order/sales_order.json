@@ -80,7 +80,6 @@
   "product_categories",
   "policies",
   "order_policies",
-  "return_amount",
   "column_break_bscz",
   "total_qty",
   "total",
@@ -131,6 +130,10 @@
   "packed_items",
   "pricing_rule_details",
   "pricing_rules",
+  "buyback_section_break",
+  "buyback_items",
+  "return_amount",
+  "buyback_items_html",
   "invoice_information",
   "deposit_amount",
   "order_currency",
@@ -1013,6 +1016,12 @@
    "fieldtype": "Currency",
    "label": "Exchange Amount",
    "options": "currency"
+  },
+  {
+   "fieldname": "buyback_items_html",
+   "fieldtype": "HTML",
+   "label": "Buyback Items",
+   "read_only": 1
   },
   {
    "fieldname": "totals",
@@ -2245,6 +2254,16 @@
    "fieldtype": "Table",
    "label": "Debt History",
    "options": "Order and Debt Tracking"
+  },
+  {
+   "fieldname": "buyback_section_break",
+   "fieldtype": "Section Break",
+   "label": "Buyback"
+  },
+  {
+   "fieldname": "buyback_items",
+   "fieldtype": "Button",
+   "label": "Select buyback/exchange items"
   },
   {
    "fieldname": "invoice_information",
