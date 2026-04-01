@@ -2426,7 +2426,8 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 					frappe.model.set_value(cdt, cdn, "sepay_reference_number", r.sepay_reference_number);
 					frappe.model.set_value(cdt, cdn, "sepay_id", r.sepay_id);
 					if (r.sepay_transaction_date) {
-						frm.set_value("payment_date", r.sepay_transaction_date);
+						let datetime_str = moment(r.sepay_transaction_date, "YYYY-MM-DD HH:mm:ss").format("YYYY-MM-DD HH:mm:ss");
+						frm.set_value("payment_date", datetime_str);
 					}
 				}
 			});
