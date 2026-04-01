@@ -3,6 +3,7 @@
 
 
 import json
+import time
 from functools import reduce
 
 import frappe
@@ -12,6 +13,7 @@ from frappe.query_builder import Tuple
 from frappe.query_builder.functions import Count
 from frappe.utils import cint, comma_or, flt, getdate, nowdate
 from frappe.utils.data import comma_and, fmt_money, get_link_to_form
+from frappe.integrations.doctype.webhook.webhook import enqueue_webhook
 from pypika import Case
 from pypika.functions import Coalesce, Sum
 
@@ -4138,3 +4140,56 @@ def get_payment_entry_list(doctype=None, txt="", searchfield="name", start=0, pa
 	values["page_len"] = int(page_len) if page_len else 100
 
 	return frappe.db.sql(query, values, as_dict=True)
+
+def daily_run_success_batch():
+	webhooks = frappe.get_all(
+		"Webhook",
+		filters={"enabled": 1, "webhook_doctype": "Payment Entry"},
+		fields=["name"]
+	)
+	
+	webhook = None
+	for wh in webhooks:
+		w = frappe.get_doc("Webhook", wh.name)
+		if w.webhook_headers:
+			for h in w.webhook_headers:
+				if h.key == "erp-topic" and h.value == "update":
+					webhook = w
+					break
+		if webhook:
+			break
+
+	if not webhook:
+		frappe.log_error(
+			"No webhook found for Payment Entry with 'erp-topic: update' header",
+			"Payment Entry Webhook Trigger"
+		)
+		return
+
+	payment_entries = frappe.get_all(
+		"Payment Entry",
+		filters={
+			"custom_transfer_status": "success",
+			"payment_order_status": "Success",
+			"verified_by": ["is", "set"],
+			"misa_synced": 0,
+			"docstatus": 0
+		},
+		pluck="name"
+	)
+
+	if not payment_entries:
+		frappe.logger().info("No Payment Entries found for daily webhook trigger")
+		return
+
+	for pe_name in payment_entries:
+		try:
+			doc = frappe.get_doc("Payment Entry", pe_name)
+			enqueue_webhook(doc, webhook)
+			frappe.logger().info(f"Webhook triggered successfully for Payment Entry: {pe_name}")
+		except Exception as e:
+			frappe.log_error(
+				f"Failed to trigger webhook for Payment Entry {pe_name}: {str(e)}",
+				"Payment Entry Webhook Trigger Error"
+			)		
+		time.sleep(1)
