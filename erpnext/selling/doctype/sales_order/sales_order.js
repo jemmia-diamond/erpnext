@@ -402,6 +402,9 @@ frappe.ui.form.on("Sales Order", {
 					},
 					callback: function(r) {
 						if (r.message && r.message.success) {
+							if (r.message.return_amount !== undefined) {
+								frm.set_value('return_amount', r.message.return_amount);
+							}
 							frappe.show_alert({
 								message: __('Successfully linked {0} buyback item(s)', [r.message.count]),
 								indicator: 'green'
@@ -607,6 +610,9 @@ frappe.ui.form.on("Sales Order", {
 											args: { item_name: item_name },
 											callback: function(r) {
 												if (r.message && r.message.success) {
+													if (r.message.return_amount !== undefined) {
+														frm.set_value('return_amount', r.message.return_amount);
+													}
 													frappe.show_alert({
 														message: __('Buyback item unlinked successfully'),
 														indicator: 'green'

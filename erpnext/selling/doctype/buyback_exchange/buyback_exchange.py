@@ -15,7 +15,6 @@ class BuybackExchange(Document):
 	reason: str
 	refund_amount: float
 	order_code: str
-	prev_sales_order: str
 	new_order_code: str
 	submitted_date: str
 	items: list
@@ -51,8 +50,6 @@ class BuybackExchange(Document):
 
 				if not self.order_code and row.order_code:
 					self.order_code = row.order_code
-				if not self.prev_sales_order and row.prev_sales_order:
-					self.prev_sales_order = row.prev_sales_order
 
 		except Exception as e:
 			frappe.log_error(f"Invalid products_info in BuybackExchange {self.name}: {e!s}", self.products_info)
