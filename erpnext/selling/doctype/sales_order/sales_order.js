@@ -1104,6 +1104,19 @@ frappe.ui.form.on("Sales Order Item", {
 		}
 	},
 
+	fetch_policy: function(frm, cdt, cdn) {
+		let row = locals[cdt][cdn];
+		frappe.call({
+			method: "erpnext.selling.doctype.sales_order_item.sales_order_item.trigger_manual_webhook",
+			args: { item_name: row.name },
+			callback: function(r) {
+				if (r.message) {
+					frappe.show_alert(__('Đang tự động lấy thông tin chính sách ...'), 5);
+				}
+			}
+		});
+	},
+
 	serial: function (frm, cdt, cdn) {
 		// When serial is selected, append serial number to serial_numbers field
 		var row = locals[cdt][cdn];

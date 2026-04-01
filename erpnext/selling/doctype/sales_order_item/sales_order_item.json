@@ -39,6 +39,9 @@
   "promotion_5",
   "column_break_klcw",
   "promotion",
+  "fetch_policy",
+  "item_policy",
+  "is_policy_locked",
   "section_break_5",
   "description",
   "item_group",
@@ -1204,6 +1207,24 @@
    "label": "Promotion 5",
    "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"NONE\"]]",
    "options": "Promotion"
+  },
+  {
+   "fieldname": "item_policy",
+   "fieldtype": "Long Text",
+   "label": "Item Policy",
+   "permlevel": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_policy_locked",
+   "fieldtype": "Check",
+   "label": "Is Policy Locked",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "fetch_policy",
+   "fieldtype": "Button",
+   "label": "Fetch Policy"
   }
  ],
  "grid_page_length": 50,

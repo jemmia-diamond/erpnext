@@ -78,6 +78,7 @@
   "promotions",
   "product_categories",
   "policies",
+  "order_policies",
   "column_break_bscz",
   "total_qty",
   "total",
@@ -256,7 +257,8 @@
   "column_break_phue",
   "haravan_created_at",
   "source_name",
-  "connections_tab"
+  "connections_tab",
+  "payment_entries_tab"
  ],
  "fields": [
   {
@@ -2076,7 +2078,8 @@
   },
   {
    "fieldname": "payment_section_section",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_pulu",
@@ -2278,6 +2281,17 @@
    "in_standard_filter": 1,
    "label": "Fulfillment Completion Date",
    "read_only": 1
+  },
+  {
+   "fieldname": "order_policies",
+   "fieldtype": "Long Text",
+   "label": "Policies (Auto)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_entries_tab",
+   "fieldtype": "Tab Break",
+   "label": "Payment Entries"
   }
  ],
  "grid_page_length": 50,
