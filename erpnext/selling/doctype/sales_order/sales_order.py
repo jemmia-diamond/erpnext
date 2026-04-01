@@ -67,20 +67,12 @@ class SalesOrder(SellingController):
 		from erpnext.accounts.doctype.payment_entry_reference.payment_entry_reference import PaymentEntryReference
 		from erpnext.accounts.doctype.payment_schedule.payment_schedule import PaymentSchedule
 		from erpnext.accounts.doctype.pricing_rule_detail.pricing_rule_detail import PricingRuleDetail
-		from erpnext.accounts.doctype.sales_taxes_and_charges.sales_taxes_and_charges import (
-			SalesTaxesandCharges,
-		)
-		from erpnext.selling.doctype.order_and_debt_tracking.order_and_debt_tracking import (
-			OrderandDebtTracking,
-		)
+		from erpnext.accounts.doctype.sales_taxes_and_charges.sales_taxes_and_charges import SalesTaxesandCharges
+		from erpnext.selling.doctype.order_and_debt_tracking.order_and_debt_tracking import OrderandDebtTracking
 		from erpnext.selling.doctype.sales_order_item.sales_order_item import SalesOrderItem
-		from erpnext.selling.doctype.sales_order_payment_record.sales_order_payment_record import (
-			SalesOrderPaymentRecord,
-		)
+		from erpnext.selling.doctype.sales_order_payment_record.sales_order_payment_record import SalesOrderPaymentRecord
 		from erpnext.selling.doctype.sales_order_policy.sales_order_policy import SalesOrderPolicy
-		from erpnext.selling.doctype.sales_order_product_category.sales_order_product_category import (
-			SalesOrderProductCategory,
-		)
+		from erpnext.selling.doctype.sales_order_product_category.sales_order_product_category import SalesOrderProductCategory
 		from erpnext.selling.doctype.sales_order_promotion.sales_order_promotion import SalesOrderPromotion
 		from erpnext.selling.doctype.sales_order_purpose.sales_order_purpose import SalesOrderPurpose
 		from erpnext.selling.doctype.sales_order_reference.sales_order_reference import SalesOrderReference
@@ -244,6 +236,7 @@ class SalesOrder(SellingController):
 		total_net_weight: DF.Float
 		total_qty: DF.Float
 		total_taxes_and_charges: DF.Currency
+		tracking_number: DF.Data | None
 		transaction_date: DF.Date
 		transaction_time: DF.Time | None
 		utm_campaign: DF.Link | None
