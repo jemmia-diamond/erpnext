@@ -2182,7 +2182,7 @@ class PaymentEntry(AccountsController):
 
 		self.save()
 
-		frappe.msgprint(_("Payment Entry verified successfully"))
+		frappe.msgprint(_("Xác nhận thành công!!"))
 
 	@frappe.whitelist()
 	def allocate_amount_to_references(self, paid_amount, paid_amount_change, allocate_payment_amount):
