@@ -430,7 +430,8 @@ auto_cancel_exempted_doctypes = [
 scheduler_events = {
 	"cron": {
 		"0/15 * * * *": [
-			"erpnext.manufacturing.doctype.bom_update_log.bom_update_log.resume_bom_cost_update_jobs"
+			"erpnext.manufacturing.doctype.bom_update_log.bom_update_log.resume_bom_cost_update_jobs",
+			"erpnext.accounts.doctype.payment_entry.payment_entry.daily_run_success_batch",
 		],
 		"0/30 * * * *": [
 			"erpnext.stock.doctype.repost_item_valuation.repost_item_valuation.run_parallel_reposting",
@@ -445,10 +446,6 @@ scheduler_events = {
 		# Daily but offset by 45 minutes
 		"45 0 * * *": [
 			"erpnext.stock.reorder_item.reorder_item",
-		],
-		# Daily run at 9am (UTC+7)
-		"0 2 * * *": [
-			"erpnext.accounts.doctype.payment_entry.payment_entry.daily_run_success_batch",
 		]
 	},
 	"hourly": [
