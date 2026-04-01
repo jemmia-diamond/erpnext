@@ -408,6 +408,10 @@ frappe.ui.form.on("Payment Entry", {
 					}
 				}
 
+				if (frappe.user.has_role("Administrator") || frappe.user.has_role("Developer")) {
+					can_cancel = true;
+				}
+
 				if (can_cancel) {
 					frm.add_custom_button(__("Cancel"), function () {
 						frappe.confirm(
