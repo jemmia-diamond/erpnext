@@ -909,7 +909,7 @@ class SalesOrder(SellingController):
 			if len(parts) != 2:
 				continue
 			
-			if parts[0] == "JEM":
+			if parts[0] == "AP0001":
 				continue
 
 			if len(parts[1]) == 6:
