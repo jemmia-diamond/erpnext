@@ -90,7 +90,6 @@ class SalesOrder(SellingController):
 		auto_repeat: DF.Link | None
 		balance: DF.Currency
 		balance_group_payment: DF.Currency
-		balance_payment: DF.Currency
 		base_discount_amount: DF.Currency
 		base_grand_total: DF.Currency
 		base_in_words: DF.Data | None
@@ -232,7 +231,6 @@ class SalesOrder(SellingController):
 		to_date: DF.Date | None
 		total: DF.Currency
 		total_allocated_group_payment: DF.Currency
-		total_allocated_payment: DF.Currency
 		total_amount: DF.Currency
 		total_commission: DF.Currency
 		total_net_weight: DF.Float
@@ -314,8 +312,6 @@ class SalesOrder(SellingController):
 		""", self.name, as_dict=True)
 
 		if not payment_references:
-			self.total_allocated_payment = 0.0
-			self.balance_payment = self.grand_total
 			return
 
 		total_allocated = 0.0
@@ -342,9 +338,6 @@ class SalesOrder(SellingController):
 					"payment_date": pe_ref.payment_date,
 					"payment_order_status": pe_ref.payment_order_status
 			})
-		
-		self.total_allocated_payment = total_allocated
-		self.balance_payment = self.grand_total - total_allocated
 			
 
 	def set_group_payment_entries(self):
