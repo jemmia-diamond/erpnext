@@ -219,9 +219,12 @@ class SellingController(StockController):
 				)
 			)
 
-		self.amount_eligible_for_commission = sum(
-			item.base_net_amount for item in self.items if item.grant_commission
-		)
+		if self.meta.get_field("commission_base_amount") and self.get("commission_base_amount"):
+			self.amount_eligible_for_commission = self.commission_base_amount
+		else:
+			self.amount_eligible_for_commission = sum(
+				item.base_net_amount for item in self.items if item.grant_commission
+			)
 
 		self.total_commission = flt(
 			self.amount_eligible_for_commission * self.commission_rate / 100.0,
