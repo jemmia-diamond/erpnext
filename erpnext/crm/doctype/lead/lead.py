@@ -334,14 +334,19 @@ class Lead(SellingController, CRMNote):
 			return frappe.get_doc("Contact", existing_contact_name)
 
 		return None
-
-	def check_lead_source(self):
+		
+	def check_lead_source(self, pancake_data=None):
 		lead_source = None
 		parsed_pancake_data = None
-		try:
-			parsed_pancake_data = frappe.parse_json(self.pancake_data)
-		except Exception as e:
-			parsed_pancake_data = None
+		
+		if pancake_data:
+			parsed_pancake_data = pancake_data
+		else:
+			try:
+				parsed_pancake_data = frappe.parse_json(self.pancake_data)
+			except Exception as e:
+				parsed_pancake_data = None
+		
 		if parsed_pancake_data is None:
 			return
 		if parsed_pancake_data.get("page_id", None):
@@ -652,13 +657,20 @@ class Lead(SellingController, CRMNote):
 				parsed_pancake_data = None
 		
 		pancake_dict = parsed_pancake_data or {}
+
+		# Determine source from pancake platform
+		derived_source = self.source		
+		if pancake_dict:
+			lead_source_data = self.check_lead_source(pancake_data=pancake_dict)
+			if lead_source_data:
+				derived_source = lead_source_data[0]
 		
 		contact.update(
 			{
 				"first_name": self.first_name or self.lead_name,
 				"last_name": self.last_name,
 				"salutation": self.salutation,
-				"source": self.source,
+				"source": derived_source,
 				"gender": self.gender,
 				"designation": self.job_title,
 				"company_name": self.company_name,
