@@ -979,7 +979,9 @@ frappe.ui.form.on("Payment Entry", {
 			},
 			callback: function(r) {
 				if (r.message && r.message.length > 0) {
-					let sales_orders = r.message;
+					let sales_orders = r.message.filter(so => !(so.financial_status === "Paid"));
+					if (sales_orders.length === 0) return;
+
 					let single_order = sales_orders.length === 1;
 
 					sales_orders.forEach(function(so) {
