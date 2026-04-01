@@ -1,5 +1,6 @@
 import frappe
 
+
 def get_lead_name_by_conversation_id(conversation_id: str):
 	names = frappe.get_all(
 		"Contact",
