@@ -4063,6 +4063,27 @@ def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, fil
 		},
 	)
 
+
+@frappe.whitelist()
+def get_sales_orders_for_auto_populate(company, customer):
+	return frappe.db.sql(
+		"""
+		SELECT name, FORMAT(grand_total, 0) as grand_total, order_number, customer_name
+		FROM `tabSales Order`
+		WHERE company = %(company)s
+		AND customer = %(customer)s
+		AND cancelled_status = "Uncancelled"
+		AND financial_status IN ("Pending", "Partially Paid")
+		AND grand_total > 0
+		ORDER BY modified DESC
+		""",
+		{
+			"company": company,
+			"customer": customer,
+		},
+		as_dict=True
+	)
+
 def cancel_pending_transfers():
 	from frappe.utils import add_to_date, now_datetime
 

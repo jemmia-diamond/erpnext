@@ -87,7 +87,8 @@
    "label": "Paid Amount",
    "columns": 2,
    "read_only": 1,
-   "options": "currency"
+   "options": "currency",
+   "precision": "0"
   },
   {
    "fieldname": "payment_date",

@@ -262,7 +262,7 @@ frappe.ui.form.on("Payment Entry", {
 			callback(null);
 			return;
 		}
-		
+
 		frappe.db.get_value("Mode of Payment", frm.doc.mode_of_payment, "payment_code", (r) => {
 			callback(r ? r.payment_code : null);
 		});
@@ -334,15 +334,15 @@ frappe.ui.form.on("Payment Entry", {
 
 		frm.events.get_payment_code(frm, (payment_code) => {
 			frm.toggle_display("gateway", ["payment_link", "pos", "cash", "cash_on_delivery"].includes(payment_code));
-			
+
 			const show_bank_account = payment_code && !["cash", "pos", "payment_link", "cash_on_delivery"].includes(payment_code);
 			frm.toggle_display("bank_account", show_bank_account);
-			
+
 			const is_new_or_has_bank = frm.is_new() || frm.doc.bank_account;
 			const make_required = show_bank_account && frm.doc.docstatus === 0 && is_new_or_has_bank;
 			frm.set_df_property("bank_account", "reqd", make_required ? 1 : 0);
 			frm.toggle_display("qr_section_break", payment_code === "banking");
-			
+
 			const payment_date_required = !["cash_on_delivery"].includes(payment_code);
 			frm.set_df_property("payment_date", "reqd", payment_date_required ? 1 : 0);
 		});
@@ -352,7 +352,7 @@ frappe.ui.form.on("Payment Entry", {
 		if (frm.doc.docstatus === 0) {
 			if (frm.page.btn_primary) {
 				frm.page.btn_primary.hide();
-			}			
+			}
 			frm.page.remove_inner_button(__("Submit"));
 		}
 	},
@@ -457,7 +457,7 @@ frappe.ui.form.on("Payment Entry", {
 			(frappe.user.has_role("Accounts User") || frappe.user.has_role("Accounts Manager"))
 		) {
 			let has_sales_order = frm.doc.references && frm.doc.references.some(ref => ref.reference_doctype === "Sales Order");
-			
+
 			let btn = frm.add_custom_button(__("Verify"), () => {
 				frm.events.get_payment_code(frm, (payment_code) => {
 					let requires_bank_transaction = payment_code === "banking";
@@ -490,7 +490,7 @@ frappe.ui.form.on("Payment Entry", {
 					});
 				});
 			});
-			
+
 			if (!has_sales_order) {
 				btn.addClass('disabled').prop('disabled', true);
 			}
@@ -519,7 +519,7 @@ frappe.ui.form.on("Payment Entry", {
 		for (let bt of frm.doc.bank_transactions) {
 			if (bt.allocated_amount && frm.doc.paid_amount) {
 				if (Math.abs(flt(bt.allocated_amount) - flt(frm.doc.paid_amount)) > 0.01) {
-					frappe.throw(__("Số tiền phân bổ của giao dịch ngân hàng ({0}) phải khớp với số tiền thanh toán của phiếu ({1}).", 
+					frappe.throw(__("Số tiền phân bổ của giao dịch ngân hàng ({0}) phải khớp với số tiền thanh toán của phiếu ({1}).",
 						[bt.allocated_amount, frm.doc.paid_amount]));
 				}
 			}
@@ -728,7 +728,7 @@ frappe.ui.form.on("Payment Entry", {
 		frm.set_value("gateway", "");
 		frm.events.update_gateway_options(frm);
 		frm.events.update_field_visibility(frm);
-		
+
 		if (frm.doc.mode_of_payment) {
 			frappe.db.get_value("Mode of Payment", frm.doc.mode_of_payment, "payment_code", (r) => {
 				if (r && r.payment_code) {
@@ -736,7 +736,16 @@ frappe.ui.form.on("Payment Entry", {
 				}
 			});
 		}
-		
+
+		if (frm.doc.references && frm.doc.references.length > 0) {
+			frm.doc.references.forEach(function(row) {
+				if (row.reference_doctype === "Sales Order") {
+					frappe.model.set_value(row.doctype, row.name, "mode_of_payment", frm.doc.mode_of_payment);
+				}
+			});
+			frm.refresh_field("references");
+		}
+
 		erpnext.accounts.pos.get_payment_mode_account(frm, frm.doc.mode_of_payment, function (account) {
 			let payment_account_field = frm.doc.payment_type == "Receive" ? "paid_to" : "paid_from";
 			frm.set_value(payment_account_field, account);
@@ -872,6 +881,7 @@ frappe.ui.form.on("Payment Entry", {
 									frm.doc.paid_to_account_currency,
 									company_currency
 								),
+							() => frm.events.auto_populate_sales_orders(frm),
 						]);
 					}
 				},
@@ -881,6 +891,89 @@ frappe.ui.form.on("Payment Entry", {
 
 	apply_tds: function (frm) {
 		if (!frm.doc.apply_tds) {
+			frm.set_value("tax_withholding_category", "");
+		} else if (["Customer", "Supplier"].includes(frm.doc.party_type)) {
+			frappe.db.get_value(frm.doc.party_type, frm.doc.party, "tax_withholding_category", (values) => {
+				frm.set_value("tax_withholding_category", values.tax_withholding_category);
+			});
+		}
+		frm.clear_table("tax_withholding_entries");
+	},
+
+	auto_populate_sales_orders: function(frm) {
+		if (!frm.doc.party || !frm.doc.paid_amount) {
+			return;
+		}
+
+		frm.clear_table("references");
+		frappe.call({
+			method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_sales_orders_for_auto_populate",
+			args: {
+				company: frm.doc.company,
+				customer: frm.doc.party
+			},
+			callback: function(r) {
+				if (r.message && r.message.length > 0) {
+					let sales_orders = r.message;
+					let single_order = sales_orders.length === 1;
+
+					sales_orders.forEach(function(so) {
+						let row = frm.add_child("references");
+						row.reference_doctype = "Sales Order";
+						row.reference_name = so.name;
+
+						if (single_order) {
+							row.allocated_amount = frm.doc.paid_amount;
+						} else {
+							row.allocated_amount = 0;
+						}
+
+						frappe.call({
+							method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_reference_details",
+							args: {
+								reference_doctype: "Sales Order",
+								reference_name: so.name,
+								party_account_currency: frm.doc.payment_type == "Receive"
+									? frm.doc.paid_from_account_currency
+									: frm.doc.paid_to_account_currency,
+								party_type: frm.doc.party_type,
+								party: frm.doc.party,
+							},
+							callback: function(ref_r) {
+								if (ref_r.message) {
+									$.each(ref_r.message, function(field, value) {
+										frappe.model.set_value(row.doctype, row.name, field, value);
+									});
+
+									frappe.model.set_value(row.doctype, row.name, "mode_of_payment", frm.doc.mode_of_payment);
+									frappe.model.set_value(row.doctype, row.name, "gateway", frm.doc.gateway);
+									frappe.model.set_value(row.doctype, row.name, "paid_amount", frm.doc.paid_amount);
+									frappe.model.set_value(row.doctype, row.name, "payment_date", frm.doc.payment_date);
+									frappe.model.set_value(row.doctype, row.name, "payment_order_status", frm.doc.payment_order_status);
+
+									frappe.db.get_value("Sales Order", so.name, [
+										"order_number",
+										"split_order_group_name"
+									], (so_data) => {
+										if (so_data) {
+											frappe.model.set_value(row.doctype, row.name, "order_number", so_data.order_number);
+											frappe.model.set_value(row.doctype, row.name, "split_order_group_name", so_data.split_order_group_name);
+										}
+									});
+								}
+							}
+						});
+					});
+
+					frm.refresh_field("references");
+					frm.events.set_total_allocated_amount(frm);
+				}
+			}
+		});
+	},
+
+	apply_tax_withholding_amount: function (frm) {
+		if (!frm.doc.apply_tax_withholding_amount) {
 			frm.set_value("tax_withholding_category", "");
 		} else if (["Customer", "Supplier"].includes(frm.doc.party_type)) {
 			frappe.db.get_value(frm.doc.party_type, frm.doc.party, "tax_withholding_category", (values) => {
@@ -1050,6 +1143,17 @@ frappe.ui.form.on("Payment Entry", {
 		frm.events.paid_from_account_currency(frm);
 	},
 
+	payment_date: function (frm) {
+		if (frm.doc.references && frm.doc.references.length > 0) {
+			frm.doc.references.forEach(function(row) {
+				if (row.reference_doctype === "Sales Order") {
+					frappe.model.set_value(row.doctype, row.name, "payment_date", frm.doc.payment_date);
+				}
+			});
+			frm.refresh_field("references");
+		}
+	},
+
 	source_exchange_rate: function (frm) {
 		let company_currency = frappe.get_doc(":Company", frm.doc.company).default_currency;
 		if (frm.doc.paid_amount) {
@@ -1104,6 +1208,11 @@ frappe.ui.form.on("Payment Entry", {
 	},
 
 	paid_amount: function (frm) {
+		if (frm.doc.party && frm.doc.paid_amount) {
+			frm.events.auto_populate_sales_orders(frm);
+		}
+
+		// Original logic
 		frm.set_value("base_paid_amount", flt(frm.doc.paid_amount) * flt(frm.doc.source_exchange_rate));
 		let company_currency = frappe.get_doc(":Company", frm.doc.company).default_currency;
 		if (!frm.doc.received_amount) {
@@ -2144,12 +2253,12 @@ frappe.ui.form.on("Payment Entry Reference", {
 
 							frappe.model.set_value(cdt, cdn, "allocated_amount", allocated_amount);
 						}
-						
+
 						if (row.reference_doctype === "Sales Order") {
 							frappe.model.set_value(cdt, cdn, "mode_of_payment", frm.doc.mode_of_payment);
 							frappe.model.set_value(cdt, cdn, "gateway", frm.doc.gateway);
 							frappe.model.set_value(cdt, cdn, "paid_amount", frm.doc.paid_amount);
-							frappe.model.set_value(cdt, cdn, "payment_date", frm.doc.posting_date);
+							frappe.model.set_value(cdt, cdn, "payment_date", frm.doc.payment_date);
 							frappe.model.set_value(cdt, cdn, "payment_order_status", frm.doc.payment_order_status);
 							frappe.db.get_value("Sales Order", row.reference_name, [
 								"order_number",
@@ -2161,7 +2270,7 @@ frappe.ui.form.on("Payment Entry Reference", {
 								}
 							});
 						}
-						
+
 						frm.refresh_fields();
 					}
 				},
@@ -2171,7 +2280,6 @@ frappe.ui.form.on("Payment Entry Reference", {
 
 	allocated_amount: function (frm) {
 		frm.events.set_total_allocated_amount(frm);
-		frm.events.validate_total_allocated_amount(frm);
 	},
 
 	references_remove: function (frm) {
@@ -2322,7 +2430,7 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 	},
 
 	allocated_amount: function(frm, cdt, cdn) {
-		let row = locals[cdt][cdn];		
+		let row = locals[cdt][cdn];
 		if (row.allocated_amount && frm.doc.paid_amount) {
 			if (Math.abs(flt(row.allocated_amount) - flt(frm.doc.paid_amount)) > 0.01) {
 				frappe.msgprint({
@@ -2330,7 +2438,7 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 					message: __("Vui lòng kiểm tra và nhập <b>đúng số tiền thanh toán trước</b> khi tiếp tục.", [frm.doc.paid_amount]),
 					indicator: 'red'
 				});
-				
+
 				frappe.model.clear_doc(cdt, cdn);
 				frm.refresh_field("bank_transactions");
 			}
@@ -2344,14 +2452,14 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 				indicator: "red",
 				message: __("Mỗi phiếu thanh toán chỉ được phép gắn <b>một giao dịch duy nhất</b>.")
 			});
-			
+
 			setTimeout(() => {
 				frappe.model.clear_doc(cdt, cdn);
 				frm.refresh_field("bank_transactions");
 			}, 100);
 			return;
 		}
-		
+
 		let row = locals[cdt][cdn];
 		if (frm.doc.paid_amount) {
 			frappe.model.set_value(cdt, cdn, "allocated_amount", frm.doc.paid_amount);
