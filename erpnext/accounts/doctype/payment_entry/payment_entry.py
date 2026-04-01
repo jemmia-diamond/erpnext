@@ -1029,6 +1029,15 @@ class PaymentEntry(AccountsController):
 			if not bt.bank_transaction:
 				frappe.throw(_("Dòng #{0}: Bắt buộc chọn Giao dịch ngân hàng").format(bt.idx))
 
+			sepay_account_number = frappe.db.get_value("Bank Transaction", bt.bank_transaction, "sepay_account_number")
+			if sepay_account_number and self.bank_account_no and self.bank_account_no != sepay_account_number:
+				msg = _("STK ngân hàng của phiếu thanh toán không khớp STK ngân hàng của giao dịch ngân hàng")
+				msg += "<br><br>"
+				msg += _("1. Bạn cần phải thay đổi <b>Tài khoản ngân hàng</b> đúng với Ngân hàng của phiếu <b>Giao dịch ngân hàng</b>. Bấm <b>Lưu</b>") + "<br>"
+				msg += _("2. Sau đó map <b>Giao dịch ngân hàng</b> và bấm <b>Lưu</b>") + "<br><br>"
+				msg += _("<b>Lưu ý: Nếu bạn không làm được, hãy nhắn gửi tin nhắn đến nhóm hỗ trợ nhé!</b>")
+				frappe.throw(msg)
+
 	def update_payment_schedule(self, cancel=0):
 		invoice_payment_amount_map = {}
 		invoice_paid_amount_map = {}
