@@ -1563,7 +1563,9 @@ class SalesOrder(SellingController):
 			'weight_per_unit',
 			'weight_uom',
 			'image',
-			'discount_rate'
+			'discount_rate',
+			'item_policy',
+			'is_policy_locked'
 		]
 
 	def copy_sales_order_items_from_reference(self, ref_order_doc):

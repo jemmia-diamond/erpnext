@@ -1212,14 +1212,14 @@
    "fieldname": "item_policy",
    "fieldtype": "Long Text",
    "label": "Item Policy",
-   "permlevel": 1
+   "permlevel": 3
   },
   {
    "default": "0",
    "fieldname": "is_policy_locked",
    "fieldtype": "Check",
    "label": "Is Policy Locked",
-   "permlevel": 1
+   "permlevel": 3
   },
   {
    "fieldname": "fetch_policy",
