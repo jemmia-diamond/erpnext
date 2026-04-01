@@ -102,7 +102,6 @@ class PaymentEntry(AccountsController):
 		custom_transaction_id: DF.Data | None
 		custom_transfer_note: DF.SmallText | None
 		custom_transfer_status: DF.Literal["", "pending", "success", "cancel"]
-		custom_webhook_processed: DF.Check
 		deductions: DF.Table[PaymentEntryDeduction]
 		difference_amount: DF.Currency
 		gateway: DF.Literal[None]
