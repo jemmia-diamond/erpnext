@@ -304,7 +304,7 @@ class SalesOrder(SellingController):
 		payment_references = frappe.db.sql("""
 			SELECT
 				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name,
-				pr.total_amount, pr.outstanding_amount,
+				pr.total_amount, pr.outstanding_amount, pr.order_number, pr.split_order_group_name,
 				CASE
 					WHEN pe.payment_type = 'Pay' THEN -pr.allocated_amount
 					ELSE pr.allocated_amount
@@ -342,7 +342,9 @@ class SalesOrder(SellingController):
 					"gateway": pe_ref.gateway,
 					"paid_amount": pe_ref.paid_amount,
 					"payment_date": pe_ref.payment_date,
-					"payment_order_status": pe_ref.payment_order_status
+					"payment_order_status": pe_ref.payment_order_status,
+					"order_number": pe_ref.order_number,
+					"split_order_group_name": pe_ref.split_order_group_name,
 			})
 
 
@@ -363,7 +365,7 @@ class SalesOrder(SellingController):
 		payment_references = frappe.db.sql("""
 			SELECT
 				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name,
-				pr.total_amount, pr.outstanding_amount,
+				pr.total_amount, pr.outstanding_amount, pr.order_number, pr.split_order_group_name,
 				CASE
 					WHEN pe.payment_type = 'Pay' THEN -pr.allocated_amount
 					ELSE pr.allocated_amount
@@ -400,7 +402,9 @@ class SalesOrder(SellingController):
 						"gateway": pe_ref.gateway,
 						"paid_amount": pe_ref.paid_amount,
 						"payment_date": pe_ref.payment_date,
-						"payment_order_status": pe_ref.payment_order_status
+						"payment_order_status": pe_ref.payment_order_status,
+						"order_number": pe_ref.order_number,
+						"split_order_group_name": pe_ref.split_order_group_name
 				})
 
 	def get_all_related_sales_orders(self):
