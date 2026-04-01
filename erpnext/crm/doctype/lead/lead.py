@@ -500,13 +500,19 @@ class Lead(SellingController, CRMNote):
 			)
 			self.contact_doc.save()
 
-	def link_to_contacts(self, page_id, conversation_id):
-		print("link_to_contacts")
-		try:
+	def link_to_contacts(self, pancake_data):
+		try: 
+			page_id = pancake_data.get("page_id")
+			conversation_id = pancake_data.get("conversation_id")
+			
 			self.contact_doc = self.check_contact(
 				page_id=page_id, 
 				conversation_id=conversation_id
 			)
+
+			if not self.contact_doc:
+				self.contact_doc = self.create_contact(pancake_data=pancake_data)
+
 			if self.contact_doc:
 				contact_link = frappe.get_value("Dynamic Link", {
 						"link_doctype": self.doctype,
@@ -518,34 +524,32 @@ class Lead(SellingController, CRMNote):
 					self.link_to_contact()
 					
 				self.set_first_lead_source()
+
 		except Exception as e:
-			print(f"Error link_to_contacts {e}")
+			frappe.log_error(f"Error link_to_contacts {e}")
 	
 	def set_first_lead_source(self):
 		try:
-			linked_contacts_data = frappe.db.sql(
+			source = frappe.db.sql(
 				'''
-				SELECT tdl.parent 
+				SELECT tc.source 
 				FROM `tabDynamic Link` as tdl
-				LEFT JOIN `tabContact` as tc ON tdl.parent = tc.name
+				JOIN `tabContact` as tc ON tdl.parent = tc.name
 				WHERE tdl.link_name = %s
 					AND tdl.link_doctype = 'Lead'
 					AND tdl.parenttype = 'Contact'
+					AND tc.inserted_at IS NOT NULL
 				ORDER BY tc.inserted_at ASC
 				LIMIT 1
 				''',
-				(self.name),
-				as_dict=True
+				(self.name)
 			)
-			if linked_contacts_data:
-				if linked_contacts_data[0].get('parent', None):
-					contact_name = linked_contacts_data[0].get('parent', None)
-					contact = frappe.get_doc("Contact", contact_name)
-					self.source = contact.source
-					self.save(ignore_permissions=True)
+			
+			if source and source[0][0]:
+				self.db_set("source", source[0][0]) 
 
 		except Exception as e:
-			print(f"Error set_first_lead_source {e}")
+			frappe.log_error(f"Error set_first_lead_source {e}")
 
 	def update_prospect(self):
 		lead_row_name = frappe.db.get_value("Prospect Lead", filters={"lead": self.name}, fieldname="name")
@@ -633,20 +637,22 @@ class Lead(SellingController, CRMNote):
 		if data.create_prospect:
 			self.create_prospect(data.prospect_name)
 
-	def create_contact(self, lead_source=None):
+	def create_contact(self, lead_source=None, pancake_data=None):
 		if not self.lead_name:
 			self.set_full_name()
 			self.set_lead_name()
 
 		contact = frappe.new_doc("Contact")
 
-		parsed_pancake_data = None
-		if self.pancake_data:
+		parsed_pancake_data = pancake_data
+		if not parsed_pancake_data and self.pancake_data:
 			try:
 				parsed_pancake_data = frappe.parse_json(self.pancake_data)
 			except Exception as e:
 				parsed_pancake_data = None
-
+		
+		pancake_dict = parsed_pancake_data or {}
+		
 		contact.update(
 			{
 				"first_name": self.first_name or self.lead_name,
@@ -656,14 +662,14 @@ class Lead(SellingController, CRMNote):
 				"gender": self.gender,
 				"designation": self.job_title,
 				"company_name": self.company_name,
-				"pancake_conversation_id": parsed_pancake_data.get("conversation_id") if parsed_pancake_data and parsed_pancake_data.get("conversation_id") else None,
-				"pancake_customer_id": parsed_pancake_data.get("customer_id") if parsed_pancake_data and parsed_pancake_data.get("customer_id") else None,
-				"pancake_inserted_at": parsed_pancake_data.get("inserted_at") if parsed_pancake_data and parsed_pancake_data.get("inserted_at") else None,
-				"inserted_at": parsed_pancake_data.get("inserted_at") if parsed_pancake_data and parsed_pancake_data.get("inserted_at") else None,
-				"pancake_updated_at": parsed_pancake_data.get("updated_at") if parsed_pancake_data and parsed_pancake_data.get("updated_at") else None,
-				"pancake_page_id": parsed_pancake_data.get("page_id") if parsed_pancake_data and parsed_pancake_data.get("page_id") else None,
-				"can_inbox": parsed_pancake_data.get("can_inbox") if parsed_pancake_data and parsed_pancake_data.get("can_inbox") else 0,
-				"last_message_time" :  parsed_pancake_data.get("latest_message_at", None) if parsed_pancake_data else None
+				"pancake_conversation_id": pancake_dict.get("conversation_id") or None,
+				"pancake_customer_id": pancake_dict.get("customer_id") or None,
+				"pancake_inserted_at": pancake_dict.get("inserted_at") or None,
+				"inserted_at": pancake_dict.get("inserted_at") or None,
+				"pancake_updated_at": pancake_dict.get("updated_at") or None,
+				"pancake_page_id": pancake_dict.get("page_id") or None,
+				"can_inbox": pancake_dict.get("can_inbox") or 0,
+				"last_message_time" :  pancake_dict.get("latest_message_at") or None
 			}
 		)
 
@@ -694,6 +700,7 @@ class Lead(SellingController, CRMNote):
 				f"Failed to create contact for lead (LinkValidationError): {str(e)}")
 			frappe.throw(_(f"Failed to create contact for lead (LinkValidationError): {str(e)}."))
 		except Exception as e:
+			frappe.log_error(f"Error create_contact: {e}")
 			return None
 		return None
 
