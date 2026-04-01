@@ -524,8 +524,6 @@ class SalesOrder(SellingController):
 
 			validate_coupon_code(self.coupon_code)
 
-		self.validate_sensitive_coupons()
-
 		self.set_order_policies_summary()
 
 		from erpnext.stock.doctype.packed_item.packed_item import make_packing_list
@@ -938,10 +936,17 @@ class SalesOrder(SellingController):
 			if code:
 				coupon_codes.append(code)
 		
-		# Check if any coupon code is a partner coupon (contains hyphen)
+		# Check if any coupon code is a partner coupon
 		partner_coupons = []
 		for coupon_code in coupon_codes:
-			if "-" in coupon_code:
+			if " " in coupon_code:
+				continue
+			
+			parts = coupon_code.split("-")
+			if len(parts) != 2:
+				continue
+				
+			if len(parts[1]) == 6:
 				partner_coupons.append(coupon_code)
 		
 		if partner_coupons:
@@ -2841,6 +2846,10 @@ def get_stock_reservation_status():
 @frappe.whitelist()
 def larksuite_notification(sales_order_doc):
     sales_order = json.loads(sales_order_doc)
+
+    # Validate sensitive coupons before sending to Lark
+    doc = frappe.get_doc("Sales Order", sales_order.get("name"))
+    doc.validate_sensitive_coupons()
 
     url = f"{config.FN_BASE_URL}/api/erp/sales_orders/{sales_order.get('name')}/notifications"
     headers = {
