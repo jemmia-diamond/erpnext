@@ -61,6 +61,7 @@ class Customer(TransactionBase):
 		from erpnext.accounts.doctype.allowed_to_transact_with.allowed_to_transact_with import AllowedToTransactWith
 		from erpnext.accounts.doctype.party_account.party_account import PartyAccount
 		from erpnext.selling.doctype.coupon.coupon import Coupon
+		from erpnext.selling.doctype.customer_buyback_record.customer_buyback_record import CustomerBuybackRecord
 		from erpnext.selling.doctype.customer_credit_limit.customer_credit_limit import CustomerCreditLimit
 		from erpnext.selling.doctype.sales_team.sales_team import SalesTeam
 		from erpnext.selling.doctype.supplier_number_at_customer.supplier_number_at_customer import (
@@ -78,6 +79,7 @@ class Customer(TransactionBase):
 		birth_date: DF.Date | None
 		bizfly_customer_number: DF.Data | None
 		bizfly_id: DF.Data | None
+		buyback_history: DF.Table[CustomerBuybackRecord]
 		buyback_revenue: DF.Currency
 		ceo_name: DF.Data | None
 		companies: DF.Table[AllowedToTransactWith]
@@ -1643,3 +1645,23 @@ def _update_current_12_month_score(customer_name, auto_commit=True):
 
 	if auto_commit:
 		frappe.db.commit()
+
+@frappe.whitelist()
+def get_customer_buybacks(customer_name, phone_number):
+	return frappe.get_all(
+		"Buyback Exchange",
+		or_filters={
+			"customer_name": customer_name,
+			"phone_number": phone_number
+		},
+		fields=[
+			"name",
+			"instance_type",
+			"submitted_date",
+			"refund_amount",
+			"status",
+			"reason",
+			"new_order_code"
+		],
+		order_by="submitted_date desc"
+	)

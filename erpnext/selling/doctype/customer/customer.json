@@ -146,6 +146,8 @@
   "sales_order_html",
   "section_break_dkbv",
   "coupon_table",
+  "section_break_bbex",
+  "buyback_history",
   "sales_team_tab",
   "sales_team",
   "sales_team_section",
@@ -1114,6 +1116,13 @@
    "label": "Orders Management"
   },
   {
+   "fieldname": "buyback_history",
+   "fieldtype": "Table",
+   "label": "Buyback History",
+   "options": "Customer Buyback Record",
+   "read_only": 1
+  },
+  {
    "fieldname": "sales_order_html",
    "fieldtype": "HTML",
    "label": "Orders List",
@@ -1172,6 +1181,11 @@
    "fieldname": "passport_expiry_date",
    "fieldtype": "Date",
    "label": "Passport Expiry Date"
+  },
+  {
+   "fieldname": "section_break_bbex",
+   "fieldtype": "Section Break",
+   "label": "Buyback / Exchange Management"
   }
  ],
  "icon": "fa fa-user",

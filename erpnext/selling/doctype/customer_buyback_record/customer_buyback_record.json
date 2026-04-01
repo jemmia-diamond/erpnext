@@ -1,0 +1,80 @@
+{
+ "actions": [],
+ "creation": "2026-02-04 16:53:36.482000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "buyback_exchange",
+  "instance_type",
+  "submitted_date",
+  "refund_amount",
+  "status",
+  "reason",
+  "new_order_code"
+ ],
+ "fields": [
+  {
+   "fieldname": "buyback_exchange",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Buyback ID",
+   "options": "Buyback Exchange",
+   "read_only": 1
+  },
+  {
+   "fieldname": "instance_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Instance Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_date",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "refund_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Refund Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "new_order_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "New Order",
+   "options": "Sales Order",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-02-04 16:53:36.482000",
+ "modified_by": "Administrator",
+ "module": "Selling",
+ "name": "Customer Buyback Record",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
