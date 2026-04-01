@@ -22,6 +22,17 @@ class BuybackExchange(Document):
 
 	def validate(self):
 		self.process_products_info()
+		if self.is_new():
+			self.link_to_current_sales_order()
+
+	def link_to_current_sales_order(self):
+		if not self.new_order_code:
+			return
+
+		sales_order = self.find_sales_order(self.new_order_code)
+		if sales_order:
+			for item in self.items:
+				item.current_sales_order = sales_order
 
 	def process_products_info(self):
 		if not self.products_info:
