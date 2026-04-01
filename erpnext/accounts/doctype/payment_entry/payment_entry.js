@@ -1629,6 +1629,14 @@ frappe.ui.form.on("Payment Entry", {
 		let total_allocated = 0;
 
 		$.each(frm.doc.references || [], function (i, row) {
+			if (!flt(row.allocated_amount)) {
+				frappe.throw({
+					title: __("Phân bổ không hợp lệ"),
+					indicator: "red",
+					message: __("Dòng #{0}: Số tiền phân bổ bằng 0. Vui lòng nhập số tiền hoặc xóa dòng.", [row.idx])
+				});
+			}
+
 			if (row.allocated_amount) {
 				total_allocated += flt(row.allocated_amount);
 				let max_amount = row.balance || row.outstanding_amount || 0;
