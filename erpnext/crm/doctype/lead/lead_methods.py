@@ -136,15 +136,8 @@ def insert_lead(doc) -> "Document":
 		if frappe_doc.first_reach_at  and  \
 			get_datetime(frappe_doc.first_reach_at) < get_datetime(config.DATE_ASSIGN_LEAD_OWNER):
 			try:
-				todo_doc = frappe.new_doc("ToDo")
-				todo_doc.description = f"Assignment Rule for Lead {frappe_doc.name}"
-				todo_doc.priority =  "Medium"
-				todo_doc.reference_type= "Lead"
-				todo_doc.reference_name = frappe_doc.name
-
-				todo_doc.allocated_to = frappe_doc.lead_owner
-				todo_doc.insert()
-			except Exception as e :
+				create_lead_todo(frappe_doc.name, frappe_doc.lead_owner)
+			except Exception as e:
 				frappe.log_error(e)
 
 		return frappe_doc
@@ -283,6 +276,9 @@ def update_lead_by_batch(docs):
 				doc["first_name"] = existing_doc.lead_name
 				doc["lead_name"] = existing_doc.lead_name
 
+			if existing_doc.lead_owner:
+				doc["lead_owner"] = existing_doc.lead_owner
+
 			existing_doc.update(doc)
 			existing_doc.save(ignore_permissions=True)
 			frappe.db.commit()
@@ -366,6 +362,11 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 
 		if not master_doc.budget_lead and loser_doc.budget_lead:
 			master_doc.budget_lead = loser_doc.budget_lead
+
+		if not master_doc.lead_owner and loser_doc.lead_owner:
+			master_doc.lead_owner = loser_doc.lead_owner
+
+		transfer_lead_todos(loser_doc.name, master_doc.name)
 
 		frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True, force=1)
 
@@ -488,3 +489,37 @@ def update_contact_summary_timestamp(conversation_id):
 			except Exception:
 				frappe.log_error(f"Error updating last_summarize_time for Contact {contact.name}")
 		frappe.db.commit()
+
+def create_lead_todo(lead_name: str, allocated_to: str):
+	"""Create a ToDo assignment for a Lead."""
+	if not allocated_to:
+		return
+	todo_doc = frappe.new_doc("ToDo")
+	todo_doc.description = f"Assignment Rule for Lead {lead_name}"
+	todo_doc.priority = "Medium"
+	todo_doc.reference_type = "Lead"
+	todo_doc.reference_name = lead_name
+	todo_doc.allocated_to = allocated_to
+	todo_doc.insert()
+
+def transfer_lead_todos(from_lead_name: str, to_lead_name: str):
+	"""Transfer open ToDo assignments from one lead to another if the target has none."""
+	master_todos = frappe.get_all("ToDo", filters={
+		"reference_type": "Lead",
+		"reference_name": to_lead_name,
+		"status": "Open"
+	}, fields=["name"])
+
+	if master_todos:
+		return
+
+	loser_todos = frappe.get_all("ToDo", filters={
+		"reference_type": "Lead",
+		"reference_name": from_lead_name,
+		"status": "Open"
+	}, fields=["name"])
+	for todo in loser_todos:
+		todo_doc = frappe.get_doc("ToDo", todo.name)
+		todo_doc.reference_name = to_lead_name
+		todo_doc.description = f"Assignment Rule for Lead {to_lead_name}"
+		todo_doc.save(ignore_permissions=True)
