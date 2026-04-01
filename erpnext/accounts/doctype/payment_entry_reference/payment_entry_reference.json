@@ -36,7 +36,9 @@
   "payment_request",
   "payment_request_outstanding",
   "advance_voucher_type",
-  "advance_voucher_no"
+  "advance_voucher_no",
+  "ref_order_number",
+  "ref_order_date"
  ],
  "fields": [
   {
@@ -68,46 +70,46 @@
    "search_index": 1
   },
   {
+   "columns": 2,
    "fieldname": "mode_of_payment",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Mode of Payment",
-   "columns": 2,
    "options": "Mode of Payment",
    "read_only": 1
   },
   {
+   "columns": 2,
    "fieldname": "gateway",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Gateway",
-   "columns": 2,
    "read_only": 1
   },
   {
+   "columns": 2,
    "fieldname": "paid_amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Paid Amount",
-   "columns": 2,
-   "read_only": 1,
    "options": "currency",
-   "precision": "0"
+   "precision": "0",
+   "read_only": 1
   },
   {
+   "columns": 2,
    "fieldname": "payment_date",
    "fieldtype": "Datetime",
    "in_list_view": 1,
    "label": "Payment Date",
-   "columns": 2,
    "read_only": 1
   },
   {
+   "columns": 2,
    "fieldname": "payment_order_status",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Payment Status",
-   "columns": 2,
    "read_only": 1
   },
   {
@@ -160,8 +162,8 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Balance",
-   "read_only": 1,
-   "precision": "0"
+   "precision": "0",
+   "read_only": 1
   },
   {
    "columns": 2,
@@ -277,6 +279,16 @@
    "fieldtype": "Data",
    "label": "Branch",
    "read_only": 1
+  },
+  {
+   "fieldname": "ref_order_number",
+   "fieldtype": "Data",
+   "label": "Ref Order Number"
+  },
+  {
+   "fieldname": "ref_order_date",
+   "fieldtype": "Date",
+   "label": "Ref Order Date"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -290,7 +302,7 @@
  "permissions": [],
  "quick_entry": 1,
  "row_format": "Dynamic",
- "sort_field": "creation",
+ "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
  "track_changes": 1
