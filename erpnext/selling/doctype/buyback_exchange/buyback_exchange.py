@@ -23,6 +23,7 @@ class BuybackExchange(Document):
 	submitted_date: str
 	items: list
 	products_info: str
+	serial_number: str
 
 	def validate(self):
 		self.process_products_info()

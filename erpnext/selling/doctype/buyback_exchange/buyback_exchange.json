@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "lark_instance_id",
+  "serial_number",
   "instance_type",
   "status",
   "submitted_date",
@@ -27,7 +28,12 @@
   {
    "fieldname": "lark_instance_id",
    "fieldtype": "Data",
-   "label": "Lark Instance ID",
+   "label": "Lark Instance ID"
+  },
+  {
+   "fieldname": "serial_number",
+   "fieldtype": "Data",
+   "label": "Serial Number",
    "unique": 1
   },
   {
