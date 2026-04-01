@@ -236,6 +236,7 @@
   "balance",
   "payment_section_section",
   "payment_entries",
+  "group_payment_entries",
   "payment_records",
   "debt_history",
   "payment_terms_section",
@@ -2034,6 +2035,13 @@
    "fieldtype": "Table",
    "label": "Payment Entries",
    "options": "Payment Entry Reference"
+  },
+  {
+   "fieldname": "group_payment_entries",
+   "fieldtype": "Table",
+   "label": "Group Payment Entries",
+   "options": "Payment Entry Reference",
+   "read_only": 1
   },
   {
    "fieldname": "payment_records",
