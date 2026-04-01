@@ -1152,7 +1152,18 @@ frappe.ui.form.on("Sales Order Item", {
 		var row = locals[cdt][cdn];
 		if (row.promotion) {
 			var selected_promotions = [row.promotion_1, row.promotion_2, row.promotion_3, row.promotion_4, row.promotion_5];
-			if (!selected_promotions.includes(row.promotion)) {
+			var is_earring = false;
+			
+			const type = row.type ? decode_unicode(row.type) : "";
+			const title = row.variant_title ? decode_unicode(row.variant_title) : "";
+
+			if (type.includes("Bông Tai") || (type.toLowerCase() === "virtual" && title.includes("Bông Tai"))) {
+				is_earring = true;
+			}
+			
+			var promotion_count = selected_promotions.filter(p => p === row.promotion).length;
+			
+			if (!selected_promotions.includes(row.promotion) || (is_earring && promotion_count < 2)) {
 
 				if (!row.promotion_1) {
 					row.promotion_1 = row.promotion;
@@ -2054,6 +2065,13 @@ function calculate_allocated_percentage(frm, cdt, cdn) {
 		var percentage = (row.merator / row.denominator) * 100;
 		frappe.model.set_value(cdt, cdn, "allocated_percentage", percentage);
 	}
+}
+
+// Helper to decode unicode escape sequences (e.g. B\u00f4ng Tai -> Bông Tai)
+function decode_unicode(str) {
+	return str.replace(/\\u[\dA-F]{4}/gi, 
+		(match) => String.fromCharCode(parseInt(match.replace(/\\u/g, ''), 16))
+	);
 }
 
 extend_cscript(cur_frm.cscript, new erpnext.selling.SalesOrderController({ frm: cur_frm }));
