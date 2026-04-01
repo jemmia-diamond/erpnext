@@ -364,6 +364,36 @@ frappe.ui.form.on("Sales Order", {
 			});
 		}
 		frm.trigger('render_buyback_items');
+		frm.trigger('auto_fetch_item_policies');
+	},
+
+	trigger_fetch_policy: function(frm, item_name, item_code, show_alert = true) {
+		frappe.call({
+			method: "erpnext.selling.doctype.sales_order_item.sales_order_item.trigger_manual_webhook",
+			args: { item_name: item_name },
+			callback: function(r) {
+				if (r.message && show_alert) {
+					let label = item_code ? __('cho {0}', [item_code]) : '';
+					frappe.show_alert(__('Đang tự động lấy thông tin chính sách {0} ...', [label]), 5);
+				}
+			}
+		});
+	},
+
+	auto_fetch_item_policies: function(frm) {
+		if (frm.doc.docstatus !== 0 || frm.doc.__islocal) return;
+
+		let items_to_fetch = frm.doc.items.filter(item => {
+			let is_new = item.__islocal || 
+						 (item.name && (item.name.startsWith("New ") || item.name.startsWith("new-")));
+			return !is_new && !item.item_policy && item.is_policy_locked !== 1;
+		});
+
+		if (items_to_fetch.length > 0) {
+			items_to_fetch.forEach(item => {
+				frm.trigger('trigger_fetch_policy', item.name, item.item_code, false);
+			});
+		}
 	},
 	
 	show_buyback_selector(frm) {
@@ -1422,15 +1452,7 @@ frappe.ui.form.on("Sales Order Item", {
 
 	fetch_policy: function(frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
-		frappe.call({
-			method: "erpnext.selling.doctype.sales_order_item.sales_order_item.trigger_manual_webhook",
-			args: { item_name: row.name },
-			callback: function(r) {
-				if (r.message) {
-					frappe.show_alert(__('Đang tự động lấy thông tin chính sách ...'), 5);
-				}
-			}
-		});
+		frm.trigger('trigger_fetch_policy', row.name, row.item_code, true);
 	},
 
 	serial: function (frm, cdt, cdn) {
