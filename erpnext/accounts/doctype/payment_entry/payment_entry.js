@@ -271,8 +271,8 @@ frappe.ui.form.on("Payment Entry", {
 	update_gateway_options: function(frm) {
 		frm.events.get_payment_code(frm, (payment_code) => {
 			if (payment_code === "pos") {
-				frm.set_df_property("gateway", "options", ["Payoo", "Vietcombank"]);
-				if (!frm.doc.gateway || !["Payoo", "Vietcombank"].includes(frm.doc.gateway)) {
+				frm.set_df_property("gateway", "options", ["Payoo", "Vietcombank", "ACB"]);
+				if (!frm.doc.gateway || !["Payoo", "Vietcombank", "ACB"].includes(frm.doc.gateway)) {
 					frm.set_value("gateway", "Payoo");
 				}
 			} else if (payment_code === "payment_link") {
