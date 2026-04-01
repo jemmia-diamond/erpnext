@@ -3005,7 +3005,7 @@ def get_available_buyback_items(phone=None):
 		SELECT i.name, i.product_name, i.item_code, i.buyback_price, i.parent, i.sale_price, i.buyback_percentage, i.order_code, i.prev_sales_order
 		FROM `tabBuyback Exchange Item` i
 		JOIN `tabBuyback Exchange` p ON i.parent = p.name
-		WHERE i.current_sales_order IS NULL AND p.status = 'APPROVED'
+		WHERE i.current_sales_order IS NULL
 	"""
 	params = {}
 	if phone:
