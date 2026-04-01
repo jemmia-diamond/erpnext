@@ -371,11 +371,7 @@ class PaymentEntry(AccountsController):
 
 	def on_update(self):
 		self.sync_bank_transaction_payments()
-		frappe.enqueue(
-			"erpnext.accounts.doctype.payment_entry.payment_entry.sync_so_snapshot_pe_fields_background",
-			queue="short",
-			pe_name=self.name
-		)
+		sync_so_snapshot_pe_fields_background(self.name)
 
 	def sync_bank_transaction_payments(self):
 		if self.flags.get("updating_from_bank_transaction"):
