@@ -54,6 +54,7 @@
   "doc_image",
   "orther_section",
   "first_source",
+  "customer_identity_image",
   "customer_website",
   "column_break_ioxt",
   "customer_journey",
@@ -764,6 +765,12 @@
    "fieldname": "advanced_information_selection",
    "fieldtype": "Section Break",
    "label": "Identity Document"
+  },
+  {
+   "fieldname": "customer_identity_image",
+   "fieldtype": "Attach Image",
+   "label": "Customer Identity Image",
+   "print_hide": 1
   },
   {
    "fieldname": "birth_date",

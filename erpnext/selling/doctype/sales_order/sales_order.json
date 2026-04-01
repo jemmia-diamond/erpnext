@@ -14,12 +14,13 @@
   "column_break0",
   "company",
   "naming_series",
-  "column_break_7",
+  "tax_id",
+  "haravan_coupon_code",
+  "column_break1",
   "order_type",
   "transaction_time",
   "delivery_date",
   "column_break1",
-  "tax_id",
   "skip_delivery_note",
   "po_no",
   "po_date",
@@ -1954,6 +1955,12 @@
    "fieldname": "haravan_created_at",
    "fieldtype": "Datetime",
    "label": "Haravan Created At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "haravan_coupon_code",
+   "fieldtype": "Small Text",
+   "label": "Haravan Coupon Codes",
    "read_only": 1
   },
   {

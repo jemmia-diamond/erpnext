@@ -383,7 +383,7 @@ frappe.ui.form.on("Customer", {
 					'customer': frm.doc.name,
 					'cancelled_status': 'Uncancelled'
 				},
-				fields: ['name', 'order_number', 'transaction_date', 'status', 'grand_total', 'currency', 'haravan_order_id', 'cancelled_status', 'financial_status'],
+				fields: ['name', 'order_number', 'transaction_date', 'status', 'grand_total', 'currency', 'haravan_order_id', 'cancelled_status', 'financial_status', 'haravan_coupon_code'],
 				order_by: 'transaction_date desc',
 				limit_page_length: 20
 			},
@@ -404,6 +404,7 @@ frappe.ui.form.on("Customer", {
 										<tr style="border-bottom: 1px solid #dee2e6;">
 											<th style="${tabledHeadStyle}">Order Number</th>
 											<th style="${tabledHeadStyle}">Order Date</th>
+											<th style="${tabledHeadStyle}">Coupon</th>
 											<th style="${tabledHeadStyle}">Financial Status</th>
 											<th style="${tabledHeadStyle} text-align: right;">Grand Total</th>
 										</tr>
@@ -424,6 +425,13 @@ frappe.ui.form.on("Customer", {
 						}
 
 						const display_order_number = order.order_number || order.name;
+						
+						let coupon_display = '';
+						if (order.haravan_coupon_code) {
+							// Split by newline and wrap in code/badge
+							const coupons = order.haravan_coupon_code.split('\n').filter(c => c.trim());
+							coupon_display = coupons.map(c => `<span style="background-color: #f0f4f8; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #333; display: inline-block; margin-right: 4px; margin-bottom: 2px;">${c}</span>`).join('');
+						}
 
 						html += `
 							<tr style="border-bottom: 1px solid #f1f3f4;">
@@ -432,6 +440,9 @@ frappe.ui.form.on("Customer", {
 								</td>
 								<td style="${tableDataStyle} color: #6c757d;">
 									${frappe.datetime.str_to_user(order.transaction_date)}
+								</td>
+								<td style="${tableDataStyle}">
+									${coupon_display}
 								</td>
 								<td style="${tableDataStyle}">
 									${financial_status_badge}
