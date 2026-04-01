@@ -2,29 +2,29 @@
  "actions": [],
  "allow_import": 1,
  "autoname": "naming_series:",
- "creation": "2025-12-08 17:47:45.582788",
+ "creation": "2026-01-26 18:02:46.612103",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
   "date",
+  "company",
+  "deposit",
+  "reference_number",
   "column_break_2",
   "status",
   "bank_account",
-  "company",
   "amended_from",
+  "transaction_type",
   "section_break_4",
-  "deposit",
   "withdrawal",
   "column_break_7",
   "currency",
   "section_break_10",
   "description",
-  "reference_number",
   "column_break_10",
   "transaction_id",
-  "transaction_type",
   "section_break_14",
   "column_break_oufv",
   "payment_entries",
@@ -48,7 +48,6 @@
   "sepay_order_description",
   "sepay_bank_brand_name",
   "sepay_account_number",
-  "sepay_transaction_date",
   "sepay_column_break",
   "sepay_amount_out",
   "sepay_amount_in",
@@ -58,6 +57,7 @@
   "sepay_code",
   "sepay_sub_account",
   "sepay_bank_account_id",
+  "sepay_transaction_date",
   "payment_link_section",
   "app_id",
   "app_time",
@@ -97,8 +97,11 @@
    "default": "Pending",
    "fieldname": "status",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Status",
-   "options": "\nPending\nSettled\nUnreconciled\nReconciled\nCancelled"
+   "options": "\nPending\nSettled\nUnreconciled\nReconciled\nCancelled",
+   "print_hide": 1,
+   "report_hide": 1
   },
   {
    "fieldname": "bank_account",
@@ -112,9 +115,12 @@
    "fetch_from": "bank_account.company",
    "fieldname": "company",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Company",
    "options": "Company",
-   "read_only": 1
+   "print_hide": 1,
+   "read_only": 1,
+   "report_hide": 1
   },
   {
    "fieldname": "section_break_4",
@@ -127,8 +133,11 @@
   {
    "fieldname": "currency",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Currency",
-   "options": "Currency"
+   "options": "Currency",
+   "print_hide": 1,
+   "report_hide": 1
   },
   {
    "fieldname": "section_break_10",
@@ -137,8 +146,11 @@
   {
    "fieldname": "description",
    "fieldtype": "Small Text",
+   "hidden": 1,
    "in_list_view": 1,
-   "label": "Description"
+   "label": "Description",
+   "print_hide": 1,
+   "report_hide": 1
   },
   {
    "fieldname": "section_break_14",
@@ -165,7 +177,10 @@
   },
   {
    "fieldname": "section_break_18",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "print_hide": 1,
+   "report_hide": 1
   },
   {
    "allow_on_submit": 1,
@@ -173,6 +188,7 @@
    "fieldtype": "Currency",
    "label": "Allocated Amount",
    "options": "currency",
+   "precision": "0",
    "read_only": 1
   },
   {
@@ -194,12 +210,16 @@
    "fieldtype": "Currency",
    "label": "Unallocated Amount",
    "options": "currency",
+   "precision": "0",
    "read_only": 1
   },
   {
    "fieldname": "party_section",
    "fieldtype": "Section Break",
-   "label": "Payment From / To"
+   "hidden": 1,
+   "label": "Payment From / To",
+   "print_hide": 1,
+   "report_hide": 1
   },
   {
    "allow_on_submit": 1,
@@ -221,15 +241,21 @@
    "in_list_view": 1,
    "label": "Deposit",
    "oldfieldname": "debit",
-   "options": "currency"
+   "options": "currency",
+   "precision": "0"
   },
   {
    "fieldname": "withdrawal",
    "fieldtype": "Currency",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Withdrawal",
    "oldfieldname": "credit",
-   "options": "currency"
+   "options": "currency",
+   "precision": "0",
+   "print_hide": 1,
+   "print_hide_if_no_value": 1,
+   "report_hide": 1
   },
   {
    "fieldname": "column_break_10",
@@ -264,6 +290,7 @@
    "label": "Party Account No. (Bank Statement)"
   },
   {
+   "depends_on": "eval:doc.transaction_type=='SePay'",
    "fieldname": "sepay_section",
    "fieldtype": "Section Break",
    "label": "Sepay Details"
@@ -309,18 +336,20 @@
   {
    "fieldname": "sepay_amount_out",
    "fieldtype": "Currency",
-   "label": "Sepay Amount Out"
+   "label": "Sepay Amount Out",
+   "precision": "0"
   },
   {
    "fieldname": "sepay_amount_in",
    "fieldtype": "Currency",
-   "label": "Sepay Amount In"
+   "label": "Sepay Amount In",
+   "precision": "0"
   },
   {
    "fieldname": "sepay_accumulated",
    "fieldtype": "Currency",
-   "label": "Sepay Accumulated",
-   "hidden": 1
+   "hidden": 1,
+   "label": "Sepay Accumulated"
   },
   {
    "fieldname": "sepay_transaction_content",
@@ -336,17 +365,26 @@
   {
    "fieldname": "sepay_code",
    "fieldtype": "Data",
-   "label": "Sepay Code"
+   "hidden": 1,
+   "label": "Sepay Code",
+   "print_hide": 1,
+   "report_hide": 1
   },
   {
    "fieldname": "sepay_sub_account",
    "fieldtype": "Data",
-   "label": "Sepay Sub Account"
+   "hidden": 1,
+   "label": "Sepay Sub Account",
+   "print_hide": 1,
+   "report_hide": 1
   },
   {
    "fieldname": "sepay_bank_account_id",
    "fieldtype": "Data",
-   "label": "Sepay Bank Account ID"
+   "hidden": 1,
+   "label": "Sepay Bank Account ID",
+   "print_hide": 1,
+   "report_hide": 1
   },
   {
    "fieldname": "column_break_oufv",
@@ -373,6 +411,7 @@
    "options": "currency"
   },
   {
+   "depends_on": "eval:doc.transaction_type!='SePay'",
    "fieldname": "payment_link_section",
    "fieldtype": "Section Break",
    "label": "Payment Link Details"
@@ -440,7 +479,7 @@
  "grid_page_length": 50,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-29 13:58:05.948890",
+ "modified": "2026-01-28 14:16:03.763475",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Bank Transaction",
