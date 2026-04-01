@@ -65,6 +65,23 @@ frappe.ui.form.on("Sales Order", {
 			});
 		}
 	},
+	validate: function(frm) {
+		if (frm.is_new()) return;
+
+		let message = "";
+		(frm.doc.items || []).forEach(item => {
+			if (item.sku && (item.sku.length === 21 || item.sku.startsWith("SPT"))) {
+				if (!item.serial_numbers) {
+					message = __("Chưa nhập serial number cho sản phẩm {0}", [item.item_name]);
+				}
+			}
+		});
+
+		if (message) {
+			frappe.msgprint(message);
+			frappe.validated = false;
+		}
+	},
 
 	toggle_promotion_fields: function (frm) {
 		var useNewPromotions = true;
