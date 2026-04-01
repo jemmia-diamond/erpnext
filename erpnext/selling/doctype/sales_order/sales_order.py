@@ -307,7 +307,7 @@ class SalesOrder(SellingController):
 			SELECT
 				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name,
 				pr.total_amount, pr.outstanding_amount, pr.order_number, pr.split_order_group_name,
-				pr.bank_account, pr.bank, pr.bank_account_no, pr.bank_account_branch,
+				pr.bank_account, pr.bank, pr.bank_account_no, pr.bank_account_branch, pr.ref_order_number, pr.ref_order_date,
 				CASE
 					WHEN pe.payment_type = 'Pay' THEN -pr.allocated_amount
 					ELSE pr.allocated_amount
@@ -352,6 +352,8 @@ class SalesOrder(SellingController):
 					"bank": pe_ref.bank,
 					"bank_account_no": pe_ref.bank_account_no,
 					"bank_account_branch": pe_ref.bank_account_branch,
+					"ref_order_number": pe_ref.ref_order_number,
+					"ref_order_date": pe_ref.ref_order_date,
 			})
 
 
@@ -373,7 +375,7 @@ class SalesOrder(SellingController):
 			SELECT
 				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name,
 				pr.total_amount, pr.outstanding_amount, pr.order_number, pr.split_order_group_name,
-				pr.bank_account, pr.bank, pr.bank_account_no, pr.bank_account_branch,
+				pr.bank_account, pr.bank, pr.bank_account_no, pr.bank_account_branch, pr.ref_order_number, pr.ref_order_date,
 				CASE
 					WHEN pe.payment_type = 'Pay' THEN -pr.allocated_amount
 					ELSE pr.allocated_amount
@@ -417,6 +419,8 @@ class SalesOrder(SellingController):
 						"bank": pe_ref.bank,
 						"bank_account_no": pe_ref.bank_account_no,
 						"bank_account_branch": pe_ref.bank_account_branch,
+						"ref_order_number": pe_ref.ref_order_number,
+						"ref_order_date": pe_ref.ref_order_date,
 				})
 
 	def get_all_related_sales_orders(self):
@@ -1317,6 +1321,7 @@ class SalesOrder(SellingController):
 		self.update_customer_revenue_fields()
 		self.copy_from_reference_order()
 		self.auto_detect_split_orders()
+		self.update_ref_order_payment_entry_current_order_number()
 
 	def before_submit(self):
 		frappe.throw(_("Sales Order Submission is not allowed."))
@@ -1329,6 +1334,37 @@ class SalesOrder(SellingController):
 			"cumulative_revenue": cumulative,
 			"true_cumulative_revenue": true_cumulative
 		})
+
+	def update_ref_order_payment_entry_current_order_number(self):
+		"""
+		Update current order number for Payment Entry Reference linked to the original reference order
+		"""
+		try:
+			if not self.haravan_ref_order_id:
+				return
+
+			ref_order_name = frappe.db.get_value("Sales Order",
+				{"haravan_order_id": self.haravan_ref_order_id}, "name")
+
+			if not ref_order_name:
+				return
+
+			current_order_number = self.order_number
+			current_transaction_date = self.transaction_date
+
+			frappe.db.sql("""
+				UPDATE `tabPayment Entry Reference`
+				SET
+					ref_order_number = %s,
+					ref_order_date = %s
+				WHERE
+					parenttype = 'Sales Order'
+					AND parentfield = 'payment_entries'
+					AND parent = %s
+			""", (current_order_number, current_transaction_date, ref_order_name))
+
+		except Exception as e:
+			frappe.log_error(f"Error updating payment entry reference order number: {e!s}")
 
 	def calculate_customer_cumulative_revenue(self):
 		result = frappe.db.sql("""
