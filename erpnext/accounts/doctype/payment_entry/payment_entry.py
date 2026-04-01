@@ -3951,7 +3951,7 @@ def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, fil
 		AND company = %(company)s
 		AND customer = %(customer)s
 		AND cancelled_status = "Uncancelled"
-		AND financial_status IN ("Pending", "Partially Paid")
+		AND financial_status IN ("Pending", "Partially Paid", "Paid")
 		AND grand_total > 0
 		ORDER BY
 			CASE
@@ -3981,7 +3981,7 @@ def get_sales_orders_for_auto_populate(company, customer):
 		WHERE company = %(company)s
 		AND customer = %(customer)s
 		AND cancelled_status = "Uncancelled"
-		AND financial_status IN ("Pending", "Partially Paid")
+		AND financial_status IN ("Pending", "Partially Paid", "Paid")
 		AND grand_total > 0
 		ORDER BY modified DESC
 		""",
