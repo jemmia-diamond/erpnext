@@ -22,6 +22,30 @@ if TYPE_CHECKING:
 def is_non_empty(value: str | None) -> bool:
 	return bool(value and value.strip())
 
+def normalize_phone_number(phone: str) -> str:
+	"""Normalize phone number to standard format (country code + number, no prefix).
+	Examples:
+		+84 955 555 555 -> 84955555555
+		0955555555 -> 84955555555
+		84955555555 -> 84955555555
+		840932344355 -> 84932344355 (edge case: removes extra 0)
+		+1 (555)-000-4321 -> 15550004321
+		+86 138 0013 8000 -> 8613800138000
+	"""
+	if not phone:
+		return ""
+	phone = re.sub(r'[\s\-\(\)]', '', phone.strip())
+	if phone.startswith('+'):
+		phone = phone[1:]
+	if phone.startswith('00'):
+		phone = phone[2:]
+	if phone.startswith('840') and len(phone) >= 12:
+		phone = '84' + phone[3:]
+	elif phone.startswith('0'):
+		phone = '84' + phone[1:]
+	
+	return phone
+
 @frappe.whitelist(methods=["POST", "PUT"])
 def insert_lead_by_batch(docs=None):
 	"""Insert multiple lead
@@ -86,10 +110,12 @@ def insert_lead(doc) -> "Document":
 		parent.save()
 		return parent
 
-	pancake_phone = doc.get("phone", "")
+	pancake_phone = normalize_phone_number(doc.get("phone", ""))
+	doc["phone"] = pancake_phone
 	is_valid_phone = validate_phone_number(pancake_phone)
 	if is_valid_phone is False:
 		doc["phone"] = ""
+		pancake_phone = ""
 
 	pancake_data = doc.get("pancake_data", {})
 
@@ -244,10 +270,13 @@ def update_lead_by_batch(docs):
 		doc.pop("flags", None)
 		pancake_data = doc.get("pancake_data", {})
 		try:
-			pancake_phone = doc.get("phone", "")
+			pancake_phone = normalize_phone_number(doc.get("phone", ""))
+			doc["phone"] = pancake_phone
 			is_valid_phone = validate_phone_number(pancake_phone)
 			if is_valid_phone is False:
 				doc["phone"] = ""
+				pancake_phone = ""
+
 			existing_doc = None
 			try:
 				existing_doc = frappe.get_doc(doc["doctype"], doc["docname"])
@@ -319,6 +348,7 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 	if not is_non_empty(new_phone):
 		return existing_doc
 
+	new_phone = normalize_phone_number(new_phone)
 	conflicting_lead = frappe.db.get_value("Lead", {"phone": new_phone}, "name")
 
 	if not conflicting_lead or conflicting_lead == existing_doc.name:
