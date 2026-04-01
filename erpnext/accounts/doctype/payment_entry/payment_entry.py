@@ -4114,3 +4114,98 @@ def cancel_pending_transfers():
 			frappe.log_error(f"Failed to cancel Payment Entry {name}: {str(e)}")
 
 	frappe.db.commit()
+
+@frappe.whitelist()
+def get_payment_entry_list(doctype=None, txt="", searchfield="name", start=0, page_len=20, filters=None, as_dict=False, **kwargs):
+
+	phone_search = frappe.form_dict.get("phone_search") or kwargs.get("phone_search")
+	order_number_search = frappe.form_dict.get("order_number_search") or kwargs.get("order_number_search")
+	reference_filter = frappe.form_dict.get("reference_filter") or kwargs.get("reference_filter")
+
+	page_len = frappe.form_dict.get("page_length") or kwargs.get("page_length") or page_len or 20
+	start = frappe.form_dict.get("start") or kwargs.get("start") or start or 0
+
+	if not phone_search and not order_number_search and not reference_filter:
+		return None
+
+	conditions = []
+	values = {}
+
+	query = """
+		SELECT DISTINCT pe.*
+		FROM `tabPayment Entry` pe
+	"""
+
+	if order_number_search:
+		query += " INNER JOIN `tabPayment Entry Reference` per ON per.parent = pe.name"
+
+	if phone_search:
+		query += " INNER JOIN `tabCustomer` c ON c.name = pe.party AND pe.party_type = 'Customer'"
+
+	query += " WHERE 1=1"
+
+	if phone_search:
+		conditions.append("(c.mobile_no LIKE %(phone)s OR c.phone LIKE %(phone)s)")
+		values["phone"] = f"%{phone_search}%"
+
+	if order_number_search:
+		conditions.append("(per.order_number LIKE %(order_number)s OR per.split_order_group_name LIKE %(order_number)s)")
+		values["order_number"] = f"%{order_number_search}%"
+
+	if reference_filter == "has_references":
+		conditions.append("EXISTS (SELECT 1 FROM `tabPayment Entry Reference` WHERE parent = pe.name)")
+	elif reference_filter == "no_references":
+		conditions.append("NOT EXISTS (SELECT 1 FROM `tabPayment Entry Reference` WHERE parent = pe.name)")
+
+	if filters:
+		if isinstance(filters, str):
+			try:
+				filters = json.loads(filters)
+			except:
+				filters = []
+
+		if isinstance(filters, list):
+			for filter_item in filters:
+				if len(filter_item) >= 4:
+					field = filter_item[1]
+					operator = filter_item[2]
+					value = filter_item[3]
+
+					if field not in ["phone_search", "order_number_search", "reference_filter"]:
+						if operator == "=":
+							conditions.append(f"pe.{field} = %(filter_{field})s")
+							values[f"filter_{field}"] = value
+						elif operator == "!=":
+							conditions.append(f"pe.{field} != %(filter_{field})s")
+							values[f"filter_{field}"] = value
+						elif operator == "like" or operator == "LIKE":
+							conditions.append(f"pe.{field} LIKE %(filter_{field})s")
+							values[f"filter_{field}"] = f"%{value}%"
+						elif operator == "in":
+							conditions.append(f"pe.{field} IN %(filter_{field})s")
+							values[f"filter_{field}"] = value if isinstance(value, (list, tuple)) else [value]
+						elif operator == ">":
+							conditions.append(f"pe.{field} > %(filter_{field})s")
+							values[f"filter_{field}"] = value
+						elif operator == "<":
+							conditions.append(f"pe.{field} < %(filter_{field})s")
+							values[f"filter_{field}"] = value
+						elif operator == ">=":
+							conditions.append(f"pe.{field} >= %(filter_{field})s")
+							values[f"filter_{field}"] = value
+						elif operator == "<=":
+							conditions.append(f"pe.{field} <= %(filter_{field})s")
+							values[f"filter_{field}"] = value
+
+	if txt:
+		conditions.append("(pe.name LIKE %(txt)s OR pe.party_name LIKE %(txt)s)")
+		values["txt"] = f"%{txt}%"
+
+	if conditions:
+		query += " AND " + " AND ".join(conditions)
+
+	query += " ORDER BY pe.modified DESC LIMIT %(start)s, %(page_len)s"
+	values["start"] = int(start)
+	values["page_len"] = int(page_len) if page_len else 100
+
+	return frappe.db.sql(query, values, as_dict=True)
