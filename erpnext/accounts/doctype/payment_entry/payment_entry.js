@@ -764,21 +764,35 @@ frappe.ui.form.on("Payment Entry", {
 		frm.events.update_gateway_options(frm);
 		frm.events.update_field_visibility(frm);
 
+		const update_references = (payment_code) => {
+			if (frm.doc.references && frm.doc.references.length > 0) {
+				frm.doc.references.forEach(function(row) {
+					if (row.reference_doctype === "Sales Order") {
+						frappe.model.set_value(row.doctype, row.name, "mode_of_payment", frm.doc.mode_of_payment);
+
+						if (payment_code !== 'banking') {
+							frappe.model.set_value(row.doctype, row.name, "bank_account", "");
+							frappe.model.set_value(row.doctype, row.name, "bank", "");
+							frappe.model.set_value(row.doctype, row.name, "bank_account_no", "");
+							frappe.model.set_value(row.doctype, row.name, "bank_account_branch", "");
+						}
+					}
+				});
+				frm.refresh_field("references");
+			}
+		};
+
 		if (frm.doc.mode_of_payment) {
 			frappe.db.get_value("Mode of Payment", frm.doc.mode_of_payment, "payment_code", (r) => {
+				let payment_code = "";
 				if (r && r.payment_code) {
 					frm.set_value("payment_code", r.payment_code);
+					payment_code = r.payment_code;
 				}
+				update_references(payment_code);
 			});
-		}
-
-		if (frm.doc.references && frm.doc.references.length > 0) {
-			frm.doc.references.forEach(function(row) {
-				if (row.reference_doctype === "Sales Order") {
-					frappe.model.set_value(row.doctype, row.name, "mode_of_payment", frm.doc.mode_of_payment);
-				}
-			});
-			frm.refresh_field("references");
+		} else {
+			update_references("");
 		}
 
 		erpnext.accounts.pos.get_payment_mode_account(frm, frm.doc.mode_of_payment, function (account) {
@@ -788,11 +802,23 @@ frappe.ui.form.on("Payment Entry", {
 		});
 	},
 
+
 	gateway: function(frm) {
 		if (frm.doc.references && frm.doc.references.length > 0) {
 			frm.doc.references.forEach(function(row) {
 				if (row.reference_doctype === "Sales Order") {
 					frappe.model.set_value(row.doctype, row.name, "gateway", frm.doc.gateway);
+				}
+			});
+			frm.refresh_field("references");
+		}
+	},
+
+	bank_account_branch: function(frm) {
+		if (frm.doc.references && frm.doc.references.length > 0) {
+			frm.doc.references.forEach(function(row) {
+				if (row.reference_doctype === "Sales Order") {
+					frappe.model.set_value(row.doctype, row.name, "bank_account_branch", frm.doc.bank_account_branch);
 				}
 			});
 			frm.refresh_field("references");
@@ -985,6 +1011,10 @@ frappe.ui.form.on("Payment Entry", {
 									frappe.model.set_value(row.doctype, row.name, "paid_amount", frm.doc.paid_amount);
 									frappe.model.set_value(row.doctype, row.name, "payment_date", frm.doc.payment_date);
 									frappe.model.set_value(row.doctype, row.name, "payment_order_status", frm.doc.payment_order_status);
+									frappe.model.set_value(row.doctype, row.name, "bank_account", frm.doc.bank_account);
+									frappe.model.set_value(row.doctype, row.name, "bank", frm.doc.bank);
+									frappe.model.set_value(row.doctype, row.name, "bank_account_no", frm.doc.bank_account_no);
+									frappe.model.set_value(row.doctype, row.name, "bank_account_branch", frm.doc.bank_account_branch);
 
 									frappe.db.get_value("Sales Order", so.name, [
 										"order_number",
@@ -1885,6 +1915,16 @@ frappe.ui.form.on("Payment Entry", {
 						frm.set_value("bank", r.message.bank);
 						frm.set_value("bank_account_no", r.message.bank_account_no);
 						frm.events.update_bank_branch_logic(frm);
+						if (frm.doc.references && frm.doc.references.length > 0) {
+							$.each(frm.doc.references, function(i, d) {
+								if (d.reference_doctype === "Sales Order") {
+									frappe.model.set_value(d.doctype, d.name, "bank_account", frm.doc.bank_account);
+									frappe.model.set_value(d.doctype, d.name, "bank", r.message.bank);
+									frappe.model.set_value(d.doctype, d.name, "bank_account_no", r.message.bank_account_no);
+								}
+							});
+							frm.refresh_field("references");
+						}
 					}
 				},
 			});
@@ -2295,6 +2335,11 @@ frappe.ui.form.on("Payment Entry Reference", {
 							frappe.model.set_value(cdt, cdn, "paid_amount", frm.doc.paid_amount);
 							frappe.model.set_value(cdt, cdn, "payment_date", frm.doc.payment_date);
 							frappe.model.set_value(cdt, cdn, "payment_order_status", frm.doc.payment_order_status);
+							frappe.model.set_value(cdt, cdn, "bank_account", frm.doc.bank_account);
+							frappe.model.set_value(cdt, cdn, "bank", frm.doc.bank);
+							frappe.model.set_value(cdt, cdn, "bank_account_no", frm.doc.bank_account_no);
+							frappe.model.set_value(cdt, cdn, "bank_account_branch", frm.doc.bank_account_branch);
+
 							frappe.db.get_value("Sales Order", row.reference_name, [
 								"order_number",
 								"split_order_group_name"
