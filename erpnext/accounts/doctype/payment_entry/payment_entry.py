@@ -1026,6 +1026,9 @@ class PaymentEntry(AccountsController):
 						)
 					)
 
+			if not bt.bank_transaction:
+				frappe.throw(_("Dòng #{0}: Bắt buộc chọn Giao dịch ngân hàng").format(bt.idx))
+
 	def update_payment_schedule(self, cancel=0):
 		invoice_payment_amount_map = {}
 		invoice_paid_amount_map = {}
