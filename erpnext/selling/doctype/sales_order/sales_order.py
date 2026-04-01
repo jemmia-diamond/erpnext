@@ -67,12 +67,20 @@ class SalesOrder(SellingController):
 		from erpnext.accounts.doctype.payment_entry_reference.payment_entry_reference import PaymentEntryReference
 		from erpnext.accounts.doctype.payment_schedule.payment_schedule import PaymentSchedule
 		from erpnext.accounts.doctype.pricing_rule_detail.pricing_rule_detail import PricingRuleDetail
-		from erpnext.accounts.doctype.sales_taxes_and_charges.sales_taxes_and_charges import SalesTaxesandCharges
-		from erpnext.selling.doctype.order_and_debt_tracking.order_and_debt_tracking import OrderandDebtTracking
+		from erpnext.accounts.doctype.sales_taxes_and_charges.sales_taxes_and_charges import (
+			SalesTaxesandCharges,
+		)
+		from erpnext.selling.doctype.order_and_debt_tracking.order_and_debt_tracking import (
+			OrderandDebtTracking,
+		)
 		from erpnext.selling.doctype.sales_order_item.sales_order_item import SalesOrderItem
-		from erpnext.selling.doctype.sales_order_payment_record.sales_order_payment_record import SalesOrderPaymentRecord
+		from erpnext.selling.doctype.sales_order_payment_record.sales_order_payment_record import (
+			SalesOrderPaymentRecord,
+		)
 		from erpnext.selling.doctype.sales_order_policy.sales_order_policy import SalesOrderPolicy
-		from erpnext.selling.doctype.sales_order_product_category.sales_order_product_category import SalesOrderProductCategory
+		from erpnext.selling.doctype.sales_order_product_category.sales_order_product_category import (
+			SalesOrderProductCategory,
+		)
 		from erpnext.selling.doctype.sales_order_promotion.sales_order_promotion import SalesOrderPromotion
 		from erpnext.selling.doctype.sales_order_purpose.sales_order_purpose import SalesOrderPurpose
 		from erpnext.selling.doctype.sales_order_reference.sales_order_reference import SalesOrderReference
@@ -1407,8 +1415,38 @@ class SalesOrder(SellingController):
 			# Copy Attachments
 			self.copy_attachments_from_reference(ref_order_name)
 
+			# Copy Buyback Items
+			self.copy_buyback_items_from_reference(ref_order_name)
+
 		except Exception as e:
 			frappe.log_error(f"Error copying from reference order: {e!s}")
+
+	def copy_buyback_items_from_reference(self, ref_order_name):
+		"""Duplicate Buyback Exchange Items from reference order to current order"""
+		try:
+			buyback_items = frappe.get_all(
+				"Buyback Exchange Item",
+				filters={"current_sales_order": ref_order_name},
+				fields=["name"]
+			)
+
+			if not buyback_items:
+				return
+
+			for item in buyback_items:
+				original_doc = frappe.get_doc("Buyback Exchange Item", item.name)
+				new_doc = frappe.copy_doc(original_doc)
+
+				new_doc.current_sales_order = self.name
+				new_doc.prev_sales_order = original_doc.prev_sales_order
+				new_doc.amended_from = None
+
+				new_doc.insert(ignore_permissions=True)
+
+			_update_sales_order_return_amount(self.name)
+
+		except Exception as e:
+			frappe.log_error(f"Error copying buyback items from reference order: {e!s}")
 
 	def copy_attachments_from_reference(self, ref_order_name):
 		"""Copy attachments from reference order to current order"""
