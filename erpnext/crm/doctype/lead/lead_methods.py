@@ -258,7 +258,8 @@ def update_lead_by_batch(docs):
 				if lead_name:
 					existing_doc = frappe.get_doc(doc["doctype"], lead_name)
 				else:
-					raise
+					doc.pop("docname", None)
+					existing_doc = insert_lead(doc)
 
 			# exist phone not update
 			if existing_doc.phone and existing_doc.phone != "":
