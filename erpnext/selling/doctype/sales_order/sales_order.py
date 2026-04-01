@@ -949,7 +949,10 @@ class SalesOrder(SellingController):
 			parts = coupon_code.split("-")
 			if len(parts) != 2:
 				continue
-				
+			
+			if parts[0] == "JEM":
+				continue
+
 			if len(parts[1]) == 6:
 				partner_coupons.append(coupon_code)
 		
