@@ -359,6 +359,11 @@ class PaymentEntry(AccountsController):
 
 	def on_update(self):
 		self.sync_bank_transaction_payments()
+		frappe.enqueue(
+			"erpnext.accounts.doctype.payment_entry.payment_entry.sync_so_snapshot_pe_fields_background",
+			queue="short",
+			pe_name=self.name
+		)
 
 	def sync_bank_transaction_payments(self):
 		if self.flags.get("updating_from_bank_transaction"):
@@ -4289,3 +4294,31 @@ def daily_run_success_batch():
 				"Payment Entry Webhook Trigger Error"
 			)
 		time.sleep(1)
+
+def sync_so_snapshot_pe_fields_background(pe_name):
+	try:
+		pe_doc = frappe.get_doc("Payment Entry", pe_name)
+		if not pe_doc.references:
+			return
+
+		so_names = list({
+			ref.reference_name
+			for ref in pe_doc.references
+			if ref.reference_doctype == "Sales Order" and ref.reference_name
+		})
+
+		for so_name in so_names:
+			so = frappe.get_doc("Sales Order", so_name)
+			so.set_payment_entries()
+			so.set_group_payment_entries()
+			for row in so.get("payment_entries", []):
+				row.name = None
+			for row in so.get("group_payment_entries", []):
+				row.name = None
+			so.flags.ignore_permissions = True
+			so.flags.ignore_validate = True
+			so.flags.ignore_mandatory = True
+			so.save()
+
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), f"sync_so_snapshot_pe_fields_background failed for {pe_name}")
