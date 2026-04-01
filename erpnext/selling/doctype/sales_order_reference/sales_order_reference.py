@@ -1,7 +1,7 @@
 # Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-# import frappe
+import frappe
 from frappe.model.document import Document
 
 
@@ -19,4 +19,7 @@ class SalesOrderReference(Document):
 		parenttype: DF.Data
 		sales_order: DF.Link | None
 	# end: auto-generated types
-	pass
+	def validate(self):
+		if self.sales_order and not self.order_number:
+			self.order_number = frappe.db.get_value("Sales Order", self.sales_order, "order_number")
+
