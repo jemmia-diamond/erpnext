@@ -28,7 +28,8 @@
   {
    "fieldname": "lark_instance_id",
    "fieldtype": "Data",
-   "label": "Lark Instance ID"
+   "label": "Lark Instance ID",
+   "unique": 1
   },
   {
    "fieldname": "serial_number",
