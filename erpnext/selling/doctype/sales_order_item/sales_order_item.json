@@ -9,42 +9,73 @@
  "field_order": [
   "fg_item",
   "fg_item_qty",
+  "col_break1",
+  "item_name",
+  "variant_title",
+  "product_details",
+  "diamond_details",
+  "product_availability_status",
+  "column_break_ggzz",
+  "sku",
+  "barcode",
   "item_code",
+  "delivery_date",
   "customer_item_code",
   "ensure_delivery_based_on_produced_serial_no",
   "is_stock_item",
   "reserve_stock",
-  "col_break1",
-  "delivery_date",
-  "item_name",
+  "type",
+  "haravan_variant_id",
+  "discount_rate",
+  "section_break_eour",
+  "serial_numbers",
+  "column_break_lnqd",
+  "serial",
+  "promotion_section",
+  "promotion_1",
+  "promotion_2",
+  "promotion_3",
+  "promotion_4",
+  "promotion_5",
+  "select_promotions",
+  "new_promotions",
+  "column_break_klcw",
+  "promotion",
+  "fetch_policy",
+  "item_policy",
+  "is_policy_locked",
   "section_break_5",
   "description",
   "item_group",
   "brand",
-  "image_section",
-  "image",
-  "image_view",
   "quantity_and_rate",
+  "column_break_plpb",
   "qty",
   "stock_uom",
   "subcontracted_qty",
-  "col_break2",
   "uom",
+  "col_break2",
+  "weight_per_unit",
+  "weight_uom",
   "conversion_factor",
   "stock_qty",
   "stock_reserved_qty",
+  "item_weight_details",
+  "total_weight",
+  "column_break_21",
   "section_break_16",
   "price_list_rate",
   "base_price_list_rate",
   "discount_and_margin",
-  "margin_type",
-  "margin_rate_or_amount",
-  "rate_with_margin",
   "column_break_19",
   "discount_percentage",
   "discount_amount",
   "distributed_discount_amount",
   "base_rate_with_margin",
+  "column_break_micr",
+  "margin_type",
+  "margin_rate_or_amount",
+  "rate_with_margin",
   "section_break_simple1",
   "rate",
   "amount",
@@ -68,11 +99,6 @@
   "drop_ship_section",
   "delivered_by_supplier",
   "supplier",
-  "item_weight_details",
-  "weight_per_unit",
-  "total_weight",
-  "column_break_21",
-  "weight_uom",
   "warehouse_and_reference",
   "warehouse",
   "target_warehouse",
@@ -88,6 +114,9 @@
   "company_total_stock",
   "sales_order_schedule_section",
   "add_schedule",
+  "image_section",
+  "image",
+  "image_view",
   "manufacturing_section_section",
   "bom_no",
   "planning_section",
@@ -125,14 +154,13 @@
    "columns": 3,
    "fieldname": "item_code",
    "fieldtype": "Link",
+   "hidden": 1,
    "in_global_search": 1,
-   "in_list_view": 1,
    "label": "Item Code",
    "oldfieldname": "item_code",
    "oldfieldtype": "Link",
    "options": "Item",
    "print_width": "150px",
-   "reqd": 1,
    "width": "150px"
   },
   {
@@ -147,6 +175,7 @@
    "default": "0",
    "fieldname": "ensure_delivery_based_on_produced_serial_no",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Ensure Delivery Based on Produced Serial No"
   },
   {
@@ -157,6 +186,7 @@
    "fieldname": "item_name",
    "fieldtype": "Data",
    "in_global_search": 1,
+   "in_list_view": 1,
    "label": "Item Name",
    "oldfieldname": "item_name",
    "oldfieldtype": "Data",
@@ -166,9 +196,9 @@
    "width": "150"
   },
   {
-   "collapsible": 1,
    "fieldname": "section_break_5",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Description"
   },
   {
@@ -186,7 +216,6 @@
    "depends_on": "eval: !parent.skip_delivery_note",
    "fieldname": "delivery_date",
    "fieldtype": "Date",
-   "in_list_view": 1,
    "label": "Delivery Date",
    "no_copy": 1,
    "print_hide": 1
@@ -195,7 +224,6 @@
    "fetch_from": "item_code.image",
    "fieldname": "image",
    "fieldtype": "Attach",
-   "hidden": 1,
    "label": "Image"
   },
   {
@@ -219,6 +247,7 @@
    "non_negative": 1,
    "oldfieldname": "qty",
    "oldfieldtype": "Currency",
+   "precision": "0",
    "print_width": "100px",
    "reqd": 1,
    "width": "100px"
@@ -227,6 +256,7 @@
    "depends_on": "eval:doc.uom != doc.stock_uom",
    "fieldname": "stock_uom",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Stock UOM",
    "oldfieldname": "stock_uom",
    "oldfieldtype": "Data",
@@ -240,37 +270,40 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "Nos",
    "fieldname": "uom",
    "fieldtype": "Link",
    "label": "UOM",
-   "options": "UOM",
-   "reqd": 1
+   "options": "UOM"
   },
   {
    "depends_on": "eval:doc.uom != doc.stock_uom",
    "fieldname": "conversion_factor",
    "fieldtype": "Float",
+   "hidden": 1,
    "label": "UOM Conversion Factor",
    "print_hide": 1,
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   },
   {
-   "depends_on": "eval:doc.uom != doc.stock_uom",
    "fieldname": "stock_qty",
    "fieldtype": "Float",
+   "hidden": 1,
    "label": "Qty as per Stock UOM",
    "no_copy": 1,
    "print_hide": 1,
-   "read_only": 1
+   "read_only": 1,
+   "read_only_depends_on": "eval:doc.uom != doc.stock_uom"
   },
   {
    "fieldname": "section_break_16",
    "fieldtype": "Section Break"
   },
   {
+   "default": "0",
    "fieldname": "price_list_rate",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Price List Rate",
    "oldfieldname": "ref_rate",
    "oldfieldtype": "Currency",
@@ -283,6 +316,7 @@
   {
    "fieldname": "base_price_list_rate",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Price List Rate (Company Currency)",
    "oldfieldname": "base_ref_rate",
    "oldfieldtype": "Currency",
@@ -293,8 +327,7 @@
    "width": "100px"
   },
   {
-   "collapsible": 1,
-   "collapsible_depends_on": "eval: doc.margin_type || doc.discount_amount || doc.distributed_discount_amount",
+   "collapsible_depends_on": "eval: doc.margin_type || doc.discount_amount",
    "fieldname": "discount_and_margin",
    "fieldtype": "Section Break",
    "label": "Discount and Margin"
@@ -303,6 +336,7 @@
    "depends_on": "price_list_rate",
    "fieldname": "margin_type",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Margin Type",
    "options": "\nPercentage\nAmount",
    "print_hide": 1
@@ -331,6 +365,7 @@
    "depends_on": "price_list_rate",
    "fieldname": "discount_percentage",
    "fieldtype": "Percent",
+   "hidden": 1,
    "label": "Discount (%) on Price List Rate with Margin",
    "oldfieldname": "adj_rate",
    "oldfieldtype": "Float",
@@ -342,8 +377,10 @@
    "depends_on": "price_list_rate",
    "fieldname": "discount_amount",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Discount Amount",
-   "options": "currency"
+   "options": "currency",
+   "read_only": 1
   },
   {
    "depends_on": "eval:doc.margin_type && doc.price_list_rate && doc.margin_rate_or_amount",
@@ -370,6 +407,7 @@
    "oldfieldtype": "Currency",
    "options": "currency",
    "print_width": "100px",
+   "read_only": 1,
    "width": "100px"
   },
   {
@@ -387,11 +425,13 @@
   },
   {
    "fieldname": "col_break3",
-   "fieldtype": "Column Break"
+   "fieldtype": "Column Break",
+   "hidden": 1
   },
   {
    "fieldname": "base_rate",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Basic Rate (Company Currency)",
    "oldfieldname": "basic_rate",
    "oldfieldtype": "Currency",
@@ -404,6 +444,7 @@
   {
    "fieldname": "base_amount",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Amount (Company Currency)",
    "oldfieldname": "amount",
    "oldfieldtype": "Currency",
@@ -425,13 +466,15 @@
    "default": "0",
    "fieldname": "is_free_item",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Is Free Item",
    "print_hide": 1,
    "read_only": 1
   },
   {
    "fieldname": "section_break_24",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "hidden": 1
   },
   {
    "fieldname": "net_rate",
@@ -470,11 +513,11 @@
    "read_only": 1
   },
   {
-   "collapsible": 1,
    "collapsible_depends_on": "eval:doc.delivered_by_supplier==1||doc.supplier",
    "depends_on": "eval:!parent.is_subcontracted",
    "fieldname": "drop_ship_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Drop Ship",
    "print_hide": 1
   },
@@ -508,6 +551,7 @@
   {
    "fieldname": "total_weight",
    "fieldtype": "Float",
+   "hidden": 1,
    "label": "Total Weight",
    "read_only": 1
   },
@@ -526,6 +570,7 @@
    "depends_on": "eval:!parent.is_subcontracted",
    "fieldname": "warehouse_and_reference",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Warehouse and Reference"
   },
   {
@@ -698,11 +743,13 @@
   },
   {
    "fieldname": "section_break_63",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "hidden": 1
   },
   {
    "fieldname": "item_tax_template",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Item Tax Template",
    "options": "Item Tax Template",
    "print_hide": 1
@@ -773,6 +820,7 @@
   {
    "fieldname": "planning_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Planning"
   },
   {
@@ -780,15 +828,15 @@
    "fieldtype": "Column Break"
   },
   {
-   "collapsible": 1,
    "fieldname": "image_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Image"
   },
   {
-   "collapsible": 1,
    "fieldname": "shopping_cart_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Shopping Cart"
   },
   {
@@ -813,22 +861,25 @@
   {
    "fieldname": "manufacturing_section_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Manufacturing Section"
   },
   {
    "depends_on": "eval: doc.uom != doc.stock_uom",
    "fieldname": "stock_uom_rate",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Rate of Stock UOM",
    "no_copy": 1,
    "options": "currency",
    "read_only": 1
   },
   {
-   "default": "0",
+   "default": "1",
    "fetch_from": "item_code.grant_commission",
    "fieldname": "grant_commission",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Grant Commission",
    "read_only": 1
   },
@@ -842,6 +893,7 @@
   {
    "fieldname": "inter_transfer_reference_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Inter Transfer Reference"
   },
   {
@@ -898,6 +950,7 @@
    "depends_on": "eval: doc.stock_reserved_qty",
    "fieldname": "stock_reserved_qty",
    "fieldtype": "Float",
+   "hidden": 1,
    "label": "Stock Reserved Qty (in Stock UOM)",
    "no_copy": 1,
    "non_negative": 1,
@@ -925,6 +978,7 @@
   {
    "fieldname": "distributed_discount_amount",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Distributed Discount Amount",
    "options": "currency"
   },
@@ -945,12 +999,13 @@
    "depends_on": "eval:!parent.is_subcontracted",
    "fieldname": "available_quantity_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Available Quantity"
   },
   {
-   "collapsible": 1,
    "fieldname": "accounting_dimensions_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Accounting Dimensions"
   },
   {
@@ -1019,6 +1074,172 @@
    "no_copy": 1,
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "sku",
+   "fieldtype": "Data",
+   "label": "SKU",
+   "read_only": 1
+  },
+  {
+   "fieldname": "barcode",
+   "fieldtype": "Data",
+   "label": "Barcode",
+   "read_only": 1
+  },
+  {
+   "fieldname": "haravan_variant_id",
+   "fieldtype": "Int",
+   "label": "Haravan Variant ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_plpb",
+   "fieldtype": "Column Break",
+   "hidden": 1
+  },
+  {
+   "fieldname": "column_break_micr",
+   "fieldtype": "Column Break",
+   "hidden": 1
+  },
+  {
+   "fieldname": "column_break_ggzz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "variant_title",
+   "fieldtype": "Data",
+   "label": "Variant Title",
+   "read_only": 1
+  },
+  {
+   "fieldname": "product_details",
+   "fieldtype": "Data",
+   "label": "Product Details"
+  },
+  {
+   "fieldname": "section_break_eour",
+   "fieldtype": "Section Break",
+   "label": "Serial Section"
+  },
+  {
+   "fieldname": "serial_numbers",
+   "fieldtype": "Small Text",
+   "label": "Serial Numbers"
+  },
+  {
+   "fieldname": "column_break_lnqd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "serial",
+   "fieldtype": "Link",
+   "label": "Find Serial Number",
+   "options": "Serial"
+  },
+  {
+   "fieldname": "column_break_klcw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "promotion_section",
+   "fieldtype": "Section Break",
+   "label": "Promotion Section"
+  },
+  {
+   "fieldname": "promotion_1",
+   "fieldtype": "Link",
+   "label": "Promotion 1",
+   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"NONE\"]]",
+   "options": "Promotion"
+  },
+  {
+   "fieldname": "promotion_2",
+   "fieldtype": "Link",
+   "label": "Promotion 2",
+   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"NONE\"]]",
+   "options": "Promotion"
+  },
+  {
+   "fieldname": "promotion_3",
+   "fieldtype": "Link",
+   "label": "Promotion 3",
+   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"NONE\"]]",
+   "options": "Promotion"
+  },
+  {
+   "fieldname": "promotion_4",
+   "fieldtype": "Link",
+   "label": "Promotion 4",
+   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"NONE\"]]",
+   "options": "Promotion"
+  },
+  {
+   "fieldname": "promotion",
+   "fieldtype": "Link",
+   "label": "Find Promotion",
+   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Line Item\"],[\"Promotion\",\"is_active\",\"=\",1]]",
+   "options": "Promotion"
+  },
+  {
+   "fieldname": "select_promotions",
+   "fieldtype": "Button",
+   "label": "Select Promotions",
+   "depends_on": "eval:!doc.__islocal"
+  },
+  {
+   "fieldname": "new_promotions",
+   "fieldtype": "JSON",
+   "hidden": 1,
+   "label": "New Promotions",
+   "read_only": 1
+  },
+  {
+   "fieldname": "product_availability_status",
+   "fieldtype": "Select",
+   "label": "Product Availability Status",
+   "options": "\nIn Stock\nPre-order"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Data",
+   "label": "Product Type"
+  },
+  {
+   "fieldname": "diamond_details",
+   "fieldtype": "Data",
+   "label": "Diamond Details"
+  },
+  {
+   "fieldname": "discount_rate",
+   "fieldtype": "Data",
+   "label": "Discount Rate"
+  },
+  {
+   "fieldname": "promotion_5",
+   "fieldtype": "Link",
+   "label": "Promotion 5",
+   "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"NONE\"]]",
+   "options": "Promotion"
+  },
+  {
+   "fieldname": "item_policy",
+   "fieldtype": "Long Text",
+   "label": "Item Policy",
+   "permlevel": 3
+  },
+  {
+   "default": "0",
+   "fieldname": "is_policy_locked",
+   "fieldtype": "Check",
+   "label": "Is Policy Locked",
+   "permlevel": 3
+  },
+  {
+   "fieldname": "fetch_policy",
+   "fieldtype": "Button",
+   "label": "Fetch Policy"
   }
  ],
  "grid_page_length": 50,
@@ -1033,7 +1254,7 @@
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",
- "sort_field": "creation",
+ "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
  "track_changes": 1

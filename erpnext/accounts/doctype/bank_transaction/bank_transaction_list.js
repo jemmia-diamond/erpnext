@@ -3,6 +3,7 @@
 
 frappe.listview_settings["Bank Transaction"] = {
 	add_fields: ["unallocated_amount"],
+	hide_name_column: true,
 	get_indicator: function (doc) {
 		if (doc.docstatus == 2) {
 			return [__("Cancelled"), "red", "docstatus,=,2"];

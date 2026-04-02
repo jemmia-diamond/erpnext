@@ -407,6 +407,10 @@ doc_events = {
 	"Integration Request": {
 		"validate": "erpnext.accounts.doctype.payment_request.payment_request.validate_payment"
 	},
+	"File": {
+		"after_insert": "erpnext.r2_storage.upload_to_r2",
+		"on_trash": "erpnext.r2_storage.delete_from_r2"
+	},
 }
 
 # function should expect the variable and doc as arguments
@@ -427,19 +431,27 @@ scheduler_events = {
 	"cron": {
 		"0/15 * * * *": [
 			"erpnext.manufacturing.doctype.bom_update_log.bom_update_log.resume_bom_cost_update_jobs",
+			"erpnext.accounts.doctype.payment_entry.payment_entry.daily_run_success_batch",
 		],
 		"0/30 * * * *": [
 			"erpnext.stock.doctype.repost_item_valuation.repost_item_valuation.run_parallel_reposting",
+			"erpnext.utilities.doctype.video.video.update_youtube_data",
+            "erpnext.selling.doctype.customer.customer.update_all_customers_revenue",
+            "erpnext.selling.doctype.coupon.coupon.update_all_customers_coupon_code",
 		],
 		# Hourly but offset by 30 minutes
 		"30 * * * *": [
 			"erpnext.accounts.doctype.gl_entry.gl_entry.rename_gle_sle_docs",
 		],
 		# Daily but offset by 45 minutes
-		"45 0 * * *": [],
+		"45 0 * * *": [
+			"erpnext.stock.reorder_item.reorder_item",
+		]
 	},
 	"hourly": [
 		"erpnext.projects.doctype.project.project.hourly_reminder",
+		"erpnext.projects.doctype.project.project.collect_project_status",
+		"erpnext.accounts.doctype.payment_entry.payment_entry.cancel_pending_transfers"
 	],
 	"hourly_long": [],
 	"hourly_maintenance": [
@@ -476,7 +488,13 @@ scheduler_events = {
 		"erpnext.accounts.utils.auto_create_exchange_rate_revaluation_daily",
 		"erpnext.accounts.utils.run_ledger_health_checks",
 		"erpnext.assets.doctype.asset_maintenance_log.asset_maintenance_log.update_asset_maintenance_log_status",
-		"erpnext.stock.reorder_item.reorder_item",
+        "erpnext.selling.doctype.customer.customer_methods.map_customer_lead",
+		"erpnext.selling.doctype.promotion.promotion.update_promotion_status",
+	],
+	"weekly": [
+		"erpnext.accounts.utils.auto_create_exchange_rate_revaluation_weekly",
+	],
+	"daily_long": [
 		"erpnext.accounts.doctype.process_subscription.process_subscription.create_subscription_process",
 		"erpnext.setup.doctype.email_digest.email_digest.send",
 		"erpnext.manufacturing.doctype.bom_update_tool.bom_update_tool.auto_update_latest_price_in_all_boms",
@@ -693,3 +711,8 @@ fields_for_group_similar_items = ["qty", "amount"]
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 ignore_translatable_strings_from = ["frappe"]
+fixtures = [
+    "Lead Budget"
+]
+
+# Cloudflare R2 Storage Integration configured in doc_events above

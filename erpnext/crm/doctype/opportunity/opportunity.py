@@ -12,7 +12,7 @@ from frappe.model.mapper import get_mapped_doc
 from frappe.query_builder import DocType, Interval
 from frappe.query_builder.functions import Now
 from frappe.utils import flt, get_fullname
-
+from frappe.utils import  date_diff
 from erpnext.crm.utils import (
 	CRMNote,
 	copy_comments,
@@ -31,20 +31,20 @@ class Opportunity(TransactionBase, CRMNote):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from frappe.types import DF
-
 		from erpnext.crm.doctype.competitor_detail.competitor_detail import CompetitorDetail
 		from erpnext.crm.doctype.crm_note.crm_note import CRMNote
+		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from erpnext.crm.doctype.opportunity_item.opportunity_item import OpportunityItem
-		from erpnext.crm.doctype.opportunity_lost_reason_detail.opportunity_lost_reason_detail import (
-			OpportunityLostReasonDetail,
-		)
+		from erpnext.crm.doctype.opportunity_lost_reason_detail.opportunity_lost_reason_detail import OpportunityLostReasonDetail
+		from frappe.types import DF
 
 		address_display: DF.TextEditor | None
 		amended_from: DF.Link | None
 		annual_revenue: DF.Currency
 		base_opportunity_amount: DF.Currency
 		base_total: DF.Currency
+		budget_lead: DF.Link | None
+		campaign: DF.Link | None
 		city: DF.Data | None
 		company: DF.Link
 		competitors: DF.TableMultiSelect[CompetitorDetail]
@@ -59,6 +59,7 @@ class Opportunity(TransactionBase, CRMNote):
 		customer_group: DF.Link | None
 		customer_name: DF.Data | None
 		expected_closing: DF.Date | None
+		expected_delivery_date: DF.Date | None
 		first_response_time: DF.Duration | None
 		industry: DF.Link | None
 		items: DF.Table[OpportunityItem]
@@ -70,6 +71,7 @@ class Opportunity(TransactionBase, CRMNote):
 		no_of_employees: DF.Literal["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"]
 		notes: DF.Table[CRMNote]
 		opportunity_amount: DF.Currency
+		opportunity_date: DF.Datetime | None
 		opportunity_from: DF.Link
 		opportunity_owner: DF.Link | None
 		opportunity_type: DF.Link | None
@@ -77,10 +79,14 @@ class Opportunity(TransactionBase, CRMNote):
 		party_name: DF.DynamicLink
 		phone: DF.Data | None
 		phone_ext: DF.Data | None
+		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
 		probability: DF.Percent
+		province: DF.Link | None
+		purpose_lead: DF.Link | None
+		region: DF.Link | None
 		sales_stage: DF.Link | None
 		state: DF.Data | None
-		status: DF.Literal["Open", "Quotation", "Converted", "Lost", "Replied", "Closed"]
+		status: DF.Literal["Open", "Quotation", "Converted", "Lost", "Negotiation", "Closed"]
 		territory: DF.Link | None
 		title: DF.Data | None
 		total: DF.Currency
@@ -126,6 +132,8 @@ class Opportunity(TransactionBase, CRMNote):
 			if frappe.db.get_single_value("CRM Settings", "carry_forward_communication_and_comments"):
 				copy_comments(self.opportunity_from, self.party_name, self)
 				link_communications(self.opportunity_from, self.party_name, self)
+		self.opportunity_date = self.creation
+		self.opportunity_owner = self.owner
 
 	def validate(self):
 		self.set_opportunity_type()
@@ -155,7 +163,7 @@ class Opportunity(TransactionBase, CRMNote):
 
 	def set_opportunity_type(self):
 		if self.is_new() and not self.opportunity_type:
-			self.opportunity_type = _("Sales")
+			self.opportunity_type = _("Sales")		
 
 	def set_exchange_rate(self):
 		company_currency = frappe.get_cached_value("Company", self.company, "default_currency")
@@ -359,7 +367,6 @@ class Opportunity(TransactionBase, CRMNote):
 			for key in item_fields:
 				if not d.get(key):
 					d.set(key, item.get(key))
-
 
 @frappe.whitelist()
 def get_item_details(item_code):

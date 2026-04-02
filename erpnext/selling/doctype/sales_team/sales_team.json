@@ -11,7 +11,9 @@
   "allocated_percentage",
   "allocated_amount",
   "commission_rate",
-  "incentives"
+  "incentives",
+  "merator",
+  "denominator"
  ],
  "fields": [
   {
@@ -33,7 +35,6 @@
    "fieldname": "contact_no",
    "fieldtype": "Data",
    "hidden": 1,
-   "in_list_view": 1,
    "label": "Contact No.",
    "oldfieldname": "contact_no",
    "oldfieldtype": "Data",
@@ -48,6 +49,7 @@
    "label": "Contribution (%)",
    "oldfieldname": "allocated_percentage",
    "oldfieldtype": "Currency",
+   "precision": "5",
    "print_width": "100px",
    "width": "100px"
   },
@@ -60,6 +62,7 @@
    "oldfieldname": "allocated_amount",
    "oldfieldtype": "Currency",
    "options": "Company:company:default_currency",
+   "precision": "7",
    "print_width": "120px",
    "read_only": 1,
    "width": "120px"
@@ -69,7 +72,6 @@
    "fetch_if_empty": 1,
    "fieldname": "commission_rate",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "Commission Rate",
    "read_only": 1
   },
@@ -82,19 +84,34 @@
    "oldfieldname": "incentives",
    "oldfieldtype": "Currency",
    "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "merator",
+   "fieldtype": "Int",
+   "label": "Merator",
+   "print_width": "100px",
+   "width": "100px"
+  },
+  {
+   "fieldname": "denominator",
+   "fieldtype": "Int",
+   "label": "Denominator",
+   "print_width": "100px",
+   "width": "100px"
   }
  ],
  "idx": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-03-27 13:10:38.504580",
+ "modified": "2025-10-30 10:53:20.690229",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Team",
  "owner": "Administrator",
  "permissions": [],
  "quick_entry": 1,
- "sort_field": "creation",
+ "row_format": "Dynamic",
+ "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
  "track_changes": 1

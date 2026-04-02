@@ -9,23 +9,44 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "details",
   "customer_section",
   "column_break0",
   "company",
   "naming_series",
-  "customer",
-  "customer_name",
-  "column_break_7",
+  "tax_id",
+  "haravan_coupon_code",
+  "column_break1",
   "order_type",
-  "transaction_date",
   "transaction_time",
   "delivery_date",
   "column_break1",
-  "tax_id",
   "skip_delivery_note",
+  "po_no",
+  "po_date",
   "has_unit_price_items",
   "is_subcontracted",
   "amended_from",
+  "group_order_section",
+  "split_order_group_name",
+  "split_order_group",
+  "column_break_wcaf",
+  "is_split_order",
+  "split_reason",
+  "section_break_uceh",
+  "customer_name",
+  "order_number",
+  "transaction_date",
+  "real_order_date",
+  "consultation_date",
+  "column_break_dqxa",
+  "cancelled_status",
+  "financial_status",
+  "payment_completion_date",
+  "fulfillment_status",
+  "fulfillment_completion_date",
+  "carrier_status",
+  "expected_delivery_date",
   "accounting_dimensions_section",
   "cost_center",
   "dimension_col_break",
@@ -46,15 +67,31 @@
   "reserve_stock",
   "items_section",
   "items",
+  "custom_all_images_html",
+  "section_break_48",
+  "apply_discount_on",
+  "base_discount_amount",
+  "coupon_code",
+  "column_break_50",
+  "additional_discount_percentage",
   "section_break_31",
+  "column_break_33a",
+  "promotions",
+  "product_categories",
+  "policies",
+  "order_policies",
+  "column_break_bscz",
   "total_qty",
-  "total_net_weight",
+  "total",
+  "discount_amount",
+  "grand_total",
+  "section_break_ownx",
   "column_break_33",
   "base_total",
   "base_net_total",
-  "column_break_33a",
-  "total",
+  "total_net_weight",
   "net_total",
+  "column_break_wwye",
   "taxes_section",
   "tax_category",
   "taxes_and_charges",
@@ -70,14 +107,15 @@
   "column_break_46",
   "total_taxes_and_charges",
   "totals_section",
-  "grand_total",
   "in_words",
   "disable_rounded_total",
   "column_break_nuxg",
+  "column_break3",
   "rounding_adjustment",
   "rounded_total",
   "base_totals_section",
   "base_grand_total",
+  "totals",
   "base_in_words",
   "column_break_bgfw",
   "base_rounding_adjustment",
@@ -85,12 +123,6 @@
   "section_break_efew",
   "advance_paid",
   "additional_discount_section",
-  "apply_discount_on",
-  "base_discount_amount",
-  "coupon_code",
-  "column_break_50",
-  "additional_discount_percentage",
-  "discount_amount",
   "sec_tax_breakup",
   "other_charges_calculation",
   "item_wise_tax_details",
@@ -98,30 +130,51 @@
   "packed_items",
   "pricing_rule_details",
   "pricing_rules",
+  "buyback_section_break",
+  "buyback_items",
+  "return_amount",
+  "buyback_items_html",
+  "invoice_information",
+  "deposit_amount",
+  "order_currency",
+  "deposit_in_words",
+  "column_break_ybsp",
+  "deposit_method",
+  "billing_address",
   "contact_info",
-  "billing_address_column",
-  "customer_address",
-  "address_display",
-  "customer_group",
-  "territory",
-  "column_break_84",
+  "address_contact_section",
+  "contact_info_heading",
   "contact_person",
   "contact_display",
   "contact_phone",
   "contact_mobile",
   "contact_email",
-  "shipping_address_column",
+  "column_break_biok",
+  "default_address_heading",
+  "customer_address",
+  "address_display",
+  "customer_group",
+  "territory",
   "shipping_address_name",
   "shipping_address",
+  "customer_section_break",
+  "column_break_xnxx",
+  "customer",
+  "gender",
   "column_break_93",
-  "dispatch_address_name",
+  "customer_personal_id",
+  "customer_passport_id",
+  "birth_date",
   "dispatch_address",
+  "column_break_ujjh",
+  "place_of_issuance",
+  "date_of_issuance",
+  "dispatch_address_name",
   "col_break46",
   "company_address",
   "company_address_display",
   "column_break_92",
   "company_contact_person",
-  "payment_schedule_section",
   "payment_terms_section",
   "ignore_default_payment_terms_template",
   "payment_terms_template",
@@ -130,6 +183,14 @@
   "tc_name",
   "terms",
   "more_info",
+  "deposit_location",
+  "sales_order_purposes",
+  "column_break_cbgk",
+  "delivery_location",
+  "customer_type",
+  "tracking_number",
+  "section_break_ctso",
+  "ref_sales_orders",
   "section_break_78",
   "status",
   "delivery_status",
@@ -145,8 +206,6 @@
   "amount_eligible_for_commission",
   "commission_rate",
   "total_commission",
-  "section_break1",
-  "sales_team",
   "loyalty_points_redemption",
   "loyalty_points",
   "column_break_116",
@@ -171,13 +230,46 @@
   "utm_content",
   "additional_info_section",
   "is_internal_customer",
-  "po_no",
-  "po_date",
   "represents_company",
   "column_break_yvzv",
   "inter_company_order_reference",
   "party_account_currency",
-  "connections_tab"
+  "payment_schedule_section",
+  "total_amount",
+  "expected_payment_date",
+  "column_break_yifm",
+  "paid_amount",
+  "column_break_ptow",
+  "balance",
+  "payment_section_section",
+  "payment_entries",
+  "section_break_group_payment",
+  "group_payment_entries",
+  "total_allocated_group_payment",
+  "balance_group_payment",
+  "section_break_payment_records",
+  "payment_records",
+  "debt_history",
+  "payment_terms_section",
+  "payment_terms_template",
+  "payment_schedule",
+  "terms_section_break",
+  "tc_name",
+  "terms",
+  "sales_team_tab",
+  "section_break1",
+  "primary_sales_person",
+  "commission_base_amount",
+  "sales_team",
+  "haravan_tab",
+  "section_break_pulu",
+  "haravan_order_id",
+  "haravan_ref_order_id",
+  "column_break_phue",
+  "haravan_created_at",
+  "source_name",
+  "connections_tab",
+  "payment_entries_tab"
  ],
  "fields": [
   {
@@ -230,6 +322,7 @@
    "fetch_from": "customer.customer_name",
    "fieldname": "customer_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "in_global_search": 1,
@@ -240,12 +333,13 @@
    "default": "Sales",
    "fieldname": "order_type",
    "fieldtype": "Select",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Order Type",
    "oldfieldname": "order_type",
    "oldfieldtype": "Select",
-   "options": "\nSales\nMaintenance\nShopping Cart",
+   "options": "Sales\nMaintenance\nShopping Cart",
    "print_hide": 1,
    "reqd": 1
   },
@@ -278,7 +372,6 @@
    "fieldtype": "Link",
    "hide_days": 1,
    "hide_seconds": 1,
-   "in_standard_filter": 1,
    "label": "Company",
    "oldfieldname": "company",
    "oldfieldtype": "Link",
@@ -294,11 +387,13 @@
    "fieldtype": "Date",
    "hide_days": 1,
    "hide_seconds": 1,
+   "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Date",
+   "label": "Order Date",
    "no_copy": 1,
    "oldfieldname": "transaction_date",
    "oldfieldtype": "Date",
+   "read_only": 1,
    "reqd": 1,
    "search_index": 1,
    "width": "160px"
@@ -310,7 +405,6 @@
    "fieldtype": "Date",
    "hide_days": 1,
    "hide_seconds": 1,
-   "in_list_view": 1,
    "label": "Delivery Date",
    "no_copy": 1
   },
@@ -318,6 +412,7 @@
    "allow_on_submit": 1,
    "fieldname": "po_no",
    "fieldtype": "Data",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Customer's Purchase Order",
@@ -349,7 +444,6 @@
   },
   {
    "collapsible": 1,
-   "depends_on": "customer",
    "fieldname": "contact_info",
    "fieldtype": "Tab Break",
    "hide_days": 1,
@@ -432,6 +526,7 @@
   {
    "fieldname": "col_break46",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Company Address",
@@ -440,6 +535,7 @@
   {
    "fieldname": "shipping_address_name",
    "fieldtype": "Link",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Shipping Address Name",
@@ -449,7 +545,8 @@
   {
    "allow_on_submit": 1,
    "fieldname": "shipping_address",
-   "fieldtype": "Text Editor",
+   "fieldtype": "Small Text",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Shipping Address",
@@ -469,6 +566,7 @@
   {
    "fieldname": "territory",
    "fieldtype": "Link",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Territory",
@@ -476,9 +574,9 @@
    "print_hide": 1
   },
   {
-   "collapsible": 1,
    "fieldname": "currency_and_price_list",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Currency and Price List",
@@ -567,6 +665,7 @@
   {
    "fieldname": "sec_warehouse",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_border": 1,
    "hide_days": 1,
    "hide_seconds": 1,
@@ -587,6 +686,7 @@
    "hide_border": 1,
    "hide_days": 1,
    "hide_seconds": 1,
+   "label": "Items Details",
    "oldfieldtype": "Section Break",
    "options": "fa fa-shopping-cart"
   },
@@ -604,7 +704,6 @@
    "fieldtype": "Table",
    "hide_days": 1,
    "hide_seconds": 1,
-   "label": "Items",
    "oldfieldname": "sales_order_details",
    "oldfieldtype": "Table",
    "options": "Sales Order Item",
@@ -691,8 +790,7 @@
    "hide_seconds": 1,
    "label": "Net Total",
    "options": "currency",
-   "print_hide": 1,
-   "read_only": 1
+   "print_hide": 1
   },
   {
    "depends_on": "total_net_weight",
@@ -707,6 +805,7 @@
   {
    "fieldname": "taxes_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Taxes",
@@ -741,6 +840,7 @@
   {
    "fieldname": "section_break_40",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_border": 1,
    "hide_days": 1,
    "hide_seconds": 1
@@ -788,6 +888,7 @@
   {
    "fieldname": "section_break_43",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1
   },
@@ -849,8 +950,16 @@
    "read_only": 1
   },
   {
+   "fieldname": "section_break_48",
+   "fieldtype": "Section Break",
+   "hide_days": 1,
+   "hide_seconds": 1,
+   "label": "Additional Discount"
+  },
+  {
    "fieldname": "coupon_code",
    "fieldtype": "Link",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Coupon Code",
@@ -860,11 +969,13 @@
    "default": "Grand Total",
    "fieldname": "apply_discount_on",
    "fieldtype": "Select",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Apply Additional Discount On",
    "options": "\nGrand Total\nNet Total",
-   "print_hide": 1
+   "print_hide": 1,
+   "read_only": 1
   },
   {
    "fieldname": "base_discount_amount",
@@ -885,18 +996,45 @@
   {
    "fieldname": "additional_discount_percentage",
    "fieldtype": "Float",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Additional Discount Percentage",
    "print_hide": 1
   },
   {
+   "default": "0",
    "fieldname": "discount_amount",
    "fieldtype": "Currency",
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Additional Discount Amount",
    "options": "currency",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "return_amount",
+   "fieldtype": "Currency",
+   "label": "Exchange Amount",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "buyback_items_html",
+   "fieldtype": "HTML",
+   "label": "Buyback Items",
+   "read_only": 1
+  },
+  {
+   "fieldname": "totals",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "hide_days": 1,
+   "hide_seconds": 1,
+   "label": "Totals",
+   "oldfieldtype": "Section Break",
+   "options": "fa fa-money",
    "print_hide": 1
   },
   {
@@ -953,6 +1091,16 @@
    "width": "200px"
   },
   {
+   "fieldname": "column_break3",
+   "fieldtype": "Column Break",
+   "hidden": 1,
+   "hide_days": 1,
+   "hide_seconds": 1,
+   "oldfieldtype": "Column Break",
+   "print_hide": 1,
+   "width": "50%"
+  },
+  {
    "fieldname": "grand_total",
    "fieldtype": "Currency",
    "hide_days": 1,
@@ -969,6 +1117,7 @@
    "depends_on": "eval:!doc.disable_rounded_total",
    "fieldname": "rounding_adjustment",
    "fieldtype": "Currency",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Rounding Adjustment",
@@ -982,6 +1131,7 @@
    "depends_on": "eval:!doc.disable_rounded_total",
    "fieldname": "rounded_total",
    "fieldtype": "Currency",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Rounded Total",
@@ -994,6 +1144,7 @@
   {
    "fieldname": "in_words",
    "fieldtype": "Data",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "In Words",
@@ -1006,6 +1157,7 @@
   {
    "fieldname": "advance_paid",
    "fieldtype": "Currency",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Advance Paid",
@@ -1042,7 +1194,7 @@
    "fieldtype": "Tab Break",
    "hide_days": 1,
    "hide_seconds": 1,
-   "label": "Terms"
+   "label": "Payment Schedule"
   },
   {
    "fieldname": "payment_terms_template",
@@ -1067,6 +1219,7 @@
    "collapsible_depends_on": "terms",
    "fieldname": "terms_section_break",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Terms & Conditions",
@@ -1142,6 +1295,7 @@
    "collapsible": 1,
    "fieldname": "printing_details",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Print Settings"
@@ -1204,9 +1358,9 @@
    "print_hide": 1
   },
   {
-   "collapsible": 1,
    "fieldname": "section_break_78",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Status",
@@ -1238,10 +1392,9 @@
    "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
-   "in_standard_filter": 1,
    "label": "Delivery Status",
    "no_copy": 1,
-   "options": "Not Delivered\nFully Delivered\nPartly Delivered\nClosed\nNot Applicable",
+   "options": "Not Delivered\nFully Delivered\nPartially Delivered\nClosed\nNot Applicable",
    "print_hide": 1
   },
   {
@@ -1251,7 +1404,6 @@
    "fieldtype": "Percent",
    "hide_days": 1,
    "hide_seconds": 1,
-   "in_list_view": 1,
    "label": "%  Delivered",
    "no_copy": 1,
    "oldfieldname": "per_delivered",
@@ -1273,7 +1425,6 @@
    "fieldtype": "Percent",
    "hide_days": 1,
    "hide_seconds": 1,
-   "in_list_view": 1,
    "label": "% Amount Billed",
    "no_copy": 1,
    "oldfieldname": "per_billed",
@@ -1288,7 +1439,6 @@
    "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
-   "in_standard_filter": 1,
    "label": "Billing Status",
    "no_copy": 1,
    "options": "Not Billed\nFully Billed\nPartly Billed\nClosed",
@@ -1299,12 +1449,14 @@
    "collapsible_depends_on": "commission_rate",
    "fieldname": "sales_team_section_break",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Commission",
    "oldfieldtype": "Section Break",
    "options": "fa fa-group",
-   "print_hide": 1
+   "print_hide": 1,
+   "report_hide": 1
   },
   {
    "fieldname": "sales_partner",
@@ -1351,13 +1503,12 @@
    "print_hide": 1
   },
   {
-   "collapsible": 1,
    "collapsible_depends_on": "sales_team",
    "fieldname": "section_break1",
    "fieldtype": "Section Break",
    "hide_days": 1,
    "hide_seconds": 1,
-   "label": "Sales Team",
+   "label": "Allocations",
    "print_hide": 1
   },
   {
@@ -1366,7 +1517,6 @@
    "fieldtype": "Table",
    "hide_days": 1,
    "hide_seconds": 1,
-   "label": "Sales Team",
    "oldfieldname": "sales_team",
    "oldfieldtype": "Table",
    "options": "Sales Team",
@@ -1377,6 +1527,7 @@
    "collapsible": 1,
    "fieldname": "subscription_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Auto Repeat",
@@ -1427,10 +1578,12 @@
    "label": "Update Auto Repeat Reference"
   },
   {
+   "fetch_from": "contact_person.phone",
    "fieldname": "contact_phone",
    "fieldtype": "Data",
    "hide_days": 1,
    "hide_seconds": 1,
+   "in_standard_filter": 1,
    "label": "Phone",
    "options": "Phone",
    "read_only": 1
@@ -1467,12 +1620,14 @@
    "depends_on": "grand_total",
    "fieldname": "disable_rounded_total",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Disable Rounded Total"
   },
   {
    "allow_on_submit": 1,
    "fieldname": "dispatch_address_name",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Dispatch Address Name",
    "options": "Address",
    "print_hide": 1
@@ -1503,6 +1658,7 @@
    "collapsible": 1,
    "fieldname": "accounting_dimensions_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Accounting Dimensions"
   },
   {
@@ -1516,10 +1672,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "column_break_7",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "column_break_28",
    "fieldtype": "Column Break"
   },
@@ -1530,12 +1682,14 @@
   {
    "fieldname": "connections_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Connections",
    "show_dashboard": 1
   },
   {
    "fieldname": "payment_terms_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Payment Terms"
   },
   {
@@ -1543,22 +1697,9 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "billing_address_column",
-   "fieldtype": "Section Break",
-   "label": "Billing Address"
-  },
-  {
-   "fieldname": "shipping_address_column",
-   "fieldtype": "Section Break",
-   "label": "Shipping Address"
-  },
-  {
    "fieldname": "column_break_93",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_84",
-   "fieldtype": "Column Break"
+   "fieldtype": "Column Break",
+   "hidden": 1
   },
   {
    "fieldname": "column_break_92",
@@ -1568,6 +1709,7 @@
    "collapsible": 1,
    "fieldname": "additional_info_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Additional Info"
   },
   {
@@ -1742,6 +1884,488 @@
    "hidden": 1,
    "label": "Ignore Default Payment Terms Template",
    "read_only": 1
+  },
+  {
+   "fieldname": "haravan_tab",
+   "fieldtype": "Tab Break",
+   "label": "System"
+  },
+  {
+   "fieldname": "cancelled_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Cancelled Status",
+   "options": "\nUncancelled\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_phue",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "order_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Order Number",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "financial_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Financial Status",
+   "options": "\nPaid\nPartially Paid\nPartially Refunded\nRefunded\nPending",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fulfillment_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Fulfillment Status",
+   "options": "\nFulfilled\nNot Fulfilled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "haravan_order_id",
+   "fieldtype": "Data",
+   "label": "Haravan Order ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "haravan_ref_order_id",
+   "fieldtype": "Data",
+   "label": "Haravan Ref Order ID",
+   "read_only": 1
+  },
+  {
+   "description": "Group ID for orders splitt",
+   "fieldname": "split_order_group",
+   "fieldtype": "Data",
+   "label": "Split Order Group ID",
+   "permlevel": 1,
+   "print_hide": 1
+  },
+  {
+   "default": "0",
+   "description": "Check if this order is part of a split group",
+   "fieldname": "is_split_order",
+   "fieldtype": "Check",
+   "label": "Is Split Order",
+   "permlevel": 2,
+   "print_hide": 1
+  },
+  {
+   "depends_on": "eval:doc.is_split_order==1",
+   "fieldname": "split_reason",
+   "fieldtype": "Select",
+   "label": "Split Reason",
+   "options": "\nGold Regulation\nCustomer Request\nOther",
+   "permlevel": 2,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "haravan_created_at",
+   "fieldtype": "Datetime",
+   "label": "Haravan Created At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "haravan_coupon_code",
+   "fieldtype": "Small Text",
+   "label": "Haravan Coupon Codes",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_uceh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_dqxa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "promotions",
+   "fieldtype": "Table MultiSelect",
+   "label": "Promotions",
+   "options": "Sales Order Promotion"
+  },
+  {
+   "fetch_from": "customer.personal_id",
+   "fetch_if_empty": 1,
+   "fieldname": "customer_personal_id",
+   "fieldtype": "Data",
+   "label": "CMND/CCCD"
+  },
+  {
+   "fetch_from": "customer.passport_id",
+   "fetch_if_empty": 1,
+   "fieldname": "customer_passport_id",
+   "fieldtype": "Data",
+   "label": "Passport ID"
+  },
+  {
+   "fetch_from": "customer.place_of_issuance",
+   "fieldname": "place_of_issuance",
+   "fieldtype": "Data",
+   "label": "Place of Issuance"
+  },
+  {
+   "fetch_from": "customer.date_of_issuance",
+   "fieldname": "date_of_issuance",
+   "fieldtype": "Date",
+   "label": "Date of Issuance"
+  },
+  {
+   "fetch_from": "customer.birth_date",
+   "fieldname": "birth_date",
+   "fieldtype": "Date",
+   "label": "Birth Date"
+  },
+  {
+   "fetch_from": "customer.gender",
+   "fieldname": "gender",
+   "fieldtype": "Data",
+   "label": "Gender"
+  },
+  {
+   "fieldname": "address_contact_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_biok",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_xnxx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_bscz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_ownx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_wwye",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "source_name",
+   "fieldtype": "Data",
+   "label": "Source Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_entries",
+   "fieldtype": "Table",
+   "label": "Payment Entries",
+   "options": "Payment Entry Reference"
+  },
+  {
+   "fieldname": "section_break_group_payment",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "group_payment_entries",
+   "fieldtype": "Table",
+   "label": "Group Payment Entries",
+   "options": "Payment Entry Reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_allocated_group_payment",
+   "fieldtype": "Currency",
+   "label": "Total Allocated (Group)",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "balance_group_payment",
+   "fieldtype": "Currency",
+   "label": "Balance (Group)",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_payment_records",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "payment_records",
+   "fieldtype": "Table",
+   "options": "Sales Order Payment Record",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sales_team_tab",
+   "fieldtype": "Tab Break",
+   "label": "Sales Team"
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Tab Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "contact_info_heading",
+   "fieldtype": "Heading",
+   "label": "Contact Info Heading"
+  },
+  {
+   "fieldname": "default_address_heading",
+   "fieldtype": "Heading",
+   "label": "Default Address Heading"
+  },
+  {
+   "fieldname": "customer_section_break",
+   "fieldtype": "Section Break",
+   "label": "Customer Private Information"
+  },
+  {
+   "fieldname": "payment_section_section",
+   "fieldtype": "Section Break",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_pulu",
+   "fieldtype": "Section Break",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_ctso",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "ref_sales_orders",
+   "fieldtype": "Table",
+   "label": "Ref Sales Order",
+   "options": "Sales Order Reference"
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expected_payment_date",
+   "fieldtype": "Date",
+   "label": "Expected Payment Date"
+  },
+  {
+   "fieldname": "column_break_yifm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "paid_amount",
+   "fieldtype": "Currency",
+   "label": "Paid Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ptow",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "balance",
+   "fieldtype": "Currency",
+   "label": "Balance",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ujjh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "product_categories",
+   "fieldtype": "Table MultiSelect",
+   "label": "Product Category",
+   "options": "Sales Order Product Category"
+  },
+  {
+   "fieldname": "real_order_date",
+   "fieldtype": "Date",
+   "label": "Real Order Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expected_delivery_date",
+   "fieldtype": "Date",
+   "label": "Expected Delivery Date"
+  },
+  {
+   "fieldname": "customer_type",
+   "fieldtype": "Select",
+   "label": "Customer Type",
+   "options": "\nNew Customer\nReturning Customer"
+  },
+  {
+   "fieldname": "policies",
+   "fieldtype": "Table MultiSelect",
+   "label": "Order Policies",
+   "options": "Sales Order Policy"
+  },
+  {
+   "fieldname": "primary_sales_person",
+   "fieldtype": "Link",
+   "label": "Primary Sales Person",
+   "options": "Sales Person"
+  },
+  {
+   "fieldname": "deposit_location",
+   "fieldtype": "Link",
+   "label": "Deposit location",
+   "options": "Lead Source"
+  },
+  {
+   "fieldname": "column_break_cbgk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "delivery_location",
+   "fieldtype": "Select",
+   "label": "Delivery location ",
+   "options": "\n209, \u0110 30 th\u00e1ng 4, Xu\u00e2n Kh\u00e1nh, Ninh Ki\u1ec1u, C\u1ea7n Th\u01a1\n63 Kim M\u00e3, Qu\u1eadn Ba \u0110\u00ecnh, H\u00e0 N\u1ed9i\n72 Nguy\u1ec5n C\u01b0 Trinh, Qu\u1eadn 1, Th\u00e0nh Ph\u1ed1 H\u1ed3 Ch\u00ed Minh\nGiao v\u1ec1 \u0111\u1ecba ch\u1ec9 kh\u00e1ch"
+  },
+  {
+   "fieldname": "consultation_date",
+   "fieldtype": "Date",
+   "label": "Consultation Date"
+  },
+  {
+   "fieldname": "sales_order_purposes",
+   "fieldtype": "Table MultiSelect",
+   "label": "Sales Order Purposes",
+   "options": "Sales Order Purpose"
+  },
+  {
+   "fieldname": "carrier_status",
+   "fieldtype": "Select",
+   "label": "Carrier Status",
+   "options": "\nNot Delivered\nReady To Pick\nDelivering\nDelivered"
+  },
+  {
+   "fieldname": "debt_history",
+   "fieldtype": "Table",
+   "label": "Debt History",
+   "options": "Order and Debt Tracking"
+  },
+  {
+   "fieldname": "buyback_section_break",
+   "fieldtype": "Section Break",
+   "label": "Buyback"
+  },
+  {
+   "fieldname": "buyback_items",
+   "fieldtype": "Button",
+   "label": "Select buyback/exchange items"
+  },
+  {
+   "fieldname": "invoice_information",
+   "fieldtype": "Section Break",
+   "label": "Invoice information"
+  },
+  {
+   "fieldname": "deposit_amount",
+   "fieldtype": "Currency",
+   "label": "Deposit amount",
+   "options": "currency",
+   "precision": "0"
+  },
+  {
+   "fieldname": "deposit_in_words",
+   "fieldtype": "Small Text",
+   "label": "Deposit In Words",
+   "options": "\nCash\nBank Transfer\nCard"
+  },
+  {
+   "fieldname": "deposit_method",
+   "fieldtype": "Select",
+   "label": "Deposit Method",
+   "options": "\nCash\nBank Transfer\nCard"
+  },
+  {
+   "fieldname": "billing_address",
+   "fieldtype": "Select",
+   "label": "Billing Address",
+   "options": "\n72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh\n63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i\n209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1"
+  },
+  {
+   "fieldname": "column_break_ybsp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "VND",
+   "fieldname": "order_currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
+  },
+  {
+   "fieldname": "custom_all_images_html",
+   "fieldtype": "HTML",
+   "label": "Attached images"
+  },
+  {
+   "fieldname": "group_order_section",
+   "fieldtype": "Section Break",
+   "label": "Group Order"
+  },
+  {
+   "fieldname": "column_break_wcaf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "split_order_group_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Split Order Group Name",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "payment_completion_date",
+   "fieldtype": "Datetime",
+   "in_standard_filter": 1,
+   "label": "Payment Completion Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fulfillment_completion_date",
+   "fieldtype": "Datetime",
+   "in_standard_filter": 1,
+   "label": "Fulfillment Completion Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "order_policies",
+   "fieldtype": "Long Text",
+   "label": "Policies (Auto)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_entries_tab",
+   "fieldtype": "Tab Break",
+   "label": "Payment Entries"
+  },
+  {
+   "fieldname": "commission_base_amount",
+   "fieldtype": "Currency",
+   "label": "Base Commission Amount",
+   "permlevel": 3,
+   "precision": "0"
+  },
+  {
+   "fieldname": "tracking_number",
+   "fieldtype": "Data",
+   "label": "Tracking number"
   }
  ],
  "grid_page_length": 50,
@@ -1825,7 +2449,7 @@
  "sort_order": "DESC",
  "states": [],
  "timeline_field": "customer",
- "title_field": "customer_name",
+ "title_field": "order_number",
  "track_changes": 1,
  "track_seen": 1
 }

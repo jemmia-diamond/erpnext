@@ -21,7 +21,11 @@ class TargetDetail(Document):
 		parentfield: DF.Data
 		parenttype: DF.Data
 		target_amount: DF.Float
+		target_lead_received: DF.Int
+		target_previous_month_qualified: DF.Int
 		target_qty: DF.Float
+		target_qualified_leads: DF.Int
+		target_qualified_to_orders: DF.Int
 	# end: auto-generated types
 
 	pass

@@ -261,6 +261,8 @@ erpnext.patches.v14_0.update_proprietorship_to_individual
 erpnext.patches.v15_0.rename_subcontracting_fields
 erpnext.patches.v15_0.unset_incorrect_additional_discount_percentage
 erpnext.patches.v16_0.create_company_custom_fields
+erpnext.seeds.lead.clear_empty_phone
+erpnext.seeds.customer.update_revenue
 
 [post_model_sync]
 erpnext.patches.v15_0.rename_gross_purchase_amount_to_net_purchase_amount
@@ -472,3 +474,19 @@ erpnext.patches.v16_0.update_order_qty_and_requested_qty_based_on_mr_and_po
 erpnext.patches.v16_0.enable_serial_batch_setting
 erpnext.patches.v16_0.update_requested_qty_packed_item
 erpnext.patches.v16_0.remove_payables_receivables_workspace
+erpnext.seeds.item_group.create_default_lead_source # 6/5/2025 - 4
+erpnext.seeds.item_group.create_default_lead_budget
+erpnext.seeds.item_group.create_default_lead_demand
+# 2025-06-11
+erpnext.seeds.lead.update_region
+# 2025-06-17
+erpnext.seeds.lead.backfill_qualified_lead_date
+# 2025-07-08
+erpnext.seeds.lead.backfill_qualification_status
+# 2025-07-08
+erpnext.seeds.lead.backfill_qualified_on
+# 2025-07-08
+erpnext.seeds.contact.backfill_inserted_at
+# 2025-08-20
+erpnext.seeds.sales_order_item.drop_obsolete_promotion_columns
+erpnext.seeds.promotion.drop_type_column

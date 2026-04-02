@@ -15,6 +15,10 @@ class TaxWithholdingGroup(Document):
 		from frappe.types import DF
 
 		group_name: DF.Data
+		details: DF.TextEditor | None
+		pancake_page_id: DF.Data | None
+		pancake_platform: DF.Data | None
+		source_name: DF.Data
 	# end: auto-generated types
 
 	pass

@@ -5,7 +5,7 @@ import frappe
 from frappe import _
 from frappe.model.docstatus import DocStatus
 from frappe.model.document import Document
-from frappe.utils import flt, getdate
+from frappe.utils import flt, getdate, get_datetime
 
 
 class BankTransaction(Document):
@@ -15,18 +15,19 @@ class BankTransaction(Document):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
+		from erpnext.accounts.doctype.bank_transaction_payments.bank_transaction_payments import BankTransactionPayments
 		from frappe.types import DF
-
-		from erpnext.accounts.doctype.bank_transaction_payments.bank_transaction_payments import (
-			BankTransactionPayments,
-		)
 
 		allocated_amount: DF.Currency
 		amended_from: DF.Link | None
+		app_id: DF.Data | None
+		app_time: DF.Data | None
+		app_user: DF.Data | None
 		bank_account: DF.Link | None
 		bank_party_account_number: DF.Data | None
 		bank_party_iban: DF.Data | None
 		bank_party_name: DF.Data | None
+		channel: DF.Data | None
 		company: DF.Link | None
 		currency: DF.Link | None
 		date: DF.Date | None
@@ -34,16 +35,36 @@ class BankTransaction(Document):
 		description: DF.SmallText | None
 		excluded_fee: DF.Currency
 		included_fee: DF.Currency
+		embed_data: DF.JSON | None
+		item: DF.JSON | None
+		merchant_user_id: DF.Data | None
 		naming_series: DF.Literal["ACC-BTN-.YYYY.-"]
 		party: DF.DynamicLink | None
 		party_type: DF.Link | None
 		payment_entries: DF.Table[BankTransactionPayments]
-		reference_number: DF.SmallText | None
+		reference_number: DF.Data | None
+		sepay_account_number: DF.Data | None
+		sepay_accumulated: DF.Currency
+		sepay_amount_in: DF.Currency
+		sepay_amount_out: DF.Currency
+		sepay_bank_account_id: DF.Data | None
+		sepay_bank_brand_name: DF.Data | None
+		sepay_code: DF.Data | None
+		sepay_id: DF.Data | None
+		sepay_order_description: DF.Data | None
+		sepay_order_number: DF.Data | None
+		sepay_reference_number: DF.Data | None
+		sepay_sub_account: DF.Data | None
+		sepay_transaction_content: DF.Data | None
+		sepay_transaction_date: DF.Data | None
+		server_time: DF.Data | None
 		status: DF.Literal["", "Pending", "Settled", "Unreconciled", "Reconciled", "Cancelled"]
 		transaction_id: DF.Data | None
-		transaction_type: DF.Data | None
+		transaction_type: DF.Literal["SePay", "ZaloPay", "Payoo"]
 		unallocated_amount: DF.Currency
+		user_fee_amount: DF.Currency
 		withdrawal: DF.Currency
+		zp_trans_id: DF.Data | None
 	# end: auto-generated types
 
 	def before_validate(self):
@@ -123,6 +144,46 @@ class BankTransaction(Document):
 				continue
 
 			self.delink_payment_entry(old_pe)
+
+	def on_update(self):
+		self.sync_payment_entry_bank_transactions()
+
+	def sync_payment_entry_bank_transactions(self):
+		if self.flags.get("updating_linked_bank_transaction"):
+			return
+
+		for pe_row in self.payment_entries:
+			if pe_row.payment_document == "Payment Entry" and pe_row.payment_entry:
+				try:
+					payment_entry = frappe.get_doc("Payment Entry", pe_row.payment_entry)
+					if payment_entry.bank_account_no != self.sepay_account_number:
+						continue
+
+					existing = any(
+						bt.bank_transaction == self.name
+						for bt in payment_entry.bank_transactions
+					)
+
+					if not existing:
+						payment_entry.flags.updating_from_bank_transaction = True
+						payment_entry.append("bank_transactions", {
+							"bank_transaction": self.name,
+							"allocated_amount": pe_row.allocated_amount,
+							"date": self.date,
+							"sepay_transaction_content": self.sepay_transaction_content,
+							"sepay_order_number": self.sepay_order_number,
+							"sepay_order_description": self.sepay_order_description,
+							"sepay_reference_number": self.sepay_reference_number,
+							"sepay_id": self.sepay_id,
+							"auto_updated": 1
+						})
+						if self.sepay_transaction_date:
+							payment_entry.payment_date = get_datetime(self.sepay_transaction_date)
+
+						payment_entry.modified_by = payment_entry.owner
+						payment_entry.save(ignore_permissions=True)
+				except Exception as e:
+					frappe.log_error(f"Error syncing Bank Transaction to Payment Entry: {str(e)}")
 
 	def before_submit(self):
 		self.allocate_payment_entries()

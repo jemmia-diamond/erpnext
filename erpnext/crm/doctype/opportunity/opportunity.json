@@ -12,18 +12,32 @@
  "email_append_to": 1,
  "engine": "InnoDB",
  "field_order": [
+  "detail_tab",
+  "opportunity_section",
   "naming_series",
   "opportunity_from",
   "party_name",
   "customer_name",
-  "status",
   "column_break0",
   "opportunity_type",
-  "opportunity_owner",
-  "column_break_10",
+  "source",
   "sales_stage",
-  "expected_closing",
   "probability",
+  "opportunity_date",
+  "column_break_10",
+  "opportunity_owner",
+  "status",
+  "expected_closing",
+  "customer_demand_sections",
+  "purpose_lead",
+  "expected_delivery_date",
+  "column_break_pfyx",
+  "budget_lead",
+  "preferred_product_type",
+  "column_break_rirs",
+  "province",
+  "region",
+  "opportunity_amount",
   "organization_details_section",
   "no_of_employees",
   "annual_revenue",
@@ -42,7 +56,6 @@
   "column_break_36",
   "conversion_rate",
   "column_break_17",
-  "opportunity_amount",
   "base_opportunity_amount",
   "utm_analytics_section",
   "utm_source",
@@ -81,6 +94,9 @@
   "column_break3",
   "contact_html",
   "contact_display",
+  "notes_tab",
+  "notes_html",
+  "notes",
   "items_section",
   "items",
   "section_break_32",
@@ -91,9 +107,6 @@
   "open_activities_html",
   "all_activities_section",
   "all_activities_html",
-  "notes_tab",
-  "notes_html",
-  "notes",
   "dashboard_tab"
  ],
  "fields": [
@@ -126,7 +139,7 @@
    "fieldname": "party_name",
    "fieldtype": "Dynamic Link",
    "in_standard_filter": 1,
-   "label": "Party",
+   "label": "Party Name",
    "oldfieldname": "customer",
    "oldfieldtype": "Link",
    "options": "opportunity_from",
@@ -137,8 +150,9 @@
    "bold": 1,
    "fieldname": "customer_name",
    "fieldtype": "Data",
-   "hidden": 1,
    "in_global_search": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Customer Name",
    "read_only": 1
   },
@@ -158,6 +172,7 @@
   {
    "fieldname": "opportunity_type",
    "fieldtype": "Link",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Opportunity Type",
    "oldfieldname": "enquiry_type",
@@ -174,29 +189,32 @@
    "no_copy": 1,
    "oldfieldname": "status",
    "oldfieldtype": "Select",
-   "options": "Open\nQuotation\nConverted\nLost\nReplied\nClosed",
+   "options": "Open\nQuotation\nConverted\nLost\nNegotiation\nClosed",
    "print_hide": 1,
    "reqd": 1
   },
   {
    "fieldname": "order_lost_reason",
    "fieldtype": "Small Text",
-   "label": "Detailed Reason",
+   "label": "Order Lost Reason",
    "no_copy": 1,
    "read_only": 1
   },
   {
    "fieldname": "expected_closing",
    "fieldtype": "Date",
-   "label": "Expected Closing Date",
+   "hidden": 1,
+   "label": "Expected Closing",
    "no_copy": 1
   },
   {
    "fieldname": "section_break_14",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Opportunity Value"
   },
   {
+   "default": "VND",
    "fieldname": "currency",
    "fieldtype": "Link",
    "label": "Currency",
@@ -216,6 +234,7 @@
    "default": "Prospecting",
    "fieldname": "sales_stage",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Sales Stage",
    "options": "Sales Stage"
   },
@@ -223,11 +242,12 @@
    "default": "100",
    "fieldname": "probability",
    "fieldtype": "Percent",
-   "label": "Probability (%)"
+   "label": "Probability"
   },
   {
    "fieldname": "items_section",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Items",
    "options": "fa fa-shopping-cart"
   },
@@ -240,7 +260,7 @@
   {
    "fieldname": "contact_info",
    "fieldtype": "Tab Break",
-   "label": "Contacts",
+   "label": "Contact",
    "options": "fa fa-bullhorn"
   },
   {
@@ -297,18 +317,19 @@
    "fieldname": "contact_display",
    "fieldtype": "Small Text",
    "in_global_search": 1,
-   "label": "Contact",
+   "label": "Contact Display",
    "read_only": 1
   },
   {
    "fieldname": "contact_email",
    "fieldtype": "Data",
-   "label": "Contact Email",
+   "label": "Email",
    "options": "Email"
   },
   {
    "fieldname": "contact_mobile",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Contact Mobile",
    "options": "Phone"
   },
@@ -316,6 +337,7 @@
    "collapsible": 1,
    "fieldname": "more_info",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "More Information",
    "oldfieldtype": "Section Break",
    "options": "fa fa-file-text"
@@ -413,6 +435,7 @@
    "read_only": 1
   },
   {
+   "default": "1",
    "fieldname": "conversion_rate",
    "fieldtype": "Float",
    "label": "Exchange Rate"
@@ -425,7 +448,7 @@
    "depends_on": "eval:doc.status===\"Lost\"",
    "fieldname": "lost_detail_section",
    "fieldtype": "Section Break",
-   "label": "Lost Reasons"
+   "label": "Lost Detail Section"
   },
   {
    "fieldname": "column_break_56",
@@ -434,6 +457,7 @@
   {
    "fieldname": "competitors",
    "fieldtype": "Table MultiSelect",
+   "hidden": 1,
    "label": "Competitors",
    "options": "Competitor Detail",
    "read_only": 1
@@ -443,8 +467,10 @@
    "fieldtype": "Column Break"
   },
   {
+   "collapsible": 1,
    "fieldname": "organization_details_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Organization"
   },
   {
@@ -501,6 +527,7 @@
   {
    "fieldname": "whatsapp",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "WhatsApp",
    "options": "Phone"
   },
@@ -513,6 +540,7 @@
   {
    "fieldname": "phone_ext",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Phone Ext."
   },
   {
@@ -522,7 +550,7 @@
   {
    "fieldname": "primary_contact_section",
    "fieldtype": "Section Break",
-   "label": "Primary Contact"
+   "label": "Primary Contact Section"
   },
   {
    "fieldname": "column_break_54",
@@ -539,7 +567,7 @@
    "depends_on": "eval:!doc.__islocal",
    "fieldname": "notes_tab",
    "fieldtype": "Tab Break",
-   "label": "Comments"
+   "label": "Notes"
   },
   {
    "fieldname": "notes_html",
@@ -550,11 +578,13 @@
    "depends_on": "eval:!doc.__islocal",
    "fieldname": "activities_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Activities"
   },
   {
    "fieldname": "job_title",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Job Title"
   },
   {
@@ -646,6 +676,70 @@
    "fieldname": "utm_analytics_section",
    "fieldtype": "Section Break",
    "label": "Analytics"
+  },
+  {
+   "fieldname": "customer_demand_sections",
+   "fieldtype": "Section Break",
+   "label": "Customer Demand Sections"
+  },
+  {
+   "fieldname": "purpose_lead",
+   "fieldtype": "Link",
+   "label": "Lead Purpose",
+   "options": "Lead Demand"
+  },
+  {
+   "fieldname": "budget_lead",
+   "fieldtype": "Link",
+   "label": "Lead Budget",
+   "options": "Lead Budget"
+  },
+  {
+   "fieldname": "preferred_product_type",
+   "fieldtype": "Table MultiSelect",
+   "label": "Preferred Product Type",
+   "options": "Lead Product Item"
+  },
+  {
+   "fieldname": "column_break_pfyx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "expected_delivery_date",
+   "fieldtype": "Date",
+   "label": "Expected Delivery Date"
+  },
+  {
+   "fieldname": "column_break_rirs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "detail_tab",
+   "fieldtype": "Tab Break",
+   "label": "Detail"
+  },
+  {
+   "fieldname": "opportunity_section",
+   "fieldtype": "Section Break",
+   "label": "Opportunity"
+  },
+  {
+   "fieldname": "province",
+   "fieldtype": "Link",
+   "label": "Province",
+   "options": "Province"
+  },
+  {
+   "fieldname": "region",
+   "fieldtype": "Link",
+   "label": "Region",
+   "options": "Region",
+   "read_only": 1
+  },
+  {
+   "fieldname": "opportunity_date",
+   "fieldtype": "Datetime",
+   "label": "Opportunity Date"
   }
  ],
  "grid_page_length": 50,

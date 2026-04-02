@@ -12,6 +12,7 @@ def get_data():
 			"Auto Repeat": "reference_document",
 			"Maintenance Visit": "prevdoc_docname",
 			"Stock Reservation Entry": "voucher_no",
+			"Buyback Exchange": "prev_sales_order",
 		},
 		"internal_links": {
 			"Quotation": ["items", "prevdoc_docname"],
@@ -31,5 +32,6 @@ def get_data():
 			{"label": _("Payment"), "items": ["Payment Entry", "Payment Request", "Journal Entry"]},
 			{"label": _("Schedule"), "items": ["Delivery Schedule Item"]},
 			{"label": _("Subcontracting Inward"), "items": ["Subcontracting Inward Order"]},
+			{"label": _("Buyback"), "items": ["Buyback Exchange"]},
 		],
 	}

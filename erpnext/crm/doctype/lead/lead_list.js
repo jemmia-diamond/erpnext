@@ -1,9 +1,44 @@
+const VISIBLE_PHONE_DIGITS = 5;
+
 frappe.listview_settings["Lead"] = {
+	hide_name_column: true,
 	get_indicator: function (doc) {
 		var indicator = [__(doc.status), frappe.utils.guess_colour(doc.status), "status,=," + doc.status];
 		return indicator;
 	},
 	onload: function (listview) {
+
+		const original_get_args = listview.get_args.bind(listview);
+		listview.get_args = function() {
+			const args = original_get_args();
+
+			if (args.filters) {
+				const newFilters = [];
+				const phoneOrFilters = [];
+
+				args.filters.forEach(filter => {
+					if (Array.isArray(filter) && filter[1] === 'phone' && filter[3]) {
+						let phone = filter[3].replace(/%/g, '').trim();
+						phone = phone.replace(/[\s\-\(\)]/g, '');
+						if (phone.startsWith('0') && phone.length >= 4) {
+							phoneOrFilters.push(['Lead', 'phone', 'like', '%' + phone + '%']);
+							phoneOrFilters.push(['Lead', 'phone', 'like', '%84' + phone.substring(1) + '%']);
+						} else {
+							phoneOrFilters.push(['Lead', 'phone', 'like', '%' + phone + '%']);
+						}
+					} else {
+						newFilters.push(filter);
+					}
+				});
+				args.filters = newFilters;
+				if (phoneOrFilters.length > 0) {
+					args.or_filters = phoneOrFilters;
+				}
+			}
+			
+			return args;
+		};
+
 		if (frappe.boot.user.can_create.includes("Prospect")) {
 			listview.page.add_action_item(__("Create Prospect"), function () {
 				frappe.model.with_doctype("Prospect", function () {
@@ -43,4 +78,73 @@ frappe.listview_settings["Lead"] = {
 			});
 		}
 	},
+
+	refresh: function (listview) {
+		$(".list-row-container .list-row .level-right .comment-count").remove();
+		$(".list-row-container .list-row .level-right .mx-2").remove();
+		$(".list-row-container .list-row .level-right .list-row-like").remove();
+
+		// Mask phone numbers in list view
+		const phoneCells = $('.list-row-container [data-filter^="phone,="]');
+		phoneCells.each(function () {
+			const phoneCell = $(this);
+			const phone = phoneCell.text().trim();
+			if (phone && phone.length > VISIBLE_PHONE_DIGITS) {
+				phoneCell.text(maskPhoneNumber(phone, VISIBLE_PHONE_DIGITS));
+			}
+		});
+
+		for (let i = 0; i < listview.data.length; i++) {
+			const row = $(`.result .list-row-container:nth-child(${i + 3}) .list-row`);
+			const doc = listview.data[i];
+
+			// Add Avatar
+			var avatar = "";
+			const select = row.find(".list-subject .select-like");
+			if (doc.image) {
+				avatar = `
+				<span class="avatar avatar-small level-item filterable" title="${doc.first_name}" style="margin-right: 4px; padding: 3px;">
+     				<span class="avatar-frame" style="background-image: url(&quot;${doc.image}&quot;)" title="${doc.first_name}"></span>
+				</span>
+				`
+			} else {
+				avatar = `
+				<span class="avatar avatar-small level-item filterable" title="${doc.first_name}" style="margin-right: 4px; padding: 3px;">
+					<div class="avatar-frame standard-image" style="background-color: var(--red-avatar-bg); color: var(--red-avatar-color)" title="${doc.first_name}">${doc.first_name.charAt(0).toUpperCase()}</div>
+				</span>
+				`
+			}
+			select.after($(avatar));
+		}
+
+		var docNames = listview.data.map(function (d) { return d.name; });
+		frappe.db.get_list("Contact", {
+			filters: [
+				["Dynamic Link", "link_doctype", "=", "Lead"],
+				["Dynamic Link", "link_name", "in", docNames],
+				["pancake_conversation_id", "!=", null]
+			],
+			fields: ["name", "pancake_conversation_id", "pancake_page_id", "links.link_name"]
+		}).then((contacts) => {
+			for (let i = 0; i < listview.data.length; i++) {
+				const row = $(`.result .list-row-container:nth-child(${i + 3}) .list-row`);
+				const activity = row.find(".level-right .list-row-activity");
+				const contact = contacts.find((c) => c.link_name === listview.data[i].name);
+				if (contact) {
+					var btn = $('<button class="btn btn-primary btn-pancake">P</button>');
+					btn.on('click', function (e) {
+						e.stopPropagation();
+						window.open(`https://pancake.vn/${contact.pancake_page_id}?c_id=` + contact.pancake_conversation_id, '_blank');
+					});
+					activity.append(btn);
+				}
+			}
+		})
+	},
 };
+
+function maskPhoneNumber(phone, visibleDigits) {
+	const maskedPart = '*'.repeat(phone.length - visibleDigits);
+	const visiblePart = phone.slice(-visibleDigits);
+	return maskedPart + visiblePart;
+}

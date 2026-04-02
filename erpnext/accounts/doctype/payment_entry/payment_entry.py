@@ -3,6 +3,7 @@
 
 
 import json
+import time
 from functools import reduce
 
 import frappe
@@ -12,6 +13,7 @@ from frappe.query_builder import Tuple
 from frappe.query_builder.functions import Count
 from frappe.utils import cint, comma_or, flt, getdate, nowdate
 from frappe.utils.data import comma_and, fmt_money, get_link_to_form
+from frappe.integrations.doctype.webhook.webhook import enqueue_webhook
 from pypika import Case
 from pypika.functions import Coalesce, Sum
 
@@ -64,6 +66,102 @@ class PaymentEntry(AccountsController):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
 
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from erpnext.accounts.doctype.advance_taxes_and_charges.advance_taxes_and_charges import AdvanceTaxesandCharges
+		from erpnext.accounts.doctype.payment_entry_bank_transaction.payment_entry_bank_transaction import PaymentEntryBankTransaction
+		from erpnext.accounts.doctype.payment_entry_deduction.payment_entry_deduction import PaymentEntryDeduction
+		from erpnext.accounts.doctype.payment_entry_reference.payment_entry_reference import PaymentEntryReference
+		from frappe.types import DF
+
+		amended_from: DF.Link | None
+		admin_editing: DF.Check
+		apply_tax_withholding_amount: DF.Check
+		auto_repeat: DF.Link | None
+		bank: DF.ReadOnly | None
+		bank_account: DF.Link | None
+		bank_account_branch: DF.Literal["C\u1eeda h\u00e0ng HCM", "C\u1eeda h\u00e0ng C\u1ea7n Th\u01a1", "C\u1eeda h\u00e0ng H\u00e0 N\u1ed9i"]
+		bank_account_no: DF.ReadOnly | None
+		bank_transactions: DF.Table[PaymentEntryBankTransaction]
+		base_in_words: DF.SmallText | None
+		base_paid_amount: DF.Currency
+		base_paid_amount_after_tax: DF.Currency
+		base_received_amount: DF.Currency
+		base_received_amount_after_tax: DF.Currency
+		base_total_allocated_amount: DF.Currency
+		base_total_taxes_and_charges: DF.Currency
+		book_advance_payments_in_separate_party_account: DF.Check
+		clearance_date: DF.Date | None
+		company: DF.Link | None
+		contact_email: DF.Data | None
+		contact_person: DF.Link | None
+		cost_center: DF.Link | None
+		created_by_display: DF.Link | None
+		custom_remarks: DF.Check
+		custom_transaction_id: DF.Data | None
+		custom_transfer_note: DF.SmallText | None
+		custom_transfer_status: DF.Literal["", "pending", "success", "cancel"]
+		deductions: DF.Table[PaymentEntryDeduction]
+		difference_amount: DF.Currency
+		gateway: DF.Literal[None]
+		in_words: DF.SmallText | None
+		is_opening: DF.Literal["No", "Yes"]
+		letter_head: DF.Link | None
+		misa_sync_error_msg: DF.Data | None
+		misa_sync_guid: DF.Data | None
+		misa_synced: DF.Check
+		misa_synced_at: DF.Datetime | None
+		mode_of_payment: DF.Link
+		name_display: DF.Data | None
+		naming_series: DF.Literal["ACC-PAY-.YYYY.-"]
+		notification_sent: DF.Check
+		paid_amount: DF.Currency
+		paid_amount_after_tax: DF.Currency
+		paid_from: DF.Link | None
+		paid_from_account_balance: DF.Currency
+		paid_from_account_currency: DF.Link | None
+		paid_from_account_type: DF.Data | None
+		paid_to: DF.Link | None
+		paid_to_account_balance: DF.Currency
+		paid_to_account_currency: DF.Link | None
+		paid_to_account_type: DF.Data | None
+		party: DF.DynamicLink | None
+		party_balance: DF.Currency
+		party_bank_account: DF.Link | None
+		party_name: DF.Data | None
+		party_type: DF.Link | None
+		payment_code: DF.Data | None
+		payment_date: DF.Datetime
+		payment_order: DF.Link | None
+		payment_order_status: DF.Literal["Pending", "Success", "Cancel"]
+		payment_type: DF.Literal["Receive", "Pay", "Internal Transfer"]
+		posting_date: DF.Date
+		print_heading: DF.Link | None
+		project: DF.Link | None
+		purchase_taxes_and_charges_template: DF.Link | None
+		qr_url: DF.Data | None
+		received_amount: DF.Currency
+		received_amount_after_tax: DF.Currency
+		reconcile_on_advance_payment_date: DF.Check
+		reference_date: DF.Date | None
+		reference_no: DF.Data | None
+		references: DF.Table[PaymentEntryReference]
+		remarks: DF.SmallText | None
+		sales_taxes_and_charges_template: DF.Link | None
+		shipping_code: DF.Data | None
+		source_exchange_rate: DF.Float
+		status: DF.Literal["", "Draft", "Submitted", "Cancelled"]
+		target_exchange_rate: DF.Float
+		tax_withholding_category: DF.Link | None
+		taxes: DF.Table[AdvanceTaxesandCharges]
+		title: DF.Data | None
+		total_allocated_amount: DF.Currency
+		total_order_amount: DF.Currency
+		total_taxes_and_charges: DF.Currency
+		unallocated_amount: DF.Currency
+		verified_by: DF.Link | None
+	# end: auto-generated types
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
@@ -147,12 +245,27 @@ class PaymentEntry(AccountsController):
 		total_allocated_amount: DF.Currency
 		total_taxes_and_charges: DF.Currency
 		unallocated_amount: DF.Currency
+		custom_transaction_id: DF.Data | None
+		custom_transfer_note: DF.SmallText | None
+		custom_transfer_status: DF.Literal["", "pending", "success", "cancel"]
+		qr_url: DF.Data | None
 	# end: auto-generated types
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		if not self.is_new():
 			self.setup_party_account_field()
+
+	def after_insert(self):
+		try:
+			webhook = frappe.get_doc("Webhook", "create payment entries")
+			enqueue_webhook(self, webhook)
+		except Exception as e:
+			frappe.log_error(
+				f"Failed to trigger webhook for Payment Entry {self.name}: {str(e)}",
+				"Payment Entry Webhook Trigger Error"
+			)
+
 
 	def setup_party_account_field(self):
 		self.party_account_field = None
@@ -170,6 +283,10 @@ class PaymentEntry(AccountsController):
 			self.party_account_currency = self.paid_to_account_currency
 
 	def validate(self):
+		self.set_created_by_display()
+		self.set_shipping_code_from_sales_order()
+		self.set_bank_account_from_mapping()
+		self.set_total_order_amount()
 		self.setup_party_account_field()
 		self.set_missing_values()
 		self.set_liability_account()
@@ -185,6 +302,7 @@ class PaymentEntry(AccountsController):
 		self.set_amounts_after_tax()
 		self.clear_unallocated_reference_document_rows()
 		self.validate_transaction_reference()
+		self.validate_bank_transactions()
 		self.set_title()
 		self.set_remarks()
 		self.validate_duplicate_entry()
@@ -196,8 +314,86 @@ class PaymentEntry(AccountsController):
 		self.set_status()
 		self.set_total_in_words()
 
+	def onload(self):
+		self.set_created_by_display()
+		self.set_total_order_amount()
+		self.load_bank_transactions()
+		if self.name:
+			self.name_display = self.name
+
+	def load_bank_transactions(self):
+		"""Fetch and populate linked Bank Transactions"""
+		if not self.name:
+			return
+
+
+		if self.bank_transactions:
+			return
+
+		linked_transactions = frappe.db.sql("""
+			SELECT
+				btp.parent as bank_transaction,
+				bt.date,
+				btp.allocated_amount,
+				btp.clearance_date
+			FROM `tabBank Transaction Payments` btp
+			INNER JOIN `tabBank Transaction` bt ON bt.name = btp.parent
+			WHERE btp.payment_entry = %s
+			ORDER BY bt.date DESC
+		""", (self.name,), as_dict=True)
+
+		for row in linked_transactions:
+			self.append("bank_transactions", row)
+
+	def set_created_by_display(self):
+		if not self.created_by_display:
+			self.created_by_display = frappe.session.user
+
+	def set_total_order_amount(self):
+		"""Fetch grand_total from linked Sales Order if exists"""
+		self.total_order_amount = 0
+
+		if not self.references:
+			return
+
+		for ref in self.references:
+			if ref.reference_doctype == "Sales Order" and ref.reference_name:
+				try:
+					grand_total = frappe.db.get_value("Sales Order", ref.reference_name, "grand_total")
+					if grand_total:
+						self.total_order_amount = grand_total
+						break
+				except Exception:
+					pass
+
 	def before_save(self):
 		self.set_matched_unset_payment_requests_to_response()
+
+	def on_update(self):
+		self.sync_bank_transaction_payments()
+		sync_so_snapshot_pe_fields_background(self.name)
+
+	def sync_bank_transaction_payments(self):
+		if self.flags.get("updating_from_bank_transaction"):
+			return
+
+		for bt_row in self.bank_transactions:
+			if bt_row.bank_transaction:
+				bank_transaction = frappe.get_doc("Bank Transaction", bt_row.bank_transaction)
+				existing = any(
+					pe.payment_document == "Payment Entry" and pe.payment_entry == self.name
+					for pe in bank_transaction.payment_entries
+				)
+
+				if not existing:
+					bank_transaction.flags.updating_linked_bank_transaction = True
+					bank_transaction.append("payment_entries", {
+						"payment_document": "Payment Entry",
+						"payment_entry": self.name,
+						"allocated_amount": bt_row.allocated_amount
+					})
+					bank_transaction.save(ignore_permissions=True)
+
 
 	def on_submit(self):
 		if self.difference_amount:
@@ -322,6 +518,44 @@ class PaymentEntry(AccountsController):
 
 		update_payment_requests_as_per_pe_references(self.references, cancel=cancel)
 
+	@frappe.whitelist()
+	def cancel_draft_payment_entry(self):
+		if self.docstatus != 0:
+			frappe.throw(_("Chỉ được huỷ Phiếu thanh toán khi đang ở trạng thái Nháp"))
+
+		user_roles = frappe.get_roles()
+		is_admin = ("Administrator" in user_roles or "Developer" in user_roles)
+		if not is_admin:
+			payment_code = None
+			if self.mode_of_payment:
+				payment_code = frappe.db.get_value("Mode of Payment", self.mode_of_payment, "payment_code")
+
+			if payment_code == "banking":
+				if self.bank_transactions and len(self.bank_transactions) > 0:
+					frappe.throw(_("Không thể huỷ Phiếu thanh toán chuyển khoản đã có giao dịch ngân hàng"))
+
+			if payment_code in ["cash_on_delivery", "cash", "pos", "payment_link"]:
+				if self.verified_by:
+					frappe.throw(_("Không thể huỷ Phiếu thanh toán đã được xác nhận"))
+
+		doc = frappe.get_doc("Payment Entry", self.name)
+		doc.payment_order_status = "Cancel"
+		doc.flags.ignore_permissions = True
+		doc.flags.ignore_validate = True
+		doc.save()
+
+		frappe.db.sql("""
+			UPDATE `tabPayment Entry`
+			SET docstatus = 2,
+			status = 'Cancelled',
+			payment_order_status = 'Cancel',
+			custom_transfer_status = 'cancel'
+			WHERE name = %s
+		""", self.name)
+
+		frappe.db.commit()
+		return {"message": _("Huỷ Phiếu thanh toán thành công")}
+
 	def update_outstanding_amounts(self):
 		self.set_missing_ref_details(force=True)
 
@@ -378,6 +612,47 @@ class PaymentEntry(AccountsController):
 			# Check for negative outstanding invoices as well
 			if flt(d.allocated_amount) < 0 and flt(d.allocated_amount) < flt(d.outstanding_amount):
 				frappe.throw(fail_message.format(d.idx))
+
+	def set_shipping_code_from_sales_order(self):
+		for ref in self.get("references", []):
+			if ref.reference_name:
+				self.shipping_code = frappe.db.get_value("Sales Order", ref.reference_name, "tracking_number") or self.shipping_code
+				break
+
+	def set_bank_account_from_mapping(self):
+		if self.mode_of_payment not in ["COD", "Payment Link", "Cà thẻ (POS)"]:
+			return
+
+		target_account_no = None
+		if self.mode_of_payment in ["COD", "Payment Link"]:
+			target_account_no = "1054449999"
+
+		elif self.mode_of_payment == "Cà thẻ (POS)":
+			if self.gateway == "Vietcombank":
+				if self.bank_account_branch == "Cửa hàng HCM":
+					target_account_no = "1054449999"
+				elif self.bank_account_branch == "Cửa hàng Hà Nội":
+					target_account_no = "1063499999"
+				elif self.bank_account_branch == "Cửa hàng Cần Thơ":
+					target_account_no = "1054499999"
+			elif self.gateway == "Payoo":
+				if self.bank_account_branch == "Cửa hàng Hà Nội":
+					target_account_no = "1121699999"
+				elif self.bank_account_branch == "Cửa hàng HCM":
+					target_account_no = "1054449999"
+				elif self.bank_account_branch == "Cửa hàng Cần Thơ":
+					target_account_no = "1054499999"
+			elif self.gateway == "ACB":
+				if self.bank_account_branch == "Cửa hàng Hà Nội":
+					target_account_no = "33399968868"
+
+		if target_account_no:
+			bank_account_name = frappe.db.get_value("Bank Account", {"bank_account_no": target_account_no}, "name")
+			if bank_account_name:
+				bank_doc = frappe.get_doc("Bank Account", bank_account_name)
+				self.bank_account = bank_doc.name
+				self.bank = bank_doc.bank
+				self.bank_account_no = bank_doc.bank_account_no
 
 	def validate_allocated_amount_as_per_payment_request(self):
 		"""
@@ -459,9 +734,10 @@ class PaymentEntry(AccountsController):
 			latest = latest.get(d.payment_term) or latest.get(None)
 			# The reference has already been fully paid
 			if not latest:
-				frappe.throw(
-					_("{0} {1} has already been fully paid.").format(_(d.reference_doctype), d.reference_name)
-				)
+				return
+				# frappe.throw(
+				# 	_("{0} {1} has already been fully paid.").format(_(d.reference_doctype), d.reference_name)
+				# )
 			# The reference has already been partly paid
 			elif (
 				latest.outstanding_amount < latest.invoice_amount
@@ -506,6 +782,7 @@ class PaymentEntry(AccountsController):
 				doc.delink_advance_entries(self.name)
 
 	def set_missing_values(self):
+		self.set_payment_code()
 		if self.payment_type == "Internal Transfer":
 			for field in (
 				"party",
@@ -643,7 +920,10 @@ class PaymentEntry(AccountsController):
 	def validate_mandatory(self):
 		for field in ("paid_amount", "received_amount", "source_exchange_rate", "target_exchange_rate"):
 			if not self.get(field):
-				frappe.throw(_("{0} is mandatory").format(_(self.meta.get_label(field))))
+				frappe.throw(_("{0} is mandatory").format(self.meta.get_label(field)))
+
+		if not self.payment_date and self.payment_code != "cash_on_delivery":
+			frappe.throw(_("Payment Date is mandatory"))
 
 	def validate_reference_documents(self):
 		valid_reference_doctypes = self.get_valid_reference_doctypes()
@@ -707,7 +987,7 @@ class PaymentEntry(AccountsController):
 							title=_("Invalid Purchase Invoice"),
 						)
 
-				if ref_doc.docstatus != 1:
+				if ref_doc.docstatus != 1 and d.reference_doctype not in ("Sales Order", "Purchase Order"):
 					frappe.throw(
 						_("{0} {1} must be submitted").format(_(d.reference_doctype), d.reference_name)
 					)
@@ -778,6 +1058,40 @@ class PaymentEntry(AccountsController):
 								d.reference_name, _(dr_or_cr)
 							)
 						)
+
+	def validate_bank_transactions(self):
+		"""
+		Validate bank transactions:
+		1. Only allow 1 bank transaction per payment entry
+		2. Allocated amount must match payment entry's paid amount
+		"""
+		if not self.bank_transactions:
+			return
+
+		if len(self.bank_transactions) > 1:
+			frappe.throw(_("Only one Bank Transaction is allowed per Payment Entry"))
+
+		for bt in self.bank_transactions:
+			if bt.allocated_amount and self.paid_amount:
+				if abs(flt(bt.allocated_amount) - flt(self.paid_amount)) > 0.01:
+					frappe.throw(
+						_("Bank Transaction allocated amount {0} must match Payment Entry paid amount {1}").format(
+							frappe.bold(bt.allocated_amount),
+							frappe.bold(self.paid_amount)
+						)
+					)
+
+			if not bt.bank_transaction:
+				frappe.throw(_("Dòng #{0}: Bắt buộc chọn Giao dịch ngân hàng").format(bt.idx))
+
+			sepay_account_number = frappe.db.get_value("Bank Transaction", bt.bank_transaction, "sepay_account_number")
+			if sepay_account_number and self.bank_account_no and self.bank_account_no != sepay_account_number:
+				msg = _("STK ngân hàng của phiếu thanh toán không khớp STK ngân hàng của giao dịch ngân hàng")
+				msg += "<br><br>"
+				msg += _("1. Bạn cần phải thay đổi <b>Tài khoản ngân hàng</b> đúng với Ngân hàng của phiếu <b>Giao dịch ngân hàng</b>. Bấm <b>Lưu</b>") + "<br>"
+				msg += _("2. Sau đó map <b>Giao dịch ngân hàng</b> và bấm <b>Lưu</b>") + "<br><br>"
+				msg += _("<b>Lưu ý: Nếu bạn không làm được, hãy nhắn gửi tin nhắn đến nhóm hỗ trợ nhé!</b>")
+				frappe.throw(msg)
 
 	def update_payment_schedule(self, cancel=0):
 		invoice_payment_amount_map = {}
@@ -921,6 +1235,8 @@ class PaymentEntry(AccountsController):
 	def set_status(self):
 		if self.docstatus == 2:
 			self.status = "Cancelled"
+			self.payment_order_status = "Cancel"
+			self.custom_transfer_status = "cancel"
 		elif self.docstatus == 1:
 			self.status = "Submitted"
 		else:
@@ -1199,11 +1515,19 @@ class PaymentEntry(AccountsController):
 
 	# Paid amount is auto allocated in the reference document by default.
 	# Clear the reference document which doesn't have allocated amount on validate so that form can be loaded fast
+	# Exception: Keep Sales Orders with 0 amount
 	def clear_unallocated_reference_document_rows(self):
-		self.set("references", self.get("references", {"allocated_amount": ["not in", [0, None, ""]]}))
+		# Keep references that are Sales Orders even if allocated_amount is 0 (for gift orders)
+		filtered_references = []
+		for ref in self.get("references"):
+			if ref.allocated_amount or ref.reference_doctype == "Sales Order":
+				filtered_references.append(ref)
+
+		self.set("references", filtered_references)
+
 		frappe.db.sql(
 			"""delete from `tabPayment Entry Reference`
-			where parent = %s and allocated_amount = 0""",
+			where parent = %s and allocated_amount = 0 and reference_doctype != 'Sales Order'""",
 			self.name,
 		)
 
@@ -1218,12 +1542,13 @@ class PaymentEntry(AccountsController):
 			self.title = self.paid_from + " - " + self.paid_to
 
 	def validate_transaction_reference(self):
-		bank_account = self.paid_to if self.payment_type == "Receive" else self.paid_from
-		bank_account_type = frappe.get_cached_value("Account", bank_account, "account_type")
-
-		if bank_account_type == "Bank":
-			if not self.reference_no or not self.reference_date:
-				frappe.throw(_("Reference No and Reference Date is mandatory for Bank transaction"))
+		# Removed Bank-only validation - reference_no and reference_date are now always optional
+		pass
+		# bank_account = self.paid_to if self.payment_type == "Receive" else self.paid_from
+		# bank_account_type = frappe.get_cached_value("Account", bank_account, "account_type")
+		# if bank_account_type == "Bank":
+		# 	if not self.reference_no or not self.reference_date:
+		# 		frappe.throw(_("Reference No and Reference Date is mandatory for Bank transaction"))
 
 	def set_remarks(self):
 		if self.custom_remarks:
@@ -1882,6 +2207,37 @@ class PaymentEntry(AccountsController):
 			return
 
 		frappe.response["matched_payment_requests"] = matched_payment_requests
+
+	def get_payment_code(self):
+		"""Get payment code from mode of payment"""
+		if not self.mode_of_payment:
+			return None
+
+		return frappe.db.get_value("Mode of Payment", self.mode_of_payment, "payment_code")
+
+	def set_payment_code(self):
+		if self.mode_of_payment:
+			self.payment_code = self.get_payment_code()
+
+	@frappe.whitelist()
+	def verify_payment(self):
+		"""Verify payment entry after bank transaction matching"""
+		payment_code = self.get_payment_code()
+		requires_bank_transaction = payment_code == "banking"
+
+		if requires_bank_transaction and (not self.bank_transactions or len(self.bank_transactions) == 0):
+			frappe.throw(_("Cannot verify: Banking payment must have at least one Bank Transaction"))
+
+		has_sales_order = any(ref.reference_doctype == "Sales Order" for ref in self.references)
+		if not has_sales_order:
+			frappe.throw(_("Cannot verify: Payment Entry must have at least one Sales Order reference"))
+
+		if not self.verified_by:
+			self.verified_by = frappe.session.user
+
+		self.save()
+
+		frappe.msgprint(_("Xác nhận thành công!!"))
 
 	@frappe.whitelist()
 	def allocate_amount_to_references(self, paid_amount, paid_amount_change, allocate_payment_amount):
@@ -2581,7 +2937,7 @@ def get_orders_to_be_billed(
 			`tab{voucher_type}`
 		where
 			{party_type} = %s
-			and docstatus = 1
+			and docstatus in (0, 1)
 			and company = %s
 			and status != "Closed"
 			and if({rounded_total_field}, {rounded_total_field}, {grand_total_field}) > advance_paid
@@ -2851,6 +3207,15 @@ def get_reference_details(
 			"payment_type": payment_type,
 		}
 	)
+
+	if reference_doctype == "Sales Order":
+		res.update({
+			"balance": flt(ref_doc.get("balance")),
+			"order_number": ref_doc.get("order_number"),
+			"split_order_group_name": ref_doc.get("split_order_group_name")
+		})
+
+
 	if account:
 		res.update({"account": account})
 	return res
@@ -3566,6 +3931,437 @@ def make_payment_order(source_name, target_doc=None):
 	return doclist
 
 
+
 @erpnext.allow_regional
 def add_regional_gl_entries(gl_entries, doc):
 	return
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_customer_with_phone(doctype, txt, searchfield, start, page_len, filters):
+	"""Custom query to search Customer by name or mobile_no"""
+	return frappe.db.sql(
+		"""
+		SELECT name, customer_name, mobile_no, phone
+		FROM `tabCustomer`
+		WHERE (
+			name LIKE %(txt)s
+			OR customer_name LIKE %(txt)s
+			OR mobile_no LIKE %(txt)s
+			OR phone LIKE %(txt)s
+		)
+		ORDER BY
+			CASE
+				WHEN name LIKE %(txt)s THEN 0
+				WHEN customer_name LIKE %(txt)s THEN 1
+				ELSE 2
+			END,
+			modified DESC
+		LIMIT %(page_len)s OFFSET %(start)s
+		""",
+		{
+			"txt": f"%{txt}%",
+			"start": start,
+			"page_len": page_len,
+		},
+	)
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_bank_transactions(doctype, txt, searchfield, start, page_len, filters):
+	"""Custom query to search Bank Transactions by name, bank_account, and sepay_transaction_content"""
+	return frappe.db.sql(
+		"""
+		SELECT name, sepay_amount_in, bank_account, sepay_transaction_content
+		FROM `tabBank Transaction`
+		WHERE (
+			name LIKE %(txt)s
+			OR bank_account LIKE %(txt)s
+			OR sepay_transaction_content LIKE %(txt)s
+			OR sepay_reference_number LIKE %(txt)s
+			OR sepay_order_description LIKE %(txt)s
+			OR sepay_order_number LIKE %(txt)s
+			OR sepay_amount_in LIKE %(txt)s
+		)
+		{conditions}
+		ORDER BY
+			CASE WHEN name LIKE %(txt)s THEN 0 ELSE 1 END,
+			modified DESC
+		LIMIT %(page_len)s OFFSET %(start)s
+		""".format(
+			conditions=("AND company = %(company)s" if filters.get("company") else "Jemmia Diamond")
+		),
+		{
+			"txt": f"%{txt}%",
+			"company": filters.get("company"),
+			"start": start,
+			"page_len": page_len,
+		},
+	)
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_sales_orders_for_payment(doctype, txt, searchfield, start, page_len, filters):
+	"""Custom query to search Sales Orders by name and order_number"""
+	return frappe.db.sql(
+		"""
+		SELECT name, FORMAT(grand_total, 0) as grand_total, order_number, customer_name
+		FROM `tabSales Order`
+		WHERE (
+			name LIKE %(txt)s
+			OR order_number LIKE %(txt)s
+			OR customer_name Like %(txt)s
+		)
+		AND company = %(company)s
+		AND customer = %(customer)s
+		AND cancelled_status = "Uncancelled"
+		AND financial_status IN ("Pending", "Partially Paid", "Paid")
+		AND grand_total > 0
+		ORDER BY
+			CASE
+				WHEN name LIKE %(txt)s THEN 0
+				WHEN order_number LIKE %(txt)s THEN 1
+				ELSE 2
+			END,
+			modified DESC
+		LIMIT %(page_len)s OFFSET %(start)s
+		""",
+		{
+			"txt": f"%{txt}%",
+			"company": filters.get("company"),
+			"customer": filters.get("customer"),
+			"start": start,
+			"page_len": page_len,
+		},
+	)
+
+
+@frappe.whitelist()
+def get_sales_orders_for_auto_populate(company, customer):
+	return frappe.db.sql(
+		"""
+		SELECT name, FORMAT(grand_total, 0) as grand_total, order_number, customer_name, financial_status, balance
+		FROM `tabSales Order`
+		WHERE company = %(company)s
+		AND customer = %(customer)s
+		AND cancelled_status = "Uncancelled"
+		AND financial_status IN ("Pending", "Partially Paid", "Paid")
+		AND grand_total > 0
+		ORDER BY modified DESC
+		""",
+		{
+			"company": company,
+			"customer": customer,
+		},
+		as_dict=True
+	)
+
+def cancel_pending_transfers():
+	from frappe.utils import add_to_date, now_datetime
+
+	threshold_time = add_to_date(now_datetime(), hours=-24)
+	allowed_modes = frappe.get_all("Mode of Payment", filters={"payment_code": "banking"}, pluck="name")
+
+	if not allowed_modes:
+		return
+
+	all_pending_entries = frappe.get_all(
+		"Payment Entry",
+		filters={
+			"custom_transfer_status": "pending",
+			"creation": ("<", threshold_time),
+			"mode_of_payment": ["in", allowed_modes]
+		},
+		pluck="name"
+	)
+
+	if not all_pending_entries:
+		return
+
+	entries_with_bank_transactions = frappe.get_all(
+		"Payment Entry Bank Transaction",
+		filters={
+			"parent": ["in", all_pending_entries]
+		},
+		pluck="parent"
+	)
+
+	payment_entry_names = list(set(all_pending_entries) - set(entries_with_bank_transactions))
+
+	for name in payment_entry_names:
+		try:
+			doc = frappe.get_doc("Payment Entry", name)
+			doc.payment_order_status = "Cancel"
+			doc.flags.ignore_permissions = True
+			doc.flags.ignore_validate = True
+			doc.save()
+
+			frappe.db.sql("""
+				UPDATE `tabPayment Entry`
+				SET docstatus = 2,
+				status = 'Cancelled',
+				custom_transfer_status = 'cancel',
+				payment_order_status = 'Cancel'
+				WHERE name = %s
+			""", name)
+		except Exception as e:
+			frappe.log_error(f"Failed to cancel Payment Entry {name}: {str(e)}")
+
+	frappe.db.commit()
+
+@frappe.whitelist()
+def get_payment_entry_list(doctype=None, txt="", searchfield="name", start=0, page_len=20, filters=None, as_dict=False, **kwargs):
+
+	phone_search = frappe.form_dict.get("phone_search") or kwargs.get("phone_search")
+	order_number_search = frappe.form_dict.get("order_number_search") or kwargs.get("order_number_search")
+	reference_filter = frappe.form_dict.get("reference_filter") or kwargs.get("reference_filter")
+
+	page_len = frappe.form_dict.get("page_length") or kwargs.get("page_length") or page_len or 20
+	start = frappe.form_dict.get("start") or kwargs.get("start") or start or 0
+
+	if not phone_search and not order_number_search and not reference_filter:
+		return None
+
+	conditions = []
+	values = {}
+
+	query = """
+		SELECT DISTINCT pe.*
+		FROM `tabPayment Entry` pe
+	"""
+
+	if order_number_search:
+		query += " INNER JOIN `tabPayment Entry Reference` per ON per.parent = pe.name"
+
+	if phone_search:
+		query += " INNER JOIN `tabCustomer` c ON c.name = pe.party AND pe.party_type = 'Customer'"
+
+	query += " WHERE 1=1"
+
+	if phone_search:
+		conditions.append("(c.mobile_no LIKE %(phone)s OR c.phone LIKE %(phone)s)")
+		values["phone"] = f"%{phone_search}%"
+
+	if order_number_search:
+		conditions.append("(per.order_number LIKE %(order_number)s OR per.split_order_group_name LIKE %(order_number)s)")
+		values["order_number"] = f"%{order_number_search}%"
+
+	if reference_filter == "has_references":
+		conditions.append("EXISTS (SELECT 1 FROM `tabPayment Entry Reference` WHERE parent = pe.name)")
+	elif reference_filter == "no_references":
+		conditions.append("NOT EXISTS (SELECT 1 FROM `tabPayment Entry Reference` WHERE parent = pe.name)")
+
+	if filters:
+		if isinstance(filters, str):
+			try:
+				filters = json.loads(filters)
+			except:
+				filters = []
+
+		if isinstance(filters, list):
+			for filter_item in filters:
+				if len(filter_item) >= 4:
+					field = filter_item[1]
+					operator = filter_item[2]
+					value = filter_item[3]
+
+					if field not in ["phone_search", "order_number_search", "reference_filter"]:
+						if operator == "=":
+							conditions.append(f"pe.{field} = %(filter_{field})s")
+							values[f"filter_{field}"] = value
+						elif operator == "!=":
+							conditions.append(f"pe.{field} != %(filter_{field})s")
+							values[f"filter_{field}"] = value
+						elif operator == "like" or operator == "LIKE":
+							conditions.append(f"pe.{field} LIKE %(filter_{field})s")
+							values[f"filter_{field}"] = f"%{value}%"
+						elif operator == "in":
+							conditions.append(f"pe.{field} IN %(filter_{field})s")
+							values[f"filter_{field}"] = value if isinstance(value, (list, tuple)) else [value]
+						elif operator == ">":
+							conditions.append(f"pe.{field} > %(filter_{field})s")
+							values[f"filter_{field}"] = value
+						elif operator == "<":
+							conditions.append(f"pe.{field} < %(filter_{field})s")
+							values[f"filter_{field}"] = value
+						elif operator == ">=":
+							conditions.append(f"pe.{field} >= %(filter_{field})s")
+							values[f"filter_{field}"] = value
+						elif operator == "<=":
+							conditions.append(f"pe.{field} <= %(filter_{field})s")
+							values[f"filter_{field}"] = value
+
+	if txt:
+		conditions.append("(pe.name LIKE %(txt)s OR pe.party_name LIKE %(txt)s)")
+		values["txt"] = f"%{txt}%"
+
+	if conditions:
+		query += " AND " + " AND ".join(conditions)
+
+	query += " ORDER BY pe.modified DESC LIMIT %(start)s, %(page_len)s"
+	values["start"] = int(start)
+	values["page_len"] = int(page_len) if page_len else 100
+
+	return frappe.db.sql(query, values, as_dict=True)
+
+@frappe.whitelist()
+def recreate_payment_entry(payment_entry_name):
+	from frappe.utils import now_datetime, nowdate, flt
+
+	doc = frappe.get_doc("Payment Entry", payment_entry_name)
+
+	if doc.docstatus != 2:
+		frappe.throw(_("Chỉ có thể tạo lại phiếu từ phiếu đã huỷ"))
+
+	new_doc = frappe.copy_doc(doc)
+	new_doc.amended_from = None
+	new_doc.docstatus = 0
+	new_doc.payment_date = now_datetime()
+	new_doc.posting_date = nowdate()
+	new_doc.payment_order_status = 'Pending'
+
+	for field in new_doc.meta.fields:
+		if field.fieldname.startswith("custom_") or field.fieldname.startswith("misa_"):
+			new_doc.set(field.fieldname, None)
+
+	new_doc.custom_transaction_id = None
+	new_doc.custom_transfer_status = None
+	new_doc.qr_url = None
+	new_doc.save()
+	frappe.db.commit()
+
+	time.sleep(6)
+	alert_message = None
+	alert_indicator = "orange"
+	transfer_note = doc.custom_transfer_note
+	amount = flt(doc.paid_amount)
+	if transfer_note:
+		fields_to_search = [
+			"description",
+			"sepay_transaction_content",
+			"sepay_order_description",
+			"sepay_order_number"
+		]
+
+		conditions = " OR ".join([f"{field} LIKE %s" for field in fields_to_search])
+		query = f"""
+			SELECT name
+			FROM `tabBank Transaction`
+			WHERE ({conditions})
+			LIMIT 1
+		"""
+		params = [f"%{transfer_note}%"] * len(fields_to_search)
+		bank_transactions = frappe.db.sql(query, tuple(params), as_dict=True)
+
+		if bank_transactions:
+			bt_name = bank_transactions[0].name
+			bt = frappe.get_doc("Bank Transaction", bt_name)
+
+			if flt(bt.sepay_amount_in) == amount:
+				if bt.payment_entries:
+					alert_message = _("Giao dịch ngân hàng có nội dung chuyển khoản của phiếu cũ đã được map với phiếu khác")
+					alert_indicator = "orange"
+				else:
+					bt.append("payment_entries", {
+						"payment_document": "Payment Entry",
+						"payment_entry": new_doc.name,
+						"allocated_amount": amount
+					})
+					bt.save()
+					alert_message = _("Tạo và map giao dịch ngân hàng thành công")
+					alert_indicator = "green"
+			else:
+				alert_message = _("Không tìm thấy giao dịch ngân hàng khớp số tiền: '{0}' và nội dung: '{1}'. Vui lòng map thủ công.").format(amount, transfer_note)
+				alert_indicator = "red"
+		else:
+			alert_message = _("Không tìm thấy giao dịch ngân hàng khớp số tiền: '{0}' và nội dung: '{1}'. Vui lòng map thủ công.").format(amount, transfer_note)
+			alert_indicator = "red"
+	else:
+		alert_message = _("Thiếu nội dung chuyển khoản ở phiếu cũ")
+		alert_indicator = "red"
+
+	return { "name": new_doc.name, "alert": alert_message, "indicator": alert_indicator }
+
+def daily_run_success_batch():
+	webhooks = frappe.get_all(
+		"Webhook",
+		filters={"enabled": 1, "webhook_doctype": "Payment Entry"},
+		fields=["name"]
+	)
+
+	webhook = None
+	for wh in webhooks:
+		w = frappe.get_doc("Webhook", wh.name)
+		if w.webhook_headers:
+			for h in w.webhook_headers:
+				if h.key == "erp-topic" and h.value == "update":
+					webhook = w
+					break
+		if webhook:
+			break
+
+	if not webhook:
+		frappe.log_error(
+			"No webhook found for Payment Entry with 'erp-topic: update' header",
+			"Payment Entry Webhook Trigger"
+		)
+		return
+
+	payment_entries = frappe.get_all(
+		"Payment Entry",
+		filters={
+			"custom_transfer_status": "success",
+			"payment_order_status": "Success",
+			"verified_by": ["is", "set"],
+			"misa_synced": 0,
+			"docstatus": 0
+		},
+		pluck="name"
+	)
+
+	if not payment_entries:
+		frappe.logger().info("No Payment Entries found for every 15 minute webhook trigger")
+		return
+
+	for pe_name in payment_entries:
+		try:
+			doc = frappe.get_doc("Payment Entry", pe_name)
+			enqueue_webhook(doc, webhook)
+			frappe.logger().info(f"Webhook triggered successfully for Payment Entry: {pe_name}")
+		except Exception as e:
+			frappe.log_error(
+				f"Failed to trigger webhook for Payment Entry {pe_name}: {str(e)}",
+				"Payment Entry Webhook Trigger Error"
+			)
+		time.sleep(1)
+
+def sync_so_snapshot_pe_fields_background(pe_name):
+	try:
+		pe_doc = frappe.get_doc("Payment Entry", pe_name)
+		if not pe_doc.references:
+			return
+
+		so_names = list({
+			ref.reference_name
+			for ref in pe_doc.references
+			if ref.reference_doctype == "Sales Order" and ref.reference_name
+		})
+
+		for so_name in so_names:
+			so = frappe.get_doc("Sales Order", so_name)
+			so.set_payment_entries()
+			so.set_group_payment_entries()
+			for row in so.get("payment_entries", []):
+				row.name = None
+			for row in so.get("group_payment_entries", []):
+				row.name = None
+			so.flags.ignore_permissions = True
+			so.flags.ignore_validate = True
+			so.flags.ignore_mandatory = True
+			so.save()
+
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), f"sync_so_snapshot_pe_fields_background failed for {pe_name}")

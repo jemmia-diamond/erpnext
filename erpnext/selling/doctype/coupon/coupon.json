@@ -1,0 +1,132 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "hash",
+ "creation": "2025-07-18 01:42:34.956452",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "coupon_info_section",
+  "sales_order",
+  "coupon_name",
+  "user",
+  "payment_status",
+  "total_price",
+  "column_break_mknb",
+  "coupon_type",
+  "haravan_coupon_id",
+  "cashback_ref",
+  "section_break_dates",
+  "start_date",
+  "end_date"
+ ],
+ "fields": [
+  {
+   "fieldname": "coupon_info_section",
+   "fieldtype": "Section Break",
+   "label": "Coupon Info"
+  },
+ {
+   "columns": 1,
+   "fieldname": "sales_order",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Sales Order",
+   "options": "Sales Order",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "coupon_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Coupon Name",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Coupon User",
+   "options": "Customer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_price",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Price",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_mknb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "coupon_type",
+   "fieldtype": "Select",
+   "label": "Coupon Type",
+   "options": "Invite\nPartner",
+   "read_only": 1
+  },
+  {
+   "columns": "1",
+   "fieldname": "payment_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Payment Status",
+   "options": "Paid\nPending",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cashback_ref",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Cashback Reference Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "haravan_coupon_id",
+   "fieldtype": "Data",
+   "label": "Haravan Coupon ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_dates",
+   "fieldtype": "Section Break",
+   "label": "Dates"
+  },
+  {
+   "description": "When coupon became active",
+   "fieldname": "start_date",
+   "fieldtype": "Datetime",
+   "label": "Start Date",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "description": "When coupon was used by another customer",
+   "fieldname": "end_date",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "End Date",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-07-27 23:57:41.255948",
+ "modified_by": "Administrator",
+ "module": "Selling",
+ "name": "Coupon",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

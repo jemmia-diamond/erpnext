@@ -3,6 +3,8 @@
 
 cur_frm.cscript.tax_table = "Sales Taxes and Charges";
 
+const NEW_PROMOTIONS_CUTOFF_DATE = "2026-02-27T16:59:00Z";
+
 erpnext.accounts.taxes.setup_tax_filters("Sales Taxes and Charges");
 erpnext.accounts.taxes.setup_tax_validations("Sales Order");
 erpnext.sales_common.setup_selling_controller();
@@ -15,7 +17,7 @@ frappe.ui.form.on("Sales Order", {
 			"Sales Invoice": "Sales Invoice",
 			"Material Request": "Material Request",
 			"Purchase Order": "Purchase Order",
-			Project: "Project",
+			"Project": "Project",
 			"Payment Entry": "Payment",
 			"Work Order": "Work Order",
 		};
@@ -63,13 +65,204 @@ frappe.ui.form.on("Sales Order", {
 			});
 		}
 	},
+	validate: function(frm) {
+		if (frm.is_new()) return;
+
+		let message = "";
+		(frm.doc.items || []).forEach(item => {
+			if (item.sku && (item.sku.length === 21 || item.sku.startsWith("SPT"))) {
+				if (!item.serial_numbers) {
+					message = __("Chưa nhập serial number cho sản phẩm {0}", [item.item_name]);
+				}
+			}
+		});
+
+		if (message) {
+			frappe.msgprint(message);
+			frappe.validated = false;
+		}
+	},
+
+	toggle_promotion_fields: function (frm) {
+		var useNewPromotions = true;
+		if (frm.doc.haravan_created_at) {
+			useNewPromotions = new Date(frm.doc.haravan_created_at) >= new Date(NEW_PROMOTIONS_CUTOFF_DATE);
+		}
+
+		var oldPromoFields = ["promotion_1", "promotion_2", "promotion_3", "promotion_4", "promotion_5", "promotion"];
+		var newPromoFields = ["select_promotions"];
+
+		oldPromoFields.forEach(function(f) {
+			frm.fields_dict.items.grid.update_docfield_property(f, "hidden", useNewPromotions ? 1 : 0);
+		});
+		newPromoFields.forEach(function(f) {
+			frm.fields_dict.items.grid.update_docfield_property(f, "hidden", useNewPromotions ? 0 : 1);
+		});
+	},
 
 	refresh: function (frm) {
+		frm.trigger('toggle_promotion_fields');
 		frm.fields_dict["items"].grid.update_docfield_property(
 			"add_schedule",
 			"hidden",
 			frm.is_new() || frm.doc.docstatus === 1 ? true : false
 		);
+		// Disable Submit button
+		$(".primary-action").prop("disabled", true);
+		// Indicate cancelled status
+		const $statusSpan = $(".page-head-content .title-area span");
+		$statusSpan.text(__(frm.doc.cancelled_status));
+		// Set color based on cancelled_status value
+		if (frm.doc.cancelled_status === "Uncancelled") {
+			$statusSpan.css("color", "green").css("background-color", "whitesmoke");
+		} else if (frm.doc.cancelled_status === "Cancelled") {
+			$statusSpan.css("color", "tomato").css("background-color", "whitesmoke");
+		}
+
+		// Show split order indicator and add button to view related orders
+		if (frm.doc.is_split_order && frm.doc.split_order_group) {
+			// Format split_order_group for display (add # prefix for readability)
+			const formatted_group = `#${frm.doc.split_order_group}`;
+
+			// Check if this is the original order (group origin)
+			const is_original = frm.doc.haravan_order_id === frm.doc.split_order_group;
+
+			// Add indicator
+			if (is_original) {
+				frm.dashboard.add_indicator(
+					__('Split Order Group: {0} (Original Order)', [formatted_group]),
+					'orange'
+				);
+			} else {
+				frm.dashboard.add_indicator(
+					__('Split Order Group: {0}', [formatted_group]),
+					'blue'
+				);
+			}
+
+			// Add button to view related split orders
+			frm.add_custom_button(__('View Related Split Orders'), function() {
+				frappe.route_options = {
+					"split_order_group": frm.doc.split_order_group,
+					"is_split_order": 1,
+					"cancelled_status": "Uncancelled"
+				};
+				frappe.set_route("List", "Sales Order");
+			}, __("Actions"));
+
+			// Load and display related split orders in the form
+			frappe.call({
+				method: 'frappe.client.get_list',
+				args: {
+					doctype: 'Sales Order',
+					filters: {
+						'split_order_group': frm.doc.split_order_group,
+						'is_split_order': 1,
+						'cancelled_status': 'Uncancelled'
+					},
+					fields: ['name', 'order_number', 'grand_total', 'haravan_order_id'],
+					order_by: 'transaction_date asc',
+					limit_page_length: 20
+				},
+				callback: function(r) {
+					if (r.message && r.message.length > 0) {
+						// Calculate total of all orders in group
+						let total_group_amount = 0;
+						let all_orders = r.message;
+
+						all_orders.forEach(function(order) {
+							total_group_amount += order.grand_total || 0;
+						});
+
+						let html = '<div class="split-orders-info" style="margin-top: 10px; padding: 10px; background-color: #f0f4f7; border-radius: 5px;">';
+						html += `<h6 style="margin-bottom: 10px; color: #3498db; font-size: 13px;"><i class="fa fa-link"></i> All Orders in Split Group: <b>${all_orders.length}</b></h6>`;
+						html += '<ul style="margin: 0; padding-left: 20px;">';
+
+						all_orders.forEach(function(order) {
+							const is_original = order.haravan_order_id === frm.doc.split_order_group;
+							const is_current = order.name === frm.doc.name;
+
+							let badge = '';
+							if (is_original) {
+								badge = '<span style="background: #95a5a6; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 5px;">ORIGINAL</span>';
+							}
+
+							const style = is_current ? 'font-weight: bold;' : '';
+							html += `<li style="${style}"><a href="/app/sales-order/${order.name}" target="_blank">${order.order_number}</a> - ${format_currency(order.grand_total, frm.doc.currency)}${badge}</li>`;
+						});
+
+						html += '</ul>';
+						html += '<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #d1d8dd;">';
+						html += `<p style="margin: 5px 0; font-size: 13px; color: #2c3e50;"><b>Total Amount (All Split Orders): ${format_currency(total_group_amount, frm.doc.currency)}</b></p>`;
+						html += '</div>';
+						html += '</div>';
+
+						frm.set_df_property('split_order_group', 'description', html);
+					}
+				}
+			});
+		}
+
+		frm.add_custom_button(__('View On Haravan'), function() {
+			const haravanUrl = `https://jemmiavn.myharavan.com/admin/orders/${frm.doc.haravan_order_id}`;
+			window.open(haravanUrl, '_blank');
+		});
+
+		frm.add_custom_button(__("Send Order To Lark"), frappe.utils.debounce(() => {
+			frappe.db.get_doc("Sales Order", frm.doc.name).then((doc) => {
+
+				const btn = frm.custom_buttons[__("Send Order To Lark")];
+				$(btn).prop("disabled", true);
+
+				let attachments = frm.attachments.get_attachments();
+				attachments = attachments.map(att => {
+					const file_url = frm.attachments.get_file_url(att);
+					return {
+						file_url: frappe.urllib.get_full_url(decodeURIComponent(file_url)), // Decode first to avoid double encoding
+						is_private: att.is_private
+					}
+				})
+
+				const docWithAttachments = {
+					...doc,
+					attachments: attachments
+				}
+
+				frappe.call({
+					method: "erpnext.selling.doctype.sales_order.sales_order.larksuite_notification",
+					args: { sales_order_doc: docWithAttachments },
+					callback: (r) => {
+						if (r.message) frappe.msgprint(r.message);
+					},
+					always: () => {
+						$(btn).prop("disabled", false);
+					}
+				});
+			});
+		}, 2000));
+
+		// hide sales order item grid footer (buttons)
+		$('[data-fieldname="items"] .grid-footer').addClass('hidden');
+
+		// fetch customer details
+		frappe.db.get_doc("Customer", frm.doc.customer).then((doc) => {
+			frm.set_value("birth_date", doc.birth_date);
+			frm.set_value("place_of_issuance", doc.place_of_issuance);
+			frm.set_value("date_of_issuance", doc.date_of_issuance);
+			frm.set_value("customer_personal_id", doc.personal_id);
+			frm.set_value("customer_passport_id", doc.passport_id);
+			frm.set_value("gender", doc.gender);
+		})
+
+		// link filters for promotions
+		frm.set_query("promotions", function () {
+            return {
+                filters: {
+                    "scope": "Order",
+					"is_active": 1
+                }
+            };
+        });
 
 		if (frm.doc.docstatus === 1) {
 			if (
@@ -170,6 +363,338 @@ frappe.ui.form.on("Sales Order", {
 		if (frm.doc.docstatus > 0) {
 			frm.set_df_property("reserve_stock", "description", null);
 		}
+
+		// Ensure deposit_amount shows currency in label and formats using SO currency
+		if (frm.doc.currency) {
+			frm.set_currency_labels(["deposit_amount"], frm.doc.order_currency);
+			frm.set_df_property("deposit_amount", "options", "currency");
+		}
+
+		// Handle buyback button visibility and click
+		const can_add_buyback = !frm.doc.__islocal && frm.doc.docstatus === 0;
+		frm.toggle_display('buyback_items', can_add_buyback);
+		
+		if (can_add_buyback) {
+			// For Button field, bind to the input element
+			frm.fields_dict.buyback_items.$input.off('click').on('click', function() {
+				frm.trigger('show_buyback_selector');
+			});
+		}
+		frm.trigger('render_buyback_items');
+		frm.trigger('auto_fetch_item_policies');
+	},
+
+	trigger_fetch_policy: function(frm, item_name, item_code, show_alert = true) {
+		frappe.call({
+			method: "erpnext.selling.doctype.sales_order_item.sales_order_item.trigger_manual_webhook",
+			args: { item_name: item_name },
+			callback: function(r) {
+				if (r.message && show_alert) {
+					let label = item_code ? __('cho {0}', [item_code]) : '';
+					frappe.show_alert(__('Đang tự động lấy thông tin chính sách {0} ...', [label]), 5);
+				}
+			}
+		});
+	},
+
+	auto_fetch_item_policies: function(frm) {
+		if (frm.doc.docstatus !== 0 || frm.doc.__islocal) return;
+
+		let items_to_fetch = frm.doc.items.filter(item => {
+			let is_new = item.__islocal || 
+						 (item.name && (item.name.startsWith("New ") || item.name.startsWith("new-")));
+			return !is_new && !item.item_policy && item.is_policy_locked !== 1;
+		});
+
+		if (items_to_fetch.length > 0) {
+			items_to_fetch.forEach(item => {
+				frm.events.trigger_fetch_policy(frm, item.name, item.item_code, false);
+			});
+		}
+	},
+	
+	show_buyback_selector(frm) {
+		// Get customer phone from sales order
+		const phone = frm.doc.contact_mobile || frm.doc.contact_phone;
+
+		if (!phone) {
+			frappe.msgprint(__('Please set customer phone before selecting buyback items.'));
+			return;
+		}
+		
+		// Fetch available buyback items
+		frappe.call({
+			method: 'erpnext.selling.doctype.sales_order.sales_order.get_available_buyback_items',
+			args: {
+				phone: phone
+			},
+			callback: function(r) {
+				if (r.message && r.message.length > 0) {
+					frm.events.open_buyback_dialog(frm, r.message);
+				} else {
+					frappe.msgprint(__('No available buyback items found for this customer phone.'));
+				}
+			}
+		});
+	},
+
+	open_buyback_dialog(frm, items) {
+		let d = new frappe.ui.Dialog({
+			title: __('Select Buyback Items to Link'),
+			size: 'large',
+			fields: [
+				{
+					fieldname: 'items_html',
+					fieldtype: 'HTML'
+				}
+			],
+			primary_action_label: __('Link Selected Items'),
+			primary_action(values) {
+				const selected = [];
+				d.$wrapper.find('input[type="checkbox"]:checked').each(function() {
+					selected.push($(this).data('item-name'));
+				});
+				
+				if (selected.length === 0) {
+					frappe.msgprint(__('Please select at least one item'));
+					return;
+				}
+				
+				frappe.call({
+					method: 'erpnext.selling.doctype.sales_order.sales_order.link_buyback_items',
+					args: {
+						sales_order: frm.doc.name,
+						item_names: selected
+					},
+					callback: function(r) {
+						if (r.message && r.message.success) {
+							frappe.show_alert({
+								message: __('Successfully linked {0} buyback item(s)', [r.message.count]),
+								indicator: 'green'
+							});
+							d.hide();
+							frm.reload_doc();
+						}
+					}
+				});
+			}
+		});
+
+		// Build HTML table with direct borders (simple)
+		let html = `
+			<div style="margin-top: 8px;">
+				<div style="max-height: 450px; overflow-y: auto; overflow-x: auto;">
+					<table class="table table-bordered" style="margin-bottom: 0; border-collapse: collapse; width: 100%; min-width: 800px; table-layout: fixed;">
+						<thead>
+							<tr style="background: linear-gradient(180deg, #f8f9fb 0%, #f3f4f6 100%); border-bottom: 2px solid #e4e7eb;">
+								<th style="padding: 14px 16px; width: 5%; border-bottom: none; text-align: center;">
+									<!-- No Select All for single selection -->
+								</th>
+								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 20%; text-align: center;">${__("Product")}</th>
+								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__("Item Code")}</th>
+								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__("Sale Price")}</th>
+								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__("Buyback Price")}</th>
+								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__("Buyback %")}</th>
+								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__("Prev Sales Order")}</th>
+							</tr>
+						</thead>
+						<tbody>
+		`;
+
+		// Escape text to HTML entities to be safe in JS strings and HTML
+		const escape = (str) => (str || "").toString()
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;")
+			.replace(/'/g, "&#39;");
+
+		// Normalize frappe.format output: verify no single quotes break the template
+		const safeFormat = (val, doc) => {
+			let s = frappe.format(val, {fieldtype: 'Currency', currency: doc.currency});
+			// Replace single quotes in HTML attributes with double quotes to be template-safe
+			return (s || "").toString().replace(/'/g, '"');
+		};
+
+		items.forEach((item, index) => {
+			const prevOrder = item.prev_sales_order || item.order_code;
+			const rowBg = index % 2 === 0 ? '#ffffff' : '#fafbfc';
+			html += `
+				<tr style="background-color: ${rowBg}; border-bottom: 1px solid #f0f1f3; transition: background-color 0.15s ease;">
+					<td style="padding: 16px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f0f1f3;">
+						<input type="checkbox" class="buyback-item-checkbox" data-item-name="${escape(item.name)}" style="width: 16px; height: 16px; cursor: pointer;">
+					</td>
+					<td style="padding: 16px; vertical-align: middle; border-bottom: 1px solid #f0f1f3;">
+						<div style="font-size: 14px; color: #111827; line-height: 1.4; word-wrap: break-word;" title="${escape(item.product_name)}">${escape(item.product_name || "-")}</div>
+					</td>
+					<td style="padding: 16px; vertical-align: middle; border-bottom: 1px solid #f0f1f3;">
+						<div style="font-size: 12px; color: #374151; line-height: 1.6;">
+							<span style="font-family: Menlo, Monaco, Consolas, monospace; color: #111827;">${escape(item.item_code)}</span>
+						</div>
+					</td>
+					<td style="padding: 16px; vertical-align: middle; text-align: right; border-bottom: 1px solid #f0f1f3; color: #111827;">
+						${safeFormat(item.sale_price, frm.doc)}
+					</td>
+					<td style="padding: 16px; vertical-align: middle; text-align: right; border-bottom: 1px solid #f0f1f3; color: #111827;">
+						${safeFormat(item.buyback_price, frm.doc)}
+					</td>
+					<td style="padding: 16px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f0f1f3; color: #111827;">
+						${item.buyback_percentage}%
+					</td>
+					<td style="padding: 16px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f0f1f3;">
+						${prevOrder ? `<a href="/app/sales-order/${escape(prevOrder)}" target="_blank" style="text-decoration: underline;">${escape(prevOrder)}</a>` : "-"}
+					</td>
+				</tr>
+			`;
+		});
+
+		html += `
+						</tbody>
+					</table>
+				</div>
+			</div>
+		`;
+
+		d.fields_dict.items_html.$wrapper.html(html);
+
+		// Single selection logic: uncheck others when one is checked
+		d.$wrapper.find('.buyback-item-checkbox').on('change', function() {
+			if ($(this).prop('checked')) {
+				d.$wrapper.find('.buyback-item-checkbox').not(this).prop('checked', false);
+			}
+		});
+
+		d.show();
+	},
+
+	render_buyback_items(frm) {
+		if (frm.doc.__islocal) return;
+		frappe.call({
+			method: "erpnext.selling.doctype.sales_order.sales_order.get_buyback_items",
+			args: {
+				sales_order: frm.doc.name
+			},
+			callback: function(r) {
+				if (r.message && r.message.length > 0) {
+					let html = `
+						<div class="control-value" style="margin-top: 8px;">
+							<div style="max-height: 450px; overflow-y: auto; overflow-x: auto;">
+								<table class="table table-bordered" style="margin-bottom: 0; border-collapse: collapse; width: 100%; min-width: 800px; table-layout: fixed;">
+									<thead>
+										<tr style="background: linear-gradient(180deg, #f8f9fb 0%, #f3f4f6 100%); border-bottom: 2px solid #e4e7eb;">
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 20%; text-align: center;">${__("Product")}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 17%; text-align: center;">${__("Item Code")}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; text-align: center; border-bottom: none; width: 15%;">${__("Sale Price")}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; text-align: center; border-bottom: none; width: 15%;">${__("Exchange Amount")}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; text-align: center; width: 12%;">${__("Buyback %")}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; text-align: center; border-bottom: none; width: 16%;">${__("Prev Sales Order")}</th>
+											<th style="padding: 14px 16px; width: 9%; border-bottom: none; text-align: center;">${__("Actions")}</th>
+										</tr>
+									</thead>
+									<tbody>
+					`;
+					
+					// Escape text to HTML entities
+					const escape = (str) => (str || "").toString()
+						.replace(/&/g, "&amp;")
+						.replace(/</g, "&lt;")
+						.replace(/>/g, "&gt;")
+						.replace(/"/g, "&quot;")
+						.replace(/'/g, "&#39;");
+
+					// Normalize frappe.format output
+					const safeFormat = (val, doc) => {
+						let s = frappe.format(val, {fieldtype: 'Currency', currency: doc.currency});
+						return (s || "").toString().replace(/'/g, '"');
+					};
+
+					r.message.forEach((item, index) => {
+						const prevOrder = item.prev_sales_order || item.order_code;
+						const rowBg = index % 2 === 0 ? '#ffffff' : '#fafbfc';
+						html += `
+							<tr style="background-color: ${rowBg}; border-bottom: 1px solid #f0f1f3; transition: background-color 0.15s ease;">
+								<td style="padding: 16px; vertical-align: middle; border-bottom: 1px solid #f0f1f3;">
+									<div style="font-size: 14px; color: #111827; margin-bottom: 4px; line-height: 1.4; word-wrap: break-word;" title="${escape(item.product_name)}">${escape(item.product_name || "-")}</div>
+								</td>
+								<td style="padding: 16px; vertical-align: middle; border-bottom: 1px solid #f0f1f3;">
+									<div style="font-size: 12px; color: #374151; line-height: 1.6;">
+										<span style="font-family: Menlo, Monaco, Consolas, monospace; color: #111827;">${escape(item.item_code)}</span>
+									</div>
+								</td>
+								<td style="padding: 16px; vertical-align: middle; text-align: right; border-bottom: 1px solid #f0f1f3; color: #111827;">
+									${safeFormat(item.sale_price, frm.doc)}
+								</td>
+								<td style="padding: 16px; vertical-align: middle; text-align: right; border-bottom: 1px solid #f0f1f3; color: #111827;">
+									${safeFormat(item.buyback_price, frm.doc)}
+								</td>
+								<td style="padding: 16px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f0f1f3; color: #111827;">
+									${item.buyback_percentage}%
+								</td>
+								<td style="padding: 16px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f0f1f3;">
+									${prevOrder ? `<a href="/app/sales-order/${escape(prevOrder)}" target="_blank" style="text-decoration: underline;">${escape(prevOrder)}</a>` : "-"}
+								</td>
+								<td style="padding: 16px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f0f1f3;">
+									<div style="display: flex; justify-content: center; gap: 8px;">
+										<a href="/app/buyback-exchange/${escape(item.parent)}" class="btn btn-sm" title="${__('View Exchange')}" target="_blank" style="padding: 6px 10px; background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; color: #374151; transition: all 0.15s ease;">
+											<i class="fa fa-external-link" style="font-size: 12px;"></i>
+										</a>
+										<button class="btn btn-sm btn-unlink-buyback" data-item-name="${escape(item.name)}" title="${__('Unlink Item')}" style="padding: 6px 10px; background-color: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; color: #dc2626; transition: all 0.15s ease;">
+											<i class="fa fa-times" style="font-size: 12px;"></i>
+										</button>
+									</div>
+								</td>
+							</tr>
+						`;
+					});
+					
+					html += `
+									</tbody>
+								</table>
+							</div>
+						</div>
+					`;
+					
+					frm.set_df_property("buyback_items_html", "options", html);
+					frm.set_df_property("buyback_items_html", "hidden", 0);
+					frm.set_df_property("buyback_section_break", "hidden", 0);
+					
+					// Add click handlers for unlink buttons
+					setTimeout(() => {
+						if (frm.fields_dict.buyback_items_html && frm.fields_dict.buyback_items_html.$wrapper) {
+							frm.fields_dict.buyback_items_html.$wrapper.find('.btn-unlink-buyback').off('click').on('click', function(e) {
+								e.preventDefault();
+								const item_name = $(this).data('item-name');
+								
+								frappe.confirm(
+									__('Are you sure you want to unlink this buyback item?'),
+									() => {
+										frappe.call({
+											method: 'erpnext.selling.doctype.sales_order.sales_order.unlink_buyback_item',
+											args: { item_name: item_name },
+											callback: function(r) {
+												if (r.message && r.message.success) {
+													frappe.show_alert({
+														message: __('Buyback item unlinked successfully'),
+														indicator: 'green'
+													});
+													frm.reload_doc();
+												}
+											}
+										});
+									}
+								);
+							});
+						}
+					}, 100);
+				} else {
+					// Hide only the items table, not the section
+					frm.set_df_property("buyback_items_html", "hidden", 1);
+				}
+				
+				// Always show the Buyback section
+				frm.set_df_property("buyback_section_break", "hidden", 0);
+			}
+		});
 	},
 
 	get_items_from_internal_purchase_order(frm) {
@@ -243,6 +768,33 @@ frappe.ui.form.on("Sales Order", {
 			"Unreconcile Payment Entries",
 			"Delivery Schedule Item",
 		];
+	},
+
+	// Update deposit_amount label and currency formatting when currency changes
+	currency: function (frm) {
+		if (frm.doc.currency) {
+			frm.set_currency_labels(["deposit_amount"], frm.doc.order_currency);
+			frm.set_df_property("deposit_amount", "options", "currency");
+		}
+	},
+
+	birth_date: function (frm) {
+		if (frm.doc.birth_date) {
+			const year = parseInt(frm.doc.birth_date.split("-")[0]);
+			const current_year = new Date().getFullYear();
+
+			if (year < 1900 || year > current_year) {
+				frappe.msgprint(__("Năm sinh phải nằm trong khoảng 1900 đến {0}", [current_year]));
+				frm.set_value("birth_date", "");
+			}
+		}
+	},
+
+	delivery_date: function (frm) {
+		$.each(frm.doc.items || [], function (i, d) {
+			if (!d.delivery_date) d.delivery_date = frm.doc.delivery_date;
+		});
+		refresh_field("items");
 	},
 
 	create_stock_reservation_entries(frm) {
@@ -449,7 +1001,7 @@ frappe.ui.form.on("Sales Order", {
 	cancel_stock_reservation_entries(frm) {
 		const dialog = new frappe.ui.Dialog({
 			title: __("Stock Unreservation"),
-			size: "extra-large",
+		 size: "extra-large",
 			fields: [
 				{
 					fieldname: "sr_entries",
@@ -914,6 +1466,76 @@ frappe.ui.form.on("Sales Order Item", {
 			}
 		}
 	},
+
+	fetch_policy: function(frm, cdt, cdn) {
+		let row = locals[cdt][cdn];
+		frm.events.trigger_fetch_policy(frm, row.name, row.item_code, true);
+	},
+
+	serial: function (frm, cdt, cdn) {
+		// When serial is selected, append serial number to serial_numbers field
+		var row = locals[cdt][cdn];
+		if (row.serial) {
+			frappe.db.get_value('Serial', row.serial, 'serial_number')
+				.then((r) => {
+					if (r && r.message && r.message.serial_number) {
+						const serialTitle = r.message.serial_number;
+						const serialNumbersList = row.serial_numbers ? row.serial_numbers.split('\n') : [];
+
+						if (!serialNumbersList.includes(serialTitle)) {
+							if (row.serial_numbers) {
+								row.serial_numbers += `\n${serialTitle}`;
+							} else {
+								row.serial_numbers = serialTitle;
+							}
+						}
+
+						// Clean up and finalize
+						row.serial_numbers = row.serial_numbers.replace(/\n+/g, '\n').trim();
+						row.serial = null;
+						frm.refresh_field('items');
+					}
+				})
+				.catch((err) => {
+					frappe.msgprint(__('Error fetching serial number: {0}', [err.message]));
+					console.error(err);
+				});
+		}
+	},
+
+	promotion: function (frm, cdt, cdn) {
+		var row = locals[cdt][cdn];
+		if (row.promotion) {
+			var selected_promotions = [row.promotion_1, row.promotion_2, row.promotion_3, row.promotion_4, row.promotion_5];
+			var is_earring = false;
+			
+			const type = row.type ? decode_unicode(row.type) : "";
+			const title = row.variant_title ? decode_unicode(row.variant_title) : "";
+
+			if (type.includes("Bông Tai") || (type.toLowerCase() === "virtual" && title.includes("Bông Tai"))) {
+				is_earring = true;
+			}
+			
+			var promotion_count = selected_promotions.filter(p => p === row.promotion).length;
+			
+			if (!selected_promotions.includes(row.promotion) || (is_earring && promotion_count < 2)) {
+
+				if (!row.promotion_1) {
+					row.promotion_1 = row.promotion;
+				} else if (!row.promotion_2) {
+					row.promotion_2 = row.promotion;
+				} else if (!row.promotion_3) {
+					row.promotion_3 = row.promotion;
+				} else if (!row.promotion_4) {
+					row.promotion_4 = row.promotion;
+				} else if (!row.promotion_5) {
+					row.promotion_5 = row.promotion;
+				}
+			}
+			row.promotion = null;
+			frm.refresh_field('items');
+		}
+	}
 });
 
 erpnext.selling.SalesOrderController = class SalesOrderController extends erpnext.selling.SellingController {
@@ -1166,41 +1788,6 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 			}
 		}
 
-		if (
-			this.frm.doc.docstatus === 0 &&
-			frappe.model.can_read("Quotation") &&
-			!this.frm.doc.is_subcontracted
-		) {
-			this.frm.add_custom_button(
-				__("Quotation"),
-				function () {
-					let d = erpnext.utils.map_current_doc({
-						method: "erpnext.selling.doctype.quotation.quotation.make_sales_order",
-						source_doctype: "Quotation",
-						target: me.frm,
-						setters: [
-							{
-								label: __("Customer"),
-								fieldname: "party_name",
-								fieldtype: "Link",
-								options: "Customer",
-								default: me.frm.doc.customer || undefined,
-							},
-						],
-						get_query_filters: {
-							company: me.frm.doc.company,
-							docstatus: 1,
-							status: ["not in", ["Lost", "Ordered"]],
-						},
-						allow_child_item_selection: true,
-						child_fieldname: "items",
-						child_columns: ["item_code", "item_name", "qty", "rate", "amount"],
-					});
-				},
-				__("Get Items From")
-			);
-		}
-
 		this.order_type(doc);
 	}
 
@@ -1423,7 +2010,7 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 						fieldname: "required_qty",
 						reqd: 1,
 						label: __("Qty"),
-						in_list_view: 1,
+					 in_list_view: 1,
 					},
 				],
 				data: r.message,
@@ -1451,10 +2038,10 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 							frappe.msgprint(
 								__("Material Request {0} submitted.", [
 									'<a href="/app/material-request/' +
-										r.message.name +
-										'">' +
-										r.message.name +
-										"</a>",
+									r.message.name +
+									'">' +
+									r.message.name +
+									"</a>",
 								])
 							);
 						}
@@ -1491,8 +2078,8 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 						</div>
 					</div>
 					${delivery_dates
-						.map(
-							(date) => `
+					.map(
+						(date) => `
 						<div class="list-item">
 							<div class="list-item__content list-item__content--flex-2">
 								<label>
@@ -1506,8 +2093,8 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 							</div>
 						</div>
 					`
-						)
-						.join("")}
+					)
+					.join("")}
 				</div>
 			`);
 
@@ -1815,6 +2402,33 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 	}
 };
 
+// Sales Team event handlers
+frappe.ui.form.on("Sales Team", {
+	merator: function(frm, cdt, cdn) {
+		calculate_allocated_percentage(frm, cdt, cdn);
+	},
+	denominator: function(frm, cdt, cdn) {
+		calculate_allocated_percentage(frm, cdt, cdn);
+	}
+});
+
+function calculate_allocated_percentage(frm, cdt, cdn) {
+	var row = locals[cdt][cdn];
+
+	if (row.merator && row.denominator && row.denominator > 0) {
+		// Calculate percentage from merator/denominator
+		var percentage = (row.merator / row.denominator) * 100;
+		frappe.model.set_value(cdt, cdn, "allocated_percentage", percentage);
+	}
+}
+
+// Helper to decode unicode escape sequences (e.g. B\u00f4ng Tai -> Bông Tai)
+function decode_unicode(str) {
+	return str.replace(/\\u[\dA-F]{4}/gi, 
+		(match) => String.fromCharCode(parseInt(match.replace(/\\u/g, ''), 16))
+	);
+}
+
 extend_cscript(cur_frm.cscript, new erpnext.selling.SalesOrderController({ frm: cur_frm }));
 
 function prevent_past_delivery_dates(frm) {
@@ -1823,4 +2437,214 @@ function prevent_past_delivery_dates(frm) {
 			minDate: new Date(frm.doc.transaction_date),
 		});
 	}
+}
+
+function parse_promos(val) {
+	try { return JSON.parse(val) || []; } catch(e) { return []; }
+}
+
+frappe.ui.form.on('Sales Order Item', {
+	select_promotions: function(frm, cdt, cdn) {
+		var dialog = new frappe.ui.form.MultiSelectDialog({
+			doctype: "Promotion",
+			target: frm,
+			setters: {
+				title: null,
+			},
+			read_only_setters: ["title"],
+			primary_action_label: "Add Selected",
+			get_query() {
+				return {
+					filters: {
+						is_active: 1,
+						scope: "Line Item"
+					}
+				};
+			},
+			action(selections) {
+				var existing = parse_promos(locals[cdt][cdn]["new_promotions"]);
+				existing.push(...selections);
+				locals[cdt][cdn]["new_promotions"] = JSON.stringify(existing);
+				frm.dirty();
+				dialog.dialog.$wrapper.modal("hide");
+				dialog.dialog.$wrapper.remove();
+				$(".modal-backdrop").last().remove();
+				$("body").addClass("modal-open");
+				var grid_row = frm.fields_dict.items.grid.grid_rows_by_docname[cdn];
+				if (grid_row) {
+					grid_row.toggle_view(true);
+					if (grid_row.grid_form && grid_row.grid_form.fields_dict.select_promotions) {
+						$(grid_row.grid_form.fields_dict.select_promotions.wrapper).find(".promo-validation-warning").remove();
+					}
+					render_promotion_pills(frm, cdt, cdn);
+				}
+			}
+		});
+
+		setTimeout(() => {
+			dialog.dialog.get_field("search_term").set_label("Search Promotion Title");
+			dialog.dialog.get_secondary_btn().hide();
+			dialog.dialog.get_field("title").$wrapper.hide();
+			dialog.dialog.$wrapper.on("hidden.bs.modal", function() {
+				$(this).remove();
+				$(".modal-backdrop").last().remove();
+				$("body").addClass("modal-open");
+				var grid_row = frm.fields_dict.items.grid.grid_rows_by_docname[cdn];
+				if (grid_row) {
+					grid_row.toggle_view(true);
+					render_promotion_pills(frm, cdt, cdn);
+				}
+			});
+		}, 100);
+	},
+	form_render: function(frm, cdt, cdn) {
+		render_promotion_pills(frm, cdt, cdn);
+		var grid_row = frm.fields_dict.items.grid.grid_rows_by_docname[cdn];
+		if (grid_row && grid_row.grid_form && grid_row.grid_form.fields_dict.fetch_policy) {
+			var $wrapper = $(grid_row.grid_form.fields_dict.fetch_policy.wrapper);
+			if (!$wrapper.prev('.promo-guidance').length) {
+				$('<div class="promo-guidance" style="margin-bottom:20px;font-size:12px;color:#666;">' +
+					'<b>Lưu ý:</b><br>' +
+					'Mỗi CTKM chỉ áp dụng cho sản phẩm đơn chiếc nên cần lưu ý trong trường hợp sản phẩm là <b>Bông Tai</b>:<br>' +
+					'- <b>Đối với Sản phẩm tạm:</b> Chọn 02 mã CTKM (tương ứng cho 02 chiếc đơn lẻ cấu thành một cặp). (ví dụ: với SPT giảm 2tr, chọn 2 voucher giảm 1tr)<br>' +
+					'- <b>Đối với Sản phẩm tồn kho:</b> Chỉ chọn duy nhất 01 CTKM. (ví dụ, với Bông Tai giảm 1tr, chỉ chọn 1 voucher giảm 500.000)<br><br>' +
+					'Nếu không tìm thấy, liên hệ Marketing để được hỗ trợ' +
+				'</div>').insertBefore($wrapper);
+			}
+		}
+	},
+	rate: function(frm, cdt, cdn) {
+		render_promotion_pills(frm, cdt, cdn);
+	},
+	price_list_rate: function(frm, cdt, cdn) {
+		render_promotion_pills(frm, cdt, cdn);
+	},
+	qty: function(frm, cdt, cdn) {
+		render_promotion_pills(frm, cdt, cdn);
+	}
+});
+
+function render_promotion_pills(frm, cdt, cdn) {
+	var promos = parse_promos(locals[cdt][cdn]["new_promotions"]);
+	var grid_row = frm.fields_dict.items.grid.grid_rows_by_docname[cdn];
+	if (!grid_row || !grid_row.grid_form) return;
+
+	var $field = $(grid_row.grid_form.fields_dict.select_promotions.wrapper);
+	$field.find(".promotion-pills").remove();
+	if (!promos.length) return;
+
+	var initial_price = locals[cdt][cdn].price_list_rate || 0;
+
+	var $pills = $('<div class="promotion-pills" style="display:flex;flex-direction:column;gap:10px;margin-top:6px;"></div>');
+	promos.forEach((promo, idx) => {
+		$pills.append($(`<div class="promo-pill" draggable="true" data-promo="${frappe.utils.escape_html(promo)}" data-idx="${idx}" style="background:#f5f5f5;color:#333;padding:8px 14px;border-radius:8px;font-size:13px;display:flex;align-items:center;justify-content:space-between;border:1px solid #d9d9d9;cursor:grab;">
+			<div style="display:flex;flex-direction:column;">
+				<span class="promo-label" style="font-weight:600;">${frappe.utils.escape_html(promo)}</span>
+				<span class="promo-price" style="font-size:12px;color:#1976d2;margin-top:2px;">...</span>
+			</div>
+			<span class="remove-promo" data-idx="${idx}" style="cursor:pointer;font-size:16px;font-weight:bold;color:#999;margin-left:10px;">&times;</span>
+		</div>`));
+	});
+	$field.append($pills);
+
+	frappe.call({
+		method: "frappe.client.get_list",
+		args: {
+			doctype: "Promotion",
+			filters: { name: ["in", promos] },
+			fields: ["name", "title", "priority", "discount_type", "discount_amount", "discount_percent"],
+			limit_page_length: 0
+		},
+		async: true,
+		callback: function(r) {
+			if (!r || !r.message) return;
+			var promo_map = {};
+			r.message.forEach(p => { promo_map[p.name] = p; });
+			
+			var current_price = initial_price;
+
+			$pills.find(".promo-pill").each(function() {
+				var name = $(this).attr("data-promo");
+				var p = promo_map[name];
+				if (p) {
+					$(this).find(".promo-label").text(p.title || p.name);
+					
+					if (p.priority === "G1") {
+						current_price = current_price * (1 - (p.discount_percent || 0) / 100);
+					} else if (p.priority === "G2") {
+						current_price = current_price - (p.discount_amount || 0);
+					} else if (["G3", "G4", "G6", "G7"].includes(p.priority)) {
+						if (p.discount_type === "Percentage") {
+							current_price = current_price * (1 - (p.discount_percent || 0) / 100);
+						} else if (p.discount_type === "Fix Amount") {
+							current_price = current_price - (p.discount_amount || 0);
+						}
+					}
+					
+					$(this).find(".promo-price").text("Sau khuyến mãi: " + format_currency(current_price, frm.doc.currency).replace(/,00$/, ""));
+				} else {
+					$(this).find(".promo-price").text("Không tìm thấy trợ giá");
+				}
+			});
+
+			$field.find(".promo-validation-warning").remove();
+			if (locals[cdt][cdn].rate !== current_price && current_price >= 0) {
+				var diff = Math.abs((locals[cdt][cdn].rate * locals[cdt][cdn].qty) - (current_price * locals[cdt][cdn].qty));
+				if (diff > 5000) {
+					var $warning = $(`<div class="promo-validation-warning" style="color:#d32f2f;font-size:12px;margin-top:5px;padding:6px 10px;background:#fdeaea;border-radius:4px;border:1px solid #f5c6c6;">
+						<i class="fa fa-exclamation-triangle"></i> Giá bị lệch ${format_currency(diff, frm.doc.currency).replace(/,00$/, "")} so với thực tế
+					</div>`);
+					$field.append($warning);
+				} else {
+					var $success = $(`<div class="promo-validation-warning" style="color:#2e7d32;font-size:12px;margin-top:5px;padding:6px 10px;background:#e8f5e9;border-radius:4px;border:1px solid #c8e6c9;">
+						<i class="fa fa-check-circle"></i> Giá khớp với giá thực tế
+					</div>`);
+					$field.append($success);
+				}
+			} else if (current_price >= 0) {
+				var $success = $(`<div class="promo-validation-warning" style="color:#2e7d32;font-size:12px;margin-top:5px;padding:6px 10px;background:#e8f5e9;border-radius:4px;border:1px solid #c8e6c9;">
+					<i class="fa fa-check-circle"></i> Giá khớp với giá thực tế
+				</div>`);
+				$field.append($success);
+			}
+		}
+	});
+
+	$pills.on("click", ".remove-promo", function() {
+		var arr = parse_promos(locals[cdt][cdn]["new_promotions"]);
+		arr.splice(parseInt($(this).attr("data-idx")), 1);
+		frappe.model.set_value(cdt, cdn, "new_promotions", JSON.stringify(arr));
+		frm.dirty();
+		$field.find(".promo-validation-warning").remove();
+		render_promotion_pills(frm, cdt, cdn);
+	});
+
+	var drag_src = null;
+	$pills.on("dragstart", ".promo-pill", function(e) {
+		drag_src = this;
+		$(this).css("opacity", "0.4");
+		e.originalEvent.dataTransfer.effectAllowed = "move";
+	});
+	$pills.on("dragover", ".promo-pill", function(e) {
+		e.preventDefault();
+		$(this).css("border-top", "2px solid #999");
+	});
+	$pills.on("dragleave", ".promo-pill", function() {
+		$(this).css("border-top", "");
+	});
+	$pills.on("drop", ".promo-pill", function(e) {
+		e.preventDefault();
+		$(this).css("border-top", "");
+		if (drag_src === this) return;
+		var arr = parse_promos(locals[cdt][cdn]["new_promotions"]);
+		var item = arr.splice(parseInt($(drag_src).attr("data-idx")), 1)[0];
+		arr.splice(parseInt($(this).attr("data-idx")), 0, item);
+		frappe.model.set_value(cdt, cdn, "new_promotions", JSON.stringify(arr));
+		frm.dirty();
+		$field.find(".promo-validation-warning").remove();
+		render_promotion_pills(frm, cdt, cdn);
+	});
+	$pills.on("dragend", ".promo-pill", function() {
+		$(this).css("opacity", "1");
+	});
 }

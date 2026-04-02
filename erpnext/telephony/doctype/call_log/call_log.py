@@ -11,6 +11,10 @@ from frappe.model.document import Document
 from erpnext.crm.doctype.lead.lead import get_lead_with_phone_number
 from erpnext.crm.doctype.utils import get_scheduled_employees_for_popup, strip_number
 
+from erpnext.config.config import config
+import jwt
+import time
+
 END_CALL_STATUSES = ["No Answer", "Completed", "Busy", "Failed"]
 ONGOING_CALL_STATUSES = ["Ringing", "In Progress"]
 
@@ -223,3 +227,17 @@ def get_linked_call_logs(doctype, docname):
 		)
 
 	return timeline_contents
+
+@frappe.whitelist()
+def get_access_token():
+	now = int(time.time())
+	exp_in_second = 30
+	exp = now + exp_in_second
+	payload = {
+		"jti": f"{config.STRINGEE_API_KEY_SID}-{now}",
+		"iss": config.STRINGEE_API_KEY_SID,
+		"exp": exp,
+		"rest_api": True
+	}
+	token = jwt.encode(payload, config.STRINGEE_API_KEY_SECRET, algorithm="HS256")
+	return token

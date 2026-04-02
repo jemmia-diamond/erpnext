@@ -7,6 +7,19 @@
  "field_order": [
   "reference_doctype",
   "reference_name",
+  "order_number",
+  "split_order_group_name",
+  "paid_amount",
+  "allocated_amount",
+  "balance",
+  "mode_of_payment",
+  "gateway",
+  "bank_account",
+  "bank",
+  "bank_account_no",
+  "bank_account_branch",
+  "payment_date",
+  "payment_order_status",
   "due_date",
   "bill_no",
   "payment_term",
@@ -17,28 +30,28 @@
   "column_break_4",
   "total_amount",
   "outstanding_amount",
-  "allocated_amount",
   "exchange_rate",
   "exchange_gain_loss",
   "account",
   "payment_request",
   "payment_request_outstanding",
   "advance_voucher_type",
-  "advance_voucher_no"
+  "advance_voucher_no",
+  "ref_order_number",
+  "ref_order_date"
  ],
  "fields": [
   {
-   "columns": 2,
+   "columns": 1,
    "fieldname": "reference_doctype",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Type",
    "options": "DocType",
    "reqd": 1,
    "search_index": 1
   },
   {
-   "columns": 4,
+   "columns": 2,
    "fieldname": "reference_name",
    "fieldtype": "Dynamic Link",
    "in_global_search": 1,
@@ -49,7 +62,64 @@
    "search_index": 1
   },
   {
+   "depends_on": "eval:doc.reference_doctype=='Sales Order'",
+   "fieldname": "order_number",
+   "fieldtype": "Data",
+   "label": "Order Number",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
    "columns": 2,
+   "fieldname": "mode_of_payment",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Mode of Payment",
+   "options": "Mode of Payment",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "gateway",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Gateway",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "paid_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Paid Amount",
+   "options": "currency",
+   "precision": "0",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "payment_date",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Payment Date",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "payment_order_status",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Payment Status",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.reference_doctype=='Sales Order'",
+   "fieldname": "split_order_group_name",
+   "fieldtype": "Data",
+   "label": "Group Order",
+   "read_only": 1
+  },
+  {
    "fieldname": "due_date",
    "fieldtype": "Date",
    "in_list_view": 1,
@@ -72,7 +142,8 @@
    "fieldname": "total_amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Grand Total",
+   "label": "Total Amount",
+   "precision": "0",
    "print_hide": 1,
    "read_only": 1
   },
@@ -86,10 +157,21 @@
   },
   {
    "columns": 2,
+   "depends_on": "eval:doc.reference_doctype=='Sales Order'",
+   "fieldname": "balance",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Balance",
+   "precision": "0",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
    "fieldname": "allocated_amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Allocated"
+   "label": "Allocated",
+   "precision": "0"
   },
   {
    "depends_on": "eval:(doc.reference_doctype=='Purchase Invoice')",
@@ -171,6 +253,42 @@
    "label": "Advance Voucher No",
    "options": "advance_voucher_type",
    "read_only": 1
+  },
+  {
+   "fieldname": "bank_account",
+   "fieldtype": "Link",
+   "label": "Company Bank Account",
+   "options": "Bank Account",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "bank",
+   "fieldtype": "Data",
+   "label": "Bank",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bank_account_no",
+   "fieldtype": "Data",
+   "label": "Bank Account No",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bank_account_branch",
+   "fieldtype": "Data",
+   "label": "Branch",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ref_order_number",
+   "fieldtype": "Data",
+   "label": "Ref Order Number"
+  },
+  {
+   "fieldname": "ref_order_date",
+   "fieldtype": "Date",
+   "label": "Ref Order Date"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -184,7 +302,7 @@
  "permissions": [],
  "quick_entry": 1,
  "row_format": "Dynamic",
- "sort_field": "creation",
+ "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
  "track_changes": 1

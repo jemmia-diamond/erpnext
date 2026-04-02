@@ -3,66 +3,152 @@
  "allow_events_in_timeline": 1,
  "allow_import": 1,
  "allow_rename": 1,
- "autoname": "naming_series:",
+ "autoname": "format:CUSTOMER{YY}{######}",
  "creation": "2013-06-11 14:26:44",
  "description": "Buyer of Goods and Services.",
  "doctype": "DocType",
  "document_type": "Setup",
  "engine": "InnoDB",
  "field_order": [
+  "detail_tab",
   "basic_info",
   "naming_series",
-  "customer_type",
+  "salutation",
   "customer_name",
-  "gender",
-  "column_break0",
   "customer_group",
+  "bizfly_customer_number",
+  "column_break_eofp",
+  "is_internal_customer",
+  "customer_type",
+  "column_break0",
+  "account_manager",
+  "lead_name",
+  "opportunity_name",
   "territory",
-  "image",
+  "prospect_name",
+  "organization_section",
+  "company_name",
+  "no_of_employees",
+  "column_break_rwpe",
+  "industry",
+  "market_segment",
+  "column_break_czdq",
+  "tax_number",
+  "ceo_name",
+  "advanced_information_selection",
+  "personal_document_type",
+  "person_name",
+  "date_of_issuance",
+  "date_of_passport_issuance",
+  "column_break_bjiq",
+  "gender",
+  "personal_id",
+  "passport_id",
+  "place_of_issuance",
+  "place_of_passport_issuance",
+  "column_break_akie",
+  "birth_date",
+  "front_image",
+  "back_image",
+  "passport_expiry_date",
+  "doc_image",
+  "orther_section",
+  "first_source",
+  "customer_identity_image",
+  "customer_website",
+  "column_break_ioxt",
+  "customer_journey",
   "defaults_tab",
   "default_currency",
   "default_bank_account",
   "column_break_14",
   "default_price_list",
+  "internal_customer_section",
+  "represents_company",
+  "column_break_70",
+  "companies",
+  "more_info",
+  "customer_pos_id",
+  "website",
+  "language",
+  "column_break_45",
+  "customer_details",
   "contact_and_address_tab",
-  "address_contacts",
-  "address_html",
-  "column_break1",
-  "contact_html",
   "primary_address_and_contact_detail",
   "column_break_26",
   "customer_primary_address",
   "primary_address",
+  "image",
   "column_break_nwor",
   "customer_primary_contact",
+  "primary_contact",
   "mobile_no",
   "email_id",
   "first_name",
   "last_name",
-  "tax_tab",
-  "taxation_section",
-  "tax_id",
-  "tax_category",
-  "column_break_21",
-  "tax_withholding_category",
   "tax_withholding_group",
-  "accounting_tab",
   "default_receivable_accounts",
   "accounts",
+  "phone",
+  "address_contacts",
+  "column_break_cgqq",
+  "address_html",
+  "address_list",
+  "column_break1",
+  "contact_list",
+  "contact_html",
+  "accounting_tab",
+  "vat_infor_section",
+  "invoice_type",
+  "vat_email",
+  "column_break_waqk",
+  "vat_name",
+  "vat_address",
+  "column_break_ikkg",
+  "personal_tax_id",
+  "bank_section",
+  "bank_account",
   "credit_limit_section",
   "payment_terms",
   "credit_limits",
-  "internal_customer_section",
-  "is_internal_customer",
-  "represents_company",
-  "column_break_70",
-  "companies",
   "loyalty_points_tab",
   "loyalty_program",
   "column_break_54",
   "loyalty_program_tier",
+  "priority_tab",
+  "rank_management_section",
+  "rank",
+  "total_cumulative_revenue",
+  "column_break_qwps",
+  "rank_updated_at",
+  "priority_login_date",
+  "column_break_rm_1",
+  "rank_score_12m",
+  "partner_role",
+  "cumulative_revenue_management_section",
+  "actual_cumulative_revenue",
+  "column_break_ebsn",
+  "referral_cumulative_revenue",
+  "column_break_qgzr",
+  "buyback_revenue",
+  "section_break_pnc",
+  "column_break_pnc1",
+  "total_referral_point",
+  "available_point_amount",
+  "column_break_pnc2",
+  "withdraw_point",
+  "withdraw_cash_amount",
+  "column_break_pnc3",
+  "withdraw_cash_amount_pending",
+  "section_break_waiv",
+  "priority_bank_account",
+  "section_break_orders",
+  "sales_order_html",
+  "section_break_dkbv",
+  "coupon_table",
+  "section_break_bbex",
+  "buyback_history",
   "sales_team_tab",
-  "account_manager",
   "sales_team",
   "sales_team_section",
   "default_sales_partner",
@@ -74,25 +160,25 @@
   "column_break_53",
   "disabled",
   "is_frozen",
+  "haravan_id",
+  "bizfly_id",
   "portal_users_tab",
   "portal_users",
   "more_info_tab",
   "references_section",
-  "lead_name",
-  "opportunity_name",
   "column_break_wlbg",
-  "prospect_name",
   "section_break_objq",
-  "market_segment",
-  "industry",
-  "website",
-  "language",
-  "customer_pos_id",
   "column_break_hdmn",
-  "customer_details",
   "supplier_numbers_section",
   "supplier_numbers",
-  "connections_tab"
+  "connections_tab",
+  "dashboard_tab",
+  "tax_tab",
+  "taxation_section",
+  "tax_id",
+  "column_break_21",
+  "tax_category",
+  "tax_withholding_category"
  ],
  "fields": [
   {
@@ -129,14 +215,13 @@
    "options": "Gender"
   },
   {
-   "default": "Company",
+   "default": "Individual",
    "fieldname": "customer_type",
    "fieldtype": "Select",
    "label": "Customer Type",
    "oldfieldname": "customer_type",
    "oldfieldtype": "Select",
-   "options": "Company\nIndividual\nPartnership",
-   "reqd": 1
+   "options": "Company\nIndividual\nPartnership"
   },
   {
    "fieldname": "default_bank_account",
@@ -171,12 +256,14 @@
   {
    "fieldname": "account_manager",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Account Manager",
    "options": "User"
   },
   {
    "fieldname": "customer_group",
    "fieldtype": "Link",
+   "hidden": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Customer Group",
@@ -189,8 +276,8 @@
   {
    "fieldname": "territory",
    "fieldtype": "Link",
+   "hidden": 1,
    "in_list_view": 1,
-   "in_standard_filter": 1,
    "label": "Territory",
    "oldfieldname": "territory",
    "oldfieldtype": "Link",
@@ -218,6 +305,7 @@
    "default": "0",
    "fieldname": "is_internal_customer",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Is Internal Customer"
   },
   {
@@ -266,7 +354,6 @@
    "depends_on": "eval:!doc.__islocal",
    "fieldname": "address_contacts",
    "fieldtype": "Section Break",
-   "label": "Address and Contact",
    "options": "fa fa-map-marker"
   },
   {
@@ -292,16 +379,14 @@
    "fieldtype": "HTML",
    "label": "Contact HTML",
    "oldfieldtype": "HTML",
+   "options": "\n\n    <p>Contact List</p>\n\n",
    "read_only": 1
   },
   {
-   "description": "Select, to make the customer searchable with these fields",
    "fieldname": "primary_address_and_contact_detail",
-   "fieldtype": "Section Break",
-   "label": "Primary Address and Contact"
+   "fieldtype": "Section Break"
   },
   {
-   "description": "Reselect, if the chosen contact is edited after save",
    "fieldname": "customer_primary_contact",
    "fieldtype": "Link",
    "label": "Customer Primary Contact",
@@ -311,6 +396,7 @@
    "fetch_from": "customer_primary_contact.mobile_no",
    "fieldname": "mobile_no",
    "fieldtype": "Read Only",
+   "hidden": 1,
    "label": "Mobile No",
    "options": "Mobile"
   },
@@ -318,7 +404,8 @@
    "fetch_from": "customer_primary_contact.email_id",
    "fieldname": "email_id",
    "fieldtype": "Read Only",
-   "label": "Email Id",
+   "hidden": 1,
+   "label": "Email",
    "options": "Email"
   },
   {
@@ -326,7 +413,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "Reselect, if the chosen address is edited after save",
    "fieldname": "customer_primary_address",
    "fieldtype": "Link",
    "label": "Customer Primary Address",
@@ -334,13 +420,14 @@
   },
   {
    "fieldname": "primary_address",
-   "fieldtype": "Text Editor",
+   "fieldtype": "Small Text",
    "label": "Primary Address",
    "read_only": 1
   },
   {
    "fieldname": "default_receivable_accounts",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Default Accounts"
   },
   {
@@ -353,6 +440,7 @@
   {
    "fieldname": "credit_limit_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Credit Limit and Payment Terms"
   },
   {
@@ -362,12 +450,26 @@
    "options": "Payment Terms Template"
   },
   {
+   "collapsible": 1,
+   "collapsible_depends_on": "customer_details",
+   "fieldname": "more_info",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "More Information",
+   "oldfieldtype": "Section Break",
+   "options": "fa fa-file-text"
+  },
+  {
    "description": "Additional information regarding the customer.",
    "fieldname": "customer_details",
    "fieldtype": "Text",
    "label": "Customer Details",
    "oldfieldname": "customer_details",
    "oldfieldtype": "Code"
+  },
+  {
+   "fieldname": "column_break_45",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "market_segment",
@@ -379,7 +481,7 @@
    "fieldname": "industry",
    "fieldtype": "Link",
    "label": "Industry",
-   "options": "Industry Type"
+   "options": "Market Segment"
   },
   {
    "default": "0",
@@ -481,11 +583,13 @@
   {
    "fieldname": "defaults_tab",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Defaults"
   },
   {
    "fieldname": "settings_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Settings"
   },
   {
@@ -493,6 +597,7 @@
    "collapsible_depends_on": "default_sales_partner",
    "fieldname": "sales_team_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Sales Team",
    "oldfieldtype": "Section Break",
    "options": "fa fa-group"
@@ -506,6 +611,13 @@
    "fieldtype": "Column Break"
   },
   {
+   "fieldname": "dashboard_tab",
+   "fieldtype": "Tab Break",
+   "hidden": 1,
+   "label": "Dashboard",
+   "show_dashboard": 1
+  },
+  {
    "fieldname": "column_break_53",
    "fieldtype": "Column Break"
   },
@@ -513,6 +625,7 @@
    "collapsible": 1,
    "fieldname": "loyalty_points_tab",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Loyalty Points"
   },
   {
@@ -527,6 +640,7 @@
   {
    "fieldname": "tax_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Tax"
   },
   {
@@ -534,7 +648,8 @@
    "collapsible_depends_on": "is_internal_customer",
    "fieldname": "internal_customer_section",
    "fieldtype": "Section Break",
-   "label": "Internal Customer Accounting"
+   "hidden": 1,
+   "label": "Internal Customer"
   },
   {
    "fieldname": "column_break_70",
@@ -547,6 +662,7 @@
   {
    "fieldname": "portal_users_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Portal Users"
   },
   {
@@ -562,11 +678,11 @@
   {
    "fieldname": "prospect_name",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Prospect",
    "no_copy": 1,
    "options": "Prospect",
-   "print_hide": 1,
-   "read_only": 1
+   "print_hide": 1
   },
   {
    "fetch_from": "customer_primary_contact.first_name",
@@ -627,6 +743,449 @@
    "fieldname": "supplier_numbers_section",
    "fieldtype": "Section Break",
    "label": "Supplier Numbers"
+  },
+  {
+   "fetch_from": "customer_primary_contact.phone",
+   "fieldname": "phone",
+   "fieldtype": "Read Only",
+   "hidden": 1,
+   "label": "Phone"
+  },
+  {
+   "fieldname": "address_list",
+   "fieldtype": "HTML",
+   "is_virtual": 1,
+   "options": " <p>Address List</p>\n\n"
+  },
+  {
+   "fieldname": "contact_list",
+   "fieldtype": "HTML",
+   "is_virtual": 1,
+   "options": "\n\n    <p>Contact List</p>\n\n"
+  },
+  {
+   "fieldname": "advanced_information_selection",
+   "fieldtype": "Section Break",
+   "label": "Identity Document"
+  },
+  {
+   "fieldname": "customer_identity_image",
+   "fieldtype": "Attach Image",
+   "label": "Customer Identity Image",
+   "print_hide": 1
+  },
+  {
+   "fieldname": "birth_date",
+   "fieldtype": "Date",
+   "label": "Birth Date"
+  },
+  {
+   "depends_on": "eval:doc.personal_document_type==\"CCCD\"",
+   "fieldname": "personal_id",
+   "fieldtype": "Data",
+   "label": "Personal ID"
+  },
+  {
+   "depends_on": "eval:doc.personal_document_type==\"CCCD\"",
+   "fieldname": "place_of_issuance",
+   "fieldtype": "Select",
+   "label": "Place of Issuance",
+   "options": "\nB\u1ed9 C\u00f4ng An\nC\u1ee5c C\u1ea3nh s\u00e1t QLHC v\u1ec1 TTXH\nC\u1ee5c C\u1ea3nh s\u00e1t \u0111\u0103ng k\u00fd, qu\u1ea3n l\u00fd c\u01b0 tr\u00fa v\u00e0 d\u1eef li\u1ec7u qu\u1ed1c gia v\u1ec1 d\u00e2n c\u01b0"
+  },
+  {
+   "depends_on": "eval:doc.personal_document_type==\"CCCD\"",
+   "fieldname": "date_of_issuance",
+   "fieldtype": "Date",
+   "label": "Date of Issuance"
+  },
+  {
+   "fieldname": "customer_website",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Website"
+  },
+  {
+   "fieldname": "personal_tax_id",
+   "fieldtype": "Data",
+   "label": "Personal Tax ID"
+  },
+  {
+   "fieldname": "column_break_waqk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_bjiq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer_journey",
+   "fieldtype": "Small Text",
+   "label": "Customer Journey"
+  },
+  {
+   "depends_on": "eval:doc.customer_type==\"Company\"",
+   "fieldname": "organization_section",
+   "fieldtype": "Section Break",
+   "label": "Organization"
+  },
+  {
+   "fieldname": "company_name",
+   "fieldtype": "Data",
+   "label": "Company Name"
+  },
+  {
+   "fieldname": "no_of_employees",
+   "fieldtype": "Data",
+   "label": "No of Employees"
+  },
+  {
+   "fieldname": "column_break_rwpe",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_czdq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tax_number",
+   "fieldtype": "Data",
+   "label": "Tax Number"
+  },
+  {
+   "fieldname": "ceo_name",
+   "fieldtype": "Data",
+   "label": "CEO"
+  },
+  {
+   "fieldname": "bizfly_customer_number",
+   "fieldtype": "Data",
+   "label": "Bizfly Customer Number",
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_eofp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "CCCD",
+   "fieldname": "personal_document_type",
+   "fieldtype": "Select",
+   "label": "Personal Document Type",
+   "options": "CCCD\nPassport"
+  },
+  {
+   "fieldname": "column_break_akie",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "orther_section",
+   "fieldtype": "Section Break",
+   "label": "Orther Section"
+  },
+  {
+   "fieldname": "column_break_ioxt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "invoice_type",
+   "fieldtype": "Select",
+   "label": "Invoice Type",
+   "options": "Individual\nCompany"
+  },
+  {
+   "fieldname": "vat_infor_section",
+   "fieldtype": "Section Break",
+   "label": "VAT "
+  },
+  {
+   "fieldname": "column_break_ikkg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "bank_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "vat_name",
+   "fieldtype": "Data",
+   "label": "VAT Name"
+  },
+  {
+   "fieldname": "vat_email",
+   "fieldtype": "Data",
+   "label": "Email"
+  },
+  {
+   "description": "For example: 123 ABC Street, Ward 1, District 2, Ho Chi Minh City",
+   "fieldname": "vat_address",
+   "fieldtype": "Data",
+   "label": "VAT Address"
+  },
+  {
+   "fieldname": "column_break_cgqq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "person_name",
+   "fieldtype": "Data",
+   "label": "Customer Personal Name"
+  },
+  {
+   "fieldname": "detail_tab",
+   "fieldtype": "Tab Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "haravan_id",
+   "fieldtype": "Data",
+   "label": "Haravan ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bizfly_id",
+   "fieldtype": "Data",
+   "label": "Bizfly ID",
+   "unique": 1
+  },
+  {
+   "fieldname": "priority_tab",
+   "fieldtype": "Tab Break",
+   "label": "Priority"
+  },
+  {
+   "fieldname": "total_cumulative_revenue",
+   "fieldtype": "Currency",
+   "label": "Total Cumulative Revenue",
+   "read_only": 1
+  },
+  {
+   "default": "No Rank",
+   "fieldname": "rank",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Rank",
+   "options": "No Rank\nSilver\nGold\nPlatinum",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_qwps",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "priority_login_date",
+   "fieldtype": "Date",
+   "label": "Priority Login Date"
+  },
+  {
+   "fieldname": "rank_updated_at",
+   "fieldtype": "Date",
+   "label": "Rank Updated At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_rm_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rank_score_12m",
+   "fieldtype": "Currency",
+   "label": "Rank Score (12 Months)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "partner_role",
+   "fieldtype": "Data",
+   "label": "Partner Role",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rank_management_section",
+   "fieldtype": "Section Break",
+   "label": "Rank Management"
+  },
+  {
+   "fieldname": "cumulative_revenue_management_section",
+   "fieldtype": "Section Break",
+   "label": "Cumulative Revenue Management"
+  },
+  {
+   "fieldname": "actual_cumulative_revenue",
+   "fieldtype": "Currency",
+   "label": "Actual Cumulative Revenue",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ebsn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "referral_cumulative_revenue",
+   "fieldtype": "Currency",
+   "label": "Referral Cumulative Revenue",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_qgzr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "buyback_revenue",
+   "fieldtype": "Currency",
+   "label": "Buyback Revenue",
+   "read_only": 1
+  },
+  {
+   "fieldname": "primary_contact",
+   "fieldtype": "Small Text",
+   "label": "Primary Contact"
+  },
+  {
+   "fieldname": "section_break_pnc",
+   "fieldtype": "Section Break",
+   "label": "Point & Cashback"
+  },
+  {
+   "fieldname": "total_referral_point",
+   "fieldtype": "Float",
+   "label": "Total Referral Point",
+   "read_only": 1
+  },
+  {
+   "fieldname": "available_point_amount",
+   "fieldtype": "Float",
+   "label": "Available Point Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_pnc1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "withdraw_point",
+   "fieldtype": "Float",
+   "label": "Withdraw points",
+   "read_only": 1
+  },
+  {
+   "fieldname": "withdraw_cash_amount",
+   "fieldtype": "Currency",
+   "label": "Total Withdrawn Cash Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_pnc2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "withdraw_cash_amount_pending",
+   "fieldtype": "Currency",
+   "label": "Pending Withdraw Cash Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_pnc3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_waiv",
+   "fieldtype": "Section Break",
+   "label": "Priority Bank Account"
+  },
+  {
+   "fieldname": "bank_account",
+   "fieldtype": "Link",
+   "label": "Bank Account",
+   "options": "Bank Account"
+  },
+  {
+   "fieldname": "priority_bank_account",
+   "fieldtype": "Link",
+   "label": "Priority Bank Account",
+   "options": "Bank Account"
+  },
+  {
+   "fieldname": "first_source",
+   "fieldtype": "Link",
+   "label": "First Source",
+   "options": "Lead Source"
+  },
+  {
+   "fieldname": "section_break_orders",
+   "fieldtype": "Section Break",
+   "label": "Orders Management"
+  },
+  {
+   "fieldname": "buyback_history",
+   "fieldtype": "Table",
+   "label": "Buyback History",
+   "options": "Customer Buyback Record",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sales_order_html",
+   "fieldtype": "HTML",
+   "label": "Orders List",
+   "options": "Orders"
+  },
+  {
+   "fieldname": "section_break_dkbv",
+   "fieldtype": "Section Break",
+   "label": "Coupon Management"
+  },
+  {
+   "fieldname": "coupon_table",
+   "fieldtype": "Table",
+   "label": "Coupon List",
+   "options": "Coupon"
+  },
+  {
+   "depends_on": "eval:doc.personal_document_type==\"CCCD\"",
+   "fieldname": "front_image",
+   "fieldtype": "Attach Image",
+   "label": "Front Image"
+  },
+  {
+   "depends_on": "eval:doc.personal_document_type==\"CCCD\"",
+   "fieldname": "back_image",
+   "fieldtype": "Attach Image",
+   "label": "Back Image"
+  },
+  {
+   "depends_on": "eval:doc.personal_document_type==\"Passport\"",
+   "fieldname": "passport_id",
+   "fieldtype": "Data",
+   "label": "Passport ID"
+  },
+  {
+   "depends_on": "eval:doc.personal_document_type==\"Passport\"",
+   "fieldname": "doc_image",
+   "fieldtype": "Attach Image",
+   "label": "Doc Image"
+  },
+  {
+   "depends_on": "eval:doc.personal_document_type==\"Passport\"",
+   "fieldname": "date_of_passport_issuance",
+   "fieldtype": "Date",
+   "label": "Date of Passport Issuance"
+  },
+  {
+   "depends_on": "eval:doc.personal_document_type==\"Passport\"",
+   "fieldname": "place_of_passport_issuance",
+   "fieldtype": "Link",
+   "label": "Place of Passport Issuance",
+   "options": "Country"
+  },
+  {
+   "depends_on": "eval:doc.personal_document_type==\"Passport\"",
+   "fieldname": "passport_expiry_date",
+   "fieldtype": "Date",
+   "label": "Passport Expiry Date"
+  },
+  {
+   "fieldname": "section_break_bbex",
+   "fieldtype": "Section Break",
+   "label": "Buyback / Exchange Management"
   }
  ],
  "icon": "fa fa-user",
@@ -644,7 +1203,7 @@
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",
- "naming_rule": "By \"Naming Series\" field",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
@@ -721,9 +1280,11 @@
  "row_format": "Dynamic",
  "search_fields": "customer_group,territory, mobile_no,primary_address",
  "show_name_in_global_search": 1,
- "sort_field": "creation",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
  "title_field": "customer_name",
- "track_changes": 1
+ "track_changes": 1,
+ "translated_doctype": 1
 }

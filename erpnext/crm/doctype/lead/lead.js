@@ -31,17 +31,6 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 		if (!this.frm.is_new() && doc.__onload && !doc.__onload.is_customer) {
 			this.frm.add_custom_button(__("Customer"), this.make_customer.bind(this), __("Create"));
 			this.frm.add_custom_button(__("Opportunity"), this.make_opportunity.bind(this), __("Create"));
-			this.frm.add_custom_button(__("Quotation"), this.make_quotation.bind(this), __("Create"));
-			if (!doc.__onload.linked_prospects.length) {
-				this.frm.add_custom_button(__("Prospect"), this.make_prospect.bind(this), __("Create"));
-				this.frm.add_custom_button(
-					__("Add to Prospect"),
-					() => {
-						this.add_lead_to_prospect(this.frm);
-					},
-					__("Action")
-				);
-			}
 		}
 
 		if (!this.frm.is_new()) {
@@ -115,24 +104,6 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 		).message?.name;
 
 		let fields = [];
-		if (!existing_prospect) {
-			fields.push(
-				{
-					label: "Create Prospect",
-					fieldname: "create_prospect",
-					fieldtype: "Check",
-					default: 1,
-				},
-				{
-					label: "Prospect Name",
-					fieldname: "prospect_name",
-					fieldtype: "Data",
-					default: frm.doc.company_name,
-					depends_on: "create_prospect",
-					mandatory_depends_on: "create_prospect",
-				}
-			);
-		}
 
 		await frm.reload_doc();
 
@@ -243,3 +214,28 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 if (cur_frm) {
 	extend_cscript(cur_frm.cscript, new erpnext.LeadController({ frm: cur_frm }));
 }
+
+frappe.ui.form.on('Lead', {
+	refresh(frm) {
+		// Check Contact associated with this Lead
+		frappe.db.get_list("Contact", {
+			filters: [
+				["Dynamic Link", "link_doctype", "=", "Lead"],
+				["Dynamic Link", "link_name", "=", frm.doc.name]
+			],
+			fields: ["name", "pancake_conversation_id", "pancake_page_id", "source"]
+		}).then(data => {
+			data.forEach(contact => {
+				if (contact.pancake_conversation_id && contact.pancake_page_id) {
+					if (contact.source) {
+						frappe.db.get_doc("Lead Source", contact.source).then(source => {
+							frm.add_web_link(`https://pancake.vn/${contact.pancake_page_id}?c_id=` + contact.pancake_conversation_id, `${source.source_name}`);
+						})
+					} else {
+						frm.add_web_link(`https://pancake.vn/${contact.pancake_page_id}?c_id=` + contact.pancake_conversation_id, `Pancake Conversation`);
+					}
+				}
+			})
+		});
+	}
+})

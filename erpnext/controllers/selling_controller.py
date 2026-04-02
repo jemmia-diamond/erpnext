@@ -5,6 +5,7 @@
 import frappe
 from frappe import _, bold, throw
 from frappe.utils import cint, flt, get_link_to_form, nowtime
+from fractions import Fraction
 
 from erpnext.accounts.party import render_address
 from erpnext.controllers.accounts_controller import get_taxes_and_charges
@@ -218,9 +219,12 @@ class SellingController(StockController):
 				)
 			)
 
-		self.amount_eligible_for_commission = sum(
-			item.base_net_amount for item in self.items if item.grant_commission
-		)
+		if self.meta.get_field("commission_base_amount") and self.get("commission_base_amount"):
+			self.amount_eligible_for_commission = self.commission_base_amount
+		else:
+			self.amount_eligible_for_commission = sum(
+				item.base_net_amount for item in self.items if item.grant_commission
+			)
 
 		self.total_commission = flt(
 			self.amount_eligible_for_commission * self.commission_rate / 100.0,
@@ -236,13 +240,23 @@ class SellingController(StockController):
 
 		self.validate_sales_team(sales_team)
 
+		amt = Fraction(int(self.amount_eligible_for_commission), 1)
+
 		for sales_person in sales_team:
 			self.round_floats_in(sales_person)
 
-			sales_person.allocated_amount = flt(
-				flt(self.amount_eligible_for_commission) * sales_person.allocated_percentage / 100.0,
-				self.precision("allocated_amount", sales_person),
-			)
+			if sales_person.merator and sales_person.denominator:
+				frac = Fraction(int(sales_person.merator), int(sales_person.denominator))
+				raw_amount = amt * frac
+				p = self.precision("allocated_amount", sales_person)
+				sales_person.allocated_amount = flt(float(raw_amount), p)
+				allocated_percentage = flt(float(frac) * 100.0,
+										self.precision("allocated_percentage", sales_person))
+			else:
+				allocated_percentage = flt(sales_person.allocated_percentage,
+										self.precision("allocated_percentage", sales_person))
+				sales_person.allocated_amount = flt(float(amt * allocated_percentage / 100.0),
+												self.precision("allocated_amount", sales_person))
 
 			if sales_person.commission_rate:
 				sales_person.incentives = flt(
@@ -250,9 +264,9 @@ class SellingController(StockController):
 					self.precision("incentives", sales_person),
 				)
 
-			total += sales_person.allocated_percentage
+			total += allocated_percentage
 
-		if sales_team and total != 100.0:
+		if sales_team and round(total) != 100.0:
 			throw(_("Total allocated percentage for sales team should be 100"))
 
 	def validate_sales_team(self, sales_team):

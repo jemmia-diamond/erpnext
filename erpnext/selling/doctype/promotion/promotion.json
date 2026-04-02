@@ -1,0 +1,179 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format: PROMOTION{YY}{MM}{######}",
+ "creation": "2025-04-22 09:48:32.212469",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "scope",
+  "product_category",
+  "is_active",
+  "is_expired",
+  "priority",
+  "discount_type",
+  "promotion_type",
+  "min_value",
+  "max_value",
+  "discount_amount",
+  "discount_percent",
+  "start_date",
+  "end_date",
+  "description",
+  "bizfly_id",
+  "promotion_month",
+  "promotion_group"
+ ],
+ "fields": [
+  {
+   "fieldname": "scope",
+   "fieldtype": "Select",
+   "label": "Scope",
+   "options": "Line Item\nOrder",
+   "reqd": 1
+  },
+  {
+   "fieldname": "product_category",
+   "fieldtype": "Select",
+   "label": "Product Category",
+   "options": "\nKim Cương Viên\nVỏ Trang Sức\nKhác"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_expired",
+   "fieldtype": "Check",
+   "label": "Is Expired"
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Priority Order",
+   "options": "\nG0\nG1\nG2\nG3\nG4\nG5\nG6\nG7",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Promotion Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.is_expired == true",
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date",
+   "mandatory_depends_on": "eval:doc.is_expired == true"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Long Text",
+   "label": "Description"
+  },
+  {
+   "depends_on": "eval:doc.discount_type == 'Fix Amount'",
+   "fieldname": "discount_amount",
+   "fieldtype": "Currency",
+   "label": "Discount Amount",
+   "mandatory_depends_on": "eval:doc.discount_type == 'Fix Amount'"
+  },
+  {
+   "depends_on": "eval:doc.discount_type == 'Percentage'",
+   "fieldname": "discount_percent",
+   "fieldtype": "Percent",
+   "label": "Discount Percent",
+   "mandatory_depends_on": "eval:doc.discount_type == 'Percentage'"
+  },
+  {
+   "fieldname": "discount_type",
+   "fieldtype": "Select",
+   "label": "Discount Type",
+   "options": "Percentage\nFix Amount\nGift",
+   "reqd": 1
+  },
+  {
+   "fieldname": "promotion_type",
+   "fieldtype": "Select",
+   "label": "Promotion Type",
+   "options": "\nKhuyến mãi nền\nKhác",
+   "default": "Khác",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.product_category == 'Kim Cương Viên'",
+   "fieldname": "min_value",
+   "fieldtype": "Float",
+   "label": "Min Value",
+   "mandatory_depends_on": "eval:doc.product_category == 'Kim Cương Viên' && doc.promotion_type == 'Khuyến mãi nền'"
+  },
+  {
+   "depends_on": "eval:doc.product_category == 'Kim Cương Viên'",
+   "fieldname": "max_value",
+   "fieldtype": "Float",
+   "label": "Max Value",
+   "mandatory_depends_on": "eval:doc.product_category == 'Kim Cương Viên' && doc.promotion_type == 'Khuyến mãi nền'"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active"
+  },
+  {
+   "fieldname": "bizfly_id",
+   "fieldtype": "Data",
+   "label": "Bizfly ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "promotion_month",
+   "fieldtype": "Link",
+   "label": "Promotion Month",
+   "options": "Promotion Month"
+  },
+  {
+   "fieldname": "promotion_group",
+   "fieldtype": "Link",
+   "label": "Promotion Group",
+   "options": "Promotion Group"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-12-12 14:40:00.000000",
+ "modified_by": "Administrator",
+ "module": "Selling",
+ "name": "Promotion",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "title",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title",
+ "translated_doctype": 1
+}
