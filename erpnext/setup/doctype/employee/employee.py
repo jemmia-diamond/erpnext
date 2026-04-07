@@ -8,7 +8,7 @@ from frappe.permissions import (
 	get_doc_permissions,
 	remove_user_permission,
 )
-from frappe.utils import cstr, getdate, today, validate_email_address
+from frappe.utils import cint, cstr, getdate, today, validate_email_address
 from frappe.utils.nestedset import NestedSet
 
 from erpnext.utilities.transaction_base import delete_events
@@ -29,10 +29,10 @@ class Employee(NestedSet):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
+		from frappe.types import DF
 		from erpnext.setup.doctype.employee_education.employee_education import EmployeeEducation
 		from erpnext.setup.doctype.employee_external_work_history.employee_external_work_history import EmployeeExternalWorkHistory
 		from erpnext.setup.doctype.employee_internal_work_history.employee_internal_work_history import EmployeeInternalWorkHistory
-		from frappe.types import DF
 
 		attendance_device_id: DF.Data | None
 		bank_ac_no: DF.Data | None
@@ -44,6 +44,7 @@ class Employee(NestedSet):
 		company: DF.Link
 		company_email: DF.Data | None
 		contract_end_date: DF.Date | None
+		create_user_automatically: DF.Check
 		create_user_permission: DF.Check
 		ctc: DF.Currency
 		current_accommodation_type: DF.Literal["", "Rented", "Owned"]
@@ -154,6 +155,16 @@ class Employee(NestedSet):
 			self.validate_for_enabled_user_id(data.get("enabled", 0))
 			self.validate_duplicate_user_id()
 
+	def validate_auto_user_creation(self):
+		if self.create_user_automatically and not (
+			self.prefered_email or self.company_email or self.personal_email
+		):
+			frappe.throw(
+				_("Company or Personal Email is mandatory when 'Create User Automatically' is enabled"),
+				frappe.MandatoryError,
+				title=_("Auto User Creation Error"),
+			)
+
 	def update_nsm_model(self):
 		frappe.utils.nestedset.update_nsm(self)
 
@@ -164,6 +175,22 @@ class Employee(NestedSet):
 			self.update_user()
 			self.update_user_permissions()
 		self.reset_employee_emails_cache()
+
+	def before_insert(self):
+		self.validate_auto_user_creation()
+
+	def after_insert(self):
+		if not self.create_user_automatically:
+			return
+
+		if self.user_id:
+			return
+
+		create_user(
+			employee=self.name,
+			email=self.prefered_email or self.company_email or self.personal_email,
+			create_user_permission=self.create_user_permission,
+		)
 
 	def update_user_permissions(self):
 		if not self.has_value_changed("user_id") and not self.has_value_changed("create_user_permission"):
@@ -392,10 +419,17 @@ def deactivate_sales_person(status=None, employee=None):
 
 
 @frappe.whitelist()
-def create_user(employee, user=None, email=None):
+def create_user(employee: str, email: str | None = None, create_user_permission: int = 0) -> str:
 	emp = frappe.get_doc("Employee", employee)
+	if emp.user_id:
+		frappe.throw(_("Employee {0} already has a linked user").format(emp.name))
 
+	if not email:
+		frappe.throw(_("Email is required to create a user"))
+
+	email = validate_email_address(email, True)
 	employee_name = emp.employee_name.split(" ")
+	first_name = employee_name[0]
 	middle_name = last_name = ""
 
 	if len(employee_name) >= 3:
@@ -404,16 +438,10 @@ def create_user(employee, user=None, email=None):
 	elif len(employee_name) == 2:
 		last_name = employee_name[1]
 
-	first_name = employee_name[0]
-
-	if email:
-		emp.prefered_email = email
-
 	user = frappe.new_doc("User")
 	user.update(
 		{
-			"name": emp.employee_name,
-			"email": emp.prefered_email,
+			"email": email,
 			"enabled": 1,
 			"first_name": first_name,
 			"middle_name": middle_name,
@@ -424,9 +452,18 @@ def create_user(employee, user=None, email=None):
 			"bio": emp.bio,
 		}
 	)
+	emp.db_set("user_id", email)
+	user.append_roles("Employee")
 	user.insert()
+
 	emp.user_id = user.name
+	emp.create_user_permission = cint(create_user_permission)
 	emp.save()
+
+	if cint(create_user_permission):
+		add_user_permission("Employee", emp.name, user.name)
+		add_user_permission("Company", emp.company, user.name)
+
 	return user.name
 
 
