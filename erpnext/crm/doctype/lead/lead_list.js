@@ -7,6 +7,7 @@ frappe.listview_settings["Lead"] = {
 		return indicator;
 	},
 	onload: function (listview) {
+		const CONVERTIBLE_OPERATORS = ['like', 'not like', '=', '!='];
 
 		const original_get_args = listview.get_args.bind(listview);
 		listview.get_args = function() {
@@ -17,14 +18,20 @@ frappe.listview_settings["Lead"] = {
 				const phoneOrFilters = [];
 
 				args.filters.forEach(filter => {
-					if (Array.isArray(filter) && filter[1] === 'phone' && filter[3]) {
+					if (Array.isArray(filter) && filter[1] === 'phone' && CONVERTIBLE_OPERATORS.includes(filter[2]) && filter[3]) {
 						let phone = filter[3].replace(/%/g, '').trim();
 						phone = phone.replace(/[\s\-\(\)]/g, '');
+
+						const operator = filter[2];
+						const useWildcards = operator.includes('like');
+						const phoneValue = useWildcards ? '%' + phone + '%' : phone;
+						const phone84Value = useWildcards ? '%84' + phone.substring(1) + '%' : '84' + phone.substring(1);
+						
 						if (phone.startsWith('0') && phone.length >= 4) {
-							phoneOrFilters.push(['Lead', 'phone', 'like', '%' + phone + '%']);
-							phoneOrFilters.push(['Lead', 'phone', 'like', '%84' + phone.substring(1) + '%']);
+							phoneOrFilters.push(['Lead', 'phone', operator, phoneValue]);
+							phoneOrFilters.push(['Lead', 'phone', operator, phone84Value]);
 						} else {
-							phoneOrFilters.push(['Lead', 'phone', 'like', '%' + phone + '%']);
+							phoneOrFilters.push(['Lead', 'phone', operator, phoneValue]);
 						}
 					} else {
 						newFilters.push(filter);
