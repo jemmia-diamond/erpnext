@@ -2181,3 +2181,33 @@ function render_promotion_pills(frm, cdt, cdn) {
 		$(this).css("opacity", "1");
 	});
 }
+
+frappe.ui.form.on("Sales Order Item", {
+	items_add: function(frm, cdt, cdn) {
+		frm.fields_dict.items.grid.update_docfield_property(
+			"product_availability_status",
+			"reqd",
+			1
+		);
+	},
+	
+	form_render: function(frm, cdt, cdn) {
+		frm.fields_dict.items.grid.update_docfield_property(
+			"product_availability_status",
+			"reqd",
+			1
+		);
+	}
+});
+
+frappe.ui.form.on("Sales Order", {
+	onload_post_render: function(frm) {
+		if (frm.fields_dict.items) {
+			frm.fields_dict.items.grid.update_docfield_property(
+				"product_availability_status",
+				"reqd",
+				1
+			);
+		}
+	}
+});
