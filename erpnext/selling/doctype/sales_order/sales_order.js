@@ -56,22 +56,7 @@ frappe.ui.form.on("Sales Order", {
 		}
 	},
 
-	toggle_promotion_fields: function (frm) {
-
-		var oldPromoFields = ["promotion_1", "promotion_2", "promotion_3", "promotion_4", "promotion_5", "promotion"];
-		var newPromoFields = ["select_promotions"];
-
-		oldPromoFields.forEach(function(f) {
-			frm.fields_dict.items.grid.update_docfield_property(f, "hidden", 1);
-		});
-		newPromoFields.forEach(function(f) {
-			frm.fields_dict.items.grid.update_docfield_property(f, "hidden", 0);
-		});
-	},
-
 	refresh: function (frm) {
-		frm.trigger('toggle_promotion_fields');
-
 		// Disable Submit button
 		$(".primary-action").prop("disabled", true);
 		// Indicate cancelled status

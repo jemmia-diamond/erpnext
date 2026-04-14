@@ -1095,6 +1095,7 @@
   {
    "fieldname": "promotion_1",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Promotion 1",
    "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"NONE\"]]",
    "options": "Promotion"
@@ -1102,6 +1103,7 @@
   {
    "fieldname": "promotion_2",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Promotion 2",
    "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"NONE\"]]",
    "options": "Promotion"
@@ -1109,6 +1111,7 @@
   {
    "fieldname": "promotion_3",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Promotion 3",
    "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"NONE\"]]",
    "options": "Promotion"
@@ -1116,6 +1119,7 @@
   {
    "fieldname": "promotion_4",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Promotion 4",
    "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"NONE\"]]",
    "options": "Promotion"
@@ -1123,6 +1127,7 @@
   {
    "fieldname": "promotion",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Find Promotion",
    "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"Line Item\"],[\"Promotion\",\"is_active\",\"=\",1]]",
    "options": "Promotion"
@@ -1164,6 +1169,7 @@
   {
    "fieldname": "promotion_5",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Promotion 5",
    "link_filters": "[[\"Promotion\",\"scope\",\"=\",\"NONE\"]]",
    "options": "Promotion"
