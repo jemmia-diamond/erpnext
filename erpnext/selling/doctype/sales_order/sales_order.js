@@ -314,7 +314,7 @@ frappe.ui.form.on("Sales Order", {
 		// Handle buyback button visibility and click
 		const can_add_buyback = !frm.doc.__islocal && frm.doc.docstatus === 0;
 		frm.toggle_display('buyback_items', can_add_buyback);
-		
+
 		if (can_add_buyback) {
 			// For Button field, bind to the input element
 			frm.fields_dict.buyback_items.$input.off('click').on('click', function() {
@@ -342,7 +342,7 @@ frappe.ui.form.on("Sales Order", {
 		if (frm.doc.docstatus !== 0 || frm.doc.__islocal) return;
 
 		let items_to_fetch = frm.doc.items.filter(item => {
-			let is_new = item.__islocal || 
+			let is_new = item.__islocal ||
 						 (item.name && (item.name.startsWith("New ") || item.name.startsWith("new-")));
 			return !is_new && !item.item_policy && item.is_policy_locked !== 1;
 		});
@@ -353,7 +353,7 @@ frappe.ui.form.on("Sales Order", {
 			});
 		}
 	},
-	
+
 	show_buyback_selector(frm) {
 		// Get customer phone from sales order
 		const phone = frm.doc.contact_mobile || frm.doc.contact_phone;
@@ -362,7 +362,7 @@ frappe.ui.form.on("Sales Order", {
 			frappe.msgprint(__('Please set customer phone before selecting buyback items.'));
 			return;
 		}
-		
+
 		// Fetch available buyback items
 		frappe.call({
 			method: 'erpnext.selling.doctype.sales_order.sales_order.get_available_buyback_items',
@@ -395,12 +395,12 @@ frappe.ui.form.on("Sales Order", {
 				d.$wrapper.find('input[type="checkbox"]:checked').each(function() {
 					selected.push($(this).data('item-name'));
 				});
-				
+
 				if (selected.length === 0) {
 					frappe.msgprint(__('Please select at least one item'));
 					return;
 				}
-				
+
 				frappe.call({
 					method: 'erpnext.selling.doctype.sales_order.sales_order.link_buyback_items',
 					args: {
@@ -534,7 +534,7 @@ frappe.ui.form.on("Sales Order", {
 									</thead>
 									<tbody>
 					`;
-					
+
 					// Escape text to HTML entities
 					const escape = (str) => (str || "").toString()
 						.replace(/&/g, "&amp;")
@@ -587,25 +587,25 @@ frappe.ui.form.on("Sales Order", {
 							</tr>
 						`;
 					});
-					
+
 					html += `
 									</tbody>
 								</table>
 							</div>
 						</div>
 					`;
-					
+
 					frm.set_df_property("buyback_items_html", "options", html);
 					frm.set_df_property("buyback_items_html", "hidden", 0);
 					frm.set_df_property("buyback_section_break", "hidden", 0);
-					
+
 					// Add click handlers for unlink buttons
 					setTimeout(() => {
 						if (frm.fields_dict.buyback_items_html && frm.fields_dict.buyback_items_html.$wrapper) {
 							frm.fields_dict.buyback_items_html.$wrapper.find('.btn-unlink-buyback').off('click').on('click', function(e) {
 								e.preventDefault();
 								const item_name = $(this).data('item-name');
-								
+
 								frappe.confirm(
 									__('Are you sure you want to unlink this buyback item?'),
 									() => {
@@ -631,7 +631,7 @@ frappe.ui.form.on("Sales Order", {
 					// Hide only the items table, not the section
 					frm.set_df_property("buyback_items_html", "hidden", 1);
 				}
-				
+
 				// Always show the Buyback section
 				frm.set_df_property("buyback_section_break", "hidden", 0);
 			}
@@ -1113,16 +1113,16 @@ frappe.ui.form.on("Sales Order Item", {
 		if (row.promotion) {
 			var selected_promotions = [row.promotion_1, row.promotion_2, row.promotion_3, row.promotion_4, row.promotion_5];
 			var is_earring = false;
-			
+
 			const type = row.type ? decode_unicode(row.type) : "";
 			const title = row.variant_title ? decode_unicode(row.variant_title) : "";
 
 			if (type.includes("Bông Tai") || (type.toLowerCase() === "virtual" && title.includes("Bông Tai"))) {
 				is_earring = true;
 			}
-			
+
 			var promotion_count = selected_promotions.filter(p => p === row.promotion).length;
-			
+
 			if (!selected_promotions.includes(row.promotion) || (is_earring && promotion_count < 2)) {
 
 				if (!row.promotion_1) {
@@ -1944,7 +1944,7 @@ function calculate_allocated_percentage(frm, cdt, cdn) {
 
 // Helper to decode unicode escape sequences (e.g. B\u00f4ng Tai -> Bông Tai)
 function decode_unicode(str) {
-	return str.replace(/\\u[\dA-F]{4}/gi, 
+	return str.replace(/\\u[\dA-F]{4}/gi,
 		(match) => String.fromCharCode(parseInt(match.replace(/\\u/g, ''), 16))
 	);
 }
@@ -2072,7 +2072,7 @@ function render_promotion_pills(frm, cdt, cdn) {
 			if (!r || !r.message) return;
 			var promo_map = {};
 			r.message.forEach(p => { promo_map[p.name] = p; });
-			
+
 			var current_price = initial_price;
 
 			$pills.find(".promo-pill").each(function() {
@@ -2080,7 +2080,7 @@ function render_promotion_pills(frm, cdt, cdn) {
 				var p = promo_map[name];
 				if (p) {
 					$(this).find(".promo-label").text(p.title || p.name);
-					
+
 					if (p.priority === "G1") {
 						current_price = current_price * (1 - (p.discount_percent || 0) / 100);
 					} else if (p.priority === "G2") {
@@ -2092,7 +2092,7 @@ function render_promotion_pills(frm, cdt, cdn) {
 							current_price = current_price - (p.discount_amount || 0);
 						}
 					}
-					
+
 					$(this).find(".promo-price").text("Sau khuyến mãi: " + format_currency(current_price, frm.doc.currency).replace(/,00$/, ""));
 				} else {
 					$(this).find(".promo-price").text("Không tìm thấy trợ giá");
@@ -2160,33 +2160,3 @@ function render_promotion_pills(frm, cdt, cdn) {
 		$(this).css("opacity", "1");
 	});
 }
-
-frappe.ui.form.on("Sales Order Item", {
-	items_add: function(frm, cdt, cdn) {
-		frm.fields_dict.items.grid.update_docfield_property(
-			"product_availability_status",
-			"reqd",
-			1
-		);
-	},
-	
-	form_render: function(frm, cdt, cdn) {
-		frm.fields_dict.items.grid.update_docfield_property(
-			"product_availability_status",
-			"reqd",
-			1
-		);
-	}
-});
-
-frappe.ui.form.on("Sales Order", {
-	onload_post_render: function(frm) {
-		if (frm.fields_dict.items) {
-			frm.fields_dict.items.grid.update_docfield_property(
-				"product_availability_status",
-				"reqd",
-				1
-			);
-		}
-	}
-});
