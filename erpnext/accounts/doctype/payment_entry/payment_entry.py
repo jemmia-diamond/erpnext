@@ -133,7 +133,7 @@ class PaymentEntry(AccountsController):
 		party_name: DF.Data | None
 		party_type: DF.Link | None
 		payment_code: DF.Data | None
-		payment_date: DF.Datetime
+		payment_date: DF.Datetime | None
 		payment_order: DF.Link | None
 		payment_order_status: DF.Literal["Pending", "Success", "Cancel"]
 		payment_type: DF.Literal["Receive", "Pay", "Internal Transfer"]
@@ -148,6 +148,7 @@ class PaymentEntry(AccountsController):
 		reference_date: DF.Date | None
 		reference_no: DF.Data | None
 		references: DF.Table[PaymentEntryReference]
+		refund_amount: DF.Currency | None
 		remarks: DF.SmallText | None
 		sales_taxes_and_charges_template: DF.Link | None
 		shipping_code: DF.Data | None
