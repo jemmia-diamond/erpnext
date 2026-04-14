@@ -2403,7 +2403,10 @@ frappe.ui.form.on("Payment Entry Reference", {
 									: frm.doc.unallocated_amount;
 
 							frappe.model.set_value(cdt, cdn, "allocated_amount", allocated_amount);
+							let diff = flt(row.paid_amount) - flt(allocated_amount);
+							frappe.model.set_value(cdt, cdn, "unallocated_amount", diff > 0 ? diff : 0);
 						}
+
 
 						if (row.reference_doctype === "Sales Order") {
 							frappe.model.set_value(cdt, cdn, "mode_of_payment", frm.doc.mode_of_payment);
@@ -2434,7 +2437,11 @@ frappe.ui.form.on("Payment Entry Reference", {
 		}
 	},
 
-	allocated_amount: function (frm) {
+	allocated_amount: function (frm, cdt, cdn) {
+		let row = locals[cdt][cdn];
+		let diff = flt(row.paid_amount) - flt(row.allocated_amount);
+		frappe.model.set_value(cdt, cdn, "unallocated_amount", diff > 0 ? diff : 0);
+		
 		frm.events.set_total_allocated_amount(frm);
 	},
 
