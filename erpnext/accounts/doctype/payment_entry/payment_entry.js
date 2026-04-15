@@ -535,6 +535,7 @@ frappe.ui.form.on("Payment Entry", {
 		await frm.events.set_exchange_gain_loss_deduction(frm);
 		frm.events.validate_bank_transactions(frm);
 		frm.events.validate_total_allocated_amount(frm);
+		frm.events.checking_refund_amount(frm);
 	},
 
 	before_save: function(frm) {
@@ -1650,7 +1651,7 @@ frappe.ui.form.on("Payment Entry", {
 		const difference = total_allocated - flt(frm.doc.paid_amount);
 		const tolerance = 1000;
 
-		if (Math.abs(difference) > tolerance) {
+		if (difference > tolerance) {
 			frappe.throw({
 				title: __("Phân bổ không hợp lệ"),
 				indicator: "red",
@@ -1659,22 +1660,88 @@ frappe.ui.form.on("Payment Entry", {
 					[
 						format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
 						format_currency(total_allocated, frm.doc.paid_from_account_currency, 0),
-						format_currency(Math.abs(difference), frm.doc.paid_from_account_currency, 0)
+						format_currency(difference, frm.doc.paid_from_account_currency, 0)
 					]
 				)
 			});
-		} else if (difference !== 0) {
+		} else if (difference > 0 && difference <= tolerance) {
 			frappe.show_alert({
 				message: __(
 					"Chênh lệch {0} nằm trong mức cho phép {1}.",
 					[
-						format_currency(Math.abs(difference), frm.doc.paid_from_account_currency, 0),
+						format_currency(difference, frm.doc.paid_from_account_currency, 0),
 						format_currency(tolerance, frm.doc.paid_from_account_currency, 0)
 					]
 				),
 				indicator: "blue"
 			}, 10);
 		}
+	},
+
+	checking_refund_amount: function (frm) {
+		if (!frm.doc.paid_amount || !frm.doc.references || frm.doc.references.length === 0) {
+			return;
+		}
+
+		if (frappe.user.has_role("Administrator") || frappe.user.has_role("Developer")) {
+			return;
+		}
+
+		let total_allocated = 0;
+		$.each(frm.doc.references || [], function (i, row) {
+			if (row.allocated_amount) {
+				total_allocated += flt(row.allocated_amount);
+			}
+		});
+
+		const paid_amount = flt(frm.doc.paid_amount);
+		const refund_amount = flt(paid_amount - total_allocated, 0);
+
+		if (refund_amount > 0) {
+			if (flt(frm.doc.refund_amount, 0) === refund_amount) {
+				return;
+			}
+
+			frm.events.show_refund_confirmation_dialog(frm, refund_amount, total_allocated);
+			frappe.validated = false;
+			return;
+		}
+
+		if (flt(frm.doc.refund_amount) > 0) {
+			frm.set_value("refund_amount", 0);
+		}
+	},
+
+	show_refund_confirmation_dialog: function (frm, refund_amount, total_allocated) {
+		const message = __(
+			"<b>Cảnh báo: Số tiền phân bổ nhỏ hơn số tiền thanh toán</b><br><br>" +
+			"- <b>Số tiền thanh toán:</b> {0}<br>" +
+			"- <b>Đã phân bổ:</b> {1}<br>" +
+			"- <b>Tiền hoàn (dự kiến): {2}</b><br><br>",
+			[
+				format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
+				format_currency(total_allocated, frm.doc.paid_from_account_currency, 0),
+				format_currency(refund_amount, frm.doc.paid_from_account_currency, 0)
+			]
+		);
+
+		frappe.confirm(
+			message,
+			function() {
+				frm.set_value("refund_amount", refund_amount).then(() => {
+					frappe.show_alert({
+						message: __(
+							"Đã xác nhận hoàn tiền: {0}",
+							[format_currency(refund_amount, frm.doc.paid_from_account_currency, 0)]
+						),
+						indicator: "green"
+					}, 10);
+					frm.save();
+				});
+			},
+			function() { frm.set_value("refund_amount", 0); },
+			{ dialog_title: "Thông báo", confirm_title: "Xác nhận", reject_title: "Phân bổ lại" }
+		);
 	},
 
 	set_unallocated_amount: function (frm) {
@@ -2336,7 +2403,10 @@ frappe.ui.form.on("Payment Entry Reference", {
 									: frm.doc.unallocated_amount;
 
 							frappe.model.set_value(cdt, cdn, "allocated_amount", allocated_amount);
+							let diff = flt(row.paid_amount) - flt(allocated_amount);
+							frappe.model.set_value(cdt, cdn, "unallocated_amount", diff > 0 ? diff : 0);
 						}
+
 
 						if (row.reference_doctype === "Sales Order") {
 							frappe.model.set_value(cdt, cdn, "mode_of_payment", frm.doc.mode_of_payment);
@@ -2367,7 +2437,11 @@ frappe.ui.form.on("Payment Entry Reference", {
 		}
 	},
 
-	allocated_amount: function (frm) {
+	allocated_amount: function (frm, cdt, cdn) {
+		let row = locals[cdt][cdn];
+		let diff = flt(row.paid_amount) - flt(row.allocated_amount);
+		frappe.model.set_value(cdt, cdn, "unallocated_amount", diff > 0 ? diff : 0);
+		
 		frm.events.set_total_allocated_amount(frm);
 	},
 

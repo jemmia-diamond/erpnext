@@ -133,7 +133,7 @@ class PaymentEntry(AccountsController):
 		party_name: DF.Data | None
 		party_type: DF.Link | None
 		payment_code: DF.Data | None
-		payment_date: DF.Datetime
+		payment_date: DF.Datetime | None
 		payment_order: DF.Link | None
 		payment_order_status: DF.Literal["Pending", "Success", "Cancel"]
 		payment_type: DF.Literal["Receive", "Pay", "Internal Transfer"]
@@ -148,6 +148,7 @@ class PaymentEntry(AccountsController):
 		reference_date: DF.Date | None
 		reference_no: DF.Data | None
 		references: DF.Table[PaymentEntryReference]
+		refund_amount: DF.Currency | None
 		remarks: DF.SmallText | None
 		sales_taxes_and_charges_template: DF.Link | None
 		shipping_code: DF.Data | None
@@ -221,6 +222,7 @@ class PaymentEntry(AccountsController):
 		self.validate_mandatory()
 		self.validate_reference_documents()
 		self.set_amounts()
+		self.set_refund_amount()
 		self.validate_amounts()
 		self.apply_taxes()
 		self.set_amounts_after_tax()
@@ -2235,6 +2237,18 @@ class PaymentEntry(AccountsController):
 	def set_payment_code(self):
 		if self.mode_of_payment:
 			self.payment_code = self.get_payment_code()
+
+	def set_refund_amount(self):
+		if not self.references:
+			return
+
+		total_allocated = sum(flt(d.allocated_amount) for d in self.references)
+
+		if self.paid_amount > total_allocated:
+			self.refund_amount = flt(self.paid_amount - total_allocated, self.precision("refund_amount"))
+			return
+
+		self.refund_amount = 0
 
 	@frappe.whitelist()
 	def verify_payment(self):
