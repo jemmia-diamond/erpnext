@@ -59,9 +59,4 @@ class PaymentEntryReference(Document):
 		return frappe.db.get_value("Payment Request", self.payment_request, "outstanding_amount")
 
 	def before_save(self):
-		# Auto-calculate unallocated_amount
-		if self.paid_amount and self.allocated_amount:
-			diff = flt(self.paid_amount - self.allocated_amount)
-			self.unallocated_amount = diff if diff > 0 else 0
-		else:
-			self.unallocated_amount = 0
+		pass
