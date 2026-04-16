@@ -11,6 +11,7 @@
   "split_order_group_name",
   "paid_amount",
   "allocated_amount",
+  "unallocated_amount",
   "balance",
   "mode_of_payment",
   "gateway",
@@ -289,6 +290,13 @@
    "fieldname": "ref_order_date",
    "fieldtype": "Date",
    "label": "Ref Order Date"
+  },
+  {
+   "fieldname": "unallocated_amount",
+   "fieldtype": "Currency",
+   "label": "Unallocated",
+   "precision": "0",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,

@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
+from frappe.utils import flt
 
 
 class PaymentEntryReference(Document):
@@ -29,6 +30,7 @@ class PaymentEntryReference(Document):
 		exchange_gain_loss: DF.Currency
 		exchange_rate: DF.Float
 		gateway: DF.Data | None
+		unallocated_amount: DF.Currency
 		mode_of_payment: DF.Link | None
 		order_number: DF.Data | None
 		outstanding_amount: DF.Float
@@ -57,3 +59,6 @@ class PaymentEntryReference(Document):
 			return
 
 		return frappe.db.get_value("Payment Request", self.payment_request, "outstanding_amount")
+
+	def before_save(self):
+		pass

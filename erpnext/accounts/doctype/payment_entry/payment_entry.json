@@ -59,6 +59,7 @@
   "source_exchange_rate",
   "base_paid_amount",
   "base_paid_amount_after_tax",
+  "refund_amount",
   "column_break_21",
   "paid_amount",
   "received_amount",
@@ -998,6 +999,12 @@
    "label": "Admin Editing",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "refund_amount",
+   "fieldtype": "Currency",
+   "label": "Refund amount",
+   "precision": "0"
   }
  ],
  "grid_page_length": 50,
@@ -1012,7 +1019,7 @@
    "table_fieldname": "payment_entries"
   }
  ],
- "modified": "2026-03-09 17:15:30.453920",
+ "modified": "2026-04-14 10:51:09.637174",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Payment Entry",

@@ -307,7 +307,7 @@ class SalesOrder(SellingController):
 		payment_references = frappe.db.sql("""
 			SELECT
 				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name,
-				pr.total_amount, pr.outstanding_amount, pr.order_number, pr.split_order_group_name,
+				pr.total_amount, pr.outstanding_amount, pr.unallocated_amount, pr.order_number, pr.split_order_group_name,
 				pr.bank_account, pr.bank, pr.bank_account_no, pr.bank_account_branch, pr.ref_order_number, pr.ref_order_date,
 				CASE
 					WHEN pe.payment_type = 'Pay' THEN -pr.allocated_amount
@@ -337,6 +337,7 @@ class SalesOrder(SellingController):
 					"reference_name": pe_ref.parent,
 					"total_amount": pe_ref.total_amount,
 					"outstanding_amount": pe_ref.outstanding_amount,
+					"unallocated_amount": pe_ref.unallocated_amount,
 					"allocated_amount": pe_ref.allocated_amount,
 					"parent": pe_ref.reference_name,
 					"parentfield": "payment_entries",
@@ -375,7 +376,7 @@ class SalesOrder(SellingController):
 		payment_references = frappe.db.sql("""
 			SELECT
 				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name,
-				pr.total_amount, pr.outstanding_amount, pr.order_number, pr.split_order_group_name,
+				pr.total_amount, pr.outstanding_amount, pr.unallocated_amount, pr.order_number, pr.split_order_group_name,
 				pr.bank_account, pr.bank, pr.bank_account_no, pr.bank_account_branch, pr.ref_order_number, pr.ref_order_date,
 				CASE
 					WHEN pe.payment_type = 'Pay' THEN -pr.allocated_amount
@@ -404,6 +405,7 @@ class SalesOrder(SellingController):
 						"reference_name": pe_ref.parent,
 						"total_amount": pe_ref.total_amount,
 						"outstanding_amount": pe_ref.outstanding_amount,
+						"unallocated_amount": pe_ref.unallocated_amount,
 						"allocated_amount": pe_ref.allocated_amount,
 						"parent": pe_ref.reference_name,
 						"parentfield": "group_payment_entries",
@@ -910,6 +912,7 @@ class SalesOrder(SellingController):
 	def on_update(self):
 		self.check_status_changes_for_rank()
 		self.sync_tracking_number_to_payment_entry()
+		self.copy_from_reference_order()
 
 	def sync_tracking_number_to_payment_entry(self):
 		if not self.tracking_number:
@@ -1700,8 +1703,20 @@ class SalesOrder(SellingController):
 			end = start + 10
 			return sku[start:end] if end <= len(sku) else None
 
+		def is_jewelry(item):
+			sku = str(getattr(item, "sku", "") or "")
+			parts = sku.split("-")
+			is_gift = sku.startswith("QT")
+			is_diamond = any(p.startswith("GIA") for p in parts)
+			return not (is_gift or is_diamond)
+
+		def get_serial(item):
+			s = getattr(item, "serial_numbers", "")
+			return str(s).strip() if s else None
+
 		ref_by_variant = {}
 		ref_by_gia = {}
+		ref_by_serial = {}
 		for ref in ref_items:
 			vid = norm(getattr(ref, "haravan_variant_id", None))
 			if vid:
@@ -1709,22 +1724,38 @@ class SalesOrder(SellingController):
 			gia = get_gia_from_sku(ref)
 			if gia and gia not in ref_by_gia:
 				ref_by_gia[gia] = ref
+			serial = get_serial(ref)
+			if serial and is_jewelry(ref) and serial not in ref_by_serial:
+				ref_by_serial[serial] = ref
 
 		pairs = []
 		matched = set()
 
+		# Pass 1: Match by Haravan Variant ID
 		for cur in current_items:
 			vid = norm(getattr(cur, "haravan_variant_id", None))
 			if vid and vid in ref_by_variant:
 				pairs.append((cur, ref_by_variant[vid]))
 				matched.add(cur.name)
 
+		# Pass 2: Match by GIA (Diamond)
 		for cur in current_items:
 			if cur.name in matched:
 				continue
 			gia = get_gia_from_sku(cur)
 			if gia and gia in ref_by_gia:
 				pairs.append((cur, ref_by_gia[gia]))
+				matched.add(cur.name)
+
+		# Pass 3: Match by Serial Number (Jewelry only, non-gift, non-diamond)
+		for cur in current_items:
+			if cur.name in matched:
+				continue
+			if not is_jewelry(cur):
+				continue
+			serial = get_serial(cur)
+			if serial and serial in ref_by_serial:
+				pairs.append((cur, ref_by_serial[serial]))
 				matched.add(cur.name)
 
 		return pairs
@@ -1750,6 +1781,7 @@ class SalesOrder(SellingController):
 			'item_policy',
 			'is_policy_locked'
 		]
+
 
 	def copy_sales_order_items_from_reference(self, ref_order_doc):
 		"""Copy Sales Order Items from reference order based on haravan_variant_id mapping"""
