@@ -3,8 +3,6 @@
 
 cur_frm.cscript.tax_table = "Sales Taxes and Charges";
 
-const NEW_PROMOTIONS_CUTOFF_DATE = "2026-02-27T16:59:00Z";
-
 erpnext.accounts.taxes.setup_tax_filters("Sales Taxes and Charges");
 erpnext.accounts.taxes.setup_tax_validations("Sales Order");
 erpnext.sales_common.setup_selling_controller();
@@ -84,19 +82,15 @@ frappe.ui.form.on("Sales Order", {
 	},
 
 	toggle_promotion_fields: function (frm) {
-		var useNewPromotions = true;
-		if (frm.doc.haravan_created_at) {
-			useNewPromotions = new Date(frm.doc.haravan_created_at) >= new Date(NEW_PROMOTIONS_CUTOFF_DATE);
-		}
 
 		var oldPromoFields = ["promotion_1", "promotion_2", "promotion_3", "promotion_4", "promotion_5", "promotion"];
 		var newPromoFields = ["select_promotions"];
 
 		oldPromoFields.forEach(function(f) {
-			frm.fields_dict.items.grid.update_docfield_property(f, "hidden", useNewPromotions ? 1 : 0);
+			frm.fields_dict.items.grid.update_docfield_property(f, "hidden", 1);
 		});
 		newPromoFields.forEach(function(f) {
-			frm.fields_dict.items.grid.update_docfield_property(f, "hidden", useNewPromotions ? 0 : 1);
+			frm.fields_dict.items.grid.update_docfield_property(f, "hidden", 0);
 		});
 	},
 
