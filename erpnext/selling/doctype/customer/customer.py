@@ -1648,7 +1648,7 @@ def _update_current_12_month_score(customer_name, auto_commit=True):
 
 @frappe.whitelist()
 def get_customer_buybacks(customer_name, phone_number):
-	return frappe.get_all(
+	buybacks = frappe.get_all(
 		"Buyback Exchange",
 		or_filters={
 			"customer_name": customer_name,
@@ -1665,3 +1665,38 @@ def get_customer_buybacks(customer_name, phone_number):
 		],
 		order_by="submitted_date desc"
 	)
+
+	for buyback in buybacks:
+		if buyback.get("new_order_code"):
+			try:
+				sales_order_name = find_sales_order_by_order_number(buyback["new_order_code"])
+				buyback["new_order_code"] = sales_order_name
+			except Exception as e:
+				buyback["new_order_code"] = None
+				frappe.log_error(f"Failed to convert order_number to Sales Order name: {e}", "Buyback Order Conversion")
+	return buybacks
+
+def find_sales_order_by_order_number(raw_code):
+	if not raw_code:
+		return None
+
+	so_name = frappe.db.get_value("Sales Order", {"order_number": raw_code}, "name")
+	if so_name:
+		return so_name
+
+	match = re.search(r'(\d+)', str(raw_code))
+	if not match:
+		return None
+
+	number_part = match.group(1)
+	patterns = [
+		f"ORDER{number_part}",
+		f"{number_part}",
+	]
+
+	for pattern in patterns:
+		so_name = frappe.db.get_value("Sales Order", {"order_number": ["like", pattern]}, "name")
+		if so_name:
+			return so_name
+
+	return None
