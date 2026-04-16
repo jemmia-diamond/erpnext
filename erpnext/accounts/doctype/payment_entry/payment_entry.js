@@ -2410,9 +2410,15 @@ frappe.ui.form.on("Payment Entry Reference", {
 									: frm.doc.unallocated_amount;
 
 							frappe.model.set_value(cdt, cdn, "allocated_amount", allocated_amount);
-							let diff = flt(row.paid_amount) - flt(allocated_amount);
-							frappe.model.set_value(cdt, cdn, "unallocated_amount", diff > 0 ? diff : 0);
 						}
+
+						// Calculate cumulative unallocated for all rows after setting allocated_amount
+						let cumulative_allocated = 0;
+						$.each(frm.doc.references || [], function(i, ref) {
+							cumulative_allocated += flt(ref.allocated_amount);
+							let remaining = flt(frm.doc.paid_amount) - cumulative_allocated;
+							frappe.model.set_value('Payment Entry Reference', ref.name, 'unallocated_amount', remaining > 0 ? remaining : 0, null, true);
+						});
 
 
 						if (row.reference_doctype === "Sales Order") {
@@ -2446,9 +2452,13 @@ frappe.ui.form.on("Payment Entry Reference", {
 
 	allocated_amount: function (frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
-		let diff = flt(row.paid_amount) - flt(row.allocated_amount);
-		frappe.model.set_value(cdt, cdn, "unallocated_amount", diff > 0 ? diff : 0);
-		
+		let cumulative_allocated = 0;
+		$.each(frm.doc.references || [], function(i, ref) {
+			cumulative_allocated += flt(ref.allocated_amount);
+			let remaining = flt(frm.doc.paid_amount) - cumulative_allocated;
+			frappe.model.set_value('Payment Entry Reference', ref.name, 'unallocated_amount', remaining > 0 ? remaining : 0, null, true);
+		});
+
 		frm.events.set_total_allocated_amount(frm);
 	},
 
