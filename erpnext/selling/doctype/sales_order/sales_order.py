@@ -307,7 +307,7 @@ class SalesOrder(SellingController):
 		payment_references = frappe.db.sql("""
 			SELECT
 				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name,
-				pr.total_amount, pr.outstanding_amount, pr.order_number, pr.split_order_group_name,
+				pr.total_amount, pr.outstanding_amount, pr.unallocated_amount, pr.order_number, pr.split_order_group_name,
 				pr.bank_account, pr.bank, pr.bank_account_no, pr.bank_account_branch, pr.ref_order_number, pr.ref_order_date,
 				CASE
 					WHEN pe.payment_type = 'Pay' THEN -pr.allocated_amount
@@ -337,6 +337,7 @@ class SalesOrder(SellingController):
 					"reference_name": pe_ref.parent,
 					"total_amount": pe_ref.total_amount,
 					"outstanding_amount": pe_ref.outstanding_amount,
+					"unallocated_amount": pe_ref.unallocated_amount,
 					"allocated_amount": pe_ref.allocated_amount,
 					"parent": pe_ref.reference_name,
 					"parentfield": "payment_entries",
@@ -375,7 +376,7 @@ class SalesOrder(SellingController):
 		payment_references = frappe.db.sql("""
 			SELECT
 				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name,
-				pr.total_amount, pr.outstanding_amount, pr.order_number, pr.split_order_group_name,
+				pr.total_amount, pr.outstanding_amount, pr.unallocated_amount, pr.order_number, pr.split_order_group_name,
 				pr.bank_account, pr.bank, pr.bank_account_no, pr.bank_account_branch, pr.ref_order_number, pr.ref_order_date,
 				CASE
 					WHEN pe.payment_type = 'Pay' THEN -pr.allocated_amount
@@ -404,6 +405,7 @@ class SalesOrder(SellingController):
 						"reference_name": pe_ref.parent,
 						"total_amount": pe_ref.total_amount,
 						"outstanding_amount": pe_ref.outstanding_amount,
+						"unallocated_amount": pe_ref.unallocated_amount,
 						"allocated_amount": pe_ref.allocated_amount,
 						"parent": pe_ref.reference_name,
 						"parentfield": "group_payment_entries",
