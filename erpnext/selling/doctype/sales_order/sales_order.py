@@ -1359,6 +1359,12 @@ class SalesOrder(SellingController):
 	def copy_buyback_items_from_reference(self, ref_order_name):
 		"""Duplicate Buyback Exchange Items from reference order to current order"""
 		try:
+			already_copied = frappe.db.exists(
+				"Buyback Exchange Item", {"current_sales_order": self.name}
+			)
+			if already_copied:
+				return
+
 			buyback_items = frappe.get_all(
 				"Buyback Exchange Item",
 				filters={"current_sales_order": ref_order_name},

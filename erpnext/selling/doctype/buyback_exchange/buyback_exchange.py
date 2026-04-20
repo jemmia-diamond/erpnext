@@ -50,7 +50,10 @@ class BuybackExchange(Document):
 			if not isinstance(products, list):
 				frappe.throw(frappe._("Invalid products_info in BuybackExchange {0}: Expected a list of products.").format(self.name))
 
-			if self.items:
+			if not self.is_new():
+				if frappe.db.exists("Buyback Exchange Item", {"parent": self.name}):
+					return
+			elif self.items:
 				return
 
 			for product in products:
