@@ -474,7 +474,8 @@ erpnext.patches.v16_0.update_order_qty_and_requested_qty_based_on_mr_and_po
 erpnext.patches.v16_0.enable_serial_batch_setting
 erpnext.patches.v16_0.update_requested_qty_packed_item
 erpnext.patches.v16_0.remove_payables_receivables_workspace
-erpnext.seeds.item_group.create_default_lead_source # 6/5/2025 - 4
+
+erpnext.seeds.item_group.create_default_lead_source
 erpnext.seeds.item_group.create_default_lead_budget
 erpnext.seeds.item_group.create_default_lead_demand
 # 2025-06-11
