@@ -1489,9 +1489,13 @@ class SalesOrder(SellingController):
 
 	def _find_matching_ref_item_by_serial(self, ref_items, current_serial):
 		"""Find reference item with matching serial_numbers"""
+		current_tokens = _tokenize_serials(current_serial)
+
 		for ref_item in ref_items:
 			ref_serial = getattr(ref_item, "serial_numbers", None)
-			if ref_serial and ref_serial.strip() == current_serial.strip():
+			if not ref_serial:
+				continue
+			if current_tokens & _tokenize_serials(ref_serial):
 				return ref_item
 		return None
 
@@ -1546,8 +1550,10 @@ class SalesOrder(SellingController):
 			if gia and gia not in ref_by_gia:
 				ref_by_gia[gia] = ref
 			serial = get_serial(ref)
-			if serial and is_jewelry(ref) and serial not in ref_by_serial:
-				ref_by_serial[serial] = ref
+			if serial and is_jewelry(ref):
+				for token in _tokenize_serials(serial):
+					if token not in ref_by_serial:
+						ref_by_serial[token] = ref
 
 		pairs = []
 		matched = set()
@@ -1575,9 +1581,13 @@ class SalesOrder(SellingController):
 			if not is_jewelry(cur):
 				continue
 			serial = get_serial(cur)
-			if serial and serial in ref_by_serial:
-				pairs.append((cur, ref_by_serial[serial]))
-				matched.add(cur.name)
+			if not serial:
+				continue
+			for token in _tokenize_serials(serial):
+				if token in ref_by_serial:
+					pairs.append((cur, ref_by_serial[token]))
+					matched.add(cur.name)
+					break
 
 		return pairs
 
@@ -2842,6 +2852,10 @@ def get_split_orders_in_group(split_order_group, include_cancelled=False):
 		order["is_original_order"] = (order.get("haravan_order_id") == split_order_group)
 
 	return orders
+
+
+def _tokenize_serials(s):
+	return {t.strip() for t in str(s).replace("\n", ",").split(",") if t.strip()}
 
 
 def _update_sales_order_return_amount(sales_order):
