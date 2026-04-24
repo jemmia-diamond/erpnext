@@ -49,7 +49,7 @@
   "expected_delivery_date",
   "column_break_ugod",
   "budget_lead",
-  "propose_lead_budget",
+  "proposed_budget",
   "preferred_product_type",
   "column_break_wsdb",
   "province",
@@ -733,7 +733,7 @@
    "options": "Lead Budget"
   },
   {
-   "fieldname": "propose_lead_budget",
+   "fieldname": "proposed_budget",
    "fieldtype": "Link",
    "label": "Propose Lead Budget",
    "options": "Lead Budget"

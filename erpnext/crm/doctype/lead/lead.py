@@ -46,7 +46,7 @@ class Lead(SellingController, CRMNote):
 		blog_subscriber: DF.Check
 		city: DF.Data | None
 		budget_lead: DF.Link | None
-		propose_lead_budget: DF.Link | None
+		proposed_budget: DF.Link | None
 		campaign_name: DF.Link | None
 		ceo_name: DF.Data | None
 		check_duplicate: DF.Link | None
