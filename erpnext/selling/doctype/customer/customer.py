@@ -64,9 +64,7 @@ class Customer(TransactionBase):
 		from erpnext.selling.doctype.customer_buyback_record.customer_buyback_record import CustomerBuybackRecord
 		from erpnext.selling.doctype.customer_credit_limit.customer_credit_limit import CustomerCreditLimit
 		from erpnext.selling.doctype.sales_team.sales_team import SalesTeam
-		from erpnext.selling.doctype.supplier_number_at_customer.supplier_number_at_customer import (
-			SupplierNumberAtCustomer,
-		)
+		from erpnext.selling.doctype.supplier_number_at_customer.supplier_number_at_customer import SupplierNumberAtCustomer
 		from erpnext.utilities.doctype.portal_user.portal_user import PortalUser
 		from frappe.types import DF
 
@@ -108,7 +106,6 @@ class Customer(TransactionBase):
 		doc_image: DF.AttachImage | None
 		email_id: DF.ReadOnly | None
 		first_name: DF.ReadOnly | None
-		first_channel: DF.Literal["", "Facebook", "Zalo", "TikTok", "Call Center", "Website Form", "Visiting Guests", "Email"]
 		first_source: DF.Link | None
 		front_image: DF.AttachImage | None
 		gender: DF.Link | None
