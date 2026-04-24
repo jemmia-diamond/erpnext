@@ -21,14 +21,14 @@
   "middle_name",
   "territory",
   "lead_stage",
-  "column_break_1",
   "phone",
+  "first_reach_at",
+  "column_break_1",
   "email_id",
   "job_title",
   "last_name",
   "gender",
   "qualified_lead_date",
-  "first_reach_at",
   "col_break123",
   "lead_owner",
   "source",
@@ -832,9 +832,7 @@
   {
    "fieldname": "first_reach_at",
    "fieldtype": "Datetime",
-   "hidden": 1,
-   "label": "First Reach At",
-   "permlevel": 1
+   "label": "First Reach At"
   },
   {
    "fetch_from": "source.source_name",
@@ -858,7 +856,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-02-10 14:36:37.157961",
+ "modified": "2026-04-24 09:48:39.159713",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",

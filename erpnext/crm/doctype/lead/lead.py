@@ -29,10 +29,9 @@ class Lead(SellingController, CRMNote):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from frappe.types import DF
-
 		from erpnext.crm.doctype.crm_note.crm_note import CRMNote
 		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
+		from frappe.types import DF
 
 		account_number: DF.Data | None
 		address: DF.Data | None
@@ -44,14 +43,13 @@ class Lead(SellingController, CRMNote):
 		bank_ward: DF.Literal[None]
 		birth_date: DF.Date | None
 		blog_subscriber: DF.Check
-		city: DF.Data | None
 		budget_lead: DF.Link | None
-		proposed_budget: DF.Link | None
-		campaign_name: DF.Link | None
 		ceo_name: DF.Data | None
 		check_duplicate: DF.Link | None
+		city: DF.Data | None
 		company: DF.Link | None
 		company_name: DF.Data | None
+		country: DF.Link | None
 		customer: DF.Link | None
 		date_of_issuance: DF.Date | None
 		disabled: DF.Check
@@ -86,6 +84,7 @@ class Lead(SellingController, CRMNote):
 		phone_ext: DF.Data | None
 		place_of_issuance: DF.Literal["Ministry of Public Security", "Department of Police for Administrative Management of Social Order", "Department of Police for Registration, Residency Management, and National Population Data"]
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
+		proposed_budget: DF.Link | None
 		province: DF.Link | None
 		purpose_lead: DF.Link | None
 		qualification_status: DF.Literal["Unqualified", "Qualified"]
@@ -95,19 +94,8 @@ class Lead(SellingController, CRMNote):
 		region: DF.Link | None
 		request_type: DF.Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
 		salutation: DF.Link | None
-		state: DF.Data | None
-		status: DF.Literal[
-			"Lead",
-			"Open",
-			"Replied",
-			"Opportunity",
-			"Quotation",
-			"Lost Quotation",
-			"Interested",
-			"Converted",
-			"Do Not Contact",
-		]
 		source: DF.Link | None
+		state: DF.Data | None
 		status: DF.Literal["Lead", "Contacted", "Replied", "Interested", "Qualified", "Opportunity", "Converted", "Do Not Contact", "Spam"]
 		stringee_data: DF.JSON | None
 		tax_number: DF.Data | None
