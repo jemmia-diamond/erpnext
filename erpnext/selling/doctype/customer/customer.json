@@ -13,7 +13,6 @@
   "detail_tab",
   "basic_info",
   "naming_series",
-  "salutation",
   "customer_name",
   "customer_group",
   "bizfly_customer_number",
@@ -165,10 +164,6 @@
   "portal_users_tab",
   "portal_users",
   "more_info_tab",
-  "references_section",
-  "column_break_wlbg",
-  "section_break_objq",
-  "column_break_hdmn",
   "supplier_numbers_section",
   "supplier_numbers",
   "connections_tab",
@@ -238,7 +233,6 @@
    "oldfieldtype": "Link",
    "options": "Lead",
    "print_hide": 1,
-   "read_only": 1,
    "report_hide": 1
   },
   {
@@ -572,8 +566,7 @@
    "label": "Opportunity",
    "no_copy": 1,
    "options": "Opportunity",
-   "print_hide": 1,
-   "read_only": 1
+   "print_hide": 1
   },
   {
    "fieldname": "contact_and_address_tab",
@@ -715,23 +708,6 @@
    "fieldname": "more_info_tab",
    "fieldtype": "Tab Break",
    "label": "More Info"
-  },
-  {
-   "fieldname": "references_section",
-   "fieldtype": "Section Break",
-   "label": "References"
-  },
-  {
-   "fieldname": "column_break_wlbg",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "section_break_objq",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_hdmn",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "connections_tab",
@@ -1200,11 +1176,11 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2026-04-15 17:34:28.056071",
+ "modified": "2026-04-24 12:18:23.868788",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",
- "naming_rule": "Expression",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {
