@@ -3,8 +3,11 @@
 
 # import frappe
 import frappe
+import requests
+import json
 from frappe.model.document import Document
 from frappe.utils import getdate, nowdate
+from erpnext.config.config import config
 
 
 class Promotion(Document):
@@ -59,3 +62,28 @@ def update_promotion_status():
 		SET is_active = 0
 		WHERE start_date > %s AND is_active = 1
 	""", (today,))
+
+@frappe.whitelist()
+def sync_diamond_collect():
+	url = f"{config.FN_BASE_URL}/api/erp/promotions/diamond-collects"
+	headers = {
+		"Content-Type": "application/json",
+		"Authorization": f"Bearer {config.FN_BEARER_TOKEN}",
+	}
+
+	try:
+		response = requests.post(url=url, headers=headers, json={})
+		response.raise_for_status()
+
+		try:
+			return response.json().get("message", "Success")
+		except json.JSONDecodeError:
+			return response.text
+
+	except requests.exceptions.HTTPError:
+		error_message = f"Error ({response.status_code}): {response.text}"
+		return error_message
+
+	except Exception as e:
+		return str(e)
+
