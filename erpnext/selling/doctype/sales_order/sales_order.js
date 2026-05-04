@@ -66,6 +66,11 @@ frappe.ui.form.on("Sales Order", {
 	validate: function(frm) {
 		if (frm.is_new()) return;
 
+		if (frm._promo_validated) {
+			frm._promo_validated = false;
+			return;
+		}
+
 		let message = "";
 		(frm.doc.items || []).forEach(item => {
 			if (item.sku && (item.sku.length === 21 || item.sku.startsWith("SPT"))) {
@@ -94,6 +99,7 @@ frappe.ui.form.on("Sales Order", {
 					indicator: "red"
 				});
 			} else {
+				frm._promo_validated = true;
 				frappe.validated = true;
 				frm.save();
 			}
@@ -2492,48 +2498,47 @@ function validate_promotion_prices(frm, items) {
 		if (!all_promo_names.length) { resolve([]); return; }
 
 		fetch_promo_map(all_promo_names).then(function(promo_map) {
+			var errors = [];
 
-				var errors = [];
+			items.forEach(function(item) {
+				var promos = parse_promos(item.new_promotions);
+				if (!promos.length) return;
 
-				items.forEach(function(item) {
-					var promos = parse_promos(item.new_promotions);
-					if (!promos.length) return;
-
-					var expected = item.price_list_rate || 0;
-					promos.forEach(function(name) {
-						expected = apply_promo_discount(expected, promo_map[name]);
-					});
-
-					var diff = Math.abs((item.rate * item.qty) - (expected * item.qty));
-					if (diff > 5000) {
-						errors.push(__("Sản phẩm {0}: giá thực tế {1} lệch {2} so với giá sau khuyến mãi {3}", [
-							item.item_name,
-							format_currency(item.rate, frm.doc.currency),
-							format_currency(diff, frm.doc.currency),
-							format_currency(expected, frm.doc.currency)
-						]));
-					}
+				var expected = item.price_list_rate || 0;
+				promos.forEach(function(name) {
+					expected = apply_promo_discount(expected, promo_map[name]);
 				});
 
-			if (order_promo_names.length) {
-					var base_total = (frm.doc.items || []).reduce(function(sum, item) {
-						return sum + (item.rate * item.qty);
-					}, 0);
-					var expected_total = base_total;
-					order_promo_names.forEach(function(name) {
-						expected_total = apply_promo_discount(expected_total, promo_map[name]);
-					});
-					var order_diff = Math.abs(frm.doc.grand_total - expected_total);
-					if (order_diff > 5000) {
-						errors.push(__("Tổng đơn hàng: giá thực tế {0} lệch {1} so với giá sau khuyến mãi {2}", [
-							format_currency(frm.doc.grand_total, frm.doc.currency),
-							format_currency(order_diff, frm.doc.currency),
-							format_currency(expected_total, frm.doc.currency)
-						]));
-					}
+				var diff = Math.abs((item.rate * item.qty) - (expected * item.qty));
+				if (diff > 5000) {
+					errors.push(__("Sản phẩm {0}: giá thực tế {1} lệch {2} so với giá sau khuyến mãi {3}", [
+						item.item_name,
+						format_currency(item.rate, frm.doc.currency),
+						format_currency(diff, frm.doc.currency),
+						format_currency(expected, frm.doc.currency)
+					]));
 				}
+			});
 
-				resolve(errors);
+			if (order_promo_names.length) {
+				var base_total = (frm.doc.items || []).reduce(function(sum, item) {
+					return sum + (item.rate * item.qty);
+				}, 0);
+				var expected_total = base_total;
+				order_promo_names.forEach(function(name) {
+					expected_total = apply_promo_discount(expected_total, promo_map[name]);
+				});
+				var order_diff = Math.abs(frm.doc.grand_total - expected_total);
+				if (order_diff > 5000) {
+					errors.push(__("Tổng đơn hàng: giá thực tế {0} lệch {1} so với giá sau khuyến mãi {2}", [
+						format_currency(frm.doc.grand_total, frm.doc.currency),
+						format_currency(order_diff, frm.doc.currency),
+						format_currency(expected_total, frm.doc.currency)
+					]));
+				}
+			}
+
+			resolve(errors);
 		});
 	});
 }
