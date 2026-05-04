@@ -62,6 +62,7 @@ class Lead(SellingController, CRMNote):
 		gender: DF.Link | None
 		image: DF.AttachImage | None
 		industry: DF.Link | None
+		is_assigned: DF.Check
 		job_title: DF.Data | None
 		language: DF.Link | None
 		last_name: DF.Data | None

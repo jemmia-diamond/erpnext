@@ -41,6 +41,7 @@
   "lead_source_platform",
   "qualification_tab",
   "qualification_status",
+  "is_assigned",
   "column_break_64",
   "qualified_by",
   "qualified_on",
@@ -849,6 +850,13 @@
    "label": "Lead Source Platform",
    "options": "Lead",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_assigned",
+   "fieldtype": "Check",
+   "label": "Is Assigned",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -856,7 +864,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-04-24 09:48:39.159713",
+ "modified": "2026-05-04 14:22:37.677519",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
