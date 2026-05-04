@@ -554,3 +554,27 @@ def transfer_lead_todos(from_lead_name: str, to_lead_name: str):
 		todo_doc.reference_name = to_lead_name
 		todo_doc.description = f"Assignment Rule for Lead {to_lead_name}"
 		todo_doc.save(ignore_permissions=True)
+
+def sync_lead_is_assigned():
+	frappe.db.sql("""
+		UPDATE `tabLead`
+		SET is_assigned = 1
+		WHERE
+			_assign IS NOT NULL
+			AND _assign != ''
+			AND _assign != '[]'
+			AND is_assigned = 0
+	""")
+
+	frappe.db.sql("""
+		UPDATE `tabLead`
+		SET is_assigned = 0
+		WHERE (
+			_assign IS NULL
+			OR _assign = ''
+			OR _assign = '[]'
+		)
+		AND is_assigned = 1
+	""")
+
+	frappe.db.commit()

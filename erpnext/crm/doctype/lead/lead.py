@@ -62,6 +62,7 @@ class Lead(SellingController, CRMNote):
 		gender: DF.Link | None
 		image: DF.AttachImage | None
 		industry: DF.Link | None
+		is_assigned: DF.Check
 		job_title: DF.Data | None
 		language: DF.Link | None
 		last_name: DF.Data | None
@@ -393,6 +394,7 @@ class Lead(SellingController, CRMNote):
 
 	def on_update(self):
 		self.update_prospect()
+		self.update_assignment_status()
 
 	def on_trash(self):
 		frappe.db.set_value("Issue", {"lead": self.name}, "lead", None)
@@ -615,6 +617,27 @@ class Lead(SellingController, CRMNote):
 				}
 			)
 			lead_row.db_update()
+
+	def update_assignment_status(self):
+		"""
+		Update is_assigned field based on assignment status
+		Sets is_assigned = 1 when lead is assigned to someone
+		Sets is_assigned = 0 when all assignments are removed
+		Handle all possible states of _assign:
+		None, '', '[]' or '["user@example.com"]'
+		"""
+		assign_list = []
+		if self._assign:
+			try:
+				assign_list = json.loads(self._assign)
+			except (json.JSONDecodeError, TypeError):
+				assign_list = []
+
+		if assign_list and not self.is_assigned:
+			frappe.db.set_value('Lead', self.name, 'is_assigned', 1)
+
+		if not assign_list and self.is_assigned:
+			frappe.db.set_value('Lead', self.name, 'is_assigned', 0)
 
 	def remove_link_from_prospect(self):
 		prospects = self.get_linked_prospects()
