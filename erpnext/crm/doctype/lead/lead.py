@@ -394,7 +394,7 @@ class Lead(SellingController, CRMNote):
 
 	def on_update(self):
 		self.update_prospect()
-		self.update_assignment_status()
+		# self.update_assignment_status()
 
 	def on_trash(self):
 		frappe.db.set_value("Issue", {"lead": self.name}, "lead", None)
