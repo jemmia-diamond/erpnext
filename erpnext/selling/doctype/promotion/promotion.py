@@ -76,14 +76,10 @@ def sync_diamond_collect():
 		response.raise_for_status()
 
 		try:
-			return response.json().get("message", "Success")
+			return response.json().get("message", "Đồng bộ thành công")
 		except json.JSONDecodeError:
 			return response.text
 
-	except requests.exceptions.HTTPError:
-		error_message = f"Error ({response.status_code}): {response.text}"
-		return error_message
-
 	except Exception as e:
-		return str(e)
-
+		frappe.log_error(f"Sync Diamond Collect failed: {e!s}")
+		frappe.throw(f"Đồng bộ thất bại: {e!s}")
