@@ -4365,6 +4365,10 @@ def sync_so_snapshot_pe_fields_background(pe_name):
 		})
 
 		for so_name in so_names:
+			cancelled_status = frappe.db.get_value("Sales Order", so_name, "cancelled_status")
+			if cancelled_status == "Cancelled":
+				continue
+			
 			so = frappe.get_doc("Sales Order", so_name)
 			so.set_payment_entries()
 			so.set_group_payment_entries()

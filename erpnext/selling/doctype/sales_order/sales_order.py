@@ -301,6 +301,21 @@ class SalesOrder(SellingController):
 		if self.docstatus == 2 or not self.name:
 			return
 
+		if self.cancelled_status == "Cancelled":
+			self.set("payment_entries", [])
+			frappe.db.sql("""
+				DELETE FROM `tabPayment Entry Reference`
+				WHERE parent = %s AND parentfield = 'payment_entries' AND parenttype = 'Sales Order'
+			""", self.name)
+
+			frappe.db.sql("""
+				UPDATE `tabSales Order`
+				SET modified = %s
+				WHERE name = %s
+			""", (frappe.utils.now(), self.name))
+			frappe.db.commit()
+			return
+
 		self.set("payment_entries", [])
 
 		# Get payment entries linked to this sales order
@@ -913,6 +928,7 @@ class SalesOrder(SellingController):
 		self.check_status_changes_for_rank()
 		self.sync_tracking_number_to_payment_entry()
 		self.copy_from_reference_order()
+		self.set_payment_entries()
 
 	def sync_tracking_number_to_payment_entry(self):
 		if not self.tracking_number:
