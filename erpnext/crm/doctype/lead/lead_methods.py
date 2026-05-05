@@ -564,6 +564,7 @@ def sync_lead_is_assigned():
 			AND _assign != ''
 			AND _assign != '[]'
 			AND is_assigned = 0
+			AND modified >= NOW() - INTERVAL 30 MINUTE
 	""")
 
 	frappe.db.sql("""
@@ -575,6 +576,7 @@ def sync_lead_is_assigned():
 			OR _assign = '[]'
 		)
 		AND is_assigned = 1
+        AND modified >= NOW() - INTERVAL 30 MINUTE
 	""")
 
 	frappe.db.commit()
