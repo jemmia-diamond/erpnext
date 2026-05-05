@@ -36,6 +36,39 @@ frappe.ui.form.on("Bank Transaction", {
 	},
 
 	refresh(frm) {
+		if (frm.doc.docstatus === 0 && !frm.is_new()) {
+			let can_cancel = true;
+
+			if (frm.doc.payment_entries && frm.doc.payment_entries.length > 0) {
+				if (!frappe.user.has_role("Administrator") && !frappe.user.has_role("Developer")) {
+					can_cancel = false;
+				}
+			}
+
+			if (can_cancel) {
+				frm.add_custom_button(__("Cancel"), function () {
+					frappe.confirm(
+						__("Bạn có chắc chắn muốn huỷ Giao dịch ngân hàng này không?"),
+						function () {
+							frappe.call({
+								method: "cancel_transaction",
+								doc: frm.doc,
+								callback: function (r) {
+									if (!r.exc) {
+										frappe.show_alert({
+											message: __("Huỷ Giao dịch ngân hàng thành công"),
+											indicator: "green"
+										});
+										frm.reload_doc();
+									}
+								}
+							});
+						}
+					);
+				}).addClass("btn-danger");
+			}
+		}
+
 		if (!frm.is_dirty() && frm.doc.payment_entries.length > 0) {
 			frm.add_custom_button(__("Unreconcile Transaction"), () => {
 				frm.call("remove_payment_entries").then(() => frm.refresh());
