@@ -88,10 +88,18 @@ frappe.ui.form.on("Sales Order", {
 
 		var items_with_promos = (frm.doc.items || []).filter(item => parse_promos(item.new_promotions).length > 0);
 		var has_order_promos = (frm.doc.promotions || []).some(row => row.promotion);
-		if (!items_with_promos.length && !has_order_promos) return;
+
+		var items_missing_promos = (frm.doc.items || []).filter(function(item) {
+			if (parse_promos(item.new_promotions).length > 0) return false;
+			if (!item.price_list_rate) return false;
+			var diff = Math.abs((item.rate * item.qty) - (item.price_list_rate * item.qty));
+			return diff > 5000;
+		});
+
+		if (!items_with_promos.length && !has_order_promos && !items_missing_promos.length) return;
 
 		frappe.validated = false;
-		validate_promotion_prices(frm, items_with_promos).then(function(errors) {
+		validate_promotion_prices(frm, items_with_promos, items_missing_promos).then(function(errors) {
 			if (errors.length) {
 				frappe.msgprint({
 					title: __("Giá không khớp với khuyến mãi"),
@@ -2480,7 +2488,7 @@ function fetch_promo_map(names) {
 	});
 }
 
-function validate_promotion_prices(frm, items) {
+function validate_promotion_prices(frm, items, items_missing_promos) {
 	var all_promo_names = [];
 
 	items.forEach(function(item) {
@@ -2495,11 +2503,21 @@ function validate_promotion_prices(frm, items) {
 	});
 
 	return new Promise(function(resolve) {
-		if (!all_promo_names.length) { resolve([]); return; }
+		var errors = [];
+
+		(items_missing_promos || []).forEach(function(item) {
+			var diff = Math.abs((item.rate * item.qty) - (item.price_list_rate * item.qty));
+			errors.push(__("Sản phẩm {0}: giá {1} lệch {2} so với giá niêm yết {3} nhưng chưa chọn khuyến mãi", [
+				item.item_name,
+				format_currency(item.rate, frm.doc.currency),
+				format_currency(diff, frm.doc.currency),
+				format_currency(item.price_list_rate, frm.doc.currency)
+			]));
+		});
+
+		if (!all_promo_names.length) { resolve(errors); return; }
 
 		fetch_promo_map(all_promo_names).then(function(promo_map) {
-			var errors = [];
-
 			items.forEach(function(item) {
 				var promos = parse_promos(item.new_promotions);
 				if (!promos.length) return;
