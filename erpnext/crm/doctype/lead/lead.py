@@ -394,7 +394,7 @@ class Lead(SellingController, CRMNote):
 
 	def on_update(self):
 		self.update_prospect()
-		# self.update_assignment_status()
+		self.update_assignment_status()
 
 	def on_trash(self):
 		frappe.db.set_value("Issue", {"lead": self.name}, "lead", None)
@@ -626,18 +626,21 @@ class Lead(SellingController, CRMNote):
 		Handle all possible states of _assign:
 		None, '', '[]' or '["user@example.com"]'
 		"""
+		if self.modified_by == "tech@jemmia.vn":
+			return
+
+		_assign = frappe.db.get_value('Lead', self.name, '_assign')
 		assign_list = []
-		if self._assign:
+
+		if _assign:
 			try:
-				assign_list = json.loads(self._assign)
+				assign_list = json.loads(_assign)
 			except (json.JSONDecodeError, TypeError):
 				assign_list = []
 
-		if assign_list and not self.is_assigned:
-			frappe.db.set_value('Lead', self.name, 'is_assigned', 1)
-
-		if not assign_list and self.is_assigned:
-			frappe.db.set_value('Lead', self.name, 'is_assigned', 0)
+		should_be_assigned = 1 if assign_list else 0		
+		if self.is_assigned != should_be_assigned:
+			frappe.db.set_value('Lead', self.name, 'is_assigned', should_be_assigned)
 
 	def remove_link_from_prospect(self):
 		prospects = self.get_linked_prospects()
