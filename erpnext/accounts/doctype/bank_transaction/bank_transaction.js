@@ -40,7 +40,10 @@ frappe.ui.form.on("Bank Transaction", {
 			let can_cancel = true;
 
 			if (frm.doc.payment_entries && frm.doc.payment_entries.length > 0) {
-				if (!frappe.user.has_role("Administrator") && !frappe.user.has_role("Developer")) {
+				if (!frappe.user.has_role("Administrator")
+					&& !frappe.user.has_role("Developer")
+					&& !frappe.user.has_role("Accounts User")
+					&& !frappe.user.has_role("Accounts Manager")) {
 					can_cancel = false;
 				}
 			}
