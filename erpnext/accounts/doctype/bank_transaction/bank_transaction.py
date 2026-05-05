@@ -412,6 +412,23 @@ class BankTransaction(Document):
 		self.excluded_fee = 0
 
 
+	@frappe.whitelist()
+	def cancel_transaction(self):
+		if self.docstatus == 2:
+			return {"message": _("Giao dịch ngân hàng đã được huỷ trước đó")}
+
+		if self.payment_entries:
+			if not (frappe.session.user == "Administrator" or "Developer" in frappe.get_roles()):
+				frappe.throw(_("Không được phép huỷ! Giao dịch ngân hàng này đang chứa các khoản thanh toán được phân bổ. Xin hãy gỡ phân bổ trước khi huỷ."))
+
+		if self.docstatus == 1:
+			self.cancel()
+		else:
+			self.db_set("docstatus", 2)
+			self.db_set("status", "Cancelled")
+
+		return {"message": _("Huỷ Giao dịch ngân hàng thành công")}
+
 @frappe.whitelist()
 def get_doctypes_for_bank_reconciliation():
 	"""Get Bank Reconciliation doctypes from all the apps"""
