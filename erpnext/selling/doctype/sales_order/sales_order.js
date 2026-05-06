@@ -2452,19 +2452,44 @@ function prevent_past_delivery_dates(frm) {
 	}
 }
 
-function apply_promo_discount(price, p) {
+function apply_promo_discount(price, p, scope) {
 	if (!p) return price;
-	if (p.priority === "G1") {
-		return price * (1 - (p.discount_percent || 0) / 100);
-	} else if (p.priority === "G2") {
-		return price - (p.discount_amount || 0);
-	} else if (["G3", "G4", "G6", "G7"].includes(p.priority)) {
-		if (p.discount_type === "Percentage") {
+
+	if (scope === "Line Item") {
+		if (p.priority === "G0") return price;
+		if (p.priority === "G1") {
 			return price * (1 - (p.discount_percent || 0) / 100);
-		} else if (p.discount_type === "Fix Amount") {
+		}
+		if (p.priority === "G2") {
 			return price - (p.discount_amount || 0);
 		}
+		if (p.priority === "G3" || p.priority === "G6" || p.priority === "G7" || p.priority === "G4") {
+			if (p.discount_type === "Percentage") {
+				return price * (1 - (p.discount_percent || 0) / 100);
+			} else if (p.discount_type === "Fix Amount") {
+				return price - (p.discount_amount || 0);
+			}
+			return price;
+		}
 	}
+
+	if (scope === "Order") {
+		if (p.priority === "G4") {
+			return price - (p.discount_amount || 0);
+		}
+		if (p.priority === "G5") {
+			return price * (1 - (p.discount_percent || 0) / 100);
+		}
+		if (p.priority === "G6" || p.priority === "G7") {
+			if (p.discount_type === "Percentage") {
+				return price * (1 - (p.discount_percent || 0) / 100);
+			} else if (p.discount_type === "Fix Amount") {
+				return price - (p.discount_amount || 0);
+			}
+			return price;
+		}
+	}
+
 	return price;
 }
 
@@ -2523,8 +2548,9 @@ function validate_promotion_prices(frm, items, items_missing_promos) {
 				if (!promos.length) return;
 
 				var expected = item.price_list_rate || 0;
-				promos.forEach(function(name) {
-					expected = apply_promo_discount(expected, promo_map[name]);
+				var promo_objects = promos.map(function(name) { return promo_map[name]; }).filter(Boolean);
+				promo_objects.forEach(function(p) {
+					expected = apply_promo_discount(expected, p, "Line Item");
 				});
 
 				var diff = Math.abs((item.rate * item.qty) - (expected * item.qty));
@@ -2543,8 +2569,9 @@ function validate_promotion_prices(frm, items, items_missing_promos) {
 					return sum + (item.rate * item.qty);
 				}, 0);
 				var expected_total = base_total;
-				order_promo_names.forEach(function(name) {
-					expected_total = apply_promo_discount(expected_total, promo_map[name]);
+				var order_promo_objects = order_promo_names.map(function(name) { return promo_map[name]; }).filter(Boolean);
+				order_promo_objects.forEach(function(p) {
+					expected_total = apply_promo_discount(expected_total, p, "Order");
 				});
 				var order_diff = Math.abs(frm.doc.grand_total - expected_total);
 				if (order_diff > 5000) {
@@ -2671,13 +2698,18 @@ function render_promotion_pills(frm, cdt, cdn) {
 	fetch_promo_map(promos).then(function(promo_map) {
 		var current_price = initial_price;
 
+		var promo_objects = promos.map(function(name) { return promo_map[name]; }).filter(Boolean);
+
+		promo_objects.forEach(function(p) {
+			current_price = apply_promo_discount(current_price, p, "Line Item");
+		});
+
 		$pills.find(".promo-pill").each(function() {
 			var name = $(this).attr("data-promo");
 			var p = promo_map[name];
 			if (p) {
 				$(this).find(".promo-label").text(p.title || p.name);
-				current_price = apply_promo_discount(current_price, p);
-				$(this).find(".promo-price").text("Sau khuy\u1ebfn m\u00e3i: " + format_currency(current_price, frm.doc.currency).replace(/,00$/, ""));
+				$(this).find(".promo-price").text("Sau khuyến mãi: " + format_currency(current_price, frm.doc.currency).replace(/,00$/, ""));
 			} else {
 				$(this).find(".promo-price").text("Kh\u00f4ng t\u00ecm th\u1ea5y tr\u1ee3 gi\u00e1");
 			}
