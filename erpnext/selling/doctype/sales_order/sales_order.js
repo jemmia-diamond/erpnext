@@ -410,9 +410,12 @@ frappe.ui.form.on("Sales Order", {
 		});
 	},
 
-	auto_fill_promotion_from_reference: function(frm, cdt, cdn) {
+	sync_reference_promotion_by_serial: function(frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
-		if (!row.item_code) return;
+		if (!row.item_code || !row.serial_numbers) return;
+
+		const serials = row.serial_numbers.split('\n').filter(s => s.trim());
+		const target_serial = serials[serials.length - 1]; 
 
 		frappe.db.get_value('Sales Order', { 'haravan_order_id': frm.doc.haravan_ref_order_id }, 'name')
 			.then(r => {
@@ -425,7 +428,7 @@ frappe.ui.form.on("Sales Order", {
 				frappe.db.get_value('Sales Order Item', {
 					'parent': source_order,
 					'item_code': row.item_code,
-					'haravan_variant_id': row.haravan_variant_id || ["is", "not set"]
+					'serial_numbers': ['like', `%${target_serial}%`]
 				}, ['new_promotions', 'promotion_1', 'promotion_2', 'promotion_3', 'promotion_4', 'promotion_5'])
 				.then(r => {
 					if (r && r.message) {
@@ -1535,7 +1538,7 @@ frappe.ui.form.on("Sales Order Item", {
 			frappe.model.set_value(cdt, cdn, 'serial', null);
 
 			if (frm.doc.haravan_ref_order_id && (!row.new_promotions || row.new_promotions == "[]")) {
-				frm.events.auto_fill_promotion_from_reference(frm, cdt, cdn);
+				frm.events.sync_reference_promotion_by_serial(frm, cdt, cdn);
 			}
 
 			frappe.db.get_value('Serial', val, 'serial_number').then((r) => {
