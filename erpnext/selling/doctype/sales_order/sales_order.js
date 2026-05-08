@@ -410,6 +410,43 @@ frappe.ui.form.on("Sales Order", {
 		});
 	},
 
+	auto_fill_promotion_from_reference: function(frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		if (!row.item_code) return;
+
+		frappe.db.get_value('Sales Order', { 'haravan_order_id': frm.doc.haravan_ref_order_id }, 'name')
+			.then(r => {
+				const source_order = r && r.message ? r.message.name : null;
+				if (!source_order || source_order === frm.doc.name) {
+					frm.refresh_field('items');
+					return;
+				}
+
+				frappe.db.get_value('Sales Order Item', {
+					'parent': source_order,
+					'item_code': row.item_code,
+					'haravan_variant_id': row.haravan_variant_id || ["is", "not set"]
+				}, ['new_promotions', 'promotion_1', 'promotion_2', 'promotion_3', 'promotion_4', 'promotion_5'])
+				.then(r => {
+					if (r && r.message) {
+						const data = r.message;
+						if (data.new_promotions && data.new_promotions !== "[]") {
+							frappe.model.set_value(cdt, cdn, 'new_promotions', data.new_promotions);
+							frappe.model.set_value(cdt, cdn, 'promotion_1', data.promotion_1);
+							frappe.model.set_value(cdt, cdn, 'promotion_2', data.promotion_2);
+							frappe.model.set_value(cdt, cdn, 'promotion_3', data.promotion_3);
+							frappe.model.set_value(cdt, cdn, 'promotion_4', data.promotion_4);
+							frappe.model.set_value(cdt, cdn, 'promotion_5', data.promotion_5);
+						}
+					}
+					frm.refresh_field('items');
+				});
+			})
+			.catch(() => {
+				frm.refresh_field('items');
+			});
+	},
+
 	auto_fetch_item_policies: function(frm) {
 		if (frm.doc.docstatus !== 0 || frm.doc.__islocal) return;
 
@@ -1506,7 +1543,13 @@ frappe.ui.form.on("Sales Order Item", {
 						// Clean up and finalize
 						row.serial_numbers = row.serial_numbers.replace(/\n+/g, '\n').trim();
 						row.serial = null;
-						frm.refresh_field('items');
+
+						// Auto-fill promotions from reference order if missing
+						if (frm.doc.haravan_ref_order_id && (!row.new_promotions || row.new_promotions == "[]")) {
+							frm.events.auto_fill_promotion_from_reference(frm, cdt, cdn);
+						} else {
+							frm.refresh_field('items');
+						}
 					}
 				})
 				.catch((err) => {
@@ -2704,14 +2747,16 @@ function render_promotion_pills(frm, cdt, cdn) {
 			current_price = apply_promo_discount(current_price, p, "Line Item");
 		});
 
+		var running_price = initial_price;
 		$pills.find(".promo-pill").each(function() {
 			var name = $(this).attr("data-promo");
 			var p = promo_map[name];
 			if (p) {
+				running_price = apply_promo_discount(running_price, p, "Line Item");
 				$(this).find(".promo-label").text(p.title || p.name);
-				$(this).find(".promo-price").text("Sau khuyến mãi: " + format_currency(current_price, frm.doc.currency).replace(/,00$/, ""));
+				$(this).find(".promo-price").text("Sau khuyến mãi: " + format_currency(running_price, frm.doc.currency).replace(/,00$/, ""));
 			} else {
-				$(this).find(".promo-price").text("Kh\u00f4ng t\u00ecm th\u1ea5y tr\u1ee3 gi\u00e1");
+				$(this).find(".promo-price").text("Không tìm thấy trợ giá");
 			}
 		});
 
