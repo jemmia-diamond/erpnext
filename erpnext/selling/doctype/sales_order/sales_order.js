@@ -1523,39 +1523,28 @@ frappe.ui.form.on("Sales Order Item", {
 	},
 
 	serial: function (frm, cdt, cdn) {
-		// When serial is selected, append serial number to serial_numbers field
 		var row = locals[cdt][cdn];
 		if (row.serial) {
-			frappe.db.get_value('Serial', row.serial, 'serial_number')
-				.then((r) => {
-					if (r && r.message && r.message.serial_number) {
-						const serialTitle = r.message.serial_number;
-						const serialNumbersList = row.serial_numbers ? row.serial_numbers.split('\n') : [];
+			const val = row.serial;
+			const current_serials = row.serial_numbers ? row.serial_numbers.split('\n') : [];
+			if (!current_serials.includes(val)) {
+				const new_list = row.serial_numbers ? `${row.serial_numbers}\n${val}` : val;
+				frappe.model.set_value(cdt, cdn, 'serial_numbers', new_list.replace(/\n+/g, '\n').trim());
+			}
+			
+			frappe.model.set_value(cdt, cdn, 'serial', null);
 
-						if (!serialNumbersList.includes(serialTitle)) {
-							if (row.serial_numbers) {
-								row.serial_numbers += `\n${serialTitle}`;
-							} else {
-								row.serial_numbers = serialTitle;
-							}
-						}
+			if (frm.doc.haravan_ref_order_id && (!row.new_promotions || row.new_promotions == "[]")) {
+				frm.events.auto_fill_promotion_from_reference(frm, cdt, cdn);
+			}
 
-						// Clean up and finalize
-						row.serial_numbers = row.serial_numbers.replace(/\n+/g, '\n').trim();
-						row.serial = null;
-
-						// Auto-fill promotions from reference order if missing
-						if (frm.doc.haravan_ref_order_id && (!row.new_promotions || row.new_promotions == "[]")) {
-							frm.events.auto_fill_promotion_from_reference(frm, cdt, cdn);
-						} else {
-							frm.refresh_field('items');
-						}
-					}
-				})
-				.catch((err) => {
-					frappe.msgprint(__('Error fetching serial number: {0}', [err.message]));
-					console.error(err);
-				});
+			frappe.db.get_value('Serial', val, 'serial_number').then((r) => {
+				if (r && r.message && r.message.serial_number && r.message.serial_number !== val) {
+					const official = r.message.serial_number;
+					const updated = row.serial_numbers.split('\n').map(s => s === val ? official : s);
+					frappe.model.set_value(cdt, cdn, 'serial_numbers', updated.join('\n'));
+				}
+			});
 		}
 	},
 
