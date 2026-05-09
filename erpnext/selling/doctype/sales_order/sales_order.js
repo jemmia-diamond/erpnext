@@ -427,7 +427,6 @@ frappe.ui.form.on("Sales Order", {
 
 				frappe.db.get_value('Sales Order Item', {
 					'parent': source_order,
-					'item_code': row.item_code,
 					'serial_numbers': ['like', `%${target_serial}%`]
 				}, ['new_promotions', 'promotion_1', 'promotion_2', 'promotion_3', 'promotion_4', 'promotion_5'])
 				.then(r => {
