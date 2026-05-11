@@ -2652,7 +2652,8 @@ frappe.ui.form.on('Sales Order Item', {
 					filters: {
 						transaction_date: frm.doc.transaction_date,
 						real_order_date: frm.doc.real_order_date,
-						scope: "Line Item"
+						scope: "Line Item",
+						as_dict: 1
 					}
 				};
 			},

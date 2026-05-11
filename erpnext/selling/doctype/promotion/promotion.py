@@ -90,9 +90,8 @@ def promotion_query(doctype, txt, searchfield, start, page_len, filters):
 	transaction_date = filters.get("transaction_date")
 	real_order_date = filters.get("real_order_date")
 	scope = filters.get("scope") or "Line Item"
-
 	results = frappe.db.sql("""
-		SELECT name, title
+		SELECT name, ifnull(title, name) as title
 		FROM `tabPromotion`
 		WHERE docstatus < 2
 		AND scope = %(scope)s
@@ -111,5 +110,5 @@ def promotion_query(doctype, txt, searchfield, start, page_len, filters):
 		"txt": f"%{txt}%",
 		"start": start,
 		"page_len": page_len
-	}, as_dict=True)
+	}, as_dict=True if filters.get("as_dict") else False)
 	return results
