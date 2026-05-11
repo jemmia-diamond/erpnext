@@ -3274,3 +3274,18 @@ def unlink_buyback_item(item_name):
 		"message": "Buyback item unlinked successfully",
 		"return_amount": new_total
 	}
+
+@frappe.whitelist()
+def get_item_promotions_by_serial(source_order, target_serial):
+	"""Fetch promotion fields for a specific serial number from a source Sales Order."""
+	if not source_order or not target_serial:
+		return {}
+
+	item = frappe.db.get_value(
+		"Sales Order Item",
+		{"parent": source_order, "serial_numbers": ["like", f"%{target_serial}%"]},
+		["new_promotions", "promotion_1", "promotion_2", "promotion_3", "promotion_4", "promotion_5"],
+		as_dict=True
+	)
+
+	return item or {}

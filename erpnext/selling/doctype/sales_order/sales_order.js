@@ -427,27 +427,30 @@ frappe.ui.form.on("Sales Order", {
 					return;
 				}
 
-				frappe.db.get_value('Sales Order Item', {
-					'parent': source_order,
-					'serial_numbers': ['like', `%${target_serial}%`]
-				}, ['new_promotions', 'promotion_1', 'promotion_2', 'promotion_3', 'promotion_4', 'promotion_5'])
-				.then(r => {
-					if (r && r.message && r.message.new_promotions) {
-						const data = r.message;
-						if (data.new_promotions && data.new_promotions !== "[]") {
-							frappe.model.set_value(cdt, cdn, 'new_promotions', data.new_promotions);
-							frappe.model.set_value(cdt, cdn, 'promotion_1', data.promotion_1);
-							frappe.model.set_value(cdt, cdn, 'promotion_2', data.promotion_2);
-							frappe.model.set_value(cdt, cdn, 'promotion_3', data.promotion_3);
-							frappe.model.set_value(cdt, cdn, 'promotion_4', data.promotion_4);
-							frappe.model.set_value(cdt, cdn, 'promotion_5', data.promotion_5);
+				frappe.call({
+					method: "erpnext.selling.doctype.sales_order.sales_order.get_item_promotions_by_serial",
+					args: {
+						source_order: source_order,
+						target_serial: target_serial
+					},
+					callback: function(r) {
+						if (r.message && r.message.new_promotions) {
+							const data = r.message;
+							if (data.new_promotions && data.new_promotions !== "[]") {
+								frappe.model.set_value(cdt, cdn, 'new_promotions', data.new_promotions);
+								frappe.model.set_value(cdt, cdn, 'promotion_1', data.promotion_1);
+								frappe.model.set_value(cdt, cdn, 'promotion_2', data.promotion_2);
+								frappe.model.set_value(cdt, cdn, 'promotion_3', data.promotion_3);
+								frappe.model.set_value(cdt, cdn, 'promotion_4', data.promotion_4);
+								frappe.model.set_value(cdt, cdn, 'promotion_5', data.promotion_5);
 
-							if (typeof render_promotion_pills !== "undefined") {
-								setTimeout(() => render_promotion_pills(frm, cdt, cdn), 100);
+								if (typeof render_promotion_pills !== "undefined") {
+									setTimeout(() => render_promotion_pills(frm, cdt, cdn), 100);
+								}
 							}
 						}
+						frm.refresh_field('items');
 					}
-					frm.refresh_field('items');
 				});
 			})
 			.catch((err) => {
