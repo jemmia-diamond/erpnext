@@ -412,10 +412,12 @@ frappe.ui.form.on("Sales Order", {
 
 	sync_reference_promotion_by_serial: function(frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
-		if (!row.item_code || !row.serial_numbers) return;
+		if (!row.serial_numbers) return;
 
-		const serials = row.serial_numbers.split('\n').filter(s => s.trim());
+		const serials = row.serial_numbers.split('\n').map(s => s.trim()).filter(s => s);
 		const target_serial = serials[serials.length - 1]; 
+		
+		if (!target_serial) return;
 
 		frappe.db.get_value('Sales Order', { 'haravan_order_id': frm.doc.haravan_ref_order_id }, 'name')
 			.then(r => {
@@ -430,7 +432,7 @@ frappe.ui.form.on("Sales Order", {
 					'serial_numbers': ['like', `%${target_serial}%`]
 				}, ['new_promotions', 'promotion_1', 'promotion_2', 'promotion_3', 'promotion_4', 'promotion_5'])
 				.then(r => {
-					if (r && r.message) {
+					if (r && r.message && r.message.new_promotions) {
 						const data = r.message;
 						if (data.new_promotions && data.new_promotions !== "[]") {
 							frappe.model.set_value(cdt, cdn, 'new_promotions', data.new_promotions);
@@ -439,12 +441,16 @@ frappe.ui.form.on("Sales Order", {
 							frappe.model.set_value(cdt, cdn, 'promotion_3', data.promotion_3);
 							frappe.model.set_value(cdt, cdn, 'promotion_4', data.promotion_4);
 							frappe.model.set_value(cdt, cdn, 'promotion_5', data.promotion_5);
+
+							if (typeof render_promotion_pills !== "undefined") {
+								setTimeout(() => render_promotion_pills(frm, cdt, cdn), 100);
+							}
 						}
 					}
 					frm.refresh_field('items');
 				});
 			})
-			.catch(() => {
+			.catch((err) => {
 				frm.refresh_field('items');
 			});
 	},
