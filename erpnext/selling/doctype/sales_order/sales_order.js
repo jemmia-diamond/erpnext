@@ -269,13 +269,15 @@ frappe.ui.form.on("Sales Order", {
 
 		// link filters for promotions
 		frm.set_query("promotions", function () {
-            return {
-                filters: {
-                    "scope": "Order",
-					"is_active": 1
-                }
-            };
-        });
+			return {
+				query: "erpnext.selling.doctype.promotion.promotion.promotion_query",
+				filters: {
+					"scope": "Order",
+					"transaction_date": frm.doc.transaction_date,
+					"real_order_date": frm.doc.real_order_date
+				}
+			};
+		});
 
 		if (frm.doc.docstatus === 1) {
 			if (
@@ -415,8 +417,8 @@ frappe.ui.form.on("Sales Order", {
 		if (!row.serial_numbers) return;
 
 		const serials = row.serial_numbers.split('\n').map(s => s.trim()).filter(s => s);
-		const target_serial = serials[serials.length - 1]; 
-		
+		const target_serial = serials[serials.length - 1];
+
 		if (!target_serial) return;
 
 		frappe.db.get_value('Sales Order', { 'haravan_order_id': frm.doc.haravan_ref_order_id }, 'name')
@@ -1542,7 +1544,7 @@ frappe.ui.form.on("Sales Order Item", {
 				const new_list = row.serial_numbers ? `${row.serial_numbers}\n${val}` : val;
 				frappe.model.set_value(cdt, cdn, 'serial_numbers', new_list.replace(/\n+/g, '\n').trim());
 			}
-			
+
 			frappe.model.set_value(cdt, cdn, 'serial', null);
 
 			if (frm.doc.haravan_ref_order_id && (!row.new_promotions || row.new_promotions == "[]")) {
@@ -2646,8 +2648,10 @@ frappe.ui.form.on('Sales Order Item', {
 			primary_action_label: "Add Selected",
 			get_query() {
 				return {
+					query: "erpnext.selling.doctype.promotion.promotion.promotion_query",
 					filters: {
-						is_active: 1,
+						transaction_date: frm.doc.transaction_date,
+						real_order_date: frm.doc.real_order_date,
 						scope: "Line Item"
 					}
 				};

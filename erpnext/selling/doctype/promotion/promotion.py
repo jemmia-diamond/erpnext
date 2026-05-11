@@ -83,3 +83,33 @@ def sync_diamond_collect():
 	except Exception as e:
 		frappe.log_error(f"Sync Diamond Collect failed: {e!s}")
 		frappe.throw(f"Đồng bộ thất bại: {e!s}")
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def promotion_query(doctype, txt, searchfield, start, page_len, filters):
+	transaction_date = filters.get("transaction_date")
+	real_order_date = filters.get("real_order_date")
+	scope = filters.get("scope") or "Line Item"
+
+	results = frappe.db.sql("""
+		SELECT name, title
+		FROM `tabPromotion`
+		WHERE docstatus < 2
+		AND scope = %(scope)s
+		AND (
+			is_active = 1
+			OR (%(transaction_date)s IS NOT NULL AND start_date <= %(transaction_date)s AND (end_date >= %(transaction_date)s OR end_date IS NULL))
+			OR (%(real_order_date)s IS NOT NULL AND start_date <= %(real_order_date)s AND (end_date >= %(real_order_date)s OR end_date IS NULL))
+		)
+		AND (name LIKE %(txt)s OR title LIKE %(txt)s)
+		ORDER BY modified DESC
+		LIMIT %(start)s, %(page_len)s
+	""", {
+		"scope": scope,
+		"transaction_date": transaction_date,
+		"real_order_date": real_order_date,
+		"txt": f"%{txt}%",
+		"start": start,
+		"page_len": page_len
+	}, as_dict=True)
+	return results
