@@ -27,6 +27,7 @@ from erpnext.accounts.party import (
 from erpnext.controllers.website_list_for_contact import add_role_for_portal_user
 from erpnext.utilities.transaction_base import TransactionBase
 from erpnext.config.config import config
+from erpnext.selling.doctype.coupon.coupon import update_customers_coupons
 import requests
 
 class CustomerRank:
