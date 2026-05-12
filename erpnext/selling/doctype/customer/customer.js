@@ -109,7 +109,7 @@ frappe.ui.form.on("Customer", {
 
     frm.set_df_property("coupon_table", "cannot_add_rows", true);
     frm.set_df_property("coupon_table", "cannot_delete_rows", true);
-	frm.get_field("coupon_table").grid.only_sortable();
+	// frm.get_field("coupon_table").grid.only_sortable();
 	},
 	customer_primary_address: function (frm) {
 		if (frm.doc.customer_primary_address) {
@@ -289,12 +289,12 @@ frappe.ui.form.on("Customer", {
 			var coupon_grid = frm.get_field("coupon_table").grid;
 			coupon_grid.cannot_add_rows = true;
 			coupon_grid.cannot_delete_rows = true;
-			coupon_grid.only_sortable = false;
+			// coupon_grid.only_sortable = false;
 
 			frm.fields_dict["coupon_table"].grid.wrapper.find('.grid-remove-rows').hide();
 			frm.fields_dict["coupon_table"].grid.wrapper.find('.grid-add-multiple-rows').hide();
 			frm.fields_dict["coupon_table"].grid.wrapper.find('.grid-add-row').hide();
-			frm.fields_dict("coupon_table").grid.wrapper.find('.grid-move-row').hide();
+			// frm.fields_dict("coupon_table").grid.wrapper.find('.grid-move-row').hide();
 			frm.fields_dict["coupon_table"].grid.grid_rows.forEach(function (row) {
 				row.wrapper.find('.grid-delete-row').hide();
 				row.wrapper.find('.grid-duplicate-row').hide();
@@ -329,7 +329,7 @@ frappe.ui.form.on("Customer", {
 
 		frm.set_df_property("coupon_table", "cannot_add_rows", true);
 		frm.set_df_property("coupon_table", "cannot_delete_rows", true);
-		frm.get_field("coupon_table").grid.only_sortable();
+		// frm.get_field("coupon_table").grid.only_sortable();
 	},
 	validate: function (frm) {
 		if (frm.doc.lead_name) frappe.model.clear_doc("Lead", frm.doc.lead_name);
