@@ -21,7 +21,6 @@ class Appointment(Document):
 
 	if TYPE_CHECKING:
 		from erpnext.crm.doctype.appointment_sales_person.appointment_sales_person import AppointmentSalesPerson
-		from erpnext.crm.doctype.universal_images.universal_images import UniversalImages
 		from frappe.types import DF
 
 		appointment_with: DF.Link | None
@@ -33,7 +32,6 @@ class Appointment(Document):
 		customer_response: DF.LongText | None
 		estimated_budget: DF.Data | None
 		gender: DF.Literal["Male", "Female"]
-		images: DF.Table[UniversalImages]
 		lead: DF.Link
 		main_sales: DF.TableMultiSelect[AppointmentSalesPerson]
 		notes: DF.LongText | None

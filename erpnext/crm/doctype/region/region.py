@@ -16,5 +16,4 @@ class Region(Document):
 
 		region_name: DF.SmallText
 	# end: auto-generated types
-
 	pass
