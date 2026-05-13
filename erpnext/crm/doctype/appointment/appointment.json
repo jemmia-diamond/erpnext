@@ -8,6 +8,7 @@
  "field_order": [
   "scheduled_time",
   "status",
+  "record_id",
   "customer_details_section",
   "lead",
   "customer_name",
@@ -159,10 +160,16 @@
    "fieldname": "policy",
    "fieldtype": "Long Text",
    "label": "Procurement Policy"
+  },
+  {
+   "description": "This record only needed when migrate data from Larkbase to ERP",
+   "fieldname": "record_id",
+   "fieldtype": "Data",
+   "label": "Record Id"
   }
  ],
  "links": [],
- "modified": "2026-05-13 00:13:47.373799",
+ "modified": "2026-05-13 01:13:34.073085",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Appointment",
