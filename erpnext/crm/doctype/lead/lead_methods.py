@@ -169,14 +169,22 @@ def insert_lead(doc) -> "Document":
 				frappe.log_error(e)
 
 		return frappe_doc
-	except Exception:
+	except Exception as e:
 		try:
-			existing_doc = frappe.get_doc(frappe_doc.doctype, frappe_doc.name)
-			if existing_doc:
+			existing_lead_name = None
+			if is_non_empty(pancake_phone):
+				existing_lead_name = frappe.db.get_value("Lead", {"phone": pancake_phone}, "name")
+
+			if existing_lead_name:
+				existing_doc = frappe.get_doc("Lead", existing_lead_name)
+				if conversation_id and page_id:
+					existing_doc.link_to_contacts(pancake_data=pancake_data)
 				return existing_doc
-			return None
 		except Exception:
-			return None
+			pass
+
+		frappe.log_error(f"Error insert_lead for conversation {conversation_id}: {e}")
+		return None
 
 @frappe.whitelist(methods=["PUT", "PATCH"])
 def backfill_lead_info(docs):
@@ -295,6 +303,14 @@ def update_lead_by_batch(docs):
 					doc.pop("docname", None)
 					existing_doc = insert_lead(doc)
 
+				if not existing_doc:
+					results.append({
+						"name": None,
+						"conversation_id": pancake_data.get("conversation_id"),
+						"error": "Failed to find or create lead"
+					})
+					continue
+
 			# exist phone not update
 			if existing_doc.phone and existing_doc.phone != "":
 				doc["phone"] = existing_doc.phone
@@ -314,11 +330,23 @@ def update_lead_by_batch(docs):
 			if existing_doc.lead_owner:
 				doc["lead_owner"] = existing_doc.lead_owner
 
+			if pancake_data:
+				existing_pancake_data = existing_doc.get("pancake_data")
+				if isinstance(existing_pancake_data, str):
+					try:
+						existing_pancake_data = json.loads(existing_pancake_data)
+					except Exception:
+						existing_pancake_data = {}
+
+				if existing_pancake_data == pancake_data:
+					doc.pop("pancake_data", None)
+
 			existing_doc.update(doc)
 			existing_doc.save(ignore_permissions=True)
 			frappe.db.commit()
 
-			existing_doc.link_to_contacts(pancake_data)
+			if pancake_data:
+				existing_doc.link_to_contacts(pancake_data)
 
 			try:
 				pancake_list_tags = doc.get("pancake_tags", [])
