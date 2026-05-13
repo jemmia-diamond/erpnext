@@ -20,18 +20,30 @@ class Appointment(Document):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
+		from erpnext.crm.doctype.appointment_sales_person.appointment_sales_person import AppointmentSalesPerson
+		from erpnext.crm.doctype.universal_images.universal_images import UniversalImages
 		from frappe.types import DF
 
 		appointment_with: DF.Link | None
 		calendar_event: DF.Link | None
-		customer_details: DF.LongText | None
-		customer_email: DF.Data
-		customer_name: DF.Data
+		conversation_greeting: DF.LongText | None
+		customer_email: DF.Data | None
+		customer_name: DF.Data | None
 		customer_phone_number: DF.Data | None
-		customer_skype: DF.Data | None
+		customer_response: DF.LongText | None
+		estimated_budget: DF.Data | None
+		gender: DF.Literal["Male", "Female"]
+		images: DF.Table[UniversalImages]
+		lead: DF.Link
+		main_sales: DF.TableMultiSelect[AppointmentSalesPerson]
+		notes: DF.LongText | None
+		offline_sales: DF.TableMultiSelect[AppointmentSalesPerson]
 		party: DF.DynamicLink | None
+		policy: DF.LongText | None
+		range_estimated_budget: DF.Data | None
 		scheduled_time: DF.Datetime
-		status: DF.Literal["Open", "Unverified", "Closed"]
+		status: DF.Literal["Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng", "Kh\u00e1ch h\u1eb9n \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng", "Kh\u00e1ch ch\u01b0a mua h\u00e0ng", "Kh\u00e1ch kh\u00f4ng \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch ho\u00e3n l\u1ea1i ng\u00e0y \u0111\u1ebfn c\u1eeda h\u00e0ng"]
+		store: DF.Literal["72 KCT", "63 KM", "Can Tho"]
 	# end: auto-generated types
 
 	def find_lead_by_email(self):
@@ -115,7 +127,7 @@ class Appointment(Document):
 		# Create new lead
 		self.create_lead_and_link()
 		# Remove unverified status
-		self.status = "Open"
+		self.status = "Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng"
 		# Create calender event
 		self.auto_assign()
 		self.create_calendar_event()
@@ -137,11 +149,11 @@ class Appointment(Document):
 			}
 		)
 
-		if self.customer_details:
+		if self.conversation_greeting:
 			lead.append(
 				"notes",
 				{
-					"note": self.customer_details,
+					"note": self.conversation_greeting,
 					"added_by": frappe.session.user,
 					"added_on": now(),
 				},
