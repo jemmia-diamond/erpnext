@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 def is_non_empty(value: str | None) -> bool:
 	return bool(value and value.strip())
 
-def normalize_phone_number(phone: str) -> str:
+def normalize_phone_number(phone: str | None) -> str | None:
 	"""Normalize phone number to standard format (country code + number, no prefix).
 	Examples:
 		+84 955 555 555 -> 84955555555
@@ -33,7 +33,7 @@ def normalize_phone_number(phone: str) -> str:
 		+86 138 0013 8000 -> 8613800138000
 	"""
 	if not phone:
-		return ""
+		return None
 	phone = re.sub(r'[\s\-\(\)]', '', phone.strip())
 	if phone.startswith('+'):
 		phone = phone[1:]
@@ -43,7 +43,7 @@ def normalize_phone_number(phone: str) -> str:
 		phone = '84' + phone[3:]
 	elif phone.startswith('0'):
 		phone = '84' + phone[1:]
-	
+
 	return phone
 
 @frappe.whitelist(methods=["POST", "PUT"])
@@ -110,12 +110,14 @@ def insert_lead(doc) -> "Document":
 		parent.save()
 		return parent
 
-	pancake_phone = normalize_phone_number(doc.get("phone", ""))
+	is_valid_phone = False
+	pancake_phone = normalize_phone_number(doc.get("phone"))
 	doc["phone"] = pancake_phone
-	is_valid_phone = validate_phone_number(pancake_phone)
-	if is_valid_phone is False:
-		doc["phone"] = ""
-		pancake_phone = ""
+	if pancake_phone:
+		is_valid_phone = validate_phone_number(pancake_phone)
+		if is_valid_phone is False:
+			doc["phone"] = None
+			pancake_phone = None
 
 	pancake_data = doc.get("pancake_data", {})
 
@@ -270,12 +272,15 @@ def update_lead_by_batch(docs):
 		doc.pop("flags", None)
 		pancake_data = doc.get("pancake_data", {})
 		try:
-			pancake_phone = normalize_phone_number(doc.get("phone", ""))
-			doc["phone"] = pancake_phone
-			is_valid_phone = validate_phone_number(pancake_phone)
-			if is_valid_phone is False:
-				doc["phone"] = ""
-				pancake_phone = ""
+			pancake_phone = normalize_phone_number(doc.get("phone"))
+			if pancake_phone is not None:
+				doc["phone"] = pancake_phone
+				is_valid_phone = validate_phone_number(pancake_phone)
+				if is_valid_phone is False:
+					doc["phone"] = None
+					pancake_phone = None
+			else:
+				doc.pop("phone", None)
 
 			existing_doc = None
 			try:
