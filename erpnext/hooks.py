@@ -434,10 +434,10 @@ scheduler_events = {
 			"erpnext.crm.doctype.lead.lead_methods.sync_lead_is_assigned"
 		],
 		"0/30 * * * *": [
-			"erpnext.stock.doctype.repost_item_valuation.repost_item_valuation.run_parallel_reposting",
-			"erpnext.utilities.doctype.video.video.update_youtube_data",
-            "erpnext.selling.doctype.customer.customer.update_all_customers_revenue",
-            "erpnext.selling.doctype.coupon.coupon.update_all_customers_coupon_code",
+			# "erpnext.stock.doctype.repost_item_valuation.repost_item_valuation.run_parallel_reposting",
+			# "erpnext.utilities.doctype.video.video.update_youtube_data",
+            # "erpnext.selling.doctype.customer.customer.update_all_customers_revenue",
+            # "erpnext.selling.doctype.coupon.coupon.update_all_customers_coupon_code",
 		],
 		# Hourly but offset by 30 minutes
 		"30 * * * *": [
