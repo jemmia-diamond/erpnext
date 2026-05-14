@@ -1569,6 +1569,13 @@ class SalesOrder(SellingController):
 
 				new_doc.insert(ignore_permissions=True)
 
+			if original_doc and original_doc.parent:
+				frappe.db.sql("""
+					UPDATE `tabBuyback Exchange`
+					SET modified = %s
+					WHERE name = %s
+				""", (frappe.utils.now(), original_doc.parent))
+
 			_update_sales_order_return_amount(self.name)
 
 		except Exception as e:
