@@ -92,7 +92,7 @@ frappe.ui.form.on("Appointment", {
 			}
 
 			// Fill email if not already set
-			if (!frm.doc.customer_email && lead.email_id) {
+			if (!frm.doc.customer_email) {
 				frm.set_value("customer_email", lead.email_id);
 			}
 

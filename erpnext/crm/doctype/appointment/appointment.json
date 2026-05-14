@@ -41,15 +41,14 @@
    "fieldname": "lead",
    "fieldtype": "Link",
    "label": "Lead",
-   "options": "Lead",
-   "reqd": 1
+   "options": "Lead"
   },
   {
    "fieldname": "customer_name",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Name",
-   "read_only": 1
+   "reqd": 1
   },
   {
    "fieldname": "customer_phone_number",
@@ -59,8 +58,9 @@
   },
   {
    "fieldname": "estimated_budget",
-   "fieldtype": "Data",
-   "label": "Estimated Budget"
+   "fieldtype": "Link",
+   "label": "Estimated Budget",
+   "options": "Lead Budget"
   },
   {
    "fieldname": "scheduled_time",
@@ -116,18 +116,20 @@
    "fieldname": "store",
    "fieldtype": "Select",
    "label": "Store",
-   "options": "72 KCT\n63 KM\nCan Tho"
+   "options": "72 NCT\n63 KM\nC\u1ea7n Th\u01a1",
+   "reqd": 1
   },
   {
    "fieldname": "range_estimated_budget",
-   "fieldtype": "Data",
-   "label": "Budget Range"
+   "fieldtype": "Link",
+   "label": "Budget Range",
+   "options": "Lead Budget"
   },
   {
    "fieldname": "gender",
    "fieldtype": "Select",
    "label": "Gender",
-   "options": "Male\nFemale"
+   "options": "Male\nFemale\nLGBT"
   },
   {
    "fieldname": "main_sales",
@@ -165,11 +167,12 @@
    "description": "This record only needed when migrate data from Larkbase to ERP",
    "fieldname": "record_id",
    "fieldtype": "Data",
-   "label": "Record Id"
+   "label": "Record Id",
+   "unique": 1
   }
  ],
  "links": [],
- "modified": "2026-05-13 01:13:34.073085",
+ "modified": "2026-05-13 21:55:11.780138",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Appointment",
