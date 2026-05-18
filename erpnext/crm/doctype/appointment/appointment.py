@@ -27,22 +27,22 @@ class Appointment(Document):
 		calendar_event: DF.Link | None
 		conversation_greeting: DF.LongText | None
 		customer_email: DF.Data | None
-		customer_name: DF.Data | None
+		customer_name: DF.Data
 		customer_phone_number: DF.Data | None
 		customer_response: DF.LongText | None
-		estimated_budget: DF.Data | None
-		gender: DF.Literal["Male", "Female"]
-		lead: DF.Link
+		estimated_budget: DF.Link | None
+		gender: DF.Literal["Male", "Female", "LGBT"]
+		lead: DF.Link | None
 		main_sales: DF.TableMultiSelect[AppointmentSalesPerson]
 		notes: DF.LongText | None
 		offline_sales: DF.TableMultiSelect[AppointmentSalesPerson]
 		party: DF.DynamicLink | None
 		policy: DF.LongText | None
-		range_estimated_budget: DF.Data | None
+		range_estimated_budget: DF.Link | None
 		record_id: DF.Data | None
 		scheduled_time: DF.Datetime
 		status: DF.Literal["Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng", "Kh\u00e1ch h\u1eb9n \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng", "Kh\u00e1ch ch\u01b0a mua h\u00e0ng", "Kh\u00e1ch kh\u00f4ng \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch ho\u00e3n l\u1ea1i ng\u00e0y \u0111\u1ebfn c\u1eeda h\u00e0ng"]
-		store: DF.Literal["72 KCT", "63 KM", "Can Tho"]
+		store: DF.Literal["72 NCT", "63 KM", "C\u1ea7n Th\u01a1"]
 	# end: auto-generated types
 
 	def find_lead_by_email(self):
