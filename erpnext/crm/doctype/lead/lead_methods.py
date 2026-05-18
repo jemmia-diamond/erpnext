@@ -376,19 +376,10 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 		master_doc = conflicting_doc
 		loser_doc = existing_doc
 
-	# Re-link loser's contacts to master
-	loser_contacts = frappe.get_all("Contact", filters=[
-		["Dynamic Link", "link_doctype", "=", "Lead"],
-		["Dynamic Link", "link_name", "=", loser_doc.name]
-	], fields=["name"])
-
 	try:
-		for lc in loser_contacts:
-			frappe.db.sql("""
-				UPDATE `tabDynamic Link`
-				SET link_name = %s
-				WHERE link_doctype = 'Lead' AND link_name = %s AND parent = %s
-			""", (master_doc.name, loser_doc.name, lc.name))
+		frappe.db.savepoint("lead_merge")
+		# Re-link loser's contacts and addresses to master
+		_relink_dynamic_links(loser_doc.name, master_doc.name)
 
 		if not master_doc.region and loser_doc.region:
 			master_doc.region = loser_doc.region
@@ -409,6 +400,7 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 		master_doc.set_first_lead_source()
 
 	except Exception as e:
+		frappe.db.rollback(save_point="lead_merge")
 		frappe.log_error(
 			f"Failed to merge lead {loser_doc.name} into {master_doc.name}: {e!s}. All changes rolled back.",
 			"Lead Merge Error"
@@ -416,6 +408,23 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 		raise
 
 	return master_doc
+
+
+def _relink_dynamic_links(from_lead: str, to_lead: str):
+	"""Re-link Contact and Address Dynamic Link records from one lead to another."""
+	for doctype in ("Contact", "Address"):
+		linked_docs = frappe.get_all(doctype, filters=[
+			["Dynamic Link", "link_doctype", "=", "Lead"],
+			["Dynamic Link", "link_name", "=", from_lead]
+		], fields=["name"])
+
+		for doc in linked_docs:
+			frappe.db.sql("""
+				UPDATE `tabDynamic Link`
+				SET link_name = %s
+				WHERE link_doctype = 'Lead' AND link_name = %s AND parent = %s
+			""", (to_lead, from_lead, doc.name))
+
 
 def transform_price_label(label: str) -> str:
     return label.replace('<', 'dưới ').replace('>', 'trên ').strip()
