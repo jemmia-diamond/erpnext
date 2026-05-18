@@ -594,7 +594,7 @@ class Lead(SellingController, CRMNote):
 				ORDER BY tc.inserted_at ASC
 				LIMIT 1
 				''',
-				(self.name)
+				(self.name,)
 			)
 
 			if source and source[0][0]:
