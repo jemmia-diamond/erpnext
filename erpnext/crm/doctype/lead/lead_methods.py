@@ -430,7 +430,6 @@ def _relink_dynamic_links(from_lead: str, to_lead: str):
 
 def _relink_downstream_docs(from_lead: str, to_lead: str):
 	"""Re-link all downstream documents, logs, and audits from one lead to another."""
-	# --- Primary CRM & Sales Documents ---
 	# Quotations linked via party_name
 	frappe.db.sql("""
 		UPDATE `tabQuotation`
@@ -459,24 +458,11 @@ def _relink_downstream_docs(from_lead: str, to_lead: str):
 		WHERE lead = %s
 	""", (to_lead, to_lead, from_lead))
 
-	# Customers linked via lead_name and first_source
+	# Customers linked via lead_name
 	frappe.db.sql("""
 		UPDATE `tabCustomer`
 		SET lead_name = %s
 		WHERE lead_name = %s
-	""", (to_lead, from_lead))
-
-	frappe.db.sql("""
-		UPDATE `tabCustomer`
-		SET first_source = %s
-		WHERE first_source = %s
-	""", (to_lead, from_lead))
-
-	# Contacts linked via source
-	frappe.db.sql("""
-		UPDATE `tabContact`
-		SET `source` = %s
-		WHERE `source` = %s
 	""", (to_lead, from_lead))
 
 	# Appointments linked via lead
@@ -484,14 +470,6 @@ def _relink_downstream_docs(from_lead: str, to_lead: str):
 		UPDATE `tabAppointment`
 		SET `lead` = %s
 		WHERE `lead` = %s
-	""", (to_lead, from_lead))
-
-	# --- System Logs, Communications & Audits ---
-	# Notification Logs
-	frappe.db.sql("""
-		UPDATE `tabNotification Log`
-		SET document_name = %s
-		WHERE document_type = 'Lead' AND document_name = %s
 	""", (to_lead, from_lead))
 
 	# Communications referencing this lead
@@ -534,13 +512,6 @@ def _relink_downstream_docs(from_lead: str, to_lead: str):
 		UPDATE `tabComment`
 		SET reference_name = %s
 		WHERE reference_doctype = 'Lead' AND reference_name = %s
-	""", (to_lead, from_lead))
-
-	# Email Campaign
-	frappe.db.sql("""
-		UPDATE `tabEmail Campaign`
-		SET recipient = %s
-		WHERE email_campaign_for = 'Lead' AND recipient = %s
 	""", (to_lead, from_lead))
 
 def transform_price_label(label: str) -> str:
