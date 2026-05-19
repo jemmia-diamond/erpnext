@@ -380,8 +380,10 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 	# Use savepoint so the entire merge can be rolled back if anything fails
 	try:
 		frappe.db.savepoint("lead_merge")
-		# Re-link all references from loser to master
+	  # Re-link loser's contacts and addresses to master
 		_relink_dynamic_links(loser_doc.name, master_doc.name)
+
+		# Re-link downstream docs to master
 		_relink_downstream_docs(loser_doc.name, master_doc.name)
 
 		# Transfer field values from loser to master
