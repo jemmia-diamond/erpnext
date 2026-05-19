@@ -479,13 +479,6 @@ def _relink_downstream_docs(from_lead: str, to_lead: str):
 		WHERE reference_doctype = 'Lead' AND reference_name = %s
 	""", (to_lead, from_lead))
 
-	# Activity Log
-	frappe.db.sql("""
-		UPDATE `tabActivity Log`
-		SET reference_name = %s
-		WHERE reference_doctype = 'Lead' AND reference_name = %s
-	""", (to_lead, from_lead))
-
 	# Version Audit Trail
 	frappe.db.sql("""
 		UPDATE `tabVersion`
