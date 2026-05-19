@@ -16,7 +16,19 @@ from frappe.model.docstatus import DocStatus
 from frappe.model.mapper import get_mapped_doc
 from frappe.model.utils import get_fetch_values
 from frappe.query_builder.functions import Sum
-from frappe.utils import add_days, cint, cstr, flt, get_link_to_form, getdate, nowdate, parse_json, strip_html, add_to_date, get_datetime
+from frappe.utils import (
+	add_days,
+	add_to_date,
+	cint,
+	cstr,
+	flt,
+	get_datetime,
+	get_link_to_form,
+	getdate,
+	nowdate,
+	parse_json,
+	strip_html,
+)
 
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import (
 	unlink_inter_company_doc,
@@ -63,8 +75,27 @@ class SalesOrder(SellingController):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		Closed = str
+		Uncancelled = str
+		Cancelled = str
+		Delivering = str
+		Delivered = str
+		Cash = str
+		Card = str
+		Paid = str
+		Refunded = str
+		Pending = str
+		Fulfilled = str
+		Sales = str
+		Maintenance = str
+		Other = str
+		Draft = str
+		Completed = str
+
 		from erpnext.accounts.doctype.item_wise_tax_detail.item_wise_tax_detail import ItemWiseTaxDetail
-		from erpnext.accounts.doctype.payment_entry_reference.payment_entry_reference import PaymentEntryReference
+		from erpnext.accounts.doctype.payment_entry_reference.payment_entry_reference import (
+			PaymentEntryReference,
+		)
 		from erpnext.accounts.doctype.payment_schedule.payment_schedule import PaymentSchedule
 		from erpnext.accounts.doctype.pricing_rule_detail.pricing_rule_detail import PricingRuleDetail
 		from erpnext.accounts.doctype.sales_taxes_and_charges.sales_taxes_and_charges import (
@@ -1420,7 +1451,7 @@ class SalesOrder(SellingController):
 			if not ref_rows:
 				return
 
-			def _build_row(parent_name):
+			def _build_row(parent_name, idx):
 				new_row = frappe.new_doc("Payment Entry Reference")
 				for field, value in row_dict.items():
 					if field not in ("name", "creation", "modified", "modified_by", "owner",
@@ -1434,8 +1465,8 @@ class SalesOrder(SellingController):
 
 			for idx, row in enumerate(ref_rows, start=1):
 				row_dict = dict(row)
-				_build_row(self.name).insert(ignore_permissions=True)
-				_build_row(ref_order_name).insert(ignore_permissions=True)
+				_build_row(self.name, idx).insert(ignore_permissions=True)
+				_build_row(ref_order_name, idx).insert(ignore_permissions=True)
 
 		except Exception as e:
 			frappe.log_error(f"Error copying payment entry references to current order: {e!s}")
@@ -1657,18 +1688,22 @@ class SalesOrder(SellingController):
 			if not current_serial:
 				return
 
-			# Get reference order based on Sales Order's haravan_ref_order_id
-			ref_order_name = frappe.db.get_value("Sales Order",
-				{"haravan_order_id": self.haravan_ref_order_id}, "name")
-
-			if not ref_order_name:
+			ref_order_names = get_candidate_reference_orders(
+				current_order_name=self.name,
+				haravan_ref_order_id=self.haravan_ref_order_id,
+				split_order_group=self.split_order_group,
+				is_split_order=self.is_split_order
+			)
+			if not ref_order_names:
 				return
 
-			ref_order_doc = frappe.get_doc("Sales Order", ref_order_name)
-			ref_items = ref_order_doc.get("items") or []
-
-			# Find reference item with matching serial_numbers
-			matching_ref_item = self._find_matching_ref_item_by_serial(ref_items, current_serial)
+			matching_ref_item = None
+			for name in ref_order_names:
+				ref_order_doc = frappe.get_doc("Sales Order", name)
+				ref_items = ref_order_doc.get("items") or []
+				matching_ref_item = self._find_matching_ref_item_by_serial(ref_items, current_serial)
+				if matching_ref_item:
+					break
 
 			if not matching_ref_item:
 				return
@@ -1842,10 +1877,10 @@ class SalesOrder(SellingController):
 			ref_value = getattr(ref_item, field, None)
 			current_value = getattr(current_item, field, None)
 
-			# Special handling for uom field - always copy if reference has value
 			if field == 'uom' and ref_value:
-				frappe.db.set_value("Sales Order Item", current_item.name, field, ref_value)
-				items_updated = True
+				if current_value != ref_value:
+					frappe.db.set_value("Sales Order Item", current_item.name, field, ref_value)
+					items_updated = True
 			# For other fields, only copy if reference has value and current item doesn't have value
 			elif ref_value and not current_value:
 				frappe.db.set_value("Sales Order Item", current_item.name, field, ref_value)
@@ -3282,17 +3317,81 @@ def unlink_buyback_item(item_name):
 		"return_amount": new_total
 	}
 
+def get_candidate_reference_orders(current_order_name=None, haravan_ref_order_id=None, split_order_group=None, is_split_order=False):
+	"""Resolve candidate reference order names based on direct references and split group siblings."""
+	ref_order_names = []
+
+	if haravan_ref_order_id:
+		ref_order_name = frappe.db.get_value("Sales Order", {"haravan_order_id": haravan_ref_order_id}, "name")
+		if ref_order_name:
+			ref_order_names.append(ref_order_name)
+
+	if is_split_order and split_order_group and current_order_name:
+		pair_orders = frappe.db.get_all(
+			"Sales Order",
+			filters={
+				"split_order_group": split_order_group,
+				"name": ["!=", current_order_name],
+				"cancelled_status": "Uncancelled"
+			},
+			fields=["haravan_ref_order_id"]
+		)
+		ref_order_ids = [p.haravan_ref_order_id for p in pair_orders if p.haravan_ref_order_id]
+		if ref_order_ids:
+			sibling_refs = frappe.db.get_all(
+				"Sales Order",
+				filters={
+					"haravan_order_id": ["in", ref_order_ids],
+					"cancelled_status": "Uncancelled"
+				},
+				fields=["name"]
+			)
+			for s in sibling_refs:
+				if s.name not in ref_order_names:
+					ref_order_names.append(s.name)
+
+	return ref_order_names
+
+
 @frappe.whitelist()
-def get_item_promotions_by_serial(source_order, target_serial):
-	"""Fetch promotion fields for a specific serial number from a source Sales Order."""
-	if not source_order or not target_serial:
+def get_item_promotions_by_serial(source_order, target_serial, current_order=None, haravan_ref_order_id=None):
+	"""Fetch promotion fields for a specific serial number from a source Sales Order or its group sibling reference orders."""
+	if not target_serial:
+		return {}
+
+	if not source_order and haravan_ref_order_id:
+		source_order = frappe.db.get_value("Sales Order", {"haravan_order_id": haravan_ref_order_id}, "name")
+
+	if source_order:
+		item = frappe.db.get_value(
+			"Sales Order Item",
+			{"parent": source_order, "serial_numbers": ["like", f"%{target_serial}%"]},
+			["new_promotions", "promotion_1", "promotion_2", "promotion_3", "promotion_4", "promotion_5"],
+			as_dict=True
+		)
+		if item:
+			return item
+
+	if not current_order:
+		return {}
+
+	split_group, is_split = frappe.db.get_value("Sales Order", current_order, ["split_order_group", "is_split_order"])
+	if not split_group:
+		return {}
+
+	ref_names = get_candidate_reference_orders(
+		current_order_name=current_order,
+		split_order_group=split_group,
+		is_split_order=is_split
+	)
+	if not ref_names:
 		return {}
 
 	item = frappe.db.get_value(
 		"Sales Order Item",
-		{"parent": source_order, "serial_numbers": ["like", f"%{target_serial}%"]},
+		{"parent": ["in", ref_names], "serial_numbers": ["like", f"%{target_serial}%"]},
 		["new_promotions", "promotion_1", "promotion_2", "promotion_3", "promotion_4", "promotion_5"],
 		as_dict=True
 	)
-
 	return item or {}
+
