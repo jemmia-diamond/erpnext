@@ -169,15 +169,7 @@ class Lead(SellingController, CRMNote):
 			self.first_name, self.middle_name, self.last_name = parse_full_name(self.lead_name)
 
 		if self.pancake_data:
-			try:
-				if isinstance(self.pancake_data, str):
-					parsed_pancake = frappe.parse_json(self.pancake_data)
-				else:
-					parsed_pancake = self.pancake_data
-
-				pancake_user_id = parsed_pancake.get("pancake_user_id") if parsed_pancake else None
-			except Exception:
-				pancake_user_id = None
+			pancake_user_id = self.pancake_data.get("pancake_user_id", None)
 			self.update_lead_owner(pancake_user_id)
 
 	def before_save(self):
