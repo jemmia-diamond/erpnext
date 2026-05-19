@@ -1,237 +1,245 @@
 {
-    "actions": [],
-    "autoname": "format:APMT-{customer_name}-{####}",
-    "creation": "2019-08-27 10:48:27.926283",
-    "doctype": "DocType",
-    "editable_grid": 1,
-    "engine": "InnoDB",
-    "field_order": [
-        "scheduled_time",
-        "status",
-        "record_id",
-        "customer_details_section",
-        "lead",
-        "customer_name",
-        "customer_phone_number",
-        "customer_email",
-        "store",
-        "range_estimated_budget",
-        "estimated_budget",
-        "gender",
-        "main_sales",
-        "offline_sales",
-        "col_br_2",
-        "conversation_greeting",
-        "notes",
-        "policy",
-        "customer_response",
-        "linked_docs_section",
-        "appointment_with",
-        "party",
-        "col_br_3",
-        "calendar_event"
-    ],
-    "fields": [
-        {
-            "fieldname": "customer_details_section",
-            "fieldtype": "Section Break",
-            "label": "Customer Details"
-        },
-        {
-            "fieldname": "lead",
-            "fieldtype": "Link",
-            "label": "Lead",
-            "options": "Lead"
-        },
-        {
-            "fieldname": "customer_name",
-            "fieldtype": "Data",
-            "in_list_view": 1,
-            "label": "Name",
-            "reqd": 1
-        },
-        {
-            "fieldname": "customer_phone_number",
-            "fieldtype": "Data",
-            "label": "Phone Number",
-            "read_only": 1
-        },
-        {
-            "fieldname": "estimated_budget",
-            "fieldtype": "Link",
-            "label": "Estimated Budget",
-            "options": "Lead Budget"
-        },
-        {
-            "fieldname": "scheduled_time",
-            "fieldtype": "Datetime",
-            "in_list_view": 1,
-            "label": "Scheduled Time",
-            "reqd": 1
-        },
-        {
-            "fieldname": "status",
-            "fieldtype": "Select",
-            "label": "Status",
-            "options": "Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng\nKh\u00e1ch h\u1eb9n \u0111\u1ebfn c\u1eeda h\u00e0ng\nKh\u00e1ch \u0111\u00e3 mua h\u00e0ng\nKh\u00e1ch ch\u01b0a mua h\u00e0ng\nKh\u00e1ch kh\u00f4ng \u0111\u1ebfn c\u1eeda h\u00e0ng\nKh\u00e1ch ho\u00e3n l\u1ea1i ng\u00e0y \u0111\u1ebfn c\u1eeda h\u00e0ng",
-            "reqd": 1
-        },
-        {
-            "fieldname": "calendar_event",
-            "fieldtype": "Link",
-            "label": "Calendar Event",
-            "options": "Event"
-        },
-        {
-            "fieldname": "col_br_2",
-            "fieldtype": "Column Break"
-        },
-        {
-            "fieldname": "customer_email",
-            "fieldtype": "Data",
-            "label": "Email"
-        },
-        {
-            "fieldname": "linked_docs_section",
-            "fieldtype": "Section Break",
-            "label": "Linked Documents"
-        },
-        {
-            "fieldname": "col_br_3",
-            "fieldtype": "Column Break"
-        },
-        {
-            "fieldname": "appointment_with",
-            "fieldtype": "Link",
-            "label": "Appointment With",
-            "options": "DocType"
-        },
-        {
-            "fieldname": "party",
-            "fieldtype": "Dynamic Link",
-            "label": "Party",
-            "options": "appointment_with"
-        },
-        {
-            "fieldname": "store",
-            "fieldtype": "Select",
-            "label": "Store",
-            "options": "72 NCT\n63 KM\nC\u1ea7n Th\u01a1",
-            "reqd": 1
-        },
-        {
-            "fieldname": "range_estimated_budget",
-            "fieldtype": "Link",
-            "label": "Budget Range",
-            "options": "Lead Budget"
-        },
-        {
-            "fieldname": "gender",
-            "fieldtype": "Link",
-            "label": "Gender",
-            "link_filters": "[]",
-            "options": "Gender"
-        },
-        {
-            "fieldname": "main_sales",
-            "fieldtype": "Table MultiSelect",
-            "label": "Main Sales Person",
-            "options": "Appointment Sales Person"
-        },
-        {
-            "fieldname": "offline_sales",
-            "fieldtype": "Table MultiSelect",
-            "label": "Offline Sales Person",
-            "options": "Appointment Sales Person"
-        },
-        {
-            "fieldname": "conversation_greeting",
-            "fieldtype": "Long Text",
-            "label": "In-Store Greeting Content"
-        },
-        {
-            "fieldname": "customer_response",
-            "fieldtype": "Long Text",
-            "label": "Offline Feedback"
-        },
-        {
-            "fieldname": "notes",
-            "fieldtype": "Long Text",
-            "label": "Notes"
-        },
-        {
-            "fieldname": "policy",
-            "fieldtype": "Long Text",
-            "label": "Procurement Policy"
-        },
-        {
-            "description": "This record only needed when migrate data from Larkbase to ERP",
-            "fieldname": "record_id",
-            "fieldtype": "Data",
-            "label": "Record Id",
-            "unique": 1
-        }
-    ],
-    "links": [],
-    "modified": "2026-05-13 21:55:11.780138",
-    "modified_by": "Administrator",
-    "module": "CRM",
-    "name": "Appointment",
-    "naming_rule": "Expression (old style)",
-    "owner": "Administrator",
-    "permissions": [
-        {
-            "create": 1,
-            "delete": 1,
-            "email": 1,
-            "export": 1,
-            "print": 1,
-            "read": 1,
-            "report": 1,
-            "role": "System Manager",
-            "share": 1,
-            "write": 1
-        },
-        {
-            "create": 1,
-            "delete": 1,
-            "email": 1,
-            "export": 1,
-            "print": 1,
-            "read": 1,
-            "report": 1,
-            "role": "Sales Manager",
-            "share": 1,
-            "write": 1
-        },
-        {
-            "create": 1,
-            "email": 1,
-            "export": 1,
-            "print": 1,
-            "read": 1,
-            "report": 1,
-            "role": "Sales User",
-            "share": 1,
-            "write": 1
-        },
-        {
-            "create": 1,
-            "delete": 1,
-            "email": 1,
-            "export": 1,
-            "print": 1,
-            "read": 1,
-            "report": 1,
-            "role": "Employee",
-            "share": 1,
-            "write": 1
-        }
-    ],
-    "quick_entry": 1,
-    "row_format": "Dynamic",
-    "sort_field": "creation",
-    "sort_order": "DESC",
-    "states": [],
-    "track_changes": 1
+ "actions": [],
+ "autoname": "format:APMT-{####}",
+ "creation": "2019-08-27 10:48:27.926283",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "scheduled_time",
+  "status",
+  "record_id",
+  "customer_details_section",
+  "lead",
+  "customer_name",
+  "customer_phone_number",
+  "customer_email",
+  "store",
+  "range_estimated_budget",
+  "estimated_budget",
+  "gender",
+  "main_sales",
+  "offline_sales",
+  "col_br_2",
+  "conversation_greeting",
+  "notes",
+  "policy",
+  "customer_response",
+  "linked_docs_section",
+  "appointment_with",
+  "party",
+  "col_br_3",
+  "calendar_event"
+ ],
+ "fields": [
+  {
+   "fieldname": "customer_details_section",
+   "fieldtype": "Section Break",
+   "label": "Customer Details"
+  },
+  {
+   "fieldname": "lead",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Lead",
+   "options": "Lead"
+  },
+  {
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer_phone_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Phone Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "estimated_budget",
+   "fieldtype": "Link",
+   "label": "Estimated Budget",
+   "options": "Lead Budget"
+  },
+  {
+   "fieldname": "scheduled_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Scheduled Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng\nKh\u00e1ch h\u1eb9n \u0111\u1ebfn c\u1eeda h\u00e0ng\nKh\u00e1ch ch\u01b0a mua h\u00e0ng\nKh\u00e1ch kh\u00f4ng \u0111\u1ebfn c\u1eeda h\u00e0ng\nKh\u00e1ch ho\u00e3n l\u1ea1i ng\u00e0y \u0111\u1ebfn c\u1eeda h\u00e0ng\nKh\u00e1ch \u0111\u00e3 \u0111\u1ebfn c\u1eeda h\u00e0ng",
+   "reqd": 1
+  },
+  {
+   "fieldname": "calendar_event",
+   "fieldtype": "Link",
+   "label": "Calendar Event",
+   "options": "Event"
+  },
+  {
+   "fieldname": "col_br_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer_email",
+   "fieldtype": "Data",
+   "label": "Email"
+  },
+  {
+   "fieldname": "linked_docs_section",
+   "fieldtype": "Section Break",
+   "label": "Linked Documents"
+  },
+  {
+   "fieldname": "col_br_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "appointment_with",
+   "fieldtype": "Link",
+   "label": "Appointment With",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "party",
+   "fieldtype": "Dynamic Link",
+   "label": "Party",
+   "options": "appointment_with"
+  },
+  {
+   "fieldname": "store",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Store",
+   "options": "72 NCT\n63 KM\nC\u1ea7n Th\u01a1",
+   "reqd": 1
+  },
+  {
+   "fieldname": "range_estimated_budget",
+   "fieldtype": "Link",
+   "label": "Budget Range",
+   "options": "Lead Budget"
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "link_filters": "[]",
+   "options": "Gender"
+  },
+  {
+   "fieldname": "main_sales",
+   "fieldtype": "Table MultiSelect",
+   "label": "Main Sales Person",
+   "options": "Appointment Sales Person"
+  },
+  {
+   "fieldname": "offline_sales",
+   "fieldtype": "Table MultiSelect",
+   "label": "Offline Sales Person",
+   "options": "Appointment Sales Person"
+  },
+  {
+   "fieldname": "conversation_greeting",
+   "fieldtype": "Long Text",
+   "label": "In-Store Greeting Content"
+  },
+  {
+   "fieldname": "customer_response",
+   "fieldtype": "Long Text",
+   "label": "Offline Feedback"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Long Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "policy",
+   "fieldtype": "Long Text",
+   "label": "Procurement Policy"
+  },
+  {
+   "description": "This record only needed when migrate data from Larkbase to ERP",
+   "fieldname": "record_id",
+   "fieldtype": "Data",
+   "label": "Record Id",
+   "unique": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-17 20:18:17.173432",
+ "modified_by": "Administrator",
+ "module": "CRM",
+ "name": "Appointment",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
 }
