@@ -347,7 +347,8 @@ def update_lead_by_batch(docs):
 def handle_duplicate_and_merge(existing_doc, new_phone):
 	"""
 	Check if new_phone belongs to another lead.
-	If so, keep the oldest lead (by first_reach_at), merge contacts, and delete the duplicate.
+	If so, keep the oldest lead (by first_reach_at), merge contacts and
+	downstream documents, and delete the duplicate.
 	Returns the 'master' document that survived.
 	"""
 	if not is_non_empty(new_phone):
@@ -378,34 +379,30 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 
 	try:
 		frappe.db.savepoint("lead_merge")
-		# Re-link loser's contacts and addresses to master
+	  # Re-link loser's contacts and addresses to master
 		_relink_dynamic_links(loser_doc.name, master_doc.name)
 
 		# Re-link downstream docs to master
 		_relink_downstream_docs(loser_doc.name, master_doc.name)
 
-		if not master_doc.region and loser_doc.region:
-			master_doc.region = loser_doc.region
+		# Transfer field values from loser to master
+		_transfer_lead_fields(master_doc, loser_doc)
 
-		if not master_doc.province and loser_doc.province:
-			master_doc.province = loser_doc.province
+		# Merge system/virtual fields
+		_merge_system_fields(master_doc, loser_doc)
 
-		if not master_doc.budget_lead and loser_doc.budget_lead:
-			master_doc.budget_lead = loser_doc.budget_lead
-
-		if not master_doc.lead_owner and loser_doc.lead_owner:
-			master_doc.lead_owner = loser_doc.lead_owner
-
+		# Transfer child tables and related docs
+		_transfer_child_tables(master_doc, loser_doc)
 		transfer_lead_todos(loser_doc.name, master_doc.name)
 
+		# Delete loser and finalize master
 		frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True, force=1)
-
 		master_doc.set_first_lead_source()
 
 	except Exception as e:
 		frappe.db.rollback(save_point="lead_merge")
 		frappe.log_error(
-			f"Failed to merge lead {loser_doc.name} into {master_doc.name}: {e!s}. All changes rolled back.",
+			f"Failed to merge lead {loser_doc.name} into {master_doc.name}: {e!s}.",
 			"Lead Merge Error"
 		)
 		raise
@@ -471,6 +468,145 @@ def _relink_downstream_docs(from_lead: str, to_lead: str):
 		SET reference_name = %s
 		WHERE reference_doctype = 'Lead' AND reference_name = %s
 	""", (to_lead, from_lead))
+
+
+def _transfer_lead_fields(master_doc, loser_doc):
+	"""Transfer enrichment and profile fields from loser to master where master lacks them."""
+	fill_if_empty_fields = [
+		"region", "province", "budget_lead", "purpose_lead",
+		"expected_delivery_date", "email_id", "gender", "birth_date",
+		"whatsapp_no", "image", "first_reach_at", "mobile_no", "source",
+		"first_channel", "customer", "personal_id", "company_name", "company",
+		"salutation", "utm_campaign", "utm_source", "utm_medium", "utm_content",
+		"job_title", "territory", "stringee_data", "qualified_lead_date",
+		"first_name", "middle_name", "last_name", "fax", "type",
+		"market_segment", "industry", "request_type", "website",
+		"unsubscribed", "blog_subscriber", "language", "no_of_employees",
+		"phone_ext", "annual_revenue", "city", "state", "country", "address",
+		"place_of_issuance", "date_of_issuance", "bank_name", "bank_branch",
+		"account_number", "bank_province", "bank_district", "bank_ward",
+		"tax_number", "ceo_name", "personal_tax_id", "proposed_budget",
+		"website_from_data", "qualified_by", "qualified_on"
+	]
+	for field in fill_if_empty_fields:
+		if not master_doc.get(field) and loser_doc.get(field):
+			master_doc.set(field, loser_doc.get(field))
+
+	# Transfer lead_owner. The default mail owner is considered unassigned.
+	master_has_real_owner = (
+		master_doc.lead_owner and master_doc.lead_owner != config.DEFAULT_MAIL_OWNER
+	)
+	loser_has_real_owner = (
+		loser_doc.lead_owner and loser_doc.lead_owner != config.DEFAULT_MAIL_OWNER
+	)
+	if not master_has_real_owner and loser_has_real_owner:
+		master_doc.lead_owner = loser_doc.lead_owner
+
+	# Overwrite default placeholder names with valid data from loser.
+	placeholder_names = [None, "Chưa rõ", "Unknown", ""]
+	if (master_doc.get("lead_name") in placeholder_names) and (loser_doc.get("lead_name") not in placeholder_names):
+		master_doc.lead_name = loser_doc.lead_name
+		master_doc.first_name = loser_doc.first_name
+		master_doc.middle_name = loser_doc.middle_name
+		master_doc.last_name = loser_doc.last_name
+
+	# Retain the most advanced lead stage between the two records.
+	_STAGE_ORDER = {"Lead": 0, "Qualified Lead": 1, "Opportunity": 2, "Customer": 3}
+	master_stage_rank = _STAGE_ORDER.get(master_doc.lead_stage, 0)
+	loser_stage_rank = _STAGE_ORDER.get(loser_doc.lead_stage, 0)
+	if loser_stage_rank > master_stage_rank:
+		master_doc.lead_stage = loser_doc.lead_stage
+
+	# Prioritize 'Qualified' status if present in either record.
+	if (
+		loser_doc.qualification_status == "Qualified"
+		and master_doc.qualification_status != "Qualified"
+	):
+		master_doc.qualification_status = "Qualified"
+		if loser_doc.qualified_by:
+			master_doc.qualified_by = loser_doc.qualified_by
+		if loser_doc.qualified_on:
+			master_doc.qualified_on = loser_doc.qualified_on
+
+	# Status has a default of "Lead", so if Master is untouched and Loser has progress, inherit it.
+	if master_doc.status == "Lead" and loser_doc.status != "Lead":
+		master_doc.status = loser_doc.status
+
+
+def _merge_system_fields(master_doc, loser_doc):
+	"""Merge virtual/system fields (_assign, _user_tags) that require direct DB writes."""
+	_merge_assign(master_doc, loser_doc)
+	_merge_tags(master_doc, loser_doc)
+
+
+def _merge_assign(master_doc, loser_doc):
+	"""Merge _assign JSON arrays from both leads (deduplicated)."""
+	try:
+		master_assign = json.loads(master_doc._assign or "[]")
+	except (json.JSONDecodeError, TypeError):
+		master_assign = []
+
+	try:
+		loser_assign = json.loads(loser_doc._assign or "[]")
+	except (json.JSONDecodeError, TypeError):
+		loser_assign = []
+
+	combined_assign = master_assign.copy()
+	for email in loser_assign:
+		if email not in combined_assign:
+			combined_assign.append(email)
+
+	if combined_assign != master_assign:
+		frappe.db.set_value("Lead", master_doc.name, "_assign", json.dumps(combined_assign))
+		master_doc._assign = json.dumps(combined_assign)
+
+
+def _merge_tags(master_doc, loser_doc):
+	"""Merge _user_tags from loser to master."""
+	master_tags = {t.strip() for t in (master_doc.get("_user_tags") or "").split(",") if t.strip()}
+	loser_tags = {t.strip() for t in (loser_doc.get("_user_tags") or "").split(",") if t.strip()}
+
+	combined_tags = master_tags.union(loser_tags)
+	if combined_tags != master_tags:
+		new_tags_str = "," + ",".join(combined_tags) if combined_tags else ""
+		frappe.db.set_value("Lead", master_doc.name, "_user_tags", new_tags_str)
+		master_doc._user_tags = new_tags_str
+
+
+def _transfer_child_tables(master_doc, loser_doc):
+	"""Transfer child table records (preferred products, notes) from loser to master."""
+	# Preferred products (deduplicated)
+	if loser_doc.get("preferred_product_type"):
+		existing_prods = {item.product_type for item in master_doc.get("preferred_product_type", [])}
+		for p in loser_doc.get("preferred_product_type", []):
+			if p.product_type not in existing_prods:
+				master_doc.append("preferred_product_type", {"product_type": p.product_type})
+
+	# Notes (appended in memory to survive Frappe's child table sync)
+	_transfer_notes(loser_doc.name, master_doc)
+
+
+def _transfer_notes(from_lead: str, master_doc):
+	"""Transfer notes from loser lead to master lead (in memory) and append an audit trail note."""
+	# Append system audit trail note
+	master_doc.append("notes", {
+		"note": f"System: Lead {from_lead} was identified as a duplicate and merged into this record.",
+		"added_by": getattr(frappe.session, "user", "Administrator"),
+		"added_on": frappe.utils.now_datetime()
+	})
+
+	loser_notes = frappe.get_all("CRM Note",
+		filters={"parent": from_lead, "parenttype": "Lead"},
+		fields=["note", "added_by", "added_on", "notify_to"])
+
+	for n in loser_notes:
+		master_doc.append("notes", {
+			"note": f"[Merged from {from_lead}] {n.note}",
+			"added_by": n.added_by,
+			"added_on": n.added_on,
+			"notify_to": n.notify_to
+		})
+
 
 def transform_price_label(label: str) -> str:
     return label.replace('<', 'dưới ').replace('>', 'trên ').strip()
@@ -594,25 +730,16 @@ def create_lead_todo(lead_name: str, allocated_to: str):
 	todo_doc.insert()
 
 def transfer_lead_todos(from_lead_name: str, to_lead_name: str):
-	"""Transfer open ToDo assignments from one lead to another if the target has none."""
-	master_todos = frappe.get_all("ToDo", filters={
-		"reference_type": "Lead",
-		"reference_name": to_lead_name,
-		"status": "Open"
-	}, fields=["name"])
-
-	if master_todos:
-		return
-
+	"""Transfer all ToDo assignments (open and closed) from one lead to another."""
 	loser_todos = frappe.get_all("ToDo", filters={
 		"reference_type": "Lead",
-		"reference_name": from_lead_name,
-		"status": "Open"
+		"reference_name": from_lead_name
 	}, fields=["name"])
 	for todo in loser_todos:
 		todo_doc = frappe.get_doc("ToDo", todo.name)
 		todo_doc.reference_name = to_lead_name
-		todo_doc.description = f"Assignment Rule for Lead {to_lead_name}"
+		if todo_doc.description == f"Assignment Rule for Lead {from_lead_name}":
+			todo_doc.description = f"Assignment Rule for Lead {to_lead_name}"
 		todo_doc.save(ignore_permissions=True)
 
 def sync_lead_is_assigned():
