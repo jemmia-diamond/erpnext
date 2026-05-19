@@ -377,7 +377,6 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 		master_doc = conflicting_doc
 		loser_doc = existing_doc
 
-	# Use savepoint so the entire merge can be rolled back if anything fails
 	try:
 		frappe.db.savepoint("lead_merge")
 	  # Re-link loser's contacts and addresses to master
@@ -739,7 +738,6 @@ def transfer_lead_todos(from_lead_name: str, to_lead_name: str):
 	for todo in loser_todos:
 		todo_doc = frappe.get_doc("ToDo", todo.name)
 		todo_doc.reference_name = to_lead_name
-		# Preserve custom descriptions, only update default auto-generated ones
 		if todo_doc.description == f"Assignment Rule for Lead {from_lead_name}":
 			todo_doc.description = f"Assignment Rule for Lead {to_lead_name}"
 		todo_doc.save(ignore_permissions=True)
