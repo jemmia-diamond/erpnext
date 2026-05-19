@@ -381,6 +381,9 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 		# Re-link loser's contacts and addresses to master
 		_relink_dynamic_links(loser_doc.name, master_doc.name)
 
+		# Re-link downstream docs to master
+		_relink_downstream_docs(loser_doc.name, master_doc.name)
+
 		if not master_doc.region and loser_doc.region:
 			master_doc.region = loser_doc.region
 
@@ -425,6 +428,120 @@ def _relink_dynamic_links(from_lead: str, to_lead: str):
 				WHERE link_doctype = 'Lead' AND link_name = %s AND parent = %s
 			""", (to_lead, from_lead, doc.name))
 
+def _relink_downstream_docs(from_lead: str, to_lead: str):
+	"""Re-link all downstream documents, logs, and audits from one lead to another."""
+	# --- Primary CRM & Sales Documents ---
+	# Quotations linked via party_name
+	frappe.db.sql("""
+		UPDATE `tabQuotation`
+		SET party_name = %s
+		WHERE party_name = %s AND quotation_to = 'Lead'
+	""", (to_lead, from_lead))
+
+	# Opportunities linked via party_name
+	frappe.db.sql("""
+		UPDATE `tabOpportunity`
+		SET party_name = %s
+		WHERE party_name = %s AND opportunity_from = 'Lead'
+	""", (to_lead, from_lead))
+
+	# Issues linked via lead field
+	frappe.db.sql("""
+		UPDATE `tabIssue`
+		SET `lead` = %s
+		WHERE `lead` = %s
+	""", (to_lead, from_lead))
+
+	# Prospect Lead links
+	frappe.db.sql("""
+		UPDATE `tabProspect Lead`
+		SET lead = %s, lead_name = (SELECT lead_name FROM `tabLead` WHERE name = %s)
+		WHERE lead = %s
+	""", (to_lead, to_lead, from_lead))
+
+	# Customers linked via lead_name and first_source
+	frappe.db.sql("""
+		UPDATE `tabCustomer`
+		SET lead_name = %s
+		WHERE lead_name = %s
+	""", (to_lead, from_lead))
+
+	frappe.db.sql("""
+		UPDATE `tabCustomer`
+		SET first_source = %s
+		WHERE first_source = %s
+	""", (to_lead, from_lead))
+
+	# Contacts linked via source
+	frappe.db.sql("""
+		UPDATE `tabContact`
+		SET `source` = %s
+		WHERE `source` = %s
+	""", (to_lead, from_lead))
+
+	# Appointments linked via lead
+	frappe.db.sql("""
+		UPDATE `tabAppointment`
+		SET `lead` = %s
+		WHERE `lead` = %s
+	""", (to_lead, from_lead))
+
+	# --- System Logs, Communications & Audits ---
+	# Notification Logs
+	frappe.db.sql("""
+		UPDATE `tabNotification Log`
+		SET document_name = %s
+		WHERE document_type = 'Lead' AND document_name = %s
+	""", (to_lead, from_lead))
+
+	# Communications referencing this lead
+	frappe.db.sql("""
+		UPDATE `tabCommunication`
+		SET reference_name = %s
+		WHERE reference_doctype = 'Lead' AND reference_name = %s
+	""", (to_lead, from_lead))
+
+	# File attachments
+	frappe.db.sql("""
+		UPDATE `tabFile`
+		SET attached_to_name = %s
+		WHERE attached_to_doctype = 'Lead' AND attached_to_name = %s
+	""", (to_lead, from_lead))
+
+	# Email Queue
+	frappe.db.sql("""
+		UPDATE `tabEmail Queue`
+		SET reference_name = %s
+		WHERE reference_doctype = 'Lead' AND reference_name = %s
+	""", (to_lead, from_lead))
+
+	# Activity Log
+	frappe.db.sql("""
+		UPDATE `tabActivity Log`
+		SET reference_name = %s
+		WHERE reference_doctype = 'Lead' AND reference_name = %s
+	""", (to_lead, from_lead))
+
+	# Version Audit Trail
+	frappe.db.sql("""
+		UPDATE `tabVersion`
+		SET docname = %s
+		WHERE ref_doctype = 'Lead' AND docname = %s
+	""", (to_lead, from_lead))
+
+	# Comments timeline
+	frappe.db.sql("""
+		UPDATE `tabComment`
+		SET reference_name = %s
+		WHERE reference_doctype = 'Lead' AND reference_name = %s
+	""", (to_lead, from_lead))
+
+	# Email Campaign
+	frappe.db.sql("""
+		UPDATE `tabEmail Campaign`
+		SET recipient = %s
+		WHERE email_campaign_for = 'Lead' AND recipient = %s
+	""", (to_lead, from_lead))
 
 def transform_price_label(label: str) -> str:
     return label.replace('<', 'dưới ').replace('>', 'trên ').strip()
