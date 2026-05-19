@@ -9,8 +9,7 @@ from frappe.contacts.address_and_contact import (
 	load_address_and_contact,
 )
 from frappe.contacts.doctype.address.address import get_default_address
-from frappe.contacts.doctype.contact.contact import get_default_contact
-from frappe.contacts.doctype.contact.contact import Contact
+from frappe.contacts.doctype.contact.contact import Contact, get_default_contact
 from frappe.email.inbox import link_communication_to_document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import comma_and, get_link_to_form, has_gravatar, validate_email_address
@@ -29,18 +28,21 @@ class Lead(SellingController, CRMNote):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
+		from typing import Literal
+
+		from frappe.types import DF
+
 		from erpnext.crm.doctype.crm_note.crm_note import CRMNote
 		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
-		from frappe.types import DF
 
 		account_number: DF.Data | None
 		address: DF.Data | None
 		annual_revenue: DF.Currency
-		bank_branch: DF.Literal[None]
-		bank_district: DF.Literal[None]
+		bank_branch: Literal[None]
+		bank_district: Literal[None]
 		bank_name: DF.Link | None
-		bank_province: DF.Literal[None]
-		bank_ward: DF.Literal[None]
+		bank_province: Literal[None]
+		bank_ward: Literal[None]
 		birth_date: DF.Date | None
 		blog_subscriber: DF.Check
 		budget_lead: DF.Link | None
@@ -71,38 +73,38 @@ class Lead(SellingController, CRMNote):
 		lead_received_date: DF.Datetime | None
 		lead_source_name: DF.Data | None
 		lead_source_platform: DF.Data | None
-		lead_stage: DF.Literal["Lead", "Qualified Lead", "Opportunity", "Customer"]
+		lead_stage: Literal["Lead", "Qualified Lead", "Opportunity", "Customer"]
 		market_segment: DF.Link | None
 		middle_name: DF.Data | None
 		mobile_no: DF.Data | None
-		naming_series: DF.Literal["CRM-LEAD-.YYYY.-"]
-		no_of_employees: DF.Literal["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"]
+		naming_series: Literal["CRM-LEAD-.YYYY.-"]
+		no_of_employees: Literal["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"]
 		notes: DF.Table[CRMNote]
 		pancake_data: DF.JSON | None
 		personal_id: DF.Data | None
 		personal_tax_id: DF.Data | None
 		phone: DF.Data | None
 		phone_ext: DF.Data | None
-		place_of_issuance: DF.Literal["Ministry of Public Security", "Department of Police for Administrative Management of Social Order", "Department of Police for Registration, Residency Management, and National Population Data"]
+		place_of_issuance: Literal["Ministry of Public Security", "Department of Police for Administrative Management of Social Order", "Department of Police for Registration, Residency Management, and National Population Data"]
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
 		proposed_budget: DF.Link | None
 		province: DF.Link | None
 		purpose_lead: DF.Link | None
-		qualification_status: DF.Literal["Unqualified", "Qualified"]
+		qualification_status: Literal["Unqualified", "Qualified"]
 		qualified_by: DF.Link | None
 		qualified_lead_date: DF.Datetime | None
 		qualified_on: DF.Datetime | None
 		region: DF.Link | None
-		request_type: DF.Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
+		request_type: Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
 		salutation: DF.Link | None
 		source: DF.Link | None
 		state: DF.Data | None
-		status: DF.Literal["Lead", "Contacted", "Replied", "Interested", "Qualified", "Opportunity", "Converted", "Do Not Contact", "Spam"]
+		status: Literal["Lead", "Contacted", "Replied", "Interested", "Qualified", "Opportunity", "Converted", "Do Not Contact", "Spam"]
 		stringee_data: DF.JSON | None
 		tax_number: DF.Data | None
 		territory: DF.Link | None
 		title: DF.Data | None
-		type: DF.Literal["Individual", "Company", "Consultant", "Channel Partner"]
+		type: Literal["Individual", "Company", "Consultant", "Channel Partner"]
 		unsubscribed: DF.Check
 		utm_campaign: DF.Link | None
 		utm_content: DF.Data | None
@@ -594,7 +596,7 @@ class Lead(SellingController, CRMNote):
 				ORDER BY tc.inserted_at ASC
 				LIMIT 1
 				''',
-				(self.name)
+				(self.name,)
 			)
 
 			if source and source[0][0]:
@@ -638,7 +640,7 @@ class Lead(SellingController, CRMNote):
 			except (json.JSONDecodeError, TypeError):
 				assign_list = []
 
-		should_be_assigned = 1 if assign_list else 0		
+		should_be_assigned = 1 if assign_list else 0
 		if self.is_assigned != should_be_assigned:
 			frappe.db.set_value('Lead', self.name, 'is_assigned', should_be_assigned)
 
@@ -843,7 +845,7 @@ class Lead(SellingController, CRMNote):
 			return "Qualified"
 
 		return self.qualification_status
-	
+
 	def normalize_phone(self):
 		if self.phone:
 			from erpnext.crm.doctype.lead.lead_methods import normalize_phone_number
