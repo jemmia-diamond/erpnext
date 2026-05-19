@@ -430,20 +430,6 @@ def _relink_dynamic_links(from_lead: str, to_lead: str):
 
 def _relink_downstream_docs(from_lead: str, to_lead: str):
 	"""Re-link all downstream documents, logs, and audits from one lead to another."""
-	# Issues linked via lead field
-	frappe.db.sql("""
-		UPDATE `tabIssue`
-		SET `lead` = %s
-		WHERE `lead` = %s
-	""", (to_lead, from_lead))
-
-	# Prospect Lead links
-	frappe.db.sql("""
-		UPDATE `tabProspect Lead`
-		SET lead = %s, lead_name = (SELECT lead_name FROM `tabLead` WHERE name = %s)
-		WHERE lead = %s
-	""", (to_lead, to_lead, from_lead))
-
 	# Customers linked via lead_name
 	frappe.db.sql("""
 		UPDATE `tabCustomer`
