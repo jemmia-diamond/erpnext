@@ -430,20 +430,6 @@ def _relink_dynamic_links(from_lead: str, to_lead: str):
 
 def _relink_downstream_docs(from_lead: str, to_lead: str):
 	"""Re-link all downstream documents, logs, and audits from one lead to another."""
-	# Quotations linked via party_name
-	frappe.db.sql("""
-		UPDATE `tabQuotation`
-		SET party_name = %s
-		WHERE party_name = %s AND quotation_to = 'Lead'
-	""", (to_lead, from_lead))
-
-	# Opportunities linked via party_name
-	frappe.db.sql("""
-		UPDATE `tabOpportunity`
-		SET party_name = %s
-		WHERE party_name = %s AND opportunity_from = 'Lead'
-	""", (to_lead, from_lead))
-
 	# Issues linked via lead field
 	frappe.db.sql("""
 		UPDATE `tabIssue`
@@ -512,13 +498,6 @@ def _relink_downstream_docs(from_lead: str, to_lead: str):
 		UPDATE `tabComment`
 		SET reference_name = %s
 		WHERE reference_doctype = 'Lead' AND reference_name = %s
-	""", (to_lead, from_lead))
-
-	# Email Campaign
-	frappe.db.sql("""
-		UPDATE `tabEmail Campaign`
-		SET recipient = %s
-		WHERE email_campaign_for = 'Lead' AND recipient = %s
 	""", (to_lead, from_lead))
 
 def transform_price_label(label: str) -> str:
