@@ -514,6 +514,13 @@ def _relink_downstream_docs(from_lead: str, to_lead: str):
 		WHERE reference_doctype = 'Lead' AND reference_name = %s
 	""", (to_lead, from_lead))
 
+	# Email Campaign
+	frappe.db.sql("""
+		UPDATE `tabEmail Campaign`
+		SET recipient = %s
+		WHERE email_campaign_for = 'Lead' AND recipient = %s
+	""", (to_lead, from_lead))
+
 def transform_price_label(label: str) -> str:
     return label.replace('<', 'dưới ').replace('>', 'trên ').strip()
 
