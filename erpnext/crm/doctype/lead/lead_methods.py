@@ -424,6 +424,49 @@ def _relink_dynamic_links(from_lead: str, to_lead: str):
 				WHERE link_doctype = 'Lead' AND link_name = %s AND parent = %s
 			""", (to_lead, from_lead, doc.name))
 
+def _relink_downstream_docs(from_lead: str, to_lead: str):
+	"""Re-link all downstream documents, logs, and audits from one lead to another."""
+	# Customers linked via lead_name
+	frappe.db.sql("""
+		UPDATE `tabCustomer`
+		SET lead_name = %s
+		WHERE lead_name = %s
+	""", (to_lead, from_lead))
+
+	# Appointments linked via lead
+	frappe.db.sql("""
+		UPDATE `tabAppointment`
+		SET `lead` = %s
+		WHERE `lead` = %s
+	""", (to_lead, from_lead))
+
+	# Communications referencing this lead
+	frappe.db.sql("""
+		UPDATE `tabCommunication`
+		SET reference_name = %s
+		WHERE reference_doctype = 'Lead' AND reference_name = %s
+	""", (to_lead, from_lead))
+
+	# File attachments
+	frappe.db.sql("""
+		UPDATE `tabFile`
+		SET attached_to_name = %s
+		WHERE attached_to_doctype = 'Lead' AND attached_to_name = %s
+	""", (to_lead, from_lead))
+
+	# Version Audit Trail
+	frappe.db.sql("""
+		UPDATE `tabVersion`
+		SET docname = %s
+		WHERE ref_doctype = 'Lead' AND docname = %s
+	""", (to_lead, from_lead))
+
+	# Comments timeline
+	frappe.db.sql("""
+		UPDATE `tabComment`
+		SET reference_name = %s
+		WHERE reference_doctype = 'Lead' AND reference_name = %s
+	""", (to_lead, from_lead))
 
 def _relink_downstream_docs(from_lead: str, to_lead: str):
 	"""Re-link all downstream documents, logs, and audits from one lead to another."""
