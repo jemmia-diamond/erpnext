@@ -1539,23 +1539,42 @@ frappe.ui.form.on("Sales Order Item", {
 		var row = locals[cdt][cdn];
 		if (row.serial) {
 			const val = row.serial;
-			const current_serials = row.serial_numbers ? row.serial_numbers.split('\n') : [];
-			if (!current_serials.includes(val)) {
-				const new_list = row.serial_numbers ? `${row.serial_numbers}\n${val}` : val;
-				frappe.model.set_value(cdt, cdn, 'serial_numbers', new_list.replace(/\n+/g, '\n').trim());
-			}
+			frappe.call({
+				method: "erpnext.selling.doctype.sales_order.sales_order.validate_serial_number",
+				args: {
+					serial_number: val,
+					sales_order_name: frm.doc.name
+				},
+				callback: function (r) {
+					if (r.message && !r.message.allowed) {
+						frappe.msgprint({
+							title: __("Trùng số Serial"),
+							indicator: "red",
+							message: __("Số Serial <b>{0}</b> đã được điền trong Đơn hàng <b>{1}</b>.", [val, r.message.duplicate_order])
+						});
+						frappe.model.set_value(cdt, cdn, 'serial', null);
+						return;
+					}
 
-			frappe.model.set_value(cdt, cdn, 'serial', null);
+					const current_serials = row.serial_numbers ? row.serial_numbers.split('\n') : [];
+					if (!current_serials.includes(val)) {
+						const new_list = row.serial_numbers ? `${row.serial_numbers}\n${val}` : val;
+						frappe.model.set_value(cdt, cdn, 'serial_numbers', new_list.replace(/\n+/g, '\n').trim());
+					}
 
-			if (frm.doc.haravan_ref_order_id && (!row.new_promotions || row.new_promotions == "[]")) {
-				frm.events.sync_reference_promotion_by_serial(frm, cdt, cdn);
-			}
+					frappe.model.set_value(cdt, cdn, 'serial', null);
 
-			frappe.db.get_value('Serial', val, 'serial_number').then((r) => {
-				if (r && r.message && r.message.serial_number && r.message.serial_number !== val) {
-					const official = r.message.serial_number;
-					const updated = row.serial_numbers.split('\n').map(s => s === val ? official : s);
-					frappe.model.set_value(cdt, cdn, 'serial_numbers', updated.join('\n'));
+					if (frm.doc.haravan_ref_order_id && (!row.new_promotions || row.new_promotions == "[]")) {
+						frm.events.sync_reference_promotion_by_serial(frm, cdt, cdn);
+					}
+
+					frappe.db.get_value('Serial', val, 'serial_number').then((r) => {
+						if (r && r.message && r.message.serial_number && r.message.serial_number !== val) {
+							const official = r.message.serial_number;
+							const updated = row.serial_numbers.split('\n').map(s => s === val ? official : s);
+							frappe.model.set_value(cdt, cdn, 'serial_numbers', updated.join('\n'));
+						}
+					});
 				}
 			});
 		}

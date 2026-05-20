@@ -433,7 +433,8 @@ class SalesOrder(SellingController):
 		2. Reference Tree (recursive traversal of ref_sales_orders)
 		"""
 		related_orders = set()
-		related_orders.add(self.name)
+		if self.name:
+			related_orders.add(self.name)
 
 		# 1. Fetch by Split Order Group
 		if self.is_split_order and self.split_order_group:
@@ -450,23 +451,17 @@ class SalesOrder(SellingController):
 		# 2. Fetch by Reference Tree (Recursive)
 		# We need to traverse:
 		# - Down: Orders referenced by this order (ref_sales_orders child table)
-		# - Up: Orders that reference this order (Ref Sales Order table of other orders) - OPTIONAL depending on req,
-		#   but user said "every ref sales orders in tree based", implying full connectivity.
-		#   However, typically `ref_sales_orders` is a directed link.
-		#   Let's assume standard traversal of the graph defined by `ref_sales_orders`.
-
-		# To be safe and thorough, let's treat it as an undirected graph traversal.
-		# Nodes: Sales Orders
-		# Edges: Entries in `Sales Order Reference` table.
+		# - Up: Orders that reference this order (Ref Sales Order table of other orders)
 
 		to_visit = list(related_orders)
 		visited = set(related_orders)
 
 		while to_visit:
 			current_so = to_visit.pop()
+			if not current_so:
+				continue
 
 			# A. Find orders referenced BY current_so
-			# query child table `Sales Order Reference` where parent = current_so
 			refs_down = frappe.db.get_all("Sales Order Reference",
 				filters={"parent": current_so},
 				fields=["sales_order"]
@@ -479,7 +474,6 @@ class SalesOrder(SellingController):
 					related_orders.add(ref.sales_order)
 
 			# B. Find orders referencing current_so
-			# query child table `Sales Order Reference` where sales_order = current_so
 			refs_up = frappe.db.get_all("Sales Order Reference",
 				filters={"sales_order": current_so},
 				fields=["parent"]
@@ -490,6 +484,7 @@ class SalesOrder(SellingController):
 					visited.add(ref.parent)
 					to_visit.append(ref.parent)
 					related_orders.add(ref.parent)
+
 
 		return list(related_orders)
 
@@ -3296,3 +3291,42 @@ def get_item_promotions_by_serial(source_order, target_serial):
 	)
 
 	return item or {}
+
+
+@frappe.whitelist()
+def validate_serial_number(serial_number, sales_order_name=None):
+	"""
+	Checks if a serial number is used in an unrelated order.
+	"""
+	if not serial_number:
+		return {"allowed": True}
+
+	related_orders = set()
+	if sales_order_name and frappe.db.exists("Sales Order", sales_order_name):
+		so = frappe.get_doc("Sales Order", sales_order_name)
+		related_orders = set(so.get_all_related_sales_orders() or [])
+
+	duplicate_items = frappe.db.sql("""
+		SELECT 
+			so_item.parent as order_name,
+			so_item.serial_numbers
+		FROM 
+			`tabSales Order Item` so_item
+		INNER JOIN
+			`tabSales Order` so ON so.name = so_item.parent
+		WHERE 
+			so_item.serial_numbers LIKE %s
+			AND so.docstatus < 2
+			AND so.name != %s
+	""", (f"%{serial_number}%", sales_order_name or ""), as_dict=True)
+
+	for d in duplicate_items:
+		d_serials = [s.strip() for s in (d.serial_numbers or "").split("\n") if s.strip()]
+		if serial_number in d_serials:
+			if d.order_name not in related_orders:
+				return {
+					"allowed": False,
+					"duplicate_order": d.order_name
+				}
+
+	return {"allowed": True}
