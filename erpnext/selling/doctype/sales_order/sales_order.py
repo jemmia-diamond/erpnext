@@ -3356,7 +3356,7 @@ def validate_serial_number(serial_number, sales_order_name=None):
 
 def get_candidate_reference_orders(source_order=None, haravan_ref_order_id=None, split_order_group=None, is_split_order=False):
 	"""
-	given a sales order, find all ref sales orders of sibling orders in one group
+	given a sales order, find all ref sales orders of member orders in one group
 	"""
 	reference_ids = set()
 
