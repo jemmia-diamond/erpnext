@@ -1533,8 +1533,36 @@ class SalesOrder(SellingController):
 			# Copy Buyback Items
 			self.copy_buyback_items_from_reference(ref_order_name)
 
+			# Copy Promotions from all candidate reference orders in the split group
+			self.copy_promotions_from_split_group(ref_order_name)
+
 		except Exception as e:
 			frappe.log_error(f"Error copying from reference order: {e!s}")
+
+	def copy_promotions_from_split_group(self, ref_order_name):
+		"""Copy Promotions from all candidate reference orders in the split group"""
+		if not (self.is_split_order and self.split_order_group):
+			return
+
+		promotion_fields = [
+			'new_promotions',
+			'promotion_1',
+			'promotion_2',
+			'promotion_3',
+			'promotion_4',
+			'promotion_5'
+		]
+		
+		current_items = self.get("items") or []
+
+		candidate_ref_orders = self.get_candidate_reference_orders()
+		
+		for candidate_name in candidate_ref_orders:
+			if candidate_name == ref_order_name:
+				continue
+
+			candidate_doc = frappe.get_doc("Sales Order", candidate_name)
+			self.copy_sales_order_items_from_reference(candidate_doc, include_fields=promotion_fields)
 
 	def copy_buyback_items_from_reference(self, ref_order_name):
 		"""Duplicate Buyback Exchange Items from reference order to current order"""
@@ -1652,12 +1680,8 @@ class SalesOrder(SellingController):
 			if not current_serial:
 				return
 
-			ref_order_names = get_candidate_reference_orders(
-				source_order=self.name,
-				haravan_ref_order_id=self.haravan_ref_order_id,
-				split_order_group=self.split_order_group,
-				is_split_order=self.is_split_order
-			)
+			ref_order_names = self.get_candidate_reference_orders()
+			
 			if not ref_order_names:
 				return
 
@@ -1805,7 +1829,43 @@ class SalesOrder(SellingController):
 		]
 
 
-	def copy_sales_order_items_from_reference(self, ref_order_doc):
+	def get_candidate_reference_orders(self):
+		"""
+		Given this sales order, find all ref sales orders of member orders in its split group
+		"""
+		reference_ids = set()
+
+		if self.haravan_ref_order_id:
+			reference_ids.add(self.haravan_ref_order_id)
+
+		if self.is_split_order and self.split_order_group:
+			sibling_orders = frappe.db.get_all(
+				"Sales Order",
+				filters={
+					"split_order_group": self.split_order_group,
+					"cancelled_status": "Uncancelled"
+				},
+				fields=["haravan_ref_order_id"]
+			)
+			for order in sibling_orders:
+				if order.haravan_ref_order_id:
+					reference_ids.add(order.haravan_ref_order_id)
+
+		if not reference_ids:
+			return []
+
+		original_sales_orders = frappe.db.get_all(
+			"Sales Order",
+			filters={
+				"haravan_order_id": ["in", list(reference_ids)],
+				"cancelled_status": "Uncancelled"
+			},
+			fields=["name"]
+		)
+
+		return [order.name for order in original_sales_orders]
+
+	def copy_sales_order_items_from_reference(self, ref_order_doc, include_fields=None):
 		"""Copy Sales Order Items from reference order based on haravan_variant_id mapping"""
 		try:
 			current_items = self.get("items") or []
@@ -1823,7 +1883,7 @@ class SalesOrder(SellingController):
 			items_updated = False
 			for current_item, ref_item in pairs:
 				# Copy fields using common method
-				items_updated = self._copy_item_fields_with_db_update(ref_item, current_item) or items_updated
+				items_updated = self._copy_item_fields_with_db_update(ref_item, current_item, include_fields) or items_updated
 
 			if items_updated:
 				frappe.db.commit()
@@ -1832,9 +1892,13 @@ class SalesOrder(SellingController):
 		except Exception as e:
 			frappe.log_error(f"Error copying SO items: {str(e)[:100]}")
 
-	def _copy_item_fields_with_db_update(self, ref_item, current_item):
+	def _copy_item_fields_with_db_update(self, ref_item, current_item, include_fields=None):
 		"""Copy fields from reference item to current item using frappe.db.set_value"""
 		fields_to_copy = self._get_item_fields_to_copy()
+		
+		if include_fields:
+			fields_to_copy = [f for f in fields_to_copy if f in include_fields]
+		
 		items_updated = False
 
 		for field in fields_to_copy:
@@ -1843,11 +1907,11 @@ class SalesOrder(SellingController):
 
 			# Special handling for uom field - always copy if reference has value
 			if field == 'uom' and ref_value:
-				frappe.db.set_value("Sales Order Item", current_item.name, field, ref_value)
+				current_item.db_set(field, ref_value)
 				items_updated = True
 			# For other fields, only copy if reference has value and current item doesn't have value
 			elif ref_value and not current_value:
-				frappe.db.set_value("Sales Order Item", current_item.name, field, ref_value)
+				current_item.db_set(field, ref_value)
 				items_updated = True
 
 		return items_updated
@@ -3287,22 +3351,8 @@ def get_item_promotions_by_serial(source_order, target_serial):
 	if not source_order or not target_serial:
 		return {}
 
-	order_data = frappe.db.get_value(
-		"Sales Order",
-		source_order,
-		["haravan_ref_order_id", "split_order_group", "is_split_order"]
-	)
-	if not order_data:
-		return {}
-
-	haravan_ref_order_id, split_group, is_split = order_data
-
-	ref_names = get_candidate_reference_orders(
-		source_order=source_order,
-		haravan_ref_order_id=haravan_ref_order_id,
-		split_order_group=split_group,
-		is_split_order=is_split
-	)
+	so_doc = frappe.get_doc("Sales Order", source_order)
+	ref_names = so_doc.get_candidate_reference_orders()
 	if not ref_names:
 		return {}
 
@@ -3353,40 +3403,3 @@ def validate_serial_number(serial_number, sales_order_name=None):
 				}
 
 	return {"allowed": True}
-
-def get_candidate_reference_orders(source_order=None, haravan_ref_order_id=None, split_order_group=None, is_split_order=False):
-	"""
-	given a sales order, find all ref sales orders of member orders in one group
-	"""
-	reference_ids = set()
-
-	if haravan_ref_order_id:
-		reference_ids.add(haravan_ref_order_id)
-
-	if is_split_order and split_order_group and source_order:
-		sibling_orders = frappe.db.get_all(
-			"Sales Order",
-			filters={
-				"split_order_group": split_order_group,
-				"name": ["!=", source_order],
-				"cancelled_status": "Uncancelled"
-			},
-			fields=["haravan_ref_order_id"]
-		)
-		for sibling in sibling_orders:
-			if sibling.haravan_ref_order_id:
-				reference_ids.add(sibling.haravan_ref_order_id)
-
-	if not reference_ids:
-		return []
-
-	original_sales_orders = frappe.db.get_all(
-		"Sales Order",
-		filters={
-			"haravan_order_id": ["in", list(reference_ids)],
-			"cancelled_status": "Uncancelled"
-		},
-		fields=["name"]
-	)
-
-	return [order.name for order in original_sales_orders]
