@@ -421,43 +421,31 @@ frappe.ui.form.on("Sales Order", {
 
 		if (!target_serial) return;
 
-		frappe.db.get_value('Sales Order', { 'haravan_order_id': frm.doc.haravan_ref_order_id }, 'name')
-			.then(r => {
-				const source_order = r && r.message ? r.message.name : null;
-				if (!source_order || source_order === frm.doc.name) {
-					frm.refresh_field('items');
-					return;
-				}
+		frappe.call({
+			method: "erpnext.selling.doctype.sales_order.sales_order.get_item_promotions_by_serial",
+			args: {
+				source_order: frm.doc.name,
+				target_serial: target_serial
+			},
+			callback: function(r) {
+				if (r.message && r.message.new_promotions) {
+					const data = r.message;
+					if (data.new_promotions && data.new_promotions !== "[]") {
+						frappe.model.set_value(cdt, cdn, 'new_promotions', data.new_promotions);
+						frappe.model.set_value(cdt, cdn, 'promotion_1', data.promotion_1);
+						frappe.model.set_value(cdt, cdn, 'promotion_2', data.promotion_2);
+						frappe.model.set_value(cdt, cdn, 'promotion_3', data.promotion_3);
+						frappe.model.set_value(cdt, cdn, 'promotion_4', data.promotion_4);
+						frappe.model.set_value(cdt, cdn, 'promotion_5', data.promotion_5);
 
-				frappe.call({
-					method: "erpnext.selling.doctype.sales_order.sales_order.get_item_promotions_by_serial",
-					args: {
-						source_order: source_order,
-						target_serial: target_serial
-					},
-					callback: function(r) {
-						if (r.message && r.message.new_promotions) {
-							const data = r.message;
-							if (data.new_promotions && data.new_promotions !== "[]") {
-								frappe.model.set_value(cdt, cdn, 'new_promotions', data.new_promotions);
-								frappe.model.set_value(cdt, cdn, 'promotion_1', data.promotion_1);
-								frappe.model.set_value(cdt, cdn, 'promotion_2', data.promotion_2);
-								frappe.model.set_value(cdt, cdn, 'promotion_3', data.promotion_3);
-								frappe.model.set_value(cdt, cdn, 'promotion_4', data.promotion_4);
-								frappe.model.set_value(cdt, cdn, 'promotion_5', data.promotion_5);
-
-								if (typeof render_promotion_pills !== "undefined") {
-									setTimeout(() => render_promotion_pills(frm, cdt, cdn), 100);
-								}
-							}
+						if (typeof render_promotion_pills !== "undefined") {
+							setTimeout(() => render_promotion_pills(frm, cdt, cdn), 100);
 						}
-						frm.refresh_field('items');
 					}
-				});
-			})
-			.catch((err) => {
+				}
 				frm.refresh_field('items');
-			});
+			}
+		});
 	},
 
 	auto_fetch_item_policies: function(frm) {
@@ -1564,7 +1552,7 @@ frappe.ui.form.on("Sales Order Item", {
 
 					frappe.model.set_value(cdt, cdn, 'serial', null);
 
-					if (frm.doc.haravan_ref_order_id && (!row.new_promotions || row.new_promotions == "[]")) {
+					if ((frm.doc.haravan_ref_order_id || frm.doc.split_order_group) && (!row.new_promotions || row.new_promotions == "[]")) {
 						frm.events.sync_reference_promotion_by_serial(frm, cdt, cdn);
 					}
 

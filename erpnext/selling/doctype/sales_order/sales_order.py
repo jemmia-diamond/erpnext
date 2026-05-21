@@ -1652,18 +1652,22 @@ class SalesOrder(SellingController):
 			if not current_serial:
 				return
 
-			# Get reference order based on Sales Order's haravan_ref_order_id
-			ref_order_name = frappe.db.get_value("Sales Order",
-				{"haravan_order_id": self.haravan_ref_order_id}, "name")
-
-			if not ref_order_name:
+			ref_order_names = get_candidate_reference_orders(
+				source_order=self.name,
+				haravan_ref_order_id=self.haravan_ref_order_id,
+				split_order_group=self.split_order_group,
+				is_split_order=self.is_split_order
+			)
+			if not ref_order_names:
 				return
 
-			ref_order_doc = frappe.get_doc("Sales Order", ref_order_name)
-			ref_items = ref_order_doc.get("items") or []
-
-			# Find reference item with matching serial_numbers
-			matching_ref_item = self._find_matching_ref_item_by_serial(ref_items, current_serial)
+			matching_ref_item = None
+			for name in ref_order_names:
+				ref_order_doc = frappe.get_doc("Sales Order", name)
+				ref_items = ref_order_doc.get("items") or []
+				matching_ref_item = self._find_matching_ref_item_by_serial(ref_items, current_serial)
+				if matching_ref_item:
+					break
 
 			if not matching_ref_item:
 				return
@@ -3283,9 +3287,28 @@ def get_item_promotions_by_serial(source_order, target_serial):
 	if not source_order or not target_serial:
 		return {}
 
+	order_data = frappe.db.get_value(
+		"Sales Order",
+		source_order,
+		["haravan_ref_order_id", "split_order_group", "is_split_order"]
+	)
+	if not order_data:
+		return {}
+
+	haravan_ref_order_id, split_group, is_split = order_data
+
+	ref_names = get_candidate_reference_orders(
+		source_order=source_order,
+		haravan_ref_order_id=haravan_ref_order_id,
+		split_order_group=split_group,
+		is_split_order=is_split
+	)
+	if not ref_names:
+		return {}
+
 	item = frappe.db.get_value(
 		"Sales Order Item",
-		{"parent": source_order, "serial_numbers": ["like", f"%{target_serial}%"]},
+		{"parent": ["in", ref_names], "serial_numbers": ["like", f"%{target_serial}%"]},
 		["new_promotions", "promotion_1", "promotion_2", "promotion_3", "promotion_4", "promotion_5"],
 		as_dict=True
 	)
@@ -3330,3 +3353,40 @@ def validate_serial_number(serial_number, sales_order_name=None):
 				}
 
 	return {"allowed": True}
+
+def get_candidate_reference_orders(source_order=None, haravan_ref_order_id=None, split_order_group=None, is_split_order=False):
+	"""
+	given a sales order, find all ref sales orders of member orders in one group
+	"""
+	reference_ids = set()
+
+	if haravan_ref_order_id:
+		reference_ids.add(haravan_ref_order_id)
+
+	if is_split_order and split_order_group and source_order:
+		sibling_orders = frappe.db.get_all(
+			"Sales Order",
+			filters={
+				"split_order_group": split_order_group,
+				"name": ["!=", source_order],
+				"cancelled_status": "Uncancelled"
+			},
+			fields=["haravan_ref_order_id"]
+		)
+		for sibling in sibling_orders:
+			if sibling.haravan_ref_order_id:
+				reference_ids.add(sibling.haravan_ref_order_id)
+
+	if not reference_ids:
+		return []
+
+	original_sales_orders = frappe.db.get_all(
+		"Sales Order",
+		filters={
+			"haravan_order_id": ["in", list(reference_ids)],
+			"cancelled_status": "Uncancelled"
+		},
+		fields=["name"]
+	)
+
+	return [order.name for order in original_sales_orders]
