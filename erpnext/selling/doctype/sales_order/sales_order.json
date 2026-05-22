@@ -252,6 +252,7 @@
   "sales_team_tab",
   "section_break1",
   "primary_sales_person",
+  "primary_sales_person_email",
   "commission_base_amount",
   "sales_team",
   "haravan_tab",
@@ -2210,6 +2211,15 @@
    "fieldtype": "Link",
    "label": "Primary Sales Person",
    "options": "Sales Person"
+  },
+  {
+   "fetch_from": "primary_sales_person.employee_email",
+   "fieldname": "primary_sales_person_email",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Primary Sales Person Email",
+   "options": "Email",
+   "read_only": 1
   },
   {
    "fieldname": "deposit_location",
