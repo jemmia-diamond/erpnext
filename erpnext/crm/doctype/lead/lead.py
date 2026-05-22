@@ -838,10 +838,12 @@ class Lead(SellingController, CRMNote):
 		return "Qualified Lead"
 	def get_qualification_status(self):
 		"""
-		Determine qualification status based on phone and province
-		Only auto-qualifies, never auto-disqualifies
+		Determine qualification status based on:
+		  1. Must have phone and province
+		  2. Must have preferred_product_type and proposed_budget
+		Only auto-qualifies, never auto-disqualifies.
 		"""
-		if self.phone and self.province:
+		if self.phone and self.province and self.preferred_product_type and self.proposed_budget:
 			return "Qualified"
 
 		return self.qualification_status
