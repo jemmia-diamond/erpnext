@@ -63,7 +63,7 @@ frappe.ui.form.on("Sales Order", {
 			});
 		}
 	},
-	validate: function(frm) {
+	validate: function (frm) {
 		if (frm.is_new()) return;
 
 		if (frm._promo_validated) {
@@ -89,7 +89,7 @@ frappe.ui.form.on("Sales Order", {
 		var items_with_promos = (frm.doc.items || []).filter(item => parse_promos(item.new_promotions).length > 0);
 		var has_order_promos = (frm.doc.promotions || []).some(row => row.promotion);
 
-		var items_missing_promos = (frm.doc.items || []).filter(function(item) {
+		var items_missing_promos = (frm.doc.items || []).filter(function (item) {
 			if (parse_promos(item.new_promotions).length > 0) return false;
 			if (!item.price_list_rate) return false;
 			var diff = Math.abs((item.rate * item.qty) - (item.price_list_rate * item.qty));
@@ -154,7 +154,7 @@ frappe.ui.form.on("Sales Order", {
 			}
 
 			// Add button to view related split orders
-			frm.add_custom_button(__('View Related Split Orders'), function() {
+			frm.add_custom_button(__('View Related Split Orders'), function () {
 				frappe.route_options = {
 					"split_order_group": frm.doc.split_order_group,
 					"is_split_order": 1,
@@ -177,13 +177,13 @@ frappe.ui.form.on("Sales Order", {
 					order_by: 'transaction_date asc',
 					limit_page_length: 20
 				},
-				callback: function(r) {
+				callback: function (r) {
 					if (r.message && r.message.length > 0) {
 						// Calculate total of all orders in group
 						let total_group_amount = 0;
 						let all_orders = r.message;
 
-						all_orders.forEach(function(order) {
+						all_orders.forEach(function (order) {
 							total_group_amount += order.grand_total || 0;
 						});
 
@@ -191,7 +191,7 @@ frappe.ui.form.on("Sales Order", {
 						html += `<h6 style="margin-bottom: 10px; color: #3498db; font-size: 13px;"><i class="fa fa-link"></i> All Orders in Split Group: <b>${all_orders.length}</b></h6>`;
 						html += '<ul style="margin: 0; padding-left: 20px;">';
 
-						all_orders.forEach(function(order) {
+						all_orders.forEach(function (order) {
 							const is_original = order.haravan_order_id === frm.doc.split_order_group;
 							const is_current = order.name === frm.doc.name;
 
@@ -216,7 +216,7 @@ frappe.ui.form.on("Sales Order", {
 			});
 		}
 
-		frm.add_custom_button(__('View On Haravan'), function() {
+		frm.add_custom_button(__('View On Haravan'), function () {
 			const haravanUrl = `https://jemmiavn.myharavan.com/admin/orders/${frm.doc.haravan_order_id}`;
 			window.open(haravanUrl, '_blank');
 		});
@@ -391,7 +391,7 @@ frappe.ui.form.on("Sales Order", {
 
 		if (can_add_buyback) {
 			// For Button field, bind to the input element
-			frm.fields_dict.buyback_items.$input.off('click').on('click', function() {
+			frm.fields_dict.buyback_items.$input.off('click').on('click', function () {
 				frm.trigger('show_buyback_selector');
 			});
 		}
@@ -399,11 +399,11 @@ frappe.ui.form.on("Sales Order", {
 		frm.trigger('auto_fetch_item_policies');
 	},
 
-	trigger_fetch_policy: function(frm, item_name, item_code, show_alert = true) {
+	trigger_fetch_policy: function (frm, item_name, item_code, show_alert = true) {
 		frappe.call({
 			method: "erpnext.selling.doctype.sales_order_item.sales_order_item.trigger_manual_webhook",
 			args: { item_name: item_name },
-			callback: function(r) {
+			callback: function (r) {
 				if (r.message && show_alert) {
 					let label = item_code ? __('cho {0}', [item_code]) : '';
 					frappe.show_alert(__('Đang tự động lấy thông tin chính sách {0} ...', [label]), 5);
@@ -412,7 +412,7 @@ frappe.ui.form.on("Sales Order", {
 		});
 	},
 
-	sync_reference_promotion_by_serial: function(frm, cdt, cdn) {
+	sync_reference_promotion_by_serial: function (frm, cdt, cdn) {
 		const row = locals[cdt][cdn];
 		if (!row.serial_numbers) return;
 
@@ -427,7 +427,7 @@ frappe.ui.form.on("Sales Order", {
 				source_order: frm.doc.name,
 				target_serial: target_serial
 			},
-			callback: function(r) {
+			callback: function (r) {
 				if (r.message && r.message.new_promotions) {
 					const data = r.message;
 					if (data.new_promotions && data.new_promotions !== "[]") {
@@ -448,7 +448,7 @@ frappe.ui.form.on("Sales Order", {
 		});
 	},
 
-	auto_fetch_item_policies: function(frm) {
+	auto_fetch_item_policies: function (frm) {
 		if (frm.doc.docstatus !== 0 || frm.doc.__islocal) return;
 
 		let items_to_fetch = frm.doc.items.filter(item => {
@@ -479,7 +479,7 @@ frappe.ui.form.on("Sales Order", {
 			args: {
 				phone: phone
 			},
-			callback: function(r) {
+			callback: function (r) {
 				if (r.message && r.message.length > 0) {
 					frm.events.open_buyback_dialog(frm, r.message);
 				} else {
@@ -502,7 +502,7 @@ frappe.ui.form.on("Sales Order", {
 			primary_action_label: __('Link Selected Items'),
 			primary_action(values) {
 				const selected = [];
-				d.$wrapper.find('input[type="checkbox"]:checked').each(function() {
+				d.$wrapper.find('input[type="checkbox"]:checked').each(function () {
 					selected.push($(this).data('item-name'));
 				});
 
@@ -517,7 +517,7 @@ frappe.ui.form.on("Sales Order", {
 						sales_order: frm.doc.name,
 						item_names: selected
 					},
-					callback: function(r) {
+					callback: function (r) {
 						if (r.message && r.message.success) {
 							frappe.show_alert({
 								message: __('Successfully linked {0} buyback item(s)', [r.message.count]),
@@ -562,7 +562,7 @@ frappe.ui.form.on("Sales Order", {
 
 		// Normalize frappe.format output: verify no single quotes break the template
 		const safeFormat = (val, doc) => {
-			let s = frappe.format(val, {fieldtype: 'Currency', currency: doc.currency});
+			let s = frappe.format(val, { fieldtype: 'Currency', currency: doc.currency });
 			// Replace single quotes in HTML attributes with double quotes to be template-safe
 			return (s || "").toString().replace(/'/g, '"');
 		};
@@ -609,7 +609,7 @@ frappe.ui.form.on("Sales Order", {
 		d.fields_dict.items_html.$wrapper.html(html);
 
 		// Single selection logic: uncheck others when one is checked
-		d.$wrapper.find('.buyback-item-checkbox').on('change', function() {
+		d.$wrapper.find('.buyback-item-checkbox').on('change', function () {
 			if ($(this).prop('checked')) {
 				d.$wrapper.find('.buyback-item-checkbox').not(this).prop('checked', false);
 			}
@@ -625,7 +625,7 @@ frappe.ui.form.on("Sales Order", {
 			args: {
 				sales_order: frm.doc.name
 			},
-			callback: function(r) {
+			callback: function (r) {
 				if (r.message && r.message.length > 0) {
 					let html = `
 						<div class="control-value" style="margin-top: 8px;">
@@ -655,7 +655,7 @@ frappe.ui.form.on("Sales Order", {
 
 					// Normalize frappe.format output
 					const safeFormat = (val, doc) => {
-						let s = frappe.format(val, {fieldtype: 'Currency', currency: doc.currency});
+						let s = frappe.format(val, { fieldtype: 'Currency', currency: doc.currency });
 						return (s || "").toString().replace(/'/g, '"');
 					};
 
@@ -712,7 +712,7 @@ frappe.ui.form.on("Sales Order", {
 					// Add click handlers for unlink buttons
 					setTimeout(() => {
 						if (frm.fields_dict.buyback_items_html && frm.fields_dict.buyback_items_html.$wrapper) {
-							frm.fields_dict.buyback_items_html.$wrapper.find('.btn-unlink-buyback').off('click').on('click', function(e) {
+							frm.fields_dict.buyback_items_html.$wrapper.find('.btn-unlink-buyback').off('click').on('click', function (e) {
 								e.preventDefault();
 								const item_name = $(this).data('item-name');
 
@@ -722,7 +722,7 @@ frappe.ui.form.on("Sales Order", {
 										frappe.call({
 											method: 'erpnext.selling.doctype.sales_order.sales_order.unlink_buyback_item',
 											args: { item_name: item_name },
-											callback: function(r) {
+											callback: function (r) {
 												if (r.message && r.message.success) {
 													frappe.show_alert({
 														message: __('Buyback item unlinked successfully'),
@@ -1518,7 +1518,7 @@ frappe.ui.form.on("Sales Order Item", {
 		}
 	},
 
-	fetch_policy: function(frm, cdt, cdn) {
+	fetch_policy: function (frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
 		frm.events.trigger_fetch_policy(frm, row.name, row.item_code, true);
 	},
@@ -2469,10 +2469,10 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 
 // Sales Team event handlers
 frappe.ui.form.on("Sales Team", {
-	merator: function(frm, cdt, cdn) {
+	merator: function (frm, cdt, cdn) {
 		calculate_allocated_percentage(frm, cdt, cdn);
 	},
-	denominator: function(frm, cdt, cdn) {
+	denominator: function (frm, cdt, cdn) {
 		calculate_allocated_percentage(frm, cdt, cdn);
 	}
 });
@@ -2546,7 +2546,7 @@ function apply_promo_discount(price, p, scope) {
 }
 
 function fetch_promo_map(names) {
-	return new Promise(function(resolve) {
+	return new Promise(function (resolve) {
 		if (!names || !names.length) { resolve({}); return; }
 		frappe.call({
 			method: "frappe.client.get_list",
@@ -2556,9 +2556,9 @@ function fetch_promo_map(names) {
 				fields: ["name", "title", "priority", "discount_type", "discount_amount", "discount_percent"],
 				limit_page_length: 0
 			},
-			callback: function(r) {
+			callback: function (r) {
 				var map = {};
-				(r.message || []).forEach(function(p) { map[p.name] = p; });
+				(r.message || []).forEach(function (p) { map[p.name] = p; });
 				resolve(map);
 			}
 		});
@@ -2568,21 +2568,21 @@ function fetch_promo_map(names) {
 function validate_promotion_prices(frm, items, items_missing_promos) {
 	var all_promo_names = [];
 
-	items.forEach(function(item) {
-		parse_promos(item.new_promotions).forEach(function(p) {
+	items.forEach(function (item) {
+		parse_promos(item.new_promotions).forEach(function (p) {
 			if (!all_promo_names.includes(p)) all_promo_names.push(p);
 		});
 	});
 
-	var order_promo_names = (frm.doc.promotions || []).map(function(row) { return row.promotion; }).filter(Boolean);
-	order_promo_names.forEach(function(p) {
+	var order_promo_names = (frm.doc.promotions || []).map(function (row) { return row.promotion; }).filter(Boolean);
+	order_promo_names.forEach(function (p) {
 		if (!all_promo_names.includes(p)) all_promo_names.push(p);
 	});
 
-	return new Promise(function(resolve) {
+	return new Promise(function (resolve) {
 		var errors = [];
 
-		(items_missing_promos || []).forEach(function(item) {
+		(items_missing_promos || []).forEach(function (item) {
 			var diff = Math.abs((item.rate * item.qty) - (item.price_list_rate * item.qty));
 			errors.push(__("Sản phẩm {0}: giá {1} lệch {2} so với giá niêm yết {3} nhưng chưa chọn khuyến mãi", [
 				item.item_name,
@@ -2594,14 +2594,14 @@ function validate_promotion_prices(frm, items, items_missing_promos) {
 
 		if (!all_promo_names.length) { resolve(errors); return; }
 
-		fetch_promo_map(all_promo_names).then(function(promo_map) {
-			items.forEach(function(item) {
+		fetch_promo_map(all_promo_names).then(function (promo_map) {
+			items.forEach(function (item) {
 				var promos = parse_promos(item.new_promotions);
 				if (!promos.length) return;
 
 				var expected = item.price_list_rate || 0;
-				var promo_objects = promos.map(function(name) { return promo_map[name]; }).filter(Boolean);
-				promo_objects.forEach(function(p) {
+				var promo_objects = promos.map(function (name) { return promo_map[name]; }).filter(Boolean);
+				promo_objects.forEach(function (p) {
 					expected = apply_promo_discount(expected, p, "Line Item");
 				});
 
@@ -2617,12 +2617,12 @@ function validate_promotion_prices(frm, items, items_missing_promos) {
 			});
 
 			if (order_promo_names.length) {
-				var base_total = (frm.doc.items || []).reduce(function(sum, item) {
+				var base_total = (frm.doc.items || []).reduce(function (sum, item) {
 					return sum + (item.rate * item.qty);
 				}, 0);
 				var expected_total = base_total;
-				var order_promo_objects = order_promo_names.map(function(name) { return promo_map[name]; }).filter(Boolean);
-				order_promo_objects.forEach(function(p) {
+				var order_promo_objects = order_promo_names.map(function (name) { return promo_map[name]; }).filter(Boolean);
+				order_promo_objects.forEach(function (p) {
 					expected_total = apply_promo_discount(expected_total, p, "Order");
 				});
 				var order_diff = Math.abs(frm.doc.grand_total - expected_total);
@@ -2640,11 +2640,11 @@ function validate_promotion_prices(frm, items, items_missing_promos) {
 	});
 }
 function parse_promos(val) {
-	try { return JSON.parse(val) || []; } catch(e) { return []; }
+	try { return JSON.parse(val) || []; } catch (e) { return []; }
 }
 
 frappe.ui.form.on('Sales Order Item', {
-	select_promotions: function(frm, cdt, cdn) {
+	select_promotions: function (frm, cdt, cdn) {
 		var dialog = new frappe.ui.form.MultiSelectDialog({
 			doctype: "Promotion",
 			target: frm,
@@ -2688,7 +2688,7 @@ frappe.ui.form.on('Sales Order Item', {
 			dialog.dialog.get_field("search_term").set_label("Search Promotion Title");
 			dialog.dialog.get_secondary_btn().hide();
 			dialog.dialog.get_field("title").$wrapper.hide();
-			dialog.dialog.$wrapper.on("hidden.bs.modal", function() {
+			dialog.dialog.$wrapper.on("hidden.bs.modal", function () {
 				$(this).remove();
 				$(".modal-backdrop").last().remove();
 				$("body").addClass("modal-open");
@@ -2700,7 +2700,7 @@ frappe.ui.form.on('Sales Order Item', {
 			});
 		}, 100);
 	},
-	form_render: function(frm, cdt, cdn) {
+	form_render: function (frm, cdt, cdn) {
 		render_promotion_pills(frm, cdt, cdn);
 		var grid_row = frm.fields_dict.items.grid.grid_rows_by_docname[cdn];
 		if (grid_row && grid_row.grid_form && grid_row.grid_form.fields_dict.fetch_policy) {
@@ -2716,13 +2716,13 @@ frappe.ui.form.on('Sales Order Item', {
 			}
 		}
 	},
-	rate: function(frm, cdt, cdn) {
+	rate: function (frm, cdt, cdn) {
 		render_promotion_pills(frm, cdt, cdn);
 	},
-	price_list_rate: function(frm, cdt, cdn) {
+	price_list_rate: function (frm, cdt, cdn) {
 		render_promotion_pills(frm, cdt, cdn);
 	},
-	qty: function(frm, cdt, cdn) {
+	qty: function (frm, cdt, cdn) {
 		render_promotion_pills(frm, cdt, cdn);
 	}
 });
@@ -2750,17 +2750,17 @@ function render_promotion_pills(frm, cdt, cdn) {
 	});
 	$field.append($pills);
 
-	fetch_promo_map(promos).then(function(promo_map) {
+	fetch_promo_map(promos).then(function (promo_map) {
 		var current_price = initial_price;
 
-		var promo_objects = promos.map(function(name) { return promo_map[name]; }).filter(Boolean);
+		var promo_objects = promos.map(function (name) { return promo_map[name]; }).filter(Boolean);
 
-		promo_objects.forEach(function(p) {
+		promo_objects.forEach(function (p) {
 			current_price = apply_promo_discount(current_price, p, "Line Item");
 		});
 
 		var running_price = initial_price;
-		$pills.find(".promo-pill").each(function() {
+		$pills.find(".promo-pill").each(function () {
 			var name = $(this).attr("data-promo");
 			var p = promo_map[name];
 			if (p) {
@@ -2781,7 +2781,7 @@ function render_promotion_pills(frm, cdt, cdn) {
 		}
 	});
 
-	$pills.on("click", ".remove-promo", function() {
+	$pills.on("click", ".remove-promo", function () {
 		var arr = parse_promos(locals[cdt][cdn]["new_promotions"]);
 		arr.splice(parseInt($(this).attr("data-idx")), 1);
 		frappe.model.set_value(cdt, cdn, "new_promotions", JSON.stringify(arr));
@@ -2791,19 +2791,19 @@ function render_promotion_pills(frm, cdt, cdn) {
 	});
 
 	var drag_src = null;
-	$pills.on("dragstart", ".promo-pill", function(e) {
+	$pills.on("dragstart", ".promo-pill", function (e) {
 		drag_src = this;
 		$(this).css("opacity", "0.4");
 		e.originalEvent.dataTransfer.effectAllowed = "move";
 	});
-	$pills.on("dragover", ".promo-pill", function(e) {
+	$pills.on("dragover", ".promo-pill", function (e) {
 		e.preventDefault();
 		$(this).css("border-top", "2px solid #999");
 	});
-	$pills.on("dragleave", ".promo-pill", function() {
+	$pills.on("dragleave", ".promo-pill", function () {
 		$(this).css("border-top", "");
 	});
-	$pills.on("drop", ".promo-pill", function(e) {
+	$pills.on("drop", ".promo-pill", function (e) {
 		e.preventDefault();
 		$(this).css("border-top", "");
 		if (drag_src === this) return;
@@ -2815,7 +2815,7 @@ function render_promotion_pills(frm, cdt, cdn) {
 		$field.find(".promo-validation-warning").remove();
 		render_promotion_pills(frm, cdt, cdn);
 	});
-	$pills.on("dragend", ".promo-pill", function() {
+	$pills.on("dragend", ".promo-pill", function () {
 		$(this).css("opacity", "1");
 	});
 }
