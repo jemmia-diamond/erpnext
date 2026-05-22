@@ -99,19 +99,48 @@ frappe.ui.form.on("Sales Order", {
 		if (!items_with_promos.length && !has_order_promos && !items_missing_promos.length) return;
 
 		frappe.validated = false;
-		validate_promotion_prices(frm, items_with_promos, items_missing_promos).then(function(errors) {
-			if (errors.length) {
-				frappe.msgprint({
-					title: __("Giá không khớp với khuyến mãi"),
-					message: errors.join("<br>"),
-					indicator: "red"
-				});
-			} else {
-				frm._promo_validated = true;
-				frappe.validated = true;
-				frm.save();
-			}
-		});
+		let run_price_validation = function () {
+			validate_promotion_prices(frm, items_with_promos, items_missing_promos).then(function (errors) {
+				if (errors.length) {
+					frappe.msgprint({
+						title: __("Giá không khớp với khuyến mãi"),
+						message: errors.join("<br>"),
+						indicator: "red"
+					});
+				} else {
+					frm._promo_validated = true;
+					frappe.validated = true;
+					frm.save();
+				}
+			});
+		};
+
+		if (items_missing_promos.length > 0 && !frm.is_new()) {
+			frappe.call({
+				method: "erpnext.selling.doctype.sales_order.sales_order.fetch_promotions_from_split_group",
+				args: { sales_order_name: frm.doc.name },
+				callback: function (r) {
+					let was_updated = false;
+					if (r.message && r.message.length > 0) {
+						r.message.forEach(data => {
+							let row = frappe.get_doc("Sales Order Item", data.name);
+							if (row) {
+								frappe.model.set_value(row.doctype, row.name, "new_promotions", data.new_promotions);
+								was_updated = true;
+							}
+						});
+					}
+
+					if (was_updated) {
+						setTimeout(() => frm.save(), 500);
+					} else {
+						run_price_validation();
+					}
+				}
+			});
+		} else {
+			run_price_validation();
+		}
 	},
 
 	refresh: function (frm) {
@@ -432,11 +461,6 @@ frappe.ui.form.on("Sales Order", {
 					const data = r.message;
 					if (data.new_promotions && data.new_promotions !== "[]") {
 						frappe.model.set_value(cdt, cdn, 'new_promotions', data.new_promotions);
-						frappe.model.set_value(cdt, cdn, 'promotion_1', data.promotion_1);
-						frappe.model.set_value(cdt, cdn, 'promotion_2', data.promotion_2);
-						frappe.model.set_value(cdt, cdn, 'promotion_3', data.promotion_3);
-						frappe.model.set_value(cdt, cdn, 'promotion_4', data.promotion_4);
-						frappe.model.set_value(cdt, cdn, 'promotion_5', data.promotion_5);
 
 						if (typeof render_promotion_pills !== "undefined") {
 							setTimeout(() => render_promotion_pills(frm, cdt, cdn), 100);
@@ -453,7 +477,7 @@ frappe.ui.form.on("Sales Order", {
 
 		let items_to_fetch = frm.doc.items.filter(item => {
 			let is_new = item.__islocal ||
-						 (item.name && (item.name.startsWith("New ") || item.name.startsWith("new-")));
+				(item.name && (item.name.startsWith("New ") || item.name.startsWith("new-")));
 			return !is_new && !item.item_policy && item.is_policy_locked !== 1;
 		});
 
@@ -1052,7 +1076,7 @@ frappe.ui.form.on("Sales Order", {
 	cancel_stock_reservation_entries(frm) {
 		const dialog = new frappe.ui.Dialog({
 			title: __("Stock Unreservation"),
-		 size: "extra-large",
+			size: "extra-large",
 			fields: [
 				{
 					fieldname: "sr_entries",
@@ -2075,7 +2099,7 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 						fieldname: "required_qty",
 						reqd: 1,
 						label: __("Qty"),
-					 in_list_view: 1,
+						in_list_view: 1,
 					},
 				],
 				data: r.message,
@@ -2712,7 +2736,7 @@ frappe.ui.form.on('Sales Order Item', {
 					'- <b>Đối với Sản phẩm tạm:</b> Chọn 02 mã CTKM (tương ứng cho 02 chiếc đơn lẻ cấu thành một cặp). (ví dụ: với SPT giảm 2tr, chọn 2 voucher giảm 1tr)<br>' +
 					'- <b>Đối với Sản phẩm tồn kho:</b> Chỉ chọn duy nhất 01 CTKM. (ví dụ, với Bông Tai giảm 1tr, chỉ chọn 1 voucher giảm 500.000)<br><br>' +
 					'Nếu không tìm thấy, liên hệ Marketing để được hỗ trợ' +
-				'</div>').insertBefore($wrapper);
+					'</div>').insertBefore($wrapper);
 			}
 		}
 	},
