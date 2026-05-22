@@ -1544,16 +1544,15 @@ class SalesOrder(SellingController):
 		if not (self.is_split_order and self.split_order_group):
 			return
 
-		promotion_fields = [
-			'new_promotions',
-			'promotion_1',
-			'promotion_2',
-			'promotion_3',
-			'promotion_4',
-			'promotion_5'
-		]
-		
 		current_items = self.get("items") or []
+		
+		items_missing_promos = [item for item in current_items if not getattr(item, "new_promotions", None)]
+		if not items_missing_promos:
+			return
+
+		promotion_fields = [
+			'new_promotions'
+		]
 
 		candidate_ref_orders = self.get_candidate_reference_orders()
 		
@@ -1561,8 +1560,16 @@ class SalesOrder(SellingController):
 			if candidate_name == ref_order_name:
 				continue
 
+			items_missing_promos = [item for item in items_missing_promos if not getattr(item, "new_promotions", None)]
+			if not items_missing_promos:
+				break
+
 			candidate_doc = frappe.get_doc("Sales Order", candidate_name)
-			self.copy_sales_order_items_from_reference(candidate_doc, include_fields=promotion_fields)
+			self.copy_sales_order_items_from_reference(
+				candidate_doc, 
+				include_fields=promotion_fields,
+				target_items=items_missing_promos
+			)
 
 	def copy_buyback_items_from_reference(self, ref_order_name):
 		"""Duplicate Buyback Exchange Items from reference order to current order"""
@@ -1814,11 +1821,6 @@ class SalesOrder(SellingController):
 			'product_availability_status',
 			'serial_numbers',
 			'new_promotions',
-			'promotion_1',
-			'promotion_2',
-			'promotion_3',
-			'promotion_4',
-			'promotion_5',
 			'uom',
 			'weight_per_unit',
 			'weight_uom',
@@ -1865,10 +1867,10 @@ class SalesOrder(SellingController):
 
 		return [order.name for order in original_sales_orders]
 
-	def copy_sales_order_items_from_reference(self, ref_order_doc, include_fields=None):
+	def copy_sales_order_items_from_reference(self, ref_order_doc, include_fields=None, target_items=None):
 		"""Copy Sales Order Items from reference order based on haravan_variant_id mapping"""
 		try:
-			current_items = self.get("items") or []
+			current_items = target_items if target_items is not None else (self.get("items") or [])
 			ref_items = ref_order_doc.get("items") or []
 
 			if not current_items or not ref_items:
@@ -3359,7 +3361,7 @@ def get_item_promotions_by_serial(source_order, target_serial):
 	item = frappe.db.get_value(
 		"Sales Order Item",
 		{"parent": ["in", ref_names], "serial_numbers": ["like", f"%{target_serial}%"]},
-		["new_promotions", "promotion_1", "promotion_2", "promotion_3", "promotion_4", "promotion_5"],
+		["new_promotions"],
 		as_dict=True
 	)
 
@@ -3403,3 +3405,43 @@ def validate_serial_number(serial_number, sales_order_name=None):
 				}
 
 	return {"allowed": True}
+
+
+@frappe.whitelist()
+def fetch_promotions_from_split_group(sales_order_name):
+	"""
+	Read-only fetch of promotions from sibling orders in the same split group.
+	Returns mapping of item name -> promotion fields to update the frontend before saving.
+	"""
+	if not sales_order_name:
+		return []
+
+	so = frappe.get_doc("Sales Order", sales_order_name)
+	
+	items_missing_promos = [item for item in (so.get("items") or []) if not getattr(item, "new_promotions", None)]
+	if not items_missing_promos:
+		return []
+	
+	ref_names = so.get_candidate_reference_orders()
+	if not ref_names:
+		return []
+		
+	updated_items = []
+	for ref_name in ref_names:
+		ref_doc = frappe.get_doc("Sales Order", ref_name)
+		ref_items = ref_doc.get("items") or []
+		
+		pairs = so._map_current_and_ref_items(items_missing_promos, ref_items)
+		for current_item, ref_item in pairs:
+			if getattr(ref_item, "new_promotions", None):
+				updated_items.append({
+					"name": current_item.name,
+					"new_promotions": ref_item.new_promotions,
+				})
+				current_item.new_promotions = ref_item.new_promotions
+				
+		items_missing_promos = [item for item in items_missing_promos if not getattr(item, "new_promotions", None)]
+		if not items_missing_promos:
+			break
+			
+	return updated_items
