@@ -3397,6 +3397,7 @@ def validate_serial_number(serial_number, sales_order_name=None):
 		WHERE 
 			so_item.serial_numbers LIKE %s
 			AND so.docstatus < 2
+			AND so.cancelled_status = 'Uncancelled'
 			AND so.name != %s
 	""", (f"%{serial_number}%", sales_order_name or ""), as_dict=True)
 
