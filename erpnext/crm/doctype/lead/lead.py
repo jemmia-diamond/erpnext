@@ -840,10 +840,10 @@ class Lead(SellingController, CRMNote):
 		"""
 		Determine qualification status based on:
 		  1. Must have phone and province
-		  2. Must have preferred_product_type and proposed_budget
+		  2. Must have preferred_product_type and budget_lead
 		Only auto-qualifies, never auto-disqualifies.
 		"""
-		if self.phone and self.province and self.preferred_product_type and self.proposed_budget:
+		if self.phone and self.province and self.preferred_product_type and self.budget_lead:
 			return "Qualified"
 
 		return self.qualification_status
