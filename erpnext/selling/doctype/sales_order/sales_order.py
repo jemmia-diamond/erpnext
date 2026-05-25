@@ -1546,7 +1546,7 @@ class SalesOrder(SellingController):
 
 		current_items = self.get("items") or []
 		
-		items_missing_promos = [item for item in current_items if not getattr(item, "new_promotions", None)]
+		items_missing_promos = [item for item in current_items if not _has_promotions(item)]
 		if not items_missing_promos:
 			return
 
@@ -1560,7 +1560,7 @@ class SalesOrder(SellingController):
 			if candidate_name == ref_order_name:
 				continue
 
-			items_missing_promos = [item for item in items_missing_promos if not getattr(item, "new_promotions", None)]
+			items_missing_promos = [item for item in items_missing_promos if not _has_promotions(item)]
 			if not items_missing_promos:
 				break
 
@@ -1844,8 +1844,7 @@ class SalesOrder(SellingController):
 			sibling_orders = frappe.db.get_all(
 				"Sales Order",
 				filters={
-					"split_order_group": self.split_order_group,
-					"cancelled_status": "Uncancelled"
+					"split_order_group": self.split_order_group
 				},
 				fields=["haravan_ref_order_id"]
 			)
@@ -1859,8 +1858,7 @@ class SalesOrder(SellingController):
 		original_sales_orders = frappe.db.get_all(
 			"Sales Order",
 			filters={
-				"haravan_order_id": ["in", list(reference_ids)],
-				"cancelled_status": "Uncancelled"
+				"haravan_order_id": ["in", list(reference_ids)]
 			},
 			fields=["name"]
 		)
@@ -3347,6 +3345,13 @@ def unlink_buyback_item(item_name):
 		"return_amount": new_total
 	}
 
+
+def _has_promotions(item):
+	"""Check if an item has meaningful promotions (not empty or '[]')."""
+	val = getattr(item, "new_promotions", None)
+	return val and val != "[]"
+
+
 @frappe.whitelist()
 def get_item_promotions_by_serial(source_order, target_serial):
 	"""Fetch promotion fields for a specific serial number from a source Sales Order."""
@@ -3418,7 +3423,7 @@ def fetch_promotions_from_split_group(sales_order_name):
 
 	so = frappe.get_doc("Sales Order", sales_order_name)
 	
-	items_missing_promos = [item for item in (so.get("items") or []) if not getattr(item, "new_promotions", None)]
+	items_missing_promos = [item for item in (so.get("items") or []) if not _has_promotions(item)]
 	if not items_missing_promos:
 		return []
 	
@@ -3433,14 +3438,14 @@ def fetch_promotions_from_split_group(sales_order_name):
 		
 		pairs = so._map_current_and_ref_items(items_missing_promos, ref_items)
 		for current_item, ref_item in pairs:
-			if getattr(ref_item, "new_promotions", None):
+			if _has_promotions(ref_item):
 				updated_items.append({
 					"name": current_item.name,
 					"new_promotions": ref_item.new_promotions,
 				})
 				current_item.new_promotions = ref_item.new_promotions
 				
-		items_missing_promos = [item for item in items_missing_promos if not getattr(item, "new_promotions", None)]
+		items_missing_promos = [item for item in items_missing_promos if not _has_promotions(item)]
 		if not items_missing_promos:
 			break
 			
