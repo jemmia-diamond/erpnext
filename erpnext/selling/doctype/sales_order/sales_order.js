@@ -87,7 +87,14 @@ frappe.ui.form.on("Sales Order", {
 		}
 
 		// Validate product_availability_status is set on all items
-		let missing_availability = (frm.doc.items || []).filter(item => !item.product_availability_status);
+		const _skip_keywords = ["bảo hành", "quà tặng"];
+		let missing_availability = (frm.doc.items || []).filter(item => {
+			if (!item.product_availability_status) {
+				const name_lower = (item.item_name || "").toLowerCase();
+				return !_skip_keywords.some(kw => name_lower.includes(kw));
+			}
+			return false;
+		});
 		if (missing_availability.length) {
 			frappe.validated = false;
 
