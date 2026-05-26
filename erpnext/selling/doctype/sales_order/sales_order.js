@@ -86,6 +86,62 @@ frappe.ui.form.on("Sales Order", {
 			return;
 		}
 
+		// Validate product_availability_status is set on all items
+		let missing_availability = (frm.doc.items || []).filter(item => !item.product_availability_status);
+		if (missing_availability.length) {
+			frappe.validated = false;
+
+			let item_rows_html = missing_availability.map((item, i) => {
+				let safe_name = frappe.utils.escape_html(item.item_name || item.item_code);
+				return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0;">
+					<span style="flex:1;font-weight:600;color:#333;font-size:13px;">${i + 1}. ${safe_name}</span>
+					<div style="display:flex;gap:16px;flex-shrink:0;">
+						<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;color:#555;">
+							<input type="radio" name="avail_${i}" value="In Stock" style="cursor:pointer;"> ${__("In Stock")}
+						</label>
+						<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;color:#555;">
+							<input type="radio" name="avail_${i}" value="Pre-order" style="cursor:pointer;"> ${__("Pre-order")}
+						</label>
+					</div>
+				</div>`;
+			}).join("");
+
+			let d = new frappe.ui.Dialog({
+				title: __("Thiếu trạng thái tồn kho sản phẩm"),
+				fields: [
+					{
+						fieldtype: "HTML",
+						options: `<div style="margin-bottom:4px;">
+							<div style="color:#555;margin-bottom:8px;font-size:13px;">Vui lòng chọn <b>Trạng thái tồn kho</b> cho từng sản phẩm:</div>
+							<div>${item_rows_html}</div>
+						</div>`
+					}
+				],
+				primary_action_label: __("Áp dụng & Lưu"),
+				primary_action() {
+					let all_set = missing_availability.every((item, i) =>
+						d.$wrapper.find(`input[name="avail_${i}"]:checked`).length > 0
+					);
+					if (!all_set) {
+						frappe.msgprint(__("Vui lòng chọn trạng thái cho tất cả sản phẩm."));
+						return;
+					}
+					missing_availability.forEach((item, i) => {
+						let val = d.$wrapper.find(`input[name="avail_${i}"]:checked`).val();
+						frappe.model.set_value(item.doctype, item.name, "product_availability_status", val);
+					});
+					d.hide();
+					frm.save();
+				},
+				secondary_action_label: __("Tự điền thủ công"),
+				secondary_action() {
+					d.hide();
+				}
+			});
+			d.show();
+			return;
+		}
+
 		var items_with_promos = (frm.doc.items || []).filter(item => parse_promos(item.new_promotions).length > 0);
 		var has_order_promos = (frm.doc.promotions || []).some(row => row.promotion);
 
