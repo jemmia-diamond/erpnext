@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "source_name",
+  "code",
   "details",
   "pancake_page_id",
   "pancake_platform"
@@ -19,6 +20,12 @@
    "in_list_view": 1,
    "label": "Source Name",
    "reqd": 1
+  },
+  {
+   "fieldname": "code",
+   "fieldtype": "Data",
+   "label": "Code",
+   "unique": 1
   },
   {
    "fieldname": "details",
