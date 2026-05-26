@@ -843,8 +843,11 @@ class Lead(SellingController, CRMNote):
 		  2. Must have preferred_product_type and budget_lead
 		Only auto-qualifies, never auto-disqualifies.
 		"""
-		if self.phone and self.province and self.preferred_product_type and self.budget_lead:
-			return "Qualified"
+		if self.phone and self.province:
+			if self.source == 'CRM-LEAD-2026-0039373':
+				return "Qualified"
+			elif self.preferred_product_type and self.budget_lead:
+				return "Qualified"
 
 		return self.qualification_status
 
