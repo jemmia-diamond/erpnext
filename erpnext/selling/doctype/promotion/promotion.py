@@ -97,8 +97,8 @@ def promotion_query(doctype, txt, searchfield, start, page_len, filters):
 		AND scope = %(scope)s
 		AND (
 			is_active = 1
-			OR (%(transaction_date)s IS NOT NULL AND start_date <= %(transaction_date)s AND (end_date >= %(transaction_date)s OR end_date IS NULL))
-			OR (%(real_order_date)s IS NOT NULL AND start_date <= %(real_order_date)s AND (end_date >= %(real_order_date)s OR end_date IS NULL))
+			OR (%(transaction_date)s IS NOT NULL AND %(transaction_date)s != '' AND EXTRACT(YEAR_MONTH FROM start_date) <= EXTRACT(YEAR_MONTH FROM %(transaction_date)s) AND (end_date IS NULL OR EXTRACT(YEAR_MONTH FROM end_date) >= EXTRACT(YEAR_MONTH FROM %(transaction_date)s)))
+			OR (%(real_order_date)s IS NOT NULL AND %(real_order_date)s != '' AND EXTRACT(YEAR_MONTH FROM start_date) <= EXTRACT(YEAR_MONTH FROM %(real_order_date)s) AND (end_date IS NULL OR EXTRACT(YEAR_MONTH FROM end_date) >= EXTRACT(YEAR_MONTH FROM %(real_order_date)s)))
 		)
 		AND (name LIKE %(txt)s OR title LIKE %(txt)s)
 		ORDER BY modified DESC
