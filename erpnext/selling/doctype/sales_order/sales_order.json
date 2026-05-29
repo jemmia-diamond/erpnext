@@ -2357,7 +2357,6 @@
    "fieldname": "total_group_balance",
    "fieldtype": "Currency",
    "label": "Total Group Balance",
-   "non_negative": 1,
    "options": "currency",
    "read_only": 1
   }
