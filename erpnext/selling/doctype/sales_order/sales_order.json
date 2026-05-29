@@ -429,6 +429,7 @@
    "fetch_from": "customer.tax_id",
    "fieldname": "tax_id",
    "fieldtype": "Data",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Tax Id",
@@ -705,6 +706,7 @@
   {
    "fieldname": "pricing_rule_details",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Pricing Rules"
@@ -863,6 +865,7 @@
    "collapsible": 1,
    "fieldname": "sec_tax_breakup",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Tax Breakup"
@@ -1805,6 +1808,7 @@
    "default": "0",
    "fieldname": "is_subcontracted",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Is Subcontracted",
    "print_hide": 1
   },
