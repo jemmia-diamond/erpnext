@@ -203,6 +203,7 @@
    "depends_on": "eval:doc.type==\"Individual\"",
    "fieldname": "salutation",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Salutation",
    "options": "Salutation"
   },
@@ -459,6 +460,7 @@
   {
    "fieldname": "address_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Address Information"
   },
   {
@@ -598,6 +600,7 @@
    "collapsible": 1,
    "fieldname": "utm_analytics_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Analytics"
   },
   {
