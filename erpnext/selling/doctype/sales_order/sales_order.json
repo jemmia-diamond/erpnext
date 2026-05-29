@@ -121,7 +121,6 @@
   "base_rounded_total",
   "section_break_efew",
   "advance_paid",
-  "additional_discount_section",
   "sec_tax_breakup",
   "other_charges_calculation",
   "item_wise_tax_details",
@@ -239,6 +238,7 @@
   "group_payment_entries",
   "total_allocated_group_payment",
   "balance_group_payment",
+  "total_group_balance",
   "section_break_payment_records",
   "payment_records",
   "debt_history",
@@ -1849,14 +1849,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "collapsible": 1,
-   "fieldname": "additional_discount_section",
-   "fieldtype": "Section Break",
-   "hide_days": 1,
-   "hide_seconds": 1,
-   "label": "Additional Discount"
-  },
-  {
    "fieldname": "column_break_ijxt",
    "fieldtype": "Column Break"
   },
@@ -2363,6 +2355,14 @@
    "fieldname": "tracking_number",
    "fieldtype": "Data",
    "label": "Tracking number"
+  },
+  {
+   "description": "Total Buyback Item - Balance (Group )",
+   "fieldname": "total_group_balance",
+   "fieldtype": "Currency",
+   "label": "Total Group Balance",
+   "options": "currency",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -2370,7 +2370,7 @@
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-03-04 18:04:05.873483",
+ "modified": "2026-05-29 16:59:15.353434",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
