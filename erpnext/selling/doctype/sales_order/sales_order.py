@@ -1326,6 +1326,32 @@ class SalesOrder(SellingController):
 		self.validate_primary_sales_team()
 		self.process_debt_history()
 		self.handle_serial_numbers_changes()
+		self.calculate_total_group_balance()
+
+	def calculate_total_group_balance(self):
+		try:
+			balance_group_payment = flt(self.balance_group_payment)
+			return_amount = flt(self.return_amount)
+
+			if return_amount > 0:
+				self.total_group_balance = balance_group_payment - return_amount
+			else:
+				# Try to fetch return amount from DB / recalculate
+				fetched_return_amount = 0.0
+				if self.name and not self.get("__islocal") and frappe.db.exists("Sales Order", self.name):
+					try:
+						fetched_return_amount = flt(_update_sales_order_return_amount(self.name))
+						# Sync self.return_amount
+						self.return_amount = fetched_return_amount
+					except Exception:
+						pass
+
+				if fetched_return_amount > 0:
+					self.total_group_balance = balance_group_payment - fetched_return_amount
+				else:
+					self.total_group_balance = None
+		except Exception:
+			pass
 
 	def before_insert(self):
 		self.process_debt_history()
@@ -3261,6 +3287,17 @@ def _update_sales_order_return_amount(sales_order):
 		total_return_amount += price
 
 	frappe.db.set_value("Sales Order", sales_order, "return_amount", total_return_amount)
+
+	try:
+		balance_group_payment = flt(frappe.db.get_value("Sales Order", sales_order, "balance_group_payment"))
+		if total_return_amount > 0:
+			total_group_balance = balance_group_payment - total_return_amount
+		else:
+			total_group_balance = None
+		frappe.db.set_value("Sales Order", sales_order, "total_group_balance", total_group_balance)
+	except Exception:
+		pass
+
 	return total_return_amount
 
 
