@@ -90,7 +90,6 @@ class SalesOrder(SellingController):
 		additional_discount_percentage: DF.Float
 		address_display: DF.TextEditor | None
 		advance_paid: DF.Currency
-		advance_payment_status: DF.Literal["Not Requested", "Requested", "Partially Paid", "Fully Paid"]
 		amended_from: DF.Link | None
 		amount_eligible_for_commission: DF.Currency
 		apply_discount_on: DF.Literal["", "Grand Total", "Net Total"]
@@ -108,6 +107,7 @@ class SalesOrder(SellingController):
 		billing_address: DF.Literal["", "72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh", "63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i", "209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1"]
 		billing_status: DF.Literal["Not Billed", "Fully Billed", "Partly Billed", "Closed"]
 		birth_date: DF.Date | None
+		campaign: DF.Link | None
 		cancelled_status: DF.Literal["", "Uncancelled", "Cancelled"]
 		carrier_status: DF.Literal["", "Not Delivered", "Ready To Pick", "Delivering", "Delivered"]
 		commission_base_amount: DF.Currency
@@ -156,20 +156,20 @@ class SalesOrder(SellingController):
 		grand_total: DF.Currency
 		group_payment_entries: DF.Table[PaymentEntryReference]
 		group_same_items: DF.Check
+		has_unit_price_items: DF.Check
+		ignore_default_payment_terms_template: DF.Check
 		haravan_coupon_code: DF.SmallText | None
 		haravan_created_at: DF.Datetime | None
 		haravan_order_id: DF.Data | None
 		haravan_ref_order_id: DF.Data | None
-		has_unit_price_items: DF.Check
-		ignore_default_payment_terms_template: DF.Check
 		ignore_pricing_rule: DF.Check
 		in_words: DF.Data | None
 		incoterm: DF.Link | None
 		inter_company_order_reference: DF.Link | None
 		is_internal_customer: DF.Check
-		is_split_order: DF.Check
 		is_subcontracted: DF.Check
 		item_wise_tax_details: DF.Table[ItemWiseTaxDetail]
+		is_split_order: DF.Check
 		items: DF.Table[SalesOrderItem]
 		language: DF.Link | None
 		letter_head: DF.Link | None
@@ -219,15 +219,16 @@ class SalesOrder(SellingController):
 		select_print_heading: DF.Link | None
 		selling_price_list: DF.Link
 		set_warehouse: DF.Link | None
-		shipping_address: DF.SmallText | None
+		shipping_address: DF.TextEditor | None
 		shipping_address_name: DF.Link | None
 		shipping_rule: DF.Link | None
 		skip_delivery_note: DF.Check
+		source: DF.Link | None
 		source_name: DF.Data | None
 		split_order_group: DF.Data | None
 		split_order_group_name: DF.Data | None
 		split_reason: DF.Literal["", "Gold Regulation", "Customer Request", "Other"]
-		status: DF.Literal["", "Draft", "On Hold", "To Pay", "To Deliver and Bill", "To Bill", "To Deliver", "Completed", "Cancelled", "Closed"]
+		status: DF.Literal["", "Draft", "On Hold", "To Deliver and Bill", "To Bill", "To Deliver", "Completed", "Cancelled", "Closed"]
 		tax_category: DF.Link | None
 		tax_id: DF.Data | None
 		taxes: DF.Table[SalesTaxesandCharges]
@@ -240,7 +241,6 @@ class SalesOrder(SellingController):
 		total_allocated_group_payment: DF.Currency
 		total_amount: DF.Currency
 		total_commission: DF.Currency
-		total_group_balance: DF.Currency
 		total_net_weight: DF.Float
 		total_qty: DF.Float
 		total_taxes_and_charges: DF.Currency
@@ -1326,32 +1326,6 @@ class SalesOrder(SellingController):
 		self.validate_primary_sales_team()
 		self.process_debt_history()
 		self.handle_serial_numbers_changes()
-		self.calculate_total_group_balance()
-
-	def calculate_total_group_balance(self):
-		try:
-			balance_group_payment = flt(self.balance_group_payment)
-			return_amount = flt(self.return_amount)
-
-			if return_amount > 0:
-				self.total_group_balance = balance_group_payment - return_amount
-			else:
-				# Try to fetch return amount from DB / recalculate
-				fetched_return_amount = 0.0
-				if self.name and not self.get("__islocal") and frappe.db.exists("Sales Order", self.name):
-					try:
-						fetched_return_amount = flt(_update_sales_order_return_amount(self.name))
-						# Sync self.return_amount
-						self.return_amount = fetched_return_amount
-					except Exception:
-						pass
-
-				if fetched_return_amount > 0:
-					self.total_group_balance = balance_group_payment - fetched_return_amount
-				else:
-					self.total_group_balance = None
-		except Exception:
-			pass
 
 	def before_insert(self):
 		self.process_debt_history()
@@ -1571,7 +1545,7 @@ class SalesOrder(SellingController):
 			return
 
 		current_items = self.get("items") or []
-
+		
 		items_missing_promos = [item for item in current_items if not _has_promotions(item)]
 		if not items_missing_promos:
 			return
@@ -1581,7 +1555,7 @@ class SalesOrder(SellingController):
 		]
 
 		candidate_ref_orders = self.get_candidate_reference_orders()
-
+		
 		for candidate_name in candidate_ref_orders:
 			if candidate_name == ref_order_name:
 				continue
@@ -1592,7 +1566,7 @@ class SalesOrder(SellingController):
 
 			candidate_doc = frappe.get_doc("Sales Order", candidate_name)
 			self.copy_sales_order_items_from_reference(
-				candidate_doc,
+				candidate_doc, 
 				include_fields=promotion_fields,
 				target_items=items_missing_promos
 			)
@@ -1714,7 +1688,7 @@ class SalesOrder(SellingController):
 				return
 
 			ref_order_names = self.get_candidate_reference_orders()
-
+			
 			if not ref_order_names:
 				return
 
@@ -1921,10 +1895,10 @@ class SalesOrder(SellingController):
 	def _copy_item_fields_with_db_update(self, ref_item, current_item, include_fields=None):
 		"""Copy fields from reference item to current item using frappe.db.set_value"""
 		fields_to_copy = self._get_item_fields_to_copy()
-
+		
 		if include_fields:
 			fields_to_copy = [f for f in fields_to_copy if f in include_fields]
-
+		
 		items_updated = False
 
 		for field in fields_to_copy:
@@ -3287,17 +3261,6 @@ def _update_sales_order_return_amount(sales_order):
 		total_return_amount += price
 
 	frappe.db.set_value("Sales Order", sales_order, "return_amount", total_return_amount)
-
-	try:
-		balance_group_payment = flt(frappe.db.get_value("Sales Order", sales_order, "balance_group_payment"))
-		if total_return_amount > 0:
-			total_group_balance = balance_group_payment - total_return_amount
-		else:
-			total_group_balance = None
-		frappe.db.set_value("Sales Order", sales_order, "total_group_balance", total_group_balance)
-	except Exception:
-		pass
-
 	return total_return_amount
 
 
@@ -3424,14 +3387,14 @@ def validate_serial_number(serial_number, sales_order_name=None):
 		related_orders = set(so.get_all_related_sales_orders() or [])
 
 	duplicate_items = frappe.db.sql("""
-		SELECT
+		SELECT 
 			so_item.parent as order_name,
 			so_item.serial_numbers
-		FROM
+		FROM 
 			`tabSales Order Item` so_item
 		INNER JOIN
 			`tabSales Order` so ON so.name = so_item.parent
-		WHERE
+		WHERE 
 			so_item.serial_numbers LIKE %s
 			AND so.docstatus < 2
 			AND so.cancelled_status = 'Uncancelled'
@@ -3460,20 +3423,20 @@ def fetch_promotions_from_split_group(sales_order_name):
 		return []
 
 	so = frappe.get_doc("Sales Order", sales_order_name)
-
+	
 	items_missing_promos = [item for item in (so.get("items") or []) if not _has_promotions(item)]
 	if not items_missing_promos:
 		return []
-
+	
 	ref_names = so.get_candidate_reference_orders()
 	if not ref_names:
 		return []
-
+		
 	updated_items = []
 	for ref_name in ref_names:
 		ref_doc = frappe.get_doc("Sales Order", ref_name)
 		ref_items = ref_doc.get("items") or []
-
+		
 		pairs = so._map_current_and_ref_items(items_missing_promos, ref_items)
 		for current_item, ref_item in pairs:
 			if _has_promotions(ref_item):
@@ -3482,9 +3445,9 @@ def fetch_promotions_from_split_group(sales_order_name):
 					"new_promotions": ref_item.new_promotions,
 				})
 				current_item.new_promotions = ref_item.new_promotions
-
+				
 		items_missing_promos = [item for item in items_missing_promos if not _has_promotions(item)]
 		if not items_missing_promos:
 			break
-
+			
 	return updated_items
