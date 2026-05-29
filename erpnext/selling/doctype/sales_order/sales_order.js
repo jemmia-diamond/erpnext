@@ -1613,6 +1613,16 @@ frappe.ui.form.on("Sales Order Item", {
 	serial: function (frm, cdt, cdn) {
 		var row = locals[cdt][cdn];
 		if (row.serial) {
+			if (!erpnext.utils.item.isJewelryItem(row)) {
+				frappe.msgprint({
+					title: __("Không hỗ trợ Serial"),
+					indicator: "orange",
+					message: __("Chỉ sản phẩm Trang sức mới sử dụng số Serial.")
+				});
+				frappe.model.set_value(cdt, cdn, 'serial', null);
+				return;
+			}
+
 			const val = row.serial;
 			frappe.call({
 				method: "erpnext.selling.doctype.sales_order.sales_order.validate_serial_number",
