@@ -1,22 +1,13 @@
-frappe.ui.form.on('Sales Order', {
-	async refresh(frm) {
-		await frm.trigger('render_gallery');
-		frm.trigger('bind_gallery_listeners');
-	},
-	onload_post_render: async function(frm) {
-		await frm.trigger('render_gallery');
-	},
-	attachments_update: async function(frm) {
-		await frm.trigger('render_gallery');
-	},
+frappe.provide('erpnext.utils.sales_order_gallery');
 
+$.extend(erpnext.utils.sales_order_gallery, {
 	bind_gallery_listeners(frm) {
 		if (frm.__gallery_bound) return;
 		frm.__gallery_bound = true;
 
 		const $grid = frm.fields_dict?.items?.grid?.wrapper;
 		if ($grid && $grid.length) {
-			const rerender = frappe.utils.debounce(() => frm.trigger('render_gallery'), 400);
+			const rerender = frappe.utils.debounce(() => this.render_gallery(frm), 400);
 			$grid.on('change', 'input,select,textarea', rerender);
 			$grid.on('click', '.grid-remove-rows, .grid-delete-row', rerender);
 			$grid.on('click', '.grid-add-row, .grid-insert-row, .grid-insert-row-below', rerender);

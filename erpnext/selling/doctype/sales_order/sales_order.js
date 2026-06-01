@@ -207,7 +207,22 @@ frappe.ui.form.on("Sales Order", {
 		}
 	},
 
+	onload_post_render: function(frm) {
+		if (erpnext.utils.sales_order_gallery && erpnext.utils.sales_order_gallery.render_gallery) {
+			erpnext.utils.sales_order_gallery.render_gallery(frm);
+		}
+	},
+	attachments_update: function(frm) {
+		if (erpnext.utils.sales_order_gallery && erpnext.utils.sales_order_gallery.render_gallery) {
+			erpnext.utils.sales_order_gallery.render_gallery(frm);
+		}
+	},
 	refresh: function (frm) {
+		if (erpnext.utils.sales_order_gallery && erpnext.utils.sales_order_gallery.render_gallery) {
+			erpnext.utils.sales_order_gallery.render_gallery(frm);
+			erpnext.utils.sales_order_gallery.bind_gallery_listeners(frm);
+		}
+		
 		frm.fields_dict["items"].grid.update_docfield_property(
 			"add_schedule",
 			"hidden",
