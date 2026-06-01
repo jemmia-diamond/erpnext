@@ -77,8 +77,10 @@ class BuybackExchange(Document):
 			frappe.throw(frappe._("Invalid products_info JSON in BuybackExchange {0}. Please check data from Lark.").format(self.name))
 
 	def resolve_item_reference(self, row):
+		from erpnext.selling.doctype.sales_order.item_utils import is_diamond_item_code
+		
 		if self.phone_number and row.item_code:
-			is_gia = str(row.item_code).startswith("GIA")
+			is_gia = is_diamond_item_code(row.item_code)
 			lookup_field = "sku" if is_gia else "barcode"
 			operator = "LIKE" if is_gia else "="
 			lookup_value = f"%{row.item_code}%" if is_gia else row.item_code
@@ -134,7 +136,7 @@ class BuybackExchange(Document):
 						{"parent": sales_order, "item_code": row.item_code}, "name")
 
 					if not item_name:
-						is_gia = str(row.item_code).startswith("GIA") if row.item_code else False
+						is_gia = is_diamond_item_code(row.item_code) if row.item_code else False
 						if is_gia:
 							item_name = frappe.db.get_value("Sales Order Item",
 								{"parent": sales_order, "sku": ["like", f"%{row.item_code}%"]}, "name")

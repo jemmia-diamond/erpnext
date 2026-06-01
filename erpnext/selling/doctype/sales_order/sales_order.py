@@ -50,6 +50,10 @@ from erpnext.stock.stock_balance import get_reserved_qty, update_bin_qty
 form_grid_templates = {"items": "templates/form_grid/item_grid.html"}
 
 
+import erpnext
+from erpnext.selling.doctype.sales_order.item_utils import is_diamond_item, is_gift_item, is_jewelry_item
+
+
 class WarehouseRequired(frappe.ValidationError):
 	pass
 
@@ -1764,24 +1768,10 @@ class SalesOrder(SellingController):
 		def norm(v):
 			return str(v).strip() if v is not None else None
 
-		def get_gia_from_sku(item):
-			sku = getattr(item, "sku", None)
-			if not sku:
-				return None
-			sku = str(sku)
-			pos = sku.find("GIA")
-			if pos < 0:
-				return None
-			start = pos + 3
-			end = start + 10
-			return sku[start:end] if end <= len(sku) else None
+		from erpnext.selling.doctype.sales_order.item_utils import get_gia_from_item, is_jewelry_item
 
 		def is_jewelry(item):
-			sku = str(getattr(item, "sku", "") or "")
-			parts = sku.split("-")
-			is_gift = sku.startswith("QT")
-			is_diamond = any(p.startswith("GIA") for p in parts)
-			return not (is_gift or is_diamond)
+			return is_jewelry_item(item)
 
 		def get_serial(item):
 			s = getattr(item, "serial_numbers", "")
@@ -1794,7 +1784,7 @@ class SalesOrder(SellingController):
 			vid = norm(getattr(ref, "haravan_variant_id", None))
 			if vid:
 				ref_by_variant[vid] = ref
-			gia = get_gia_from_sku(ref)
+			gia = get_gia_from_item(ref)
 			if gia and gia not in ref_by_gia:
 				ref_by_gia[gia] = ref
 			serial = get_serial(ref)
@@ -1817,7 +1807,7 @@ class SalesOrder(SellingController):
 		for cur in current_items:
 			if cur.name in matched:
 				continue
-			gia = get_gia_from_sku(cur)
+			gia = get_gia_from_item(cur)
 			if gia and gia in ref_by_gia:
 				pairs.append((cur, ref_by_gia[gia]))
 				matched.add(cur.name)
