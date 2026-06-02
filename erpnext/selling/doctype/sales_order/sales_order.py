@@ -50,8 +50,7 @@ from erpnext.stock.stock_balance import get_reserved_qty, update_bin_qty
 form_grid_templates = {"items": "templates/form_grid/item_grid.html"}
 
 
-import erpnext
-from erpnext.selling.doctype.sales_order.item_utils import is_diamond_item, is_gift_item, is_jewelry_item
+
 
 
 class WarehouseRequired(frappe.ValidationError):
@@ -1768,10 +1767,10 @@ class SalesOrder(SellingController):
 		def norm(v):
 			return str(v).strip() if v is not None else None
 
-		from erpnext.selling.doctype.sales_order.item_utils import get_gia_from_item, is_jewelry_item
+		from erpnext.selling.doctype.sales_order.item_utils import get_gia_from_item, is_serial_match_jewelry_item
 
 		def is_jewelry(item):
-			return is_jewelry_item(item)
+			return is_serial_match_jewelry_item(item)
 
 		def get_serial(item):
 			s = getattr(item, "serial_numbers", "")

@@ -20,6 +20,9 @@ def is_jewelry_item(item):
 	sku = str(getattr(item, "sku", "") or "")
 	return sku.startswith(SKU_PREFIX_TEMPORARY_JEWELRY) or len(sku) == SKU_LENGTH_JEWELRY
 
+def is_serial_match_jewelry_item(item):
+	return is_jewelry_item(item) and not (is_gift_item(item) or is_gift_item_by_name(item) or is_diamond_item(item) or get_gia_from_item(item))
+
 def is_diamond_item(item):
 	sku = str(getattr(item, "sku", "") or "")
 	return sku.startswith(SKU_PREFIX_DIAMOND) or sku.startswith(SKU_PREFIX_DIAMOND_TEMPORARY)

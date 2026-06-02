@@ -88,29 +88,31 @@ $.extend(erpnext.utils.sales_order_gallery, {
 			return;
 		}
 
-		const html = [
-			'<div class="so-gallery">',
-			...list.map(([u, meta]) => `
-				<div class="cell">
-					<div class="img">
-						<img src="${u}" loading="lazy" alt="" />
-					</div>
-					<div class="src-tag">${frappe.utils.escape_html(meta.src)}</div>
-				</div>
-			`),
-			'</div>'
-		].join('');
-		$wrap.append(html);
+		const $gallery = $('<div class="so-gallery"></div>');
+		list.forEach(([u, meta]) => {
+			const $cell = $('<div class="cell"></div>');
+			const $imgWrap = $('<div class="img"></div>');
+			const $img = $('<img>', { loading: 'lazy', alt: '' }).attr('src', u);
+			const $srcTag = $('<div class="src-tag"></div>').text(meta.src);
+
+			$imgWrap.append($img);
+			$cell.append($imgWrap, $srcTag);
+			$gallery.append($cell);
+		});
+		$wrap.append($gallery);
 
 		$wrap.off('click.soimg').on('click.soimg', '.so-gallery img', (e) => {
 			const src = e.currentTarget?.getAttribute('src');
 			const d = new frappe.ui.Dialog({ title: 'Preview', size: 'large' });
-			d.$body.css({ padding: 0 }).html(`
-				<div style="max-height:70vh; overflow:auto; background:#000">
-					<img src="${src}" style="display:block; max-width:100%; margin:auto;" />
-				</div>
-				<div style="padding:8px 12px; color:#6b7280; font-size:12px;">${src}</div>
-			`);
+			d.$body.css({ padding: 0 });
+
+			const $imgContainer = $('<div style="max-height:70vh; overflow:auto; background:#000"></div>');
+			const $img = $('<img>', { style: 'display:block; max-width:100%; margin:auto;' }).attr('src', src);
+			$imgContainer.append($img);
+
+			const $srcText = $('<div style="padding:8px 12px; color:#6b7280; font-size:12px;"></div>').text(src);
+
+			d.$body.append($imgContainer, $srcText);
 			d.show();
 		});
 	}
