@@ -2590,6 +2590,53 @@ frappe.ui.form.on("Sales Team", {
 	}
 });
 
+// Order and Debt Tracking event handlers
+frappe.ui.form.on("Order and Debt Tracking", {
+	progress_status: function(frm, cdt, cdn) {
+		set_reason_options(frm, cdt, cdn);
+	},
+	form_render: function(frm, cdt, cdn) {
+		set_reason_options(frm, cdt, cdn);
+	}
+});
+
+function set_reason_options(frm, cdt, cdn) {
+	let row = locals[cdt][cdn];
+
+	let valid_reasons = {
+		"Đủ hàng – khách sẽ nhận tuần tới": [
+			"Khách đã chốt ngày đến nhận tại cửa hàng",
+			"Sale sẽ giao tận nơi cho khách",
+			"Gửi đơn vị vận chuyển (COD) về địa chỉ khách"
+		],
+		"Đủ hàng – khách chưa chốt ngày nhận": [
+			"Khách chưa hẹn ngày nhận cụ thể, sale đang care thêm",
+			"Khách bận (công tác, nước ngoài, du lịch...)",
+			"Khách chưa đủ tiền / đang gom tiền",
+			"Đơn quá hạn công nợ, đã làm đề xuất gia hạn"
+		],
+		"Chưa đủ hàng": [
+			"Đang gia công",
+			"Đợi quà tặng",
+			"Khách chờ nhận cùng các đơn khác",
+			"Hàng lỗi, đang bảo hành tại xưởng"
+		],
+		"Đã giao – chưa thu đủ tiền": [
+			"Đã giao hàng nhưng chưa thanh toán đủ (quản lý đã duyệt)"
+		]
+	};
+
+	let options = valid_reasons[row.progress_status] || [""];
+
+	if (frm.fields_dict['debt_history'] && frm.fields_dict['debt_history'].grid) {
+		frm.fields_dict['debt_history'].grid.update_docfield_property('status_reason', 'options', options.join('\n'));
+	}
+
+	if (row.status_reason && !options.includes(row.status_reason)) {
+		frappe.model.set_value(cdt, cdn, 'status_reason', '');
+	}
+}
+
 function calculate_allocated_percentage(frm, cdt, cdn) {
 	var row = locals[cdt][cdn];
 
