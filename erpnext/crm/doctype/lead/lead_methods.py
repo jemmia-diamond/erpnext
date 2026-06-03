@@ -22,6 +22,11 @@ if TYPE_CHECKING:
 def is_non_empty(value: str | None) -> bool:
 	return bool(value and value.strip())
 
+def truncate_string(value: str | None, max_length: int = 140) -> str | None:
+	if value and isinstance(value, str) and len(value) > max_length:
+		return value[:max_length]
+	return value
+
 def normalize_phone_number(phone: str | None) -> str | None:
 	"""Normalize phone number to standard format (country code + number, no prefix).
 	Examples:
@@ -100,6 +105,11 @@ def insert_lead(doc) -> "Document":
 	:param doc: doc to insert (dict)"""
 
 	doc = frappe._dict(doc)
+
+	for field in ["lead_name", "first_name", "last_name", "middle_name"]:
+		if field in doc:
+			doc[field] = truncate_string(doc.get(field))
+
 	if frappe.is_table(doc.doctype):
 		if not (doc.parenttype and doc.parent and doc.parentfield):
 			frappe.throw(_("Parenttype, Parent and Parentfield are required to insert a child record"))
@@ -195,7 +205,7 @@ def backfill_lead_info(docs):
 
         for doc in docs:
             lead_id = doc.get("docname")
-            new_name = doc.get("new_name")
+            new_name = truncate_string(doc.get("new_name"))
             new_phone = doc.get("new_phone")
 
             if not lead_id:
@@ -270,6 +280,11 @@ def update_lead_by_batch(docs):
 	for doc in docs:
 		doc = doc.copy()
 		doc.pop("flags", None)
+
+		for field in ["lead_name", "first_name", "last_name", "middle_name"]:
+			if field in doc:
+				doc[field] = truncate_string(doc.get(field))
+
 		pancake_data = doc.get("pancake_data", {})
 		try:
 			pancake_phone = normalize_phone_number(doc.get("phone"))
