@@ -2581,6 +2581,16 @@ frappe.ui.form.on("Order and Debt Tracking", {
 	},
 	form_render: function (frm, cdt, cdn) {
 		set_reason_options(frm, cdt, cdn);
+	},
+	debt_history_add: function(frm, cdt, cdn) {
+		frappe.model.set_value(cdt, cdn, "date", frappe.datetime.get_today());
+		frappe.model.set_value(cdt, cdn, "added_by", frappe.session.user);
+		let default_options = [
+			"Khách đã chốt ngày đến nhận tại cửa hàng",
+			"Sale sẽ giao tận nơi cho khách",
+			"Gửi đơn vị vận chuyển (COD) về địa chỉ khách"
+		];
+		frm.fields_dict['debt_history'].grid.update_docfield_property('status_reason', 'options', default_options.join('\n'));
 	}
 });
 
@@ -2616,8 +2626,8 @@ function set_reason_options(frm, cdt, cdn) {
 		frm.fields_dict['debt_history'].grid.update_docfield_property('status_reason', 'options', options.join('\n'));
 	}
 
-	if (row.status_reason && !options.includes(row.status_reason)) {
-		frappe.model.set_value(cdt, cdn, 'status_reason', '');
+	if (!options.includes(row.status_reason)) {
+		frappe.model.set_value(cdt, cdn, 'status_reason', options[0]);
 	}
 }
 
