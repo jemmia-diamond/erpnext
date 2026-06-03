@@ -57,7 +57,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Progress Statuss",
-   "options": "\n\u0110\u1ee7 h\u00e0ng \u2013 kh\u00e1ch s\u1ebd nh\u1eadn tu\u1ea7n t\u1edbi\n\u0110\u1ee7 h\u00e0ng \u2013 kh\u00e1ch ch\u01b0a ch\u1ed1t ng\u00e0y nh\u1eadn\nCh\u01b0a \u0111\u1ee7 h\u00e0ng\n\u0110\u00e3 giao \u2013 ch\u01b0a thu \u0111\u1ee7 ti\u1ec1n"
+   "options": "\u0110\u1ee7 h\u00e0ng \u2013 kh\u00e1ch s\u1ebd nh\u1eadn tu\u1ea7n t\u1edbi\n\u0110\u1ee7 h\u00e0ng \u2013 kh\u00e1ch ch\u01b0a ch\u1ed1t ng\u00e0y nh\u1eadn\nCh\u01b0a \u0111\u1ee7 h\u00e0ng\n\u0110\u00e3 giao \u2013 ch\u01b0a thu \u0111\u1ee7 ti\u1ec1n"
   },
   {
    "fieldname": "status_reason",
@@ -88,7 +88,7 @@
  "is_submittable": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-06-01 16:28:03.491110",
+ "modified": "2026-06-03 13:48:37.986295",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Order and Debt Tracking",
