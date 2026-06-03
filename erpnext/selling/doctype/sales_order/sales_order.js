@@ -2576,10 +2576,10 @@ frappe.ui.form.on("Sales Team", {
 
 // Order and Debt Tracking event handlers
 frappe.ui.form.on("Order and Debt Tracking", {
-	progress_status: function(frm, cdt, cdn) {
+	progress_status: function (frm, cdt, cdn) {
 		set_reason_options(frm, cdt, cdn);
 	},
-	form_render: function(frm, cdt, cdn) {
+	form_render: function (frm, cdt, cdn) {
 		set_reason_options(frm, cdt, cdn);
 	}
 });
@@ -2760,23 +2760,21 @@ function validate_promotion_prices(frm, items, items_missing_promos) {
 				}
 			});
 
-			if (order_promo_names.length) {
-				var base_total = (frm.doc.items || []).reduce(function (sum, item) {
-					return sum + (item.rate * item.qty);
-				}, 0);
-				var expected_total = base_total;
-				var order_promo_objects = order_promo_names.map(function (name) { return promo_map[name]; }).filter(Boolean);
-				order_promo_objects.forEach(function (p) {
-					expected_total = apply_promo_discount(expected_total, p, "Order");
-				});
-				var order_diff = Math.abs(frm.doc.grand_total - expected_total);
-				if (order_diff > 5000) {
-					errors.push(__("Tổng đơn hàng: giá thực tế {0} lệch {1} so với giá sau khuyến mãi {2}", [
-						format_currency(frm.doc.grand_total, frm.doc.currency),
-						format_currency(order_diff, frm.doc.currency),
-						format_currency(expected_total, frm.doc.currency)
-					]));
-				}
+			var base_total = (frm.doc.items || []).reduce(function (sum, item) {
+				return sum + (item.rate * item.qty);
+			}, 0);
+			var expected_total = base_total;
+			var order_promo_objects = order_promo_names.map(function (name) { return promo_map[name]; }).filter(Boolean);
+			order_promo_objects.forEach(function (p) {
+				expected_total = apply_promo_discount(expected_total, p, "Order");
+			});
+			var order_diff = Math.abs(frm.doc.grand_total - expected_total);
+			if (order_diff > 5000) {
+				errors.push(__("Tổng đơn hàng: giá thực tế {0} lệch {1} so với giá sau khuyến mãi {2}", [
+					format_currency(frm.doc.grand_total, frm.doc.currency),
+					format_currency(order_diff, frm.doc.currency),
+					format_currency(expected_total, frm.doc.currency)
+				]));
 			}
 
 			resolve(errors);
