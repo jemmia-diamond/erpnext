@@ -1615,22 +1615,26 @@ class SalesOrder(SellingController):
 			if not buyback_items:
 				return
 
+			parents_to_update = set()
 			for item in buyback_items:
 				original_doc = frappe.get_doc("Buyback Exchange Item", item.name)
+				if original_doc and original_doc.parent:
+					parents_to_update.add(original_doc.parent)
+				
 				new_doc = frappe.copy_doc(original_doc)
 
 				new_doc.current_sales_order = self.name
 				new_doc.prev_sales_order = original_doc.prev_sales_order
 				new_doc.amended_from = None
 
-				new_doc.insert(ignore_permissions=True)
+				new_doc.insert()
 
-			if original_doc and original_doc.parent:
+			if parents_to_update:
 				frappe.db.sql("""
 					UPDATE `tabBuyback Exchange`
 					SET modified = %s
-					WHERE name = %s
-				""", (frappe.utils.now(), original_doc.parent))
+					WHERE name IN %s
+				""", (frappe.utils.now(), tuple(parents_to_update)))
 
 			_update_sales_order_return_amount(self.name)
 

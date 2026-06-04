@@ -39,7 +39,10 @@ class BuybackExchange(Document):
 			for item in self.items:
 				item.current_sales_order = sales_order
 
-			_update_sales_order_return_amount(sales_order)
+	def on_update(self):
+		sales_orders = {item.current_sales_order for item in self.items if item.current_sales_order}
+		for so in sales_orders:
+			_update_sales_order_return_amount(so)
 
 	def process_products_info(self):
 		if not self.products_info:
