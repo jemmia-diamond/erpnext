@@ -908,6 +908,38 @@ class SalesOrder(SellingController):
 		self.check_status_changes_for_rank()
 		self.sync_tracking_number_to_payment_entry()
 		self.copy_from_reference_order()
+		self.sync_promotions_to_split_group()
+
+	def sync_promotions_to_split_group(self):
+		"""Sync promotions to other child orders in the same split group if they are missing them"""
+		if not (self.is_split_order and self.split_order_group):
+			return
+
+		self_has_order_promos = bool(self.get("promotions"))
+
+		if not self_has_order_promos:
+			return
+
+		sibling_orders = frappe.db.get_all(
+			"Sales Order",
+			filters={
+				"split_order_group": self.split_order_group,
+				"name": ["!=", self.name],
+				"docstatus": ["<", 2]
+			},
+			fields=["name"]
+		)
+
+		if not sibling_orders:
+			return
+
+		for sibling in sibling_orders:
+			sibling_doc = frappe.get_doc("Sales Order", sibling.name)
+			
+			if self_has_order_promos and not sibling_doc.get("promotions"):
+				for row in self.get("promotions"):
+					child = sibling_doc.append("promotions", {"promotion": row.promotion})
+					child.db_insert()
 
 	def sync_tracking_number_to_payment_entry(self):
 		if not self.tracking_number:
