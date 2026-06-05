@@ -14,7 +14,7 @@ def get_tracked_sales_orders(so_names, today_str):
         filters=[
             ["parenttype", "=", "Sales Order"],
             ["parent", "in", so_names],
-            ["creation", "between", [f"{today_str} 00:00:00", f"{today_str} 23:59:59"]]
+            ["added_on", "between", [f"{today_str} 00:00:00", f"{today_str} 23:59:59"]]
         ],
         fields=["parent"],
         ignore_permissions=True
@@ -166,7 +166,7 @@ def get_debt_list(from_date=None, from_the_last_check=False):
                 filters=[
                     ["parenttype", "=", "Sales Order"],
                     ["parent", "in", list(all_so_names)],
-                    ["creation", "between", [f"{today} 00:00:00", f"{today} 23:59:59"]]
+                    ["added_on", "between", [f"{today} 00:00:00", f"{today} 23:59:59"]]
                 ],
                 fields=["parent"]
             )
