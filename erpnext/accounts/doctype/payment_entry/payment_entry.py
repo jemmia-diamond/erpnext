@@ -374,6 +374,7 @@ class PaymentEntry(AccountsController):
 	def on_update(self):
 		self.sync_bank_transaction_payments()
 		sync_so_snapshot_pe_fields_background(self.name)
+		self.update_sales_order_financials()
 
 	def sync_bank_transaction_payments(self):
 		if self.flags.get("updating_from_bank_transaction"):
@@ -406,6 +407,7 @@ class PaymentEntry(AccountsController):
 		self.make_gl_entries()
 		self.update_outstanding_amounts()
 		self.set_status()
+		self.update_sales_order_financials()
 
 	def validate_for_repost(self):
 		validate_docs_for_voucher_types(["Payment Entry"])
@@ -512,6 +514,7 @@ class PaymentEntry(AccountsController):
 		self.update_outstanding_amounts()
 		self.delink_advance_entry_references()
 		self.set_status()
+		self.update_sales_order_financials()
 
 	def update_payment_requests(self, cancel=False):
 		from erpnext.accounts.doctype.payment_request.payment_request import (
@@ -560,6 +563,27 @@ class PaymentEntry(AccountsController):
 
 	def update_outstanding_amounts(self):
 		self.set_missing_ref_details(force=True)
+
+	def after_delete(self):
+		self.update_sales_order_financials()
+
+	def update_sales_order_financials(self):
+		so_names = set()
+		for d in self.get("references"):
+			if d.reference_doctype == "Sales Order" and d.reference_name:
+				so_names.add(d.reference_name)
+		
+		if not self.is_new() and self.get_doc_before_save():
+			for d in self.get_doc_before_save().get("references", []):
+				if d.reference_doctype == "Sales Order" and d.reference_name:
+					so_names.add(d.reference_name)
+
+		for so_name in so_names:
+			try:
+				so = frappe.get_doc("Sales Order", so_name)
+				so.update_financial_totals(save=True)
+			except Exception as e:
+				frappe.log_error(f"Error updating Sales Order financials from Payment Entry {self.name}: {str(e)}", "Payment Entry -> SO Update Error")
 
 	def validate_duplicate_entry(self):
 		reference_names = set()
