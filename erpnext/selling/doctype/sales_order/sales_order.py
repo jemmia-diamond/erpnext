@@ -716,6 +716,10 @@ class SalesOrder(SellingController):
 		self.copy_from_reference_order()
 		self.sync_promotions_to_split_group()
 
+		if not self.flags.financial_totals_updated:
+			self.flags.financial_totals_updated = True
+			self.update_financial_totals(save=True)
+
 	def sync_promotions_to_split_group(self):
 		"""Sync promotions to other child orders in the same split group if they are missing them"""
 		if not (self.is_split_order and self.split_order_group):
@@ -2065,12 +2069,6 @@ class SalesOrder(SellingController):
 			group_records_total = sum(get_payment_records_total(frappe.get_doc("Sales Order", name)) for name in orders_to_update)
 			so.total_allocated_group_payment = group_payment_total + group_records_total
 			so.balance_group_payment = flt(group_grand_total) - flt(so.total_allocated_group_payment)
-			
-			if save:
-				so.flags.ignore_validate_update_after_submit = True
-				so.db_update()
-				if so_name == self.name:
-					pass
 
 		if save:
 			for so_name in orders_to_update:
@@ -2080,13 +2078,6 @@ class SalesOrder(SellingController):
 					so.flags.ignore_links = True
 					so.save(ignore_permissions=True, ignore_version=True)
 
-
-
-	def on_update(self):
-		if not self.flags.financial_totals_updated:
-			self.flags.financial_totals_updated = True
-			self.update_financial_totals(save=True)
-		pass
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:
 	"""Returns the unreserved quantity for the Sales Order Item."""
