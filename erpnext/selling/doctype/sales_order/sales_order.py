@@ -2074,6 +2074,7 @@ class SalesOrder(SellingController):
 			for so_name in orders_to_update:
 				so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
 				if so.docstatus != 2:
+					so.flags.financial_totals_updated = True
 					so.flags.ignore_validate_update_after_submit = True
 					so.flags.ignore_links = True
 					so.save(ignore_permissions=True, ignore_version=True)
