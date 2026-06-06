@@ -716,12 +716,9 @@ class SalesOrder(SellingController):
 		self.copy_from_reference_order()
 		self.sync_promotions_to_split_group()
 
-		if not getattr(frappe.flags, "in_financial_update", False):
-			frappe.flags.in_financial_update = True
-			try:
-				self.update_financial_totals(save=True)
-			finally:
-				frappe.flags.in_financial_update = False
+		if not self.flags.financial_totals_updated:
+			self.flags.financial_totals_updated = True
+			self.update_financial_totals(save=True)
 
 	def sync_promotions_to_split_group(self):
 		"""Sync promotions to other child orders in the same split group if they are missing them"""
@@ -2077,9 +2074,9 @@ class SalesOrder(SellingController):
 			for so_name in orders_to_update:
 				so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
 				if so.docstatus != 2:
+					so.flags.financial_totals_updated = True
 					so.flags.ignore_validate_update_after_submit = True
 					so.flags.ignore_links = True
-					so.flags.financial_totals_updated = True
 					so.save(ignore_permissions=True, ignore_version=True)
 
 
