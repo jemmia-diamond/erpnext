@@ -21,7 +21,8 @@
    "default": "now",
    "fieldname": "added_on",
    "fieldtype": "Datetime",
-   "label": "Added On"
+   "label": "Added On",
+   "read_only": 1
   },
   {
    "fieldname": "added_by",
