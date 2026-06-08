@@ -2574,7 +2574,7 @@ frappe.ui.form.on("Sales Team", {
 	}
 });
 
-/* // Order and Debt Tracking event handlers
+// Order and Debt Tracking event handlers
 frappe.ui.form.on("Order and Debt Tracking", {
 	progress_status: function (frm, cdt, cdn) {
 		set_reason_options(frm, cdt, cdn);
@@ -2629,7 +2629,7 @@ function set_reason_options(frm, cdt, cdn) {
 	if (!options.includes(row.status_reason)) {
 		frappe.model.set_value(cdt, cdn, 'status_reason', options[0]);
 	}
-} */
+}
 
 function calculate_allocated_percentage(frm, cdt, cdn) {
 	var row = locals[cdt][cdn];
