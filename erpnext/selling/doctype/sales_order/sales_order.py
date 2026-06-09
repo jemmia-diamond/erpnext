@@ -351,16 +351,15 @@ class SalesOrder(SellingController):
 
 		return total_allocated
 
-	def set_group_payment_entries(self, orders_to_update=None):
+	def set_group_payment_entries(self):
 		"""Fetch and set the payment entries linked to the split order group and reference tree.
 		Returns (group_payment_total, group_grand_total, orders_to_update)."""
 		if self.docstatus == 2:
 			self.set("group_payment_entries", [])
 			return 0.0, 0.0, []
 
-		if not orders_to_update:
-			related_orders = self.get_all_related_sales_orders()
-			orders_to_update = related_orders if related_orders else [self.name]
+		related_orders = self.get_all_related_sales_orders()
+		orders_to_update = related_orders if related_orders else [self.name]
 
 		self.set("group_payment_entries", [])
 
@@ -2087,10 +2086,7 @@ class SalesOrder(SellingController):
 
 		self.balance = flt(self.grand_total) - flt(self.paid_amount)
 
-		related_orders = self.get_all_related_sales_orders()
-		orders_to_update = related_orders if related_orders else [self.name]
-
-		group_payment_total, group_grand_total, orders_to_update = self.set_group_payment_entries(orders_to_update)
+		group_payment_total, group_grand_total, orders_to_update = self.set_group_payment_entries()
 
 		group_records_total = sum(self._get_payment_records_total(frappe.get_doc("Sales Order", name)) for name in orders_to_update)
 
