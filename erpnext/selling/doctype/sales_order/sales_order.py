@@ -898,10 +898,6 @@ class SalesOrder(SellingController):
 		self.copy_from_reference_order()
 		self.sync_promotions_to_split_group()
 
-		if not self.flags.financial_totals_updated:
-			self.flags.financial_totals_updated = True
-			self.update_financial_totals(save=True)
-
 	def sync_promotions_to_split_group(self):
 		"""Sync promotions to other child orders in the same split group if they are missing them"""
 		if not (self.is_split_order and self.split_order_group):
@@ -1351,6 +1347,10 @@ class SalesOrder(SellingController):
 		self.process_debt_history()
 		self.handle_serial_numbers_changes()
 		self.calculate_total_group_balance()
+		
+		if not self.flags.financial_totals_updated:
+			self.flags.financial_totals_updated = True
+			self.update_financial_totals(save=True)
 
 	def calculate_total_group_balance(self):
 		try:
@@ -2129,7 +2129,10 @@ class SalesOrder(SellingController):
 
 		if save:
 			for so_name in orders_to_update:
-				so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
+				if so_name == self.name:
+					continue
+					
+				so = frappe.get_doc("Sales Order", so_name)
 				if so.docstatus != 2:
 					so.flags.financial_totals_updated = True
 					so.flags.ignore_validate_update_after_submit = True
