@@ -1346,11 +1346,12 @@ class SalesOrder(SellingController):
 		self.validate_primary_sales_team()
 		self.process_debt_history()
 		self.handle_serial_numbers_changes()
-		self.calculate_total_group_balance()
 		
 		if not self.flags.financial_totals_updated:
 			self.flags.financial_totals_updated = True
 			self.update_financial_totals(save=True)
+
+		self.calculate_total_group_balance()
 
 	def calculate_total_group_balance(self):
 		try:
