@@ -2058,15 +2058,19 @@ class SalesOrder(SellingController):
 
 		frappe.db.commit()
 
+	PAYMENT_GATEWAY_ERP = "Thanh toán qua ERP"
+	PAYMENT_GATEWAY_QR_MB = "Chuyển khoản qua QR - MBBank"
+	PAYMENT_BEFORE_RELEASE_DATE = "2025-12-14"
+
 	@staticmethod
 	def _get_payment_records_total(so_doc):
 		total = 0.0
 		for r in so_doc.get("payment_records", []):
 			if not isinstance(r.kind, str) or r.kind.lower() not in ["capture", "authorization", "sale"]:
 				continue
-			if r.gateway == "ERP":
+			if r.gateway == SalesOrder.PAYMENT_GATEWAY_ERP:
 				continue
-			if r.gateway == "Payoo (QR MB)" and r.date and getdate(r.date) > getdate("2025-12-14"):
+			if r.gateway == SalesOrder.PAYMENT_GATEWAY_QR_MB and r.date and getdate(r.date) > getdate(SalesOrder.PAYMENT_BEFORE_RELEASE_DATE):
 				continue
 			total += flt(r.amount)
 		return total
