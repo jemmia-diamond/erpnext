@@ -300,6 +300,11 @@ class SalesOrder(SellingController):
 
 		self.set("payment_entries", [])
 
+		ref_sales_order_names = [self.name]
+		for ref in self.get("ref_sales_orders", []):
+			if ref.sales_order:
+				ref_sales_order_names.append(ref.sales_order)
+
 		payment_references = frappe.db.sql("""
 			SELECT
 				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name,
@@ -312,16 +317,33 @@ class SalesOrder(SellingController):
 				pe.mode_of_payment, pe.gateway, pe.paid_amount, pe.payment_date, pe.payment_order_status, pe.payment_type
 			FROM `tabPayment Entry Reference` pr
 			INNER JOIN `tabPayment Entry` pe ON pr.parent = pe.name
-			WHERE pr.reference_doctype = 'Sales Order' AND pr.reference_name = %s
+			WHERE pr.reference_doctype = 'Sales Order' AND pr.reference_name IN %s
 			AND pe.docstatus < 2
 			AND pe.payment_order_status = 'Success'
-		""", self.name, as_dict=True)
+		""", (tuple(ref_sales_order_names),), as_dict=True)
 
 		if not payment_references:
 			return 0.0
 
+		is_first_split_order = False
+		if self.is_split_order and self.split_order_group:
+			first_order_name = frappe.db.get_value(
+				"Sales Order",
+				{"split_order_group": self.split_order_group, "is_split_order": 1},
+				"name",
+				order_by="creation asc"
+			)
+			if first_order_name == self.name:
+				is_first_split_order = True
+
 		total_allocated = 0.0
 		for pe_ref in payment_references:
+			is_shared = pe_ref.reference_name != self.name
+			should_skip = is_shared and self.is_split_order and not is_first_split_order
+
+			if should_skip:
+				continue
+
 			total_allocated += flt(pe_ref.allocated_amount)
 			row = self.append("payment_entries", {})
 			row.update({
@@ -2081,19 +2103,43 @@ class SalesOrder(SellingController):
 			return
 
 		total_allocated = self.set_payment_entries()
-
 		payment_records_total = self._get_payment_records_total(self)
 
-		if payment_records_total >= flt(self.grand_total):
+		group_payment_total, group_grand_total, orders_to_update = self.set_group_payment_entries()
+
+		group_records_total = sum(
+			self._get_payment_records_total(self if so_name == self.name else frappe.get_doc("Sales Order", so_name))
+			for so_name in orders_to_update
+		) if orders_to_update else 0.0
+
+		real_group_grand_total = 0.0
+		if orders_to_update:
+			real_group_grand_total = frappe.db.sql("SELECT SUM(grand_total - return_amount) FROM `tabSales Order` WHERE name IN %s", (tuple(orders_to_update),))[0][0] or 0.0
+		
+		if real_group_grand_total > 0 and group_payment_total >= real_group_grand_total:
+			for so_name in orders_to_update:
+				so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
+				if so.docstatus == 2:
+					continue
+				
+				so.paid_amount = so.grand_total
+				so.balance = 0.0
+				so.total_allocated_group_payment = group_payment_total
+				so.balance_group_payment = real_group_grand_total - group_payment_total
+				
+				if so.name != self.name and save:
+					so.flags.ignore_validate_update_after_submit = True
+					so.save(ignore_permissions=True)
+			return
+
+		sales_order_grand_total = flt(self.grand_total) - flt(self.return_amount)
+
+		if payment_records_total >= sales_order_grand_total:
 			self.paid_amount = payment_records_total
 		else:
 			self.paid_amount = total_allocated + payment_records_total
 
-		self.balance = flt(self.grand_total) - flt(self.paid_amount)
-
-		group_payment_total, group_grand_total, orders_to_update = self.set_group_payment_entries()
-
-		group_records_total = sum(self._get_payment_records_total(frappe.get_doc("Sales Order", name)) for name in orders_to_update)
+		self.balance = sales_order_grand_total - flt(self.paid_amount)
 
 		for so_name in orders_to_update:
 			so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
