@@ -373,7 +373,6 @@ class PaymentEntry(AccountsController):
 
 	def on_update(self):
 		self.sync_bank_transaction_payments()
-		sync_so_snapshot_pe_fields_background(self.name)
 		self.update_sales_order_financials()
 
 	def sync_bank_transaction_payments(self):
@@ -4375,24 +4374,3 @@ def daily_run_success_batch():
 			)
 		time.sleep(1)
 
-def sync_so_snapshot_pe_fields_background(pe_name):
-	try:
-		pe_doc = frappe.get_doc("Payment Entry", pe_name)
-		if not pe_doc.references:
-			return
-
-		so_names = list({
-			ref.reference_name
-			for ref in pe_doc.references
-			if ref.reference_doctype == "Sales Order" and ref.reference_name
-		})
-
-		for so_name in so_names:
-			so = frappe.get_doc("Sales Order", so_name)
-			so.flags.ignore_permissions = True
-			so.flags.ignore_validate = True
-			so.flags.ignore_mandatory = True
-			so.save()
-
-	except Exception:
-		frappe.log_error(frappe.get_traceback(), f"sync_so_snapshot_pe_fields_background failed for {pe_name}")

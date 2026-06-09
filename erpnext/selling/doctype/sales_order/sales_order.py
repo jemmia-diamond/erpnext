@@ -2128,8 +2128,10 @@ class SalesOrder(SellingController):
 				so.balance_group_payment = real_group_grand_total - group_payment_total
 				
 				if so.name != self.name and save:
+					so.flags.financial_totals_updated = True
 					so.flags.ignore_validate_update_after_submit = True
-					so.save(ignore_permissions=True)
+					so.flags.ignore_links = True
+					so.save(ignore_permissions=True, ignore_version=True)
 			return
 
 		sales_order_grand_total = flt(self.grand_total) - flt(self.return_amount)
@@ -2176,7 +2178,7 @@ class SalesOrder(SellingController):
 					})
 
 			so.total_allocated_group_payment = group_payment_total + group_records_total
-			so.balance_group_payment = flt(group_grand_total) - flt(so.total_allocated_group_payment)
+			so.balance_group_payment = flt(real_group_grand_total) - flt(so.total_allocated_group_payment)
 
 		if save:
 			for so_name in orders_to_update:
