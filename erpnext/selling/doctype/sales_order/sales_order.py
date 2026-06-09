@@ -347,6 +347,7 @@ class SalesOrder(SellingController):
 			total_allocated += flt(pe_ref.allocated_amount)
 			row = self.append("payment_entries", {})
 			row.update({
+					"name": pe_ref.name,
 					"owner": "Administrator",
 					"modified_by": "Administrator",
 					"docstatus": 0,
@@ -356,6 +357,10 @@ class SalesOrder(SellingController):
 					"outstanding_amount": pe_ref.outstanding_amount,
 					"unallocated_amount": pe_ref.unallocated_amount,
 					"allocated_amount": pe_ref.allocated_amount,
+					"parent": pe_ref.reference_name,
+					"parentfield": "payment_entries",
+					"parenttype": pe_ref.reference_doctype,
+					"doctype": "Payment Entry Reference",
 					"mode_of_payment": pe_ref.mode_of_payment,
 					"gateway": pe_ref.gateway,
 					"paid_amount": pe_ref.paid_amount,
@@ -409,6 +414,7 @@ class SalesOrder(SellingController):
 			for pe_ref in group_payment_references:
 				row = self.append("group_payment_entries", {})
 				row.update({
+						"name": pe_ref.name,
 						"owner": "Administrator",
 						"modified_by": "Administrator",
 						"docstatus": 0,
@@ -418,6 +424,10 @@ class SalesOrder(SellingController):
 						"outstanding_amount": pe_ref.outstanding_amount,
 						"unallocated_amount": pe_ref.unallocated_amount,
 						"allocated_amount": pe_ref.allocated_amount,
+						"parent": pe_ref.reference_name,
+						"parentfield": "group_payment_entries",
+						"parenttype": pe_ref.reference_doctype,
+						"doctype": "Payment Entry Reference",
 						"mode_of_payment": pe_ref.mode_of_payment,
 						"gateway": pe_ref.gateway,
 						"paid_amount": pe_ref.paid_amount,
@@ -945,7 +955,7 @@ class SalesOrder(SellingController):
 
 		for sibling in sibling_orders:
 			sibling_doc = frappe.get_doc("Sales Order", sibling.name)
-			
+
 			if self_has_order_promos and not sibling_doc.get("promotions"):
 				for row in self.get("promotions"):
 					child = sibling_doc.append("promotions", {"promotion": row.promotion})
@@ -1368,7 +1378,7 @@ class SalesOrder(SellingController):
 		self.validate_primary_sales_team()
 		self.process_debt_history()
 		self.handle_serial_numbers_changes()
-		
+
 		if not self.flags.financial_totals_updated:
 			self.flags.financial_totals_updated = True
 			self.update_financial_totals(save=True)
@@ -2115,18 +2125,18 @@ class SalesOrder(SellingController):
 		real_group_grand_total = 0.0
 		if orders_to_update:
 			real_group_grand_total = frappe.db.sql("SELECT SUM(grand_total - return_amount) FROM `tabSales Order` WHERE name IN %s", (tuple(orders_to_update),))[0][0] or 0.0
-		
+
 		if real_group_grand_total > 0 and group_payment_total >= real_group_grand_total:
 			for so_name in orders_to_update:
 				so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
 				if so.docstatus == 2:
 					continue
-				
+
 				so.paid_amount = so.grand_total
 				so.balance = 0.0
 				so.total_allocated_group_payment = group_payment_total
 				so.balance_group_payment = real_group_grand_total - group_payment_total
-				
+
 				if so.name != self.name and save:
 					so.flags.financial_totals_updated = True
 					so.flags.ignore_validate_update_after_submit = True
@@ -2184,7 +2194,7 @@ class SalesOrder(SellingController):
 			for so_name in orders_to_update:
 				if so_name == self.name:
 					continue
-					
+
 				so = frappe.get_doc("Sales Order", so_name)
 				if so.docstatus != 2:
 					so.flags.financial_totals_updated = True
