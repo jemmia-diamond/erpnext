@@ -4392,12 +4392,6 @@ def sync_so_snapshot_pe_fields_background(pe_name):
 
 		for so_name in so_names:
 			so = frappe.get_doc("Sales Order", so_name)
-			so.set_payment_entries()
-			so.set_group_payment_entries()
-			for row in so.get("payment_entries", []):
-				row.name = None
-			for row in so.get("group_payment_entries", []):
-				row.name = None
 			so.flags.ignore_permissions = True
 			so.flags.ignore_validate = True
 			so.flags.ignore_mandatory = True
