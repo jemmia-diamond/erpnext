@@ -269,7 +269,6 @@ class SalesOrder(SellingController):
 	def onload(self) -> None:
 		super().onload()
 
-
 		if self.get("is_subcontracted"):
 			self.set_onload("can_update_items", self.can_update_items())
 			return
@@ -293,7 +292,6 @@ class SalesOrder(SellingController):
 	def before_validate(self):
 		self.set_has_unit_price_items()
 		self.flags.allow_zero_qty = self.has_unit_price_items
-
 
 	def set_payment_entries(self):
 		"""Fetch and set the payment entries linked to this sales order. Returns total allocated amount."""
@@ -429,6 +427,7 @@ class SalesOrder(SellingController):
 		if self.name:
 			related_orders.add(self.name)
 
+		# 1. Fetch by Split Order Group
 		if self.is_split_order and self.split_order_group:
 			group_orders = frappe.db.get_all("Sales Order",
 				filters={
@@ -440,6 +439,11 @@ class SalesOrder(SellingController):
 			for o in group_orders:
 				related_orders.add(o.name)
 
+		# 2. Fetch by Reference Tree (Recursive)
+		# We need to traverse:
+		# - Down: Orders referenced by this order (ref_sales_orders child table)
+		# - Up: Orders that reference this order (Ref Sales Order table of other orders)
+
 		to_visit = list(related_orders)
 		visited = set(related_orders)
 
@@ -448,6 +452,7 @@ class SalesOrder(SellingController):
 			if not current_so:
 				continue
 
+			# A. Find orders referenced BY current_so
 			refs_down = frappe.db.get_all("Sales Order Reference",
 				filters={"parent": current_so},
 				fields=["sales_order"]
@@ -459,6 +464,7 @@ class SalesOrder(SellingController):
 					to_visit.append(ref.sales_order)
 					related_orders.add(ref.sales_order)
 
+			# B. Find orders referencing current_so
 			refs_up = frappe.db.get_all("Sales Order Reference",
 				filters={"sales_order": current_so},
 				fields=["parent"]
@@ -469,7 +475,6 @@ class SalesOrder(SellingController):
 					visited.add(ref.parent)
 					to_visit.append(ref.parent)
 					related_orders.add(ref.parent)
-
 
 		return list(related_orders)
 
@@ -2053,16 +2058,8 @@ class SalesOrder(SellingController):
 
 		frappe.db.commit()
 
-
-
-
-
-
-
-
 	@staticmethod
 	def _get_payment_records_total(so_doc):
-		"""Calculate total from payment_records child table, excluding ERP gateway and post-cutoff Payoo."""
 		total = 0.0
 		for r in so_doc.get("payment_records", []):
 			if not isinstance(r.kind, str) or r.kind.lower() not in ["capture", "authorization"]:
@@ -2079,10 +2076,8 @@ class SalesOrder(SellingController):
 		if self.docstatus == 2 or not self.name:
 			return
 
-		# Set payment entries for this order
 		total_allocated = self.set_payment_entries()
 
-		# Calculate paid_amount from payment_records + payment entries
 		payment_records_total = self._get_payment_records_total(self)
 
 		if payment_records_total >= flt(self.grand_total):
@@ -2092,13 +2087,11 @@ class SalesOrder(SellingController):
 
 		self.balance = flt(self.grand_total) - flt(self.paid_amount)
 
-		# Set group payment entries and propagate to related orders
 		related_orders = self.get_all_related_sales_orders()
 		orders_to_update = related_orders if related_orders else [self.name]
 
 		group_payment_total, group_grand_total, orders_to_update = self.set_group_payment_entries(orders_to_update)
 
-		# Copy group_payment_entries to related orders and calculate group totals
 		group_records_total = sum(self._get_payment_records_total(frappe.get_doc("Sales Order", name)) for name in orders_to_update)
 
 		for so_name in orders_to_update:
@@ -2106,7 +2099,6 @@ class SalesOrder(SellingController):
 			if so.docstatus == 2:
 				continue
 
-			# Copy group_payment_entries from self to sibling orders
 			if so_name != self.name:
 				so.set("group_payment_entries", [])
 				for pe_row in self.get("group_payment_entries"):
