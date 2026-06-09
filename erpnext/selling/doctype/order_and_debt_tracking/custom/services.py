@@ -57,7 +57,8 @@ def get_debt_list(from_date=None, from_the_last_check=False):
         "customer_name",
         "real_order_date",
         "expected_payment_date",
-        "balance_group_payment"
+        "balance_group_payment",
+        "billing_address"
     ]
 
     sales_orders = frappe.get_all("Sales Order", filters=filters, fields=fields, order_by="expected_payment_date asc")
@@ -87,7 +88,8 @@ def get_debt_list(from_date=None, from_the_last_check=False):
                 "real_order_date": row.get("real_order_date"),
                 "expected_payment_date": row.get("expected_payment_date"),
                 "balance_group_payment": float(row.get("balance_group_payment") or 0),
-                "so_names": [row.get("name")]
+                "so_names": [row.get("name")],
+                "billing_address": row.get("billing_address")
             }
         else:
             if row.get("order_number"):
