@@ -2062,7 +2062,7 @@ class SalesOrder(SellingController):
 	def _get_payment_records_total(so_doc):
 		total = 0.0
 		for r in so_doc.get("payment_records", []):
-			if not isinstance(r.kind, str) or r.kind.lower() not in ["capture", "authorization"]:
+			if not isinstance(r.kind, str) or r.kind.lower() not in ["capture", "authorization", "sale"]:
 				continue
 			if r.gateway == "ERP":
 				continue
