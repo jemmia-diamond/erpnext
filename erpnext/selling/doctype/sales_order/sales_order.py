@@ -268,9 +268,6 @@ class SalesOrder(SellingController):
 
 	def onload(self) -> None:
 		super().onload()
-		self.set_payment_entries()
-		self.set_group_payment_entries()
-
 
 		if self.get("is_subcontracted"):
 			self.set_onload("can_update_items", self.can_update_items())
@@ -297,13 +294,17 @@ class SalesOrder(SellingController):
 		self.flags.allow_zero_qty = self.has_unit_price_items
 
 	def set_payment_entries(self):
-		"""Fetch and set the payment entries linked to this sales order."""
+		"""Fetch and set the payment entries linked to this sales order. Returns total allocated amount."""
 		if self.docstatus == 2 or not self.name:
-			return
+			return 0.0
 
 		self.set("payment_entries", [])
 
-		# Get payment entries linked to this sales order
+		ref_sales_order_names = [self.name]
+		for ref in self.get("ref_sales_orders", []):
+			if ref.sales_order:
+				ref_sales_order_names.append(ref.sales_order)
+
 		payment_references = frappe.db.sql("""
 			SELECT
 				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name,
@@ -316,20 +317,36 @@ class SalesOrder(SellingController):
 				pe.mode_of_payment, pe.gateway, pe.paid_amount, pe.payment_date, pe.payment_order_status, pe.payment_type
 			FROM `tabPayment Entry Reference` pr
 			INNER JOIN `tabPayment Entry` pe ON pr.parent = pe.name
-			WHERE pr.reference_doctype = 'Sales Order' AND pr.reference_name = %s
+			WHERE pr.reference_doctype = 'Sales Order' AND pr.reference_name IN %s
 			AND pe.docstatus < 2
 			AND pe.payment_order_status = 'Success'
-		""", self.name, as_dict=True)
+		""", (tuple(ref_sales_order_names),), as_dict=True)
 
 		if not payment_references:
-			return
+			return 0.0
+
+		is_first_split_order = False
+		if self.is_split_order and self.split_order_group:
+			first_order_name = frappe.db.get_value(
+				"Sales Order",
+				{"split_order_group": self.split_order_group, "is_split_order": 1},
+				"name",
+				order_by="creation asc"
+			)
+			if first_order_name == self.name:
+				is_first_split_order = True
 
 		total_allocated = 0.0
 		for pe_ref in payment_references:
+			is_shared = pe_ref.reference_name != self.name
+			should_skip = is_shared and self.is_split_order and not is_first_split_order
+
+			if should_skip:
+				continue
+
 			total_allocated += flt(pe_ref.allocated_amount)
 			row = self.append("payment_entries", {})
 			row.update({
-					"name": pe_ref.name,
 					"owner": "Administrator",
 					"modified_by": "Administrator",
 					"docstatus": 0,
@@ -339,10 +356,6 @@ class SalesOrder(SellingController):
 					"outstanding_amount": pe_ref.outstanding_amount,
 					"unallocated_amount": pe_ref.unallocated_amount,
 					"allocated_amount": pe_ref.allocated_amount,
-					"parent": pe_ref.reference_name,
-					"parentfield": "payment_entries",
-					"parenttype": pe_ref.reference_doctype,
-					"doctype": "Payment Entry Reference",
 					"mode_of_payment": pe_ref.mode_of_payment,
 					"gateway": pe_ref.gateway,
 					"paid_amount": pe_ref.paid_amount,
@@ -358,22 +371,21 @@ class SalesOrder(SellingController):
 					"ref_order_date": pe_ref.ref_order_date,
 			})
 
+		return total_allocated
 
 	def set_group_payment_entries(self):
-		"""Fetch and set the payment entries linked to the split order group and reference tree."""
+		"""Fetch and set the payment entries linked to the split order group and reference tree.
+		Returns (group_payment_total, group_grand_total, orders_to_update)."""
 		if self.docstatus == 2:
-			return
+			self.set("group_payment_entries", [])
+			return 0.0, 0.0, []
 
 		related_orders = self.get_all_related_sales_orders()
-
-		# If no related orders (including self), explicitly empty list
-		if not related_orders:
-			self.set("group_payment_entries", [])
-			return
+		orders_to_update = related_orders if related_orders else [self.name]
 
 		self.set("group_payment_entries", [])
 
-		payment_references = frappe.db.sql("""
+		group_payment_references = frappe.db.sql("""
 			SELECT
 				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name,
 				pr.total_amount, pr.outstanding_amount, pr.unallocated_amount, pr.order_number, pr.split_order_group_name,
@@ -391,13 +403,12 @@ class SalesOrder(SellingController):
 			AND pe.docstatus < 2
 			AND pe.payment_order_status = 'Success'
 			ORDER BY pe.payment_date DESC
-		""", (tuple(related_orders),), as_dict=True)
+		""", (tuple(orders_to_update),), as_dict=True)
 
-		if payment_references:
-			for pe_ref in payment_references:
+		if group_payment_references:
+			for pe_ref in group_payment_references:
 				row = self.append("group_payment_entries", {})
 				row.update({
-						"name": pe_ref.name,
 						"owner": "Administrator",
 						"modified_by": "Administrator",
 						"docstatus": 0,
@@ -407,10 +418,6 @@ class SalesOrder(SellingController):
 						"outstanding_amount": pe_ref.outstanding_amount,
 						"unallocated_amount": pe_ref.unallocated_amount,
 						"allocated_amount": pe_ref.allocated_amount,
-						"parent": pe_ref.reference_name,
-						"parentfield": "group_payment_entries",
-						"parenttype": pe_ref.reference_doctype,
-						"doctype": "Payment Entry Reference",
 						"mode_of_payment": pe_ref.mode_of_payment,
 						"gateway": pe_ref.gateway,
 						"paid_amount": pe_ref.paid_amount,
@@ -425,6 +432,11 @@ class SalesOrder(SellingController):
 						"ref_order_number": pe_ref.ref_order_number,
 						"ref_order_date": pe_ref.ref_order_date,
 				})
+
+		group_grand_total = frappe.db.sql("SELECT SUM(grand_total) FROM `tabSales Order` WHERE name IN %s", (tuple(orders_to_update),))[0][0] or 0.0
+		group_payment_total = sum(flt(r.allocated_amount) for r in group_payment_references) if group_payment_references else 0.0
+
+		return group_payment_total, group_grand_total, orders_to_update
 
 	def get_all_related_sales_orders(self):
 		"""
@@ -485,9 +497,7 @@ class SalesOrder(SellingController):
 					to_visit.append(ref.parent)
 					related_orders.add(ref.parent)
 
-
 		return list(related_orders)
-
 
 	def validate(self):
 		super().validate()
@@ -1358,6 +1368,11 @@ class SalesOrder(SellingController):
 		self.validate_primary_sales_team()
 		self.process_debt_history()
 		self.handle_serial_numbers_changes()
+		
+		if not self.flags.financial_totals_updated:
+			self.flags.financial_totals_updated = True
+			self.update_financial_totals(save=True)
+
 		self.calculate_total_group_balance()
 
 	def calculate_total_group_balance(self):
@@ -2064,6 +2079,119 @@ class SalesOrder(SellingController):
 			""", (split_group_id, split_group_name, prev_order.name))
 
 		frappe.db.commit()
+
+	PAYMENT_GATEWAY_ERP = "Thanh toán qua ERP"
+	PAYMENT_GATEWAY_QR_MB = "Chuyển khoản qua QR - MBBank"
+	PAYMENT_BEFORE_RELEASE_DATE = "2025-12-14"
+
+	@staticmethod
+	def _get_payment_records_total(so_doc):
+		total = 0.0
+		for r in so_doc.get("payment_records", []):
+			if not isinstance(r.kind, str) or r.kind.lower() not in ["capture", "authorization", "sale"]:
+				continue
+			if r.gateway == SalesOrder.PAYMENT_GATEWAY_ERP:
+				continue
+			if r.gateway == SalesOrder.PAYMENT_GATEWAY_QR_MB and r.date and getdate(r.date) > getdate(SalesOrder.PAYMENT_BEFORE_RELEASE_DATE):
+				continue
+			total += flt(r.amount)
+		return total
+
+	def update_financial_totals(self, save=True):
+		"""Recalculate financial totals and payment entry lists based on submitted Payment Entries."""
+		if self.docstatus == 2 or not self.name:
+			return
+
+		total_allocated = self.set_payment_entries()
+		payment_records_total = self._get_payment_records_total(self)
+
+		group_payment_total, group_grand_total, orders_to_update = self.set_group_payment_entries()
+
+		group_records_total = sum(
+			self._get_payment_records_total(self if so_name == self.name else frappe.get_doc("Sales Order", so_name))
+			for so_name in orders_to_update
+		) if orders_to_update else 0.0
+
+		real_group_grand_total = 0.0
+		if orders_to_update:
+			real_group_grand_total = frappe.db.sql("SELECT SUM(grand_total - return_amount) FROM `tabSales Order` WHERE name IN %s", (tuple(orders_to_update),))[0][0] or 0.0
+		
+		if real_group_grand_total > 0 and group_payment_total >= real_group_grand_total:
+			for so_name in orders_to_update:
+				so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
+				if so.docstatus == 2:
+					continue
+				
+				so.paid_amount = so.grand_total
+				so.balance = 0.0
+				so.total_allocated_group_payment = group_payment_total
+				so.balance_group_payment = real_group_grand_total - group_payment_total
+				
+				if so.name != self.name and save:
+					so.flags.financial_totals_updated = True
+					so.flags.ignore_validate_update_after_submit = True
+					so.flags.ignore_links = True
+					so.save(ignore_permissions=True, ignore_version=True)
+			return
+
+		sales_order_grand_total = flt(self.grand_total) - flt(self.return_amount)
+
+		if payment_records_total >= sales_order_grand_total:
+			self.paid_amount = payment_records_total
+		else:
+			self.paid_amount = total_allocated + payment_records_total
+
+		self.balance = sales_order_grand_total - flt(self.paid_amount)
+
+		for so_name in orders_to_update:
+			so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
+			if so.docstatus == 2:
+				continue
+
+			if so_name != self.name:
+				so.set("group_payment_entries", [])
+				for pe_row in self.get("group_payment_entries"):
+					row = so.append("group_payment_entries", {})
+					row.update({
+						"owner": pe_row.owner,
+						"modified_by": pe_row.modified_by,
+						"docstatus": pe_row.docstatus,
+						"reference_doctype": pe_row.reference_doctype,
+						"reference_name": pe_row.reference_name,
+						"total_amount": pe_row.total_amount,
+						"outstanding_amount": pe_row.outstanding_amount,
+						"unallocated_amount": pe_row.unallocated_amount,
+						"allocated_amount": pe_row.allocated_amount,
+						"mode_of_payment": pe_row.mode_of_payment,
+						"gateway": pe_row.gateway,
+						"paid_amount": pe_row.paid_amount,
+						"payment_date": pe_row.payment_date,
+						"payment_order_status": pe_row.payment_order_status,
+						"order_number": pe_row.order_number,
+						"split_order_group_name": pe_row.split_order_group_name,
+						"bank_account": pe_row.bank_account,
+						"bank": pe_row.bank,
+						"bank_account_no": pe_row.bank_account_no,
+						"bank_account_branch": pe_row.bank_account_branch,
+						"ref_order_number": pe_row.ref_order_number,
+						"ref_order_date": pe_row.ref_order_date,
+					})
+
+			so.total_allocated_group_payment = group_payment_total + group_records_total
+			so.balance_group_payment = flt(real_group_grand_total) - flt(so.total_allocated_group_payment)
+
+		if save:
+			for so_name in orders_to_update:
+				if so_name == self.name:
+					continue
+					
+				so = frappe.get_doc("Sales Order", so_name)
+				if so.docstatus != 2:
+					so.flags.financial_totals_updated = True
+					so.flags.ignore_validate_update_after_submit = True
+					so.flags.ignore_links = True
+					so.save(ignore_permissions=True, ignore_version=True)
+
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:
 	"""Returns the unreserved quantity for the Sales Order Item."""
