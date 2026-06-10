@@ -589,6 +589,7 @@ class PaymentEntry(AccountsController):
 			try:
 				so = frappe.get_doc("Sales Order", so_name)
 				so.update_financial_totals(save=True)
+				so.flags.financial_totals_updated = True
 				so.flags.ignore_validate_update_after_submit = True
 				so.flags.ignore_links = True
 				so.save(ignore_permissions=True, ignore_version=True)
