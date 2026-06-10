@@ -2360,6 +2360,7 @@
    "description": "Total Buyback Item - Balance (Group )",
    "fieldname": "total_group_balance",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Total Group Balance",
    "options": "currency",
    "read_only": 1
@@ -2370,7 +2371,7 @@
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-05-29 16:59:15.353434",
+ "modified": "2026-06-04 10:03:34.006083",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
