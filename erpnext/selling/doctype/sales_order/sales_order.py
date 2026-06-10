@@ -357,10 +357,6 @@ class SalesOrder(SellingController):
 					"outstanding_amount": pe_ref.outstanding_amount,
 					"unallocated_amount": pe_ref.unallocated_amount,
 					"allocated_amount": pe_ref.allocated_amount,
-					"parent": pe_ref.reference_name,
-					"parentfield": "payment_entries",
-					"parenttype": pe_ref.reference_doctype,
-					"doctype": "Payment Entry Reference",
 					"mode_of_payment": pe_ref.mode_of_payment,
 					"gateway": pe_ref.gateway,
 					"paid_amount": pe_ref.paid_amount,
@@ -374,6 +370,10 @@ class SalesOrder(SellingController):
 					"bank_account_branch": pe_ref.bank_account_branch,
 					"ref_order_number": pe_ref.ref_order_number,
 					"ref_order_date": pe_ref.ref_order_date,
+					"parent": pe_ref.reference_name,
+					"parentfield": "payment_entries",
+					"parenttype": pe_ref.reference_doctype,
+					"doctype": "Payment Entry Reference",
 			})
 
 		return total_allocated
@@ -424,10 +424,6 @@ class SalesOrder(SellingController):
 						"outstanding_amount": pe_ref.outstanding_amount,
 						"unallocated_amount": pe_ref.unallocated_amount,
 						"allocated_amount": pe_ref.allocated_amount,
-						"parent": pe_ref.reference_name,
-						"parentfield": "group_payment_entries",
-						"parenttype": pe_ref.reference_doctype,
-						"doctype": "Payment Entry Reference",
 						"mode_of_payment": pe_ref.mode_of_payment,
 						"gateway": pe_ref.gateway,
 						"paid_amount": pe_ref.paid_amount,
@@ -441,6 +437,10 @@ class SalesOrder(SellingController):
 						"bank_account_branch": pe_ref.bank_account_branch,
 						"ref_order_number": pe_ref.ref_order_number,
 						"ref_order_date": pe_ref.ref_order_date,
+						"parent": pe_ref.reference_name,
+						"parentfield": "group_payment_entries",
+						"parenttype": pe_ref.reference_doctype,
+						"doctype": "Payment Entry Reference",
 				})
 
 		group_grand_total = frappe.db.sql("SELECT SUM(grand_total) FROM `tabSales Order` WHERE name IN %s", (tuple(orders_to_update),))[0][0] or 0.0
@@ -955,7 +955,7 @@ class SalesOrder(SellingController):
 
 		for sibling in sibling_orders:
 			sibling_doc = frappe.get_doc("Sales Order", sibling.name)
-
+			
 			if self_has_order_promos and not sibling_doc.get("promotions"):
 				for row in self.get("promotions"):
 					child = sibling_doc.append("promotions", {"promotion": row.promotion})
@@ -1378,7 +1378,7 @@ class SalesOrder(SellingController):
 		self.validate_primary_sales_team()
 		self.process_debt_history()
 		self.handle_serial_numbers_changes()
-
+		
 		if not self.flags.financial_totals_updated:
 			self.flags.financial_totals_updated = True
 			self.update_financial_totals(save=True)
@@ -2125,18 +2125,18 @@ class SalesOrder(SellingController):
 		real_group_grand_total = 0.0
 		if orders_to_update:
 			real_group_grand_total = frappe.db.sql("SELECT SUM(grand_total - return_amount) FROM `tabSales Order` WHERE name IN %s", (tuple(orders_to_update),))[0][0] or 0.0
-
+		
 		if real_group_grand_total > 0 and group_payment_total >= real_group_grand_total:
 			for so_name in orders_to_update:
 				so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
 				if so.docstatus == 2:
 					continue
-
+				
 				so.paid_amount = so.grand_total
 				so.balance = 0.0
 				so.total_allocated_group_payment = group_payment_total
 				so.balance_group_payment = real_group_grand_total - group_payment_total
-
+				
 				if so.name != self.name and save:
 					so.flags.financial_totals_updated = True
 					so.flags.ignore_validate_update_after_submit = True
@@ -2163,6 +2163,7 @@ class SalesOrder(SellingController):
 				for pe_row in self.get("group_payment_entries"):
 					row = so.append("group_payment_entries", {})
 					row.update({
+						"name": pe_row.name,
 						"owner": pe_row.owner,
 						"modified_by": pe_row.modified_by,
 						"docstatus": pe_row.docstatus,
@@ -2172,10 +2173,6 @@ class SalesOrder(SellingController):
 						"outstanding_amount": pe_row.outstanding_amount,
 						"unallocated_amount": pe_row.unallocated_amount,
 						"allocated_amount": pe_row.allocated_amount,
-						"parent": pe_row.reference_name,
-						"parentfield": "group_payment_entries",
-						"parenttype": pe_row.reference_doctype,
-						"doctype": "Payment Entry Reference",
 						"mode_of_payment": pe_row.mode_of_payment,
 						"gateway": pe_row.gateway,
 						"paid_amount": pe_row.paid_amount,
@@ -2189,6 +2186,10 @@ class SalesOrder(SellingController):
 						"bank_account_branch": pe_row.bank_account_branch,
 						"ref_order_number": pe_row.ref_order_number,
 						"ref_order_date": pe_row.ref_order_date,
+						"parent": so_name,
+						"parentfield": "group_payment_entries",
+						"parenttype": pe_row.parenttype,
+						"doctype": "Payment Entry Reference",
 					})
 
 			so.total_allocated_group_payment = group_payment_total + group_records_total
@@ -2198,7 +2199,7 @@ class SalesOrder(SellingController):
 			for so_name in orders_to_update:
 				if so_name == self.name:
 					continue
-
+					
 				so = frappe.get_doc("Sales Order", so_name)
 				if so.docstatus != 2:
 					so.flags.financial_totals_updated = True
