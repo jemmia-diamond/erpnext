@@ -50,9 +50,8 @@ from erpnext.stock.stock_balance import get_reserved_qty, update_bin_qty
 form_grid_templates = {"items": "templates/form_grid/item_grid.html"}
 
 
-
-
-
+class WarehouseRequired(frappe.ValidationError):
+	pass
 class WarehouseRequired(frappe.ValidationError):
 	pass
 

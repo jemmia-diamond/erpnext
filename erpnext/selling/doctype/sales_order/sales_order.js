@@ -207,14 +207,14 @@ frappe.ui.form.on("Sales Order", {
 		}
 	},
 
-	onload_post_render: function(frm) {
+	onload_post_render: async function(frm) {
 		if (erpnext.utils.sales_order_gallery && erpnext.utils.sales_order_gallery.render_gallery) {
-			erpnext.utils.sales_order_gallery.render_gallery(frm);
+			await erpnext.utils.sales_order_gallery.render_gallery(frm);
 		}
 	},
-	attachments_update: function(frm) {
+	attachments_update: async function(frm) {
 		if (erpnext.utils.sales_order_gallery && erpnext.utils.sales_order_gallery.render_gallery) {
-			erpnext.utils.sales_order_gallery.render_gallery(frm);
+			await erpnext.utils.sales_order_gallery.render_gallery(frm);
 		}
 	},
 	refresh: function (frm) {

@@ -7,7 +7,7 @@ $.extend(erpnext.utils.sales_order_gallery, {
 
 		const $grid = frm.fields_dict?.items?.grid?.wrapper;
 		if ($grid && $grid.length) {
-			const rerender = frappe.utils.debounce(() => this.render_gallery(frm), 400);
+			const rerender = frappe.utils.debounce(() => erpnext.utils.sales_order_gallery.render_gallery(frm), 400);
 			$grid.on('change', 'input,select,textarea', rerender);
 			$grid.on('click', '.grid-remove-rows, .grid-delete-row', rerender);
 			$grid.on('click', '.grid-add-row, .grid-insert-row, .grid-insert-row-below', rerender);
