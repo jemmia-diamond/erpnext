@@ -349,7 +349,6 @@ class SalesOrder(SellingController):
 			total_allocated += flt(pe_ref.allocated_amount)
 			row = self.append("payment_entries", {})
 			row.update({
-					"name": pe_ref.name,
 					"owner": "Administrator",
 					"modified_by": "Administrator",
 					"docstatus": 0,
@@ -372,9 +371,6 @@ class SalesOrder(SellingController):
 					"bank_account_branch": pe_ref.bank_account_branch,
 					"ref_order_number": pe_ref.ref_order_number,
 					"ref_order_date": pe_ref.ref_order_date,
-					"parent": pe_ref.reference_name,
-					"parentfield": "payment_entries",
-					"parenttype": pe_ref.reference_doctype,
 					"doctype": "Payment Entry Reference",
 			})
 
@@ -416,7 +412,6 @@ class SalesOrder(SellingController):
 			for pe_ref in group_payment_references:
 				row = self.append("group_payment_entries", {})
 				row.update({
-						"name": pe_ref.name,
 						"owner": "Administrator",
 						"modified_by": "Administrator",
 						"docstatus": 0,
@@ -439,9 +434,6 @@ class SalesOrder(SellingController):
 						"bank_account_branch": pe_ref.bank_account_branch,
 						"ref_order_number": pe_ref.ref_order_number,
 						"ref_order_date": pe_ref.ref_order_date,
-						"parent": pe_ref.reference_name,
-						"parentfield": "group_payment_entries",
-						"parenttype": pe_ref.reference_doctype,
 						"doctype": "Payment Entry Reference",
 				})
 
@@ -2151,7 +2143,6 @@ class SalesOrder(SellingController):
 				for pe_row in self.get("group_payment_entries"):
 					row = so.append("group_payment_entries", {})
 					row.update({
-						"name": pe_row.name,
 						"owner": pe_row.owner,
 						"modified_by": pe_row.modified_by,
 						"docstatus": pe_row.docstatus,
@@ -2174,9 +2165,6 @@ class SalesOrder(SellingController):
 						"bank_account_branch": pe_row.bank_account_branch,
 						"ref_order_number": pe_row.ref_order_number,
 						"ref_order_date": pe_row.ref_order_date,
-						"parent": so_name,
-						"parentfield": "group_payment_entries",
-						"parenttype": pe_row.parenttype,
 						"doctype": "Payment Entry Reference",
 					})
 
