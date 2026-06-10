@@ -369,6 +369,7 @@ class SalesOrder(SellingController):
 					"bank_account_branch": pe_ref.bank_account_branch,
 					"ref_order_number": pe_ref.ref_order_number,
 					"ref_order_date": pe_ref.ref_order_date,
+					"doctype": "Payment Entry Reference",
 			})
 
 		return total_allocated
@@ -431,6 +432,7 @@ class SalesOrder(SellingController):
 						"bank_account_branch": pe_ref.bank_account_branch,
 						"ref_order_number": pe_ref.ref_order_number,
 						"ref_order_date": pe_ref.ref_order_date,
+						"doctype": "Payment Entry Reference",
 				})
 
 		group_grand_total = frappe.db.sql("SELECT SUM(grand_total) FROM `tabSales Order` WHERE name IN %s", (tuple(orders_to_update),))[0][0] or 0.0
@@ -2175,22 +2177,17 @@ class SalesOrder(SellingController):
 						"bank_account_branch": pe_row.bank_account_branch,
 						"ref_order_number": pe_row.ref_order_number,
 						"ref_order_date": pe_row.ref_order_date,
+						"doctype": "Payment Entry Reference",
 					})
 
 			so.total_allocated_group_payment = group_payment_total + group_records_total
 			so.balance_group_payment = flt(real_group_grand_total) - flt(so.total_allocated_group_payment)
 
-		if save:
-			for so_name in orders_to_update:
-				if so_name == self.name:
-					continue
-					
-				so = frappe.get_doc("Sales Order", so_name)
-				if so.docstatus != 2:
-					so.flags.financial_totals_updated = True
-					so.flags.ignore_validate_update_after_submit = True
-					so.flags.ignore_links = True
-					so.save(ignore_permissions=True, ignore_version=True)
+			if save and so_name != self.name and so.docstatus != 2:
+				so.flags.financial_totals_updated = True
+				so.flags.ignore_validate_update_after_submit = True
+				so.flags.ignore_links = True
+				so.save(ignore_permissions=True, ignore_version=True)
 
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:

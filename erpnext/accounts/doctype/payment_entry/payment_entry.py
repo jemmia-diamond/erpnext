@@ -574,14 +574,29 @@ class PaymentEntry(AccountsController):
 				if d.reference_doctype == "Sales Order" and d.reference_name:
 					so_names.add(d.reference_name)
 
+		if so_names:
+			frappe.enqueue(
+				"erpnext.accounts.doctype.payment_entry.payment_entry.update_so_financials_background",
+				so_names=list(so_names),
+				payment_entry_name=self.name,
+				queue="default",
+				timeout=300
+			)
+
+	def update_so_financials_background(so_names, payment_entry_name):
+		"""Background task to update Sales Order financials"""
 		for so_name in so_names:
 			try:
 				so = frappe.get_doc("Sales Order", so_name)
+				so.update_financial_totals(save=True)
 				so.flags.ignore_validate_update_after_submit = True
 				so.flags.ignore_links = True
 				so.save(ignore_permissions=True, ignore_version=True)
 			except Exception as e:
-				frappe.log_error(f"Error updating Sales Order financials from Payment Entry {self.name}: {str(e)}", "Payment Entry -> SO Update Error")
+				frappe.log_error(
+					f"Error updating Sales Order financials from Payment Entry {payment_entry_name}: {str(e)}", 
+					"Payment Entry -> SO Update Error"
+				)
 
 	def validate_duplicate_entry(self):
 		reference_names = set()
