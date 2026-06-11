@@ -36,6 +36,7 @@ class Opportunity(TransactionBase, CRMNote):
 		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from erpnext.crm.doctype.opportunity_item.opportunity_item import OpportunityItem
 		from erpnext.crm.doctype.opportunity_lost_reason_detail.opportunity_lost_reason_detail import OpportunityLostReasonDetail
+		from erpnext.selling.doctype.sales_team.sales_team import SalesTeam
 		from frappe.types import DF
 
 		address_display: DF.TextEditor | None
@@ -85,6 +86,7 @@ class Opportunity(TransactionBase, CRMNote):
 		purpose_lead: DF.Link | None
 		region: DF.Link | None
 		sales_stage: DF.Link | None
+		sales_team: DF.Table[SalesTeam]
 		state: DF.Data | None
 		status: DF.Literal["Open", "Quotation", "Converted", "Lost", "Negotiation", "Closed"]
 		territory: DF.Link | None
