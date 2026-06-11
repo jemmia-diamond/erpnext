@@ -107,7 +107,10 @@
   "open_activities_html",
   "all_activities_section",
   "all_activities_html",
-  "dashboard_tab"
+  "dashboard_tab",
+  "comment",
+  "team_sale_tab",
+  "sales_team"
  ],
  "fields": [
   {
@@ -534,8 +537,14 @@
   {
    "fieldname": "phone",
    "fieldtype": "Data",
+   "in_filter": 1,
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
    "label": "Phone",
-   "options": "Phone"
+   "options": "Phone",
+   "sticky": 1
   },
   {
    "fieldname": "phone_ext",
@@ -740,13 +749,28 @@
    "fieldname": "opportunity_date",
    "fieldtype": "Datetime",
    "label": "Opportunity Date"
+  },
+  {
+   "fieldname": "comment",
+   "fieldtype": "Tab Break",
+   "label": "Comment"
+  },
+  {
+   "fieldname": "team_sale_tab",
+   "fieldtype": "Tab Break",
+   "label": "Team sale"
+  },
+  {
+   "fieldname": "sales_team",
+   "fieldtype": "Table",
+   "options": "Sales Team"
   }
  ],
  "grid_page_length": 50,
  "icon": "fa fa-info-sign",
  "idx": 195,
  "links": [],
- "modified": "2026-02-10 14:36:01.387984",
+ "modified": "2026-06-11 12:20:42.969655",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Opportunity",
