@@ -435,7 +435,7 @@ class SalesOrder(SellingController):
 						"doctype": "Payment Entry Reference",
 				})
 
-		group_grand_total = frappe.db.sql("SELECT SUM(grand_total) FROM `tabSales Order` WHERE name IN %s", (tuple(orders_to_update),))[0][0] or 0.0
+		group_grand_total = frappe.db.sql("SELECT SUM(grand_total) FROM `tabSales Order` WHERE name IN %s AND cancelled_status = 'Uncancelled'", (tuple(orders_to_update),))[0][0] or 0.0
 		group_payment_total = sum(flt(r.allocated_amount) for r in group_payment_references) if group_payment_references else 0.0
 
 		return group_payment_total, group_grand_total, orders_to_update
@@ -2116,7 +2116,7 @@ class SalesOrder(SellingController):
 
 		real_group_grand_total = 0.0
 		if orders_to_update:
-			real_group_grand_total = frappe.db.sql("SELECT SUM(grand_total - return_amount) FROM `tabSales Order` WHERE name IN %s", (tuple(orders_to_update),))[0][0] or 0.0
+			real_group_grand_total = frappe.db.sql("SELECT SUM(grand_total - return_amount) FROM `tabSales Order` WHERE name IN %s AND cancelled_status = 'Uncancelled'", (tuple(orders_to_update),))[0][0] or 0.0
 		
 		if real_group_grand_total > 0 and group_payment_total >= real_group_grand_total:
 			for so_name in orders_to_update:
