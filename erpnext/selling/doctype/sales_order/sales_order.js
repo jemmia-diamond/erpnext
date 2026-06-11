@@ -319,23 +319,9 @@ frappe.ui.form.on("Sales Order", {
 				const btn = frm.custom_buttons[__("Send Order To Lark")];
 				$(btn).prop("disabled", true);
 
-				let attachments = frm.attachments.get_attachments();
-				attachments = attachments.map(att => {
-					const file_url = frm.attachments.get_file_url(att);
-					return {
-						file_url: frappe.urllib.get_full_url(decodeURIComponent(file_url)), // Decode first to avoid double encoding
-						is_private: att.is_private
-					}
-				})
-
-				const docWithAttachments = {
-					...doc,
-					attachments: attachments
-				}
-
 				frappe.call({
 					method: "erpnext.selling.doctype.sales_order.sales_order.larksuite_notification",
-					args: { sales_order_doc: docWithAttachments },
+					args: { sales_order_doc: doc },
 					callback: (r) => {
 						if (r.message) frappe.msgprint(r.message);
 					},
@@ -2582,7 +2568,7 @@ frappe.ui.form.on("Order and Debt Tracking", {
 	form_render: function (frm, cdt, cdn) {
 		set_reason_options(frm, cdt, cdn);
 	},
-	debt_history_add: function(frm, cdt, cdn) {
+	debt_history_add: function (frm, cdt, cdn) {
 		frappe.model.set_value(cdt, cdn, "date", frappe.datetime.get_today());
 		frappe.model.set_value(cdt, cdn, "added_by", frappe.session.user);
 		let default_options = [
