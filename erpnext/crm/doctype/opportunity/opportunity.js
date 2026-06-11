@@ -145,6 +145,20 @@ frappe.ui.form.on("Opportunity", {
 		if (frm.doc.opportunity_from && frm.doc.party_name) {
 			frm.trigger("set_contact_link");
 		}
+
+		if (frm.doc && frm.doc.name && !frm.doc.__islocal) {
+			render_custom_comments(frm);
+		} else {
+			let html_notice = `
+				<div style="text-align: center; color: #8c99a6; padding: 30px; background-color: #fff; border-radius: 8px;">
+					<i class="fa fa-info-circle" style="font-size: 24px; margin-bottom: 10px; color: #ffb100;"></i>
+					<p style="margin: 0; font-size: 13px;">Vui lòng bấm nút <b>Save (Lưu)</b> Cơ hội này trước để kích hoạt tính năng Bình luận.</p>
+				</div>
+			`;
+			if (frm.fields_dict['custom_comment_list']) {
+				frm.fields_dict['custom_comment_list'].$wrapper.html(html_notice);
+			}
+		}
 	},
 
 	set_contact_link: function (frm) {
@@ -391,3 +405,126 @@ cur_frm.cscript.item_code = function (doc, cdt, cdn) {
 		});
 	}
 };
+function render_custom_comments(frm) {
+	frappe.call({
+		method: 'frappe.client.get_list',
+		args: {
+			doctype: 'Comment',
+			fields: ['name', 'comment_by', 'content', 'creation', 'owner'],
+			filters: {
+				reference_doctype: frm.doc.doctype,
+				reference_name: frm.doc.name,
+				comment_type: 'Comment'
+			},
+			order_by: 'creation desc',
+			limit: 100
+		},
+		callback: function(r) {
+			let comments = r.message || [];
+
+			let html_content = `
+				<div class="frappe-custom-comments-wrapper" style="padding: 10px 0; font-family: inherit;">
+					<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+						<div style="font-size: 16px; font-weight: 600; color: var(--text-color);">${__('Comments')} (${comments.length})</div>
+						<button class="btn btn-primary btn-sm button-style" id="btn-custom-new-comment" style="display: inline-flex; align-items: center; gap: 6px;">
+							<svg class="icon icon-sm" style="stroke: #fff; fill: none;"><use href="#icon-add"></use></svg>
+							<span>${__('New Comment')}</span>
+						</button>
+					</div>
+					
+					<div id="custom-comments-container" style="max-height: 600px; overflow-y: auto; padding-left: 8px;">
+			`;
+
+			if (comments.length === 0) {
+				html_content += `
+					<div style="text-align: center; color: var(--text-muted); padding: 40px 20px; border: 1px dashed var(--border-color); border-radius: 8px;">
+						<p style="margin: 0; font-size: 13px;">${__('No comments yet. Start the conversation!')}</p>
+					</div>
+				`;
+			} else {
+				comments.forEach((comment, index) => {
+					// Format thời gian sang dạng DD-MM-YYYY HH:MM chuẩn Việt Nam
+					let time_display = '';
+					if (comment.creation) {
+						let dt = comment.creation.split(' ');
+						let date_part = dt[0].split('-').reverse().join('-');
+						let time_part = dt[1].split('.')[0].substring(0, 5);
+						time_display = `${time_part} ${date_part}`;
+					}
+					let sender_name = comment.comment_by || comment.owner || 'User';
+					
+					// Đổ CSS Flat chuẩn của các block element trong Frappe Form Timeline
+					html_content += `
+						<div class="custom-comment-item" style="display: flex; align-items: flex-start; margin-bottom: 20px; position: relative;">
+							
+							${index !== comments.length - 1 ? `<div style="position: absolute; left: 16px; top: 32px; bottom: -28px; width: 1px; background-color: var(--border-color);"></div>` : ''}
+
+							<div style="width: 32px; height: 32px; background-color: var(--gray-100); border: 1px solid var(--border-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 500; color: var(--text-color); margin-right: 16px; flex-shrink: 0; font-size: 12px; text-transform: uppercase;">
+								${sender_name.charAt(0)}
+							</div>
+							
+							<div style="flex-grow: 1; padding-top: 2px;">
+								<div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
+									<span style="font-weight: 600; color: var(--text-color); font-size: 13px;">${sender_name}</span>
+									<span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">• ${time_display}</span>
+								</div>
+								<div style="color: var(--text-color); font-size: 13px; line-height: 1.6; word-break: break-word; white-space: pre-line;">
+									${comment.content}
+								</div>
+							</div>
+						</div>
+					`;
+				});
+			}
+
+			html_content += `</div></div>`;
+
+			if (frm.fields_dict['custom_comment_list'] && frm.fields_dict['custom_comment_list'].$wrapper) {
+				frm.fields_dict['custom_comment_list'].$wrapper.html(html_content);
+			}
+
+			// Xử lý sự kiện click nút thêm mới bình luận
+			$('#btn-custom-new-comment').off('click').on('click', function() {
+				let d = new frappe.ui.Dialog({
+					title: __('Add Comment'),
+					fields: [
+						{
+							label: __('Comment'),
+							fieldname: 'comment_text',
+							fieldtype: 'Small Text',
+							reqd: 1
+						}
+					],
+					primary_action_label: __('Submit'),
+					primary_action(values) {
+						d.get_primary_btn().attr('disabled', true).html(__('Saving...'));
+						frappe.call({
+							method: 'frappe.client.insert',
+							args: {
+								doc: {
+									doctype: 'Comment',
+									comment_type: 'Comment',
+									reference_doctype: frm.doc.doctype,
+									reference_name: frm.doc.name,
+									content: values.comment_text,
+									comment_by: frappe.session.user_fullname || frappe.session.user
+								}
+							},
+							callback: function(res) {
+								d.hide();
+								frappe.show_alert({message: __('Comment posted'), indicators: 'green'});
+								frm.reload_doc().then(() => {
+									render_custom_comments(frm);
+								});
+							},
+							error: function() {
+								d.get_primary_btn().attr('disabled', false).html(__('Submit'));
+							}
+						});
+					}
+				});
+				d.show();
+			});
+		}
+	});
+}
