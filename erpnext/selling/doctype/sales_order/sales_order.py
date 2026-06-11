@@ -457,7 +457,8 @@ class SalesOrder(SellingController):
 			group_orders = frappe.db.get_all("Sales Order",
 				filters={
 					"split_order_group": self.split_order_group,
-					"is_split_order": 1
+					"is_split_order": 1,
+					"cancelled_status": "Uncancelled"
 				},
 				fields=["name"]
 			)
@@ -500,6 +501,13 @@ class SalesOrder(SellingController):
 					visited.add(ref.parent)
 					to_visit.append(ref.parent)
 					related_orders.add(ref.parent)
+
+		if related_orders:
+			valid_orders = frappe.db.get_all("Sales Order",
+				filters={"name": ["in", list(related_orders)], "cancelled_status": "Uncancelled"},
+				fields=["name"]
+			)
+			related_orders = {o.name for o in valid_orders}
 
 		return list(related_orders)
 
@@ -2109,7 +2117,7 @@ class SalesOrder(SellingController):
 		if real_group_grand_total > 0 and group_payment_total >= real_group_grand_total:
 			for so_name in orders_to_update:
 				so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
-				if so.docstatus == 2:
+				if so.docstatus == 2 or so.cancelled_status == 'Cancelled':
 					continue
 				
 				so.paid_amount = so.grand_total
@@ -2135,7 +2143,7 @@ class SalesOrder(SellingController):
 
 		for so_name in orders_to_update:
 			so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
-			if so.docstatus == 2:
+			if so.docstatus == 2 or so.cancelled_status == 'Cancelled':
 				continue
 
 			if so_name != self.name:
@@ -2177,7 +2185,7 @@ class SalesOrder(SellingController):
 					continue
 					
 				so = frappe.get_doc("Sales Order", so_name)
-				if so.docstatus != 2:
+				if so.docstatus != 2 and so.cancelled_status != 'Cancelled':
 					so.flags.financial_totals_updated = True
 					so.flags.ignore_validate_update_after_submit = True
 					so.flags.ignore_links = True
