@@ -331,7 +331,7 @@ class SalesOrder(SellingController):
 		if self.is_split_order and self.split_order_group:
 			first_order_name = frappe.db.get_value(
 				"Sales Order",
-				{"split_order_group": self.split_order_group, "is_split_order": 1},
+				{"split_order_group": self.split_order_group, "is_split_order": 1, "cancelled_status": "Uncancelled"},
 				"name",
 				order_by="creation asc"
 			)
@@ -2114,7 +2114,7 @@ class SalesOrder(SellingController):
 		if orders_to_update:
 			real_group_grand_total = frappe.db.sql("SELECT SUM(grand_total - return_amount) FROM `tabSales Order` WHERE name IN %s AND cancelled_status = 'Uncancelled'", (tuple(orders_to_update),))[0][0] or 0.0
 		
-		if real_group_grand_total > 0 and group_payment_total >= real_group_grand_total:
+		if real_group_grand_total > 0 and (group_payment_total + group_records_total) >= real_group_grand_total:
 			for so_name in orders_to_update:
 				so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
 				if so.docstatus == 2 or so.cancelled_status == 'Cancelled':
@@ -2122,8 +2122,8 @@ class SalesOrder(SellingController):
 				
 				so.paid_amount = so.grand_total
 				so.balance = 0.0
-				so.total_allocated_group_payment = group_payment_total
-				so.balance_group_payment = real_group_grand_total - group_payment_total
+				so.total_allocated_group_payment = group_payment_total + group_records_total
+				so.balance_group_payment = real_group_grand_total - (group_payment_total + group_records_total)
 				
 				if so.name != self.name and save:
 					so.flags.financial_totals_updated = True
@@ -2179,17 +2179,11 @@ class SalesOrder(SellingController):
 			so.total_allocated_group_payment = group_payment_total + group_records_total
 			so.balance_group_payment = flt(real_group_grand_total) - flt(so.total_allocated_group_payment)
 
-		if save:
-			for so_name in orders_to_update:
-				if so_name == self.name:
-					continue
-					
-				so = frappe.get_doc("Sales Order", so_name)
-				if so.docstatus != 2 and so.cancelled_status != 'Cancelled':
-					so.flags.financial_totals_updated = True
-					so.flags.ignore_validate_update_after_submit = True
-					so.flags.ignore_links = True
-					so.save(ignore_permissions=True, ignore_version=True)
+			if so_name != self.name and save:
+				so.flags.financial_totals_updated = True
+				so.flags.ignore_validate_update_after_submit = True
+				so.flags.ignore_links = True
+				so.save(ignore_permissions=True, ignore_version=True)
 
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:
