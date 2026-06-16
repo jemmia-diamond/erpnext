@@ -40,4 +40,6 @@ import "./financial_statements.js";
 import "./sales_trends_filters.js";
 import "./purchase_trends_filters.js";
 
+import "./utils/appointment_quick_entry";
+
 // import { sum } from 'frappe/public/utils/util.js'
