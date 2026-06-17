@@ -82,13 +82,13 @@ frappe.ui.form.on("Appointment", {
 			}
 
 			// Fill "Estimated Budget" from Lead annual_revenue (Lead Budget)
-			if (lead.annual_revenue) {
-				frm.set_value("estimated_budget", String(lead.annual_revenue));
+			if (lead.proposed_budget) {
+				frm.set_value("estimated_budget", String(lead.proposed_budget));
 			}
 
 			// Fill "Budget Range" from custom field if it exists (Propose Lead Budget)
-			if (lead.custom_propose_budget) {
-				frm.set_value("range_estimated_budget", lead.custom_propose_budget);
+			if (lead.budget_lead) {
+				frm.set_value("range_estimated_budget", lead.budget_lead);
 			}
 
 			// Fill email if not already set
@@ -97,8 +97,8 @@ frappe.ui.form.on("Appointment", {
 			}
 
 			// Fill phone
-			if (lead.mobile_no) {
-				frm.set_value("customer_phone_number", lead.mobile_no);
+			if (lead.phone) {
+				frm.set_value("customer_phone_number", lead.phone);
 			}
 		});
 	},

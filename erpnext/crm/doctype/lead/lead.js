@@ -34,6 +34,10 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 		}
 
 		if (!this.frm.is_new()) {
+			this.frm.add_custom_button(__("Appointment"), this.make_appointment.bind(this), __("Create"));
+		}
+
+		if (!this.frm.is_new()) {
 			frappe.contacts.render_address_and_contact(this.frm);
 		} else {
 			frappe.contacts.clear_address_and_contact(this.frm);
@@ -179,6 +183,20 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 			leads_row.lead = me.frm.doc.name;
 
 			frappe.set_route("Form", "Prospect", prospect.name);
+		});
+	}
+
+	make_appointment() {
+		const frm = this.frm;
+		frappe.new_doc("Appointment", {
+			lead: frm.doc.name,
+			appointment_with: "Lead",
+			customer_name: frm.doc.lead_name,
+			customer_phone_number: frm.doc.phone,
+			customer_email: frm.doc.email_id,
+			estimated_budget: frm.doc.proposed_budget || undefined,
+			range_estimated_budget: frm.doc.budget_lead || undefined,
+			gender: frm.doc.gender || undefined,
 		});
 	}
 

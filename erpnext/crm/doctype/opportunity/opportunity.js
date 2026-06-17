@@ -76,23 +76,23 @@ frappe.ui.form.on("Opportunity", {
 		erpnext.toggle_naming_series();
 
 		if (!frm.is_new() && doc.status !== "Lost") {
-			if (doc.items) {
-				frm.add_custom_button(
-					__("Supplier Quotation"),
-					function () {
-						frm.trigger("make_supplier_quotation");
-					},
-					__("Create")
-				);
+			// if (doc.items) {
+			// 	frm.add_custom_button(
+			// 		__("Supplier Quotation"),
+			// 		function () {
+			// 			frm.trigger("make_supplier_quotation");
+			// 		},
+			// 		__("Create")
+			// 	);
 
-				frm.add_custom_button(
-					__("Request For Quotation"),
-					function () {
-						frm.trigger("make_request_for_quotation");
-					},
-					__("Create")
-				);
-			}
+			// 	frm.add_custom_button(
+			// 		__("Request For Quotation"),
+			// 		function () {
+			// 			frm.trigger("make_request_for_quotation");
+			// 		},
+			// 		__("Create")
+			// 	);
+			// }
 
 			if (frm.doc.opportunity_from != "Customer") {
 				frm.add_custom_button(
@@ -104,13 +104,13 @@ frappe.ui.form.on("Opportunity", {
 				);
 			}
 
-			frm.add_custom_button(
-				__("Quotation"),
-				function () {
-					frm.trigger("create_quotation");
-				},
-				__("Create")
-			);
+			// frm.add_custom_button(
+			// 	__("Quotation"),
+			// 	function () {
+			// 		frm.trigger("create_quotation");
+			// 	},
+			// 	__("Create")
+			// );
 
 			let company_currency = erpnext.get_currency(frm.doc.company);
 			if (company_currency != frm.doc.currency) {
@@ -158,6 +158,19 @@ frappe.ui.form.on("Opportunity", {
 			if (frm.fields_dict['custom_comment_list']) {
 				frm.fields_dict['custom_comment_list'].$wrapper.html(html_notice);
 			}
+		}
+
+		if (!frm.is_new()) {
+			frm.add_custom_button(__('Appointment'), () => {
+				frappe.new_doc('Appointment', {
+					opportunity: frm.doc.name,
+					customer_name: frm.doc.customer_name,
+					customer_phone_number: frm.doc.phone,
+					customer_email: frm.doc.contact_email,
+					estimated_budget: frm.doc.proposed_budget || undefined,
+					range_estimated_budget: frm.doc.budget_lead || undefined,
+				});
+			}, __('Create'));
 		}
 	},
 

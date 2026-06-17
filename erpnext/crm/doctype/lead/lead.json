@@ -222,7 +222,8 @@
    "label": "Lead Source",
    "oldfieldname": "source",
    "oldfieldtype": "Select",
-   "options": "Lead Source"
+   "options": "Lead Source",
+   "reqd": 1
   },
   {
    "depends_on": "eval:doc.source == 'Existing Customer'",
@@ -867,7 +868,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-05-04 14:22:37.677519",
+ "modified": "2026-06-17 14:38:08.042923",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
@@ -926,6 +927,7 @@
    "role": "Sales User"
   }
  ],
+ "quick_entry": 1,
  "row_format": "Dynamic",
  "search_fields": "lead_name,lead_owner,status",
  "sender_field": "email_id",
