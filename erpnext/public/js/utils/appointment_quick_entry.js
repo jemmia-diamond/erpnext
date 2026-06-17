@@ -14,77 +14,42 @@ frappe.ui.form.AppointmentQuickEntryForm = class AppointmentQuickEntryForm exten
 	get_custom_fields() {
 		return [
 			{
+				fieldname: "existing_appointment_warning",
+				fieldtype: "HTML",
+			},
+			{
 				fieldname: "scheduled_time",
 				fieldtype: "Datetime",
 				label: __("Scheduled Time"),
 				reqd: 1
 			},
 			{
-				fieldname: "status",
+				fieldname: "at_store",
 				fieldtype: "Select",
-				label: "Status",
-				options: "Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng\nKh\u00e1ch h\u1eb9n \u0111\u1ebfn c\u1eeda h\u00e0ng\nKh\u00e1ch ch\u01b0a mua h\u00e0ng\nKh\u00e1ch kh\u00f4ng \u0111\u1ebfn c\u1eeda h\u00e0ng\nKh\u00e1ch ho\u00e3n l\u1ea1i ng\u00e0y \u0111\u1ebfn c\u1eeda h\u00e0ng\nKh\u00e1ch \u0111\u00e3 \u0111\u1ebfn c\u1eeda h\u00e0ng",
-				reqd: 1
+				label: __("At Store"),
+				options: "72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh\n63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i\n209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1"
 			},
 			{
-				fieldname: "store",
+				fieldname: "appointment_reason",
 				fieldtype: "Select",
-				label: __("Store"),
-				options: "72 NCT\n63 KM\nCần Thơ"
-			},
-			{
-				fieldname: "gender",
-				fieldtype: "Link",
-				label: __("Gender"),
-				options: "Gender",
-				read_only: 1
-			},
-			{
-				fieldname: "customer_name",
-				fieldtype: "Data",
-				label: __("Customer Name"),
+				label: __("Appointment reason"),
+				options: "Warranty Service\nTrade-in\nPurchase\nConsultation\nCleaning\nOther",
 				reqd: 1
-			},
-			{
-				fieldname: "customer_phone_number",
-				fieldtype: "Data",
-				label: __("Phone Number")
-			},
-			{
-				fieldname: "main_sales",
-				fieldtype: "Table MultiSelect",
-				label: __("Main Sales Person"),
-				options: "Appointment Sales Person"
-			},
-			{
-				fieldname: "offline_sales",
-				fieldtype: "Table MultiSelect",
-				label: "Offline Sales Person",
-				options: "Appointment Sales Person"
 			},
 			{
 				fieldname: "conversation_greeting",
 				fieldtype: "Small Text",
-				label: __("In-Store Greeting Content")
+				label: __("In-Store Greeting Content"),
 			},
 			{
-				fieldname: "notes",
-				fieldtype: "Small Text",
-				label: __("Notes")
+				fieldname: "conversation_greeting_desc",
+				fieldtype: "HTML",
+				options: '<div class="text-muted small" style="margin-top: -10px; margin-bottom: 10px;">Nhập nội dung đón tiếp; lưu ý; hay các chính sách, chính sách thu mua thu đổi</div>'
 			}
 		];
 	}
 
 	setup_custom_logic() {
-		this.dialog.set_df_property("customer_phone_number", "read_only", 0);
-
-		if (this.doc.party) {
-			this.dialog.set_df_property("gender", "hidden", 1);
-		}
-
-		if (this.doc.customer_phone_number) {
-			this.dialog.set_df_property("customer_phone_number", "read_only", 1);
-		}
 
 		// Fetch Sales Person name for current user email and set as main_sales
 		frappe.db.get_value("Sales Person", {"employee_email": frappe.session.user}, ["name", "sales_person_name"])
@@ -93,11 +58,62 @@ frappe.ui.form.AppointmentQuickEntryForm = class AppointmentQuickEntryForm exten
 					if (r.message.sales_person_name) {
 						frappe.utils.add_link_title("Sales Person", r.message.name, r.message.sales_person_name);
 					}
-					this.dialog.set_value('main_sales', [{
+					// Since main_sales is not in the dialog, set it directly on the underlying doc
+					this.doc.main_sales = [{
 						sales_person: r.message.name
-					}]);
+					}];
 				}
 			});
+
+		// Check if there is an existing appointment
+		this.check_existing_appointment();
+	}
+
+	check_existing_appointment() {
+		let get_phone_promise = Promise.resolve(this.doc.customer_phone_number);
+
+		// If phone is not passed, try to fetch it from Lead or Customer
+		if (!this.doc.customer_phone_number) {
+			if (this.doc.lead) {
+				get_phone_promise = frappe.db.get_value("Lead", this.doc.lead, ["mobile_no", "phone"])
+					.then(r => r.message ? (r.message.mobile_no || r.message.phone) : null);
+			} else if (this.doc.party && this.doc.appointment_with === "Customer") {
+				get_phone_promise = frappe.db.get_value("Customer", this.doc.party, ["mobile_no", "phone"])
+					.then(r => r.message ? (r.message.mobile_no || r.message.phone) : null);
+			}
+		}
+
+		get_phone_promise.then(phone => {
+			let or_filters = [];
+			
+			if (this.doc.lead) or_filters.push(["lead", "=", this.doc.lead]);
+			if (this.doc.party && this.doc.appointment_with === "Customer") or_filters.push(["party", "=", this.doc.party]);
+			if (phone) or_filters.push(["customer_phone_number", "=", phone]);
+
+			if (or_filters.length === 0) return;
+
+			frappe.db.get_list("Appointment", {
+				filters: [
+					["scheduled_time", ">=", frappe.datetime.now_datetime()],
+					["status", "in", ["Open", "Unverified", "Delayed"]]
+				],
+				or_filters: or_filters,
+				fields: ["name", "scheduled_time"]
+			}).then(res => {
+				if (res && res.length > 0) {
+					let appt = res[0];
+					let html = `
+						<div class="alert alert-warning" style="margin-bottom: 15px;">
+							<strong><i class="fa fa-exclamation-triangle"></i> Cảnh báo trùng lặp:</strong> Khách hàng này đã có một lịch hẹn sắp tới vào lúc <b>${appt.scheduled_time}</b>.<br>
+							<a href="/app/appointment/${appt.name}" target="_blank" style="text-decoration: underline; font-weight: bold; color: #856404;">
+								Bấm vào đây để mở lịch hẹn (${appt.name})
+							</a>
+						</div>
+					`;
+					this.dialog.get_field("existing_appointment_warning").$wrapper.html(html);
+				}
+			});
+		});
 	}
 
 	insert() {

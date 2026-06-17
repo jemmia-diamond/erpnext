@@ -41,16 +41,41 @@ erpnext.utils.CRMActivities = class CRMActivities {
 
 					$(activities_html).appendTo(me.open_activities_wrapper);
 
+					$(".open-tasks")
+						.find(".completion-checkbox")
+						.on("click", function () {
+							me.update_status(this, "ToDo");
+						});
+
 					$(".open-events")
 						.find(".completion-checkbox")
 						.on("click", function () {
 							me.update_status(this, "Event");
 						});
 
+					me.create_task();
 					me.create_event();
 				}
 			},
 		});
+	}
+
+	create_task() {
+		let me = this;
+		let _create_task = () => {
+			const args = {
+				doc: me.frm.doc,
+				frm: me.frm,
+				title: __("New Task"),
+			};
+			let composer = new frappe.views.InteractionComposer(args);
+			composer.dialog.get_field("interaction_type").set_value("ToDo");
+			// hide column having interaction type field
+			$(composer.dialog.get_field("interaction_type").wrapper).closest(".form-column").hide();
+			// hide summary field
+			$(composer.dialog.get_field("summary").wrapper).closest(".form-section").hide();
+		};
+		$(".new-task-btn").click(_create_task);
 	}
 
 	create_event() {
@@ -66,6 +91,15 @@ erpnext.utils.CRMActivities = class CRMActivities {
 			$(composer.dialog.get_field("interaction_type").wrapper).hide();
 		};
 		$(".new-event-btn").click(_create_event);
+	}
+
+	async update_status(input_field, doctype) {
+		let completed = $(input_field).prop("checked") ? 1 : 0;
+		let docname = $(input_field).attr("name");
+		if (completed) {
+			await frappe.db.set_value(doctype, docname, "status", "Closed");
+			this.refresh();
+		}
 	}
 };
 
@@ -116,12 +150,6 @@ erpnext.utils.CRMNotes = class CRMNotes {
 						reqd: 1,
 						enable_mentions: true,
 					},
-					{
-						label: "Notify To",
-						fieldname: "notify_to",
-						fieldtype: "Link",
-						options: "User",
-					}
 				],
 				primary_action: function () {
 					var data = d.get_values();
@@ -130,7 +158,6 @@ erpnext.utils.CRMNotes = class CRMNotes {
 						doc: me.frm.doc,
 						args: {
 							note: data.note,
-							notify_to: data.notify_to
 						},
 						freeze: true,
 						callback: function (r) {
@@ -152,11 +179,8 @@ erpnext.utils.CRMNotes = class CRMNotes {
 	edit_note(edit_btn) {
 		var me = this;
 		let row = $(edit_btn).closest(".comment-content");
-		let row_name = row.attr("name");
-		let grid_row = $(`[data-name="${row_name}"]`).find('[data-fieldname="notify_to"]');
 		let row_id = row.attr("name");
 		let row_content = $(row).find(".content").html();
-		let notify_to = grid_row.text() !== "" ? grid_row.text() : null;
 		if (row_content) {
 			var d = new frappe.ui.Dialog({
 				title: __("Edit Note"),
@@ -166,17 +190,7 @@ erpnext.utils.CRMNotes = class CRMNotes {
 						fieldname: "note",
 						fieldtype: "Text Editor",
 						default: row_content,
-						reqd: 1
 					},
-					{
-						label: "Notify To",
-						fieldname: "notify_to",
-						fieldtype: "Link",
-						options: "User",
-						default: notify_to,
-						reqd: notify_to ? 1 : 0,
-						read_only: notify_to ? 1 : 0
-					}
 				],
 				primary_action: function () {
 					var data = d.get_values();
@@ -185,7 +199,6 @@ erpnext.utils.CRMNotes = class CRMNotes {
 						doc: me.frm.doc,
 						args: {
 							note: data.note,
-							notify_to: data.notify_to,
 							row_id: row_id,
 						},
 						freeze: true,

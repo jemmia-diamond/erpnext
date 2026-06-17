@@ -21,16 +21,20 @@ class Appointment(Document):
 
 	if TYPE_CHECKING:
 		from erpnext.crm.doctype.appointment_sales_person.appointment_sales_person import AppointmentSalesPerson
+		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from frappe.types import DF
 
+		appointment_reason: DF.Literal["Warranty Service", "Trade-in", "Purchase", "Consultation", "Cleaning", "Other"]
 		appointment_with: DF.Link | None
+		at_store: DF.Literal["72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh", "63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i", "209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1"]
 		calendar_event: DF.Link | None
 		conversation_greeting: DF.LongText | None
 		customer_email: DF.Data | None
 		customer_name: DF.Data
 		customer_phone_number: DF.Data | None
 		customer_response: DF.LongText | None
-		estimated_budget: DF.Link | None
+		estimated_budget: DF.Data | None
+		expected_delivery_date: DF.Date | None
 		gender: DF.Link | None
 		lead: DF.Link | None
 		main_sales: DF.TableMultiSelect[AppointmentSalesPerson]
@@ -38,10 +42,12 @@ class Appointment(Document):
 		offline_sales: DF.TableMultiSelect[AppointmentSalesPerson]
 		party: DF.DynamicLink | None
 		policy: DF.LongText | None
+		preferred_products: DF.TableMultiSelect[LeadProductItem]
+		purchase_purpose: DF.Link | None
 		range_estimated_budget: DF.Link | None
 		record_id: DF.Data | None
 		scheduled_time: DF.Datetime
-		status: DF.Literal["Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng", "Kh\u00e1ch h\u1eb9n \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch ch\u01b0a mua h\u00e0ng", "Kh\u00e1ch kh\u00f4ng \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch ho\u00e3n l\u1ea1i ng\u00e0y \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch \u0111\u00e3 \u0111\u1ebfn c\u1eeda h\u00e0ng"]
+		status: DF.Literal["Open", "Unverified", "Delayed", "Closed"]
 		store: DF.Literal["72 NCT", "63 KM", "C\u1ea7n Th\u01a1"]
 	# end: auto-generated types
 

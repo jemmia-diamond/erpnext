@@ -90,9 +90,14 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 			party: this.frm.doc.name,
 			customer_name: this.frm.doc.lead_name,
 			customer_phone_number: this.frm.doc.phone,
-			estimated_budget: this.frm.doc.budget_lead || this.frm.doc.proposed_budget,
+			// estimated_budget: this.frm.doc.budget_lead || this.frm.doc.proposed_budget,
 			range_estimated_budget: this.frm.doc.budget_lead || this.frm.doc.proposed_budget,
-			gender: this.frm.doc.gender
+			gender: this.frm.doc.gender,
+			expected_delivery_date: this.frm.doc.expected_delivery_date,
+			purchase_purpose: this.frm.doc.purpose_lead,
+			preferred_products: this.frm.doc.preferred_product_type,
+			status: "Open",
+			customer_status: "Khách hẹn đến cửa hàng"
 		});
 	}
 
