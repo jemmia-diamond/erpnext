@@ -442,13 +442,14 @@
    "fieldname": "qualified_by",
    "fieldtype": "Link",
    "label": "Qualified By",
-   "options": "User"
+   "options": "User",
+   "read_only": 1
   },
   {
    "fieldname": "qualified_on",
    "fieldtype": "Datetime",
    "label": "Qualified on",
-   "permlevel": 1
+   "read_only": 1
   },
   {
    "fieldname": "qualification_status",
@@ -834,6 +835,7 @@
    "read_only": 1
   },
   {
+   "default": "Now",
    "fieldname": "first_reach_at",
    "fieldtype": "Datetime",
    "label": "First Reach At"
@@ -867,7 +869,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-05-04 14:22:37.677519",
+ "modified": "2026-06-22 17:13:31.124466",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
