@@ -389,6 +389,10 @@ class PaymentEntry(AccountsController):
 
 				if not existing:
 					bank_transaction.flags.updating_linked_bank_transaction = True
+
+					if not bank_transaction.bank_account and self.bank_account:
+						bank_transaction.bank_account = self.bank_account
+
 					bank_transaction.append("payment_entries", {
 						"payment_document": "Payment Entry",
 						"payment_entry": self.name,
@@ -568,7 +572,7 @@ class PaymentEntry(AccountsController):
 		for d in self.get("references"):
 			if d.reference_doctype == "Sales Order" and d.reference_name:
 				so_names.add(d.reference_name)
-		
+
 		if not self.is_new() and self.get_doc_before_save():
 			for d in self.get_doc_before_save().get("references", []):
 				if d.reference_doctype == "Sales Order" and d.reference_name:
