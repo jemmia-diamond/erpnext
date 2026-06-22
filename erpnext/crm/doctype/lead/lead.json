@@ -30,9 +30,9 @@
   "gender",
   "qualified_lead_date",
   "col_break123",
-  "lead_owner",
-  "source",
   "status",
+  "source",
+  "lead_owner",
   "customer",
   "request_type",
   "lead_name",
@@ -257,8 +257,7 @@
   {
    "fieldname": "contact_html",
    "fieldtype": "HTML",
-   "label": "Contact HTML",
-   "read_only": 1
+   "label": "Contact HTML"
   },
   {
    "fieldname": "phone",
@@ -291,6 +290,7 @@
    "default": "Individual",
    "fieldname": "type",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Lead Type",
    "oldfieldname": "type",
    "oldfieldtype": "Select",
@@ -623,6 +623,7 @@
    "default": "Now",
    "fieldname": "lead_received_date",
    "fieldtype": "Datetime",
+   "hidden": 1,
    "label": "Lead Received Date",
    "read_only": 1
   },
@@ -740,6 +741,7 @@
   {
    "fieldname": "proposed_budget",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Propose Lead Budget",
    "options": "Lead Budget"
   },
@@ -793,6 +795,7 @@
   {
    "fieldname": "contact_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Contact Information"
   },
   {
@@ -809,7 +812,7 @@
    "default": "Lead",
    "fieldname": "lead_stage",
    "fieldtype": "Select",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Lead Stage",
    "options": "Lead\nQualified Lead\nOpportunity\nCustomer",
    "read_only": 1
@@ -835,6 +838,7 @@
    "read_only": 1
   },
   {
+   "default": "Now",
    "fieldname": "first_reach_at",
    "fieldtype": "Datetime",
    "label": "First Reach At"
@@ -868,7 +872,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-06-17 14:38:08.042923",
+ "modified": "2026-06-22 10:18:44.409511",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",

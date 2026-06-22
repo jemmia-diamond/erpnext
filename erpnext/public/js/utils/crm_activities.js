@@ -48,6 +48,7 @@ erpnext.utils.CRMActivities = class CRMActivities {
 						});
 
 					me.create_event();
+					me.create_task();
 				}
 			},
 		});
@@ -66,6 +67,17 @@ erpnext.utils.CRMActivities = class CRMActivities {
 			$(composer.dialog.get_field("interaction_type").wrapper).hide();
 		};
 		$(".new-event-btn").click(_create_event);
+	}
+	create_task() {
+		let me = this;
+		let _create_task = () => {
+			frappe.new_doc("ToDo", {
+				reference_type: me.frm.doc.doctype,
+				reference_name: me.frm.doc.name,
+				status: "Open"
+			});
+		};
+		$(".new-task-btn").off("click").on("click", _create_task);
 	}
 };
 

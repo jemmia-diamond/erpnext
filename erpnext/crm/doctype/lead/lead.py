@@ -19,6 +19,7 @@ from erpnext.config.config import config
 from erpnext.controllers.selling_controller import SellingController
 from erpnext.crm.utils import CRMNote, copy_comments, link_communications, link_open_events
 from erpnext.selling.doctype.customer.customer import parse_full_name
+from frappe.utils import date_diff, now_datetime
 
 
 class Lead(SellingController, CRMNote):
@@ -394,6 +395,8 @@ class Lead(SellingController, CRMNote):
 	def on_update(self):
 		self.update_prospect()
 		self.update_assignment_status()
+		#Trigger auto create Opportunity
+		self.create_opportunity()
 
 	def on_trash(self):
 		frappe.db.set_value("Issue", {"lead": self.name}, "lead", None)
@@ -681,27 +684,35 @@ class Lead(SellingController, CRMNote):
 
 	def create_opportunity(self):
 		"""
-		every lead stage convert to opportunity will create opportunity if not exist
+		auto create Opportunity when lead was Qualified
 		"""
 
-		if self.lead_stage != "Opportunity":
+		if self.qualification_status != "Qualified":
 			return
 
-		opportunity = None
-		try:
-			opportunity = frappe.get_doc("Lead", {
-				"party_name" : self.name,
-				"opportunity_from" : "Lead"
-			})
-		except Exception:
-			opportunity = None
+		# Get lastest Opportunity
+		latest_opportunity = frappe.db.get_value("Opportunity", 
+			{"party_name": self.name, "opportunity_from": "Lead"},
+			["name", "status", "creation"],
+			as_dict=True,
+			order_by="creation desc"
+		)
 
-		if opportunity:
-			return
+		if latest_opportunity:
+			if latest_opportunity.status in ["Open", "Quotation", "Negotiation"]:
+				return
+			
+			# If Opportunity was closed, check time
+			# Affter `days_limit` day, Lead can create new Opportunity
+			days_limit = 30 
+			
+			diff_days = date_diff(now_datetime(), latest_opportunity.creation)
+			if diff_days < days_limit:
+				return
 
 		opportunity = make_opportunity(self.name)
 
-		opportunity.insert()
+		opportunity.insert(ignore_permissions=True)
 	@frappe.whitelist()
 	def create_prospect_and_contact(self, data):
 		data = frappe._dict(data)
