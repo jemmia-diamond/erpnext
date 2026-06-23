@@ -95,7 +95,7 @@ class Lead(SellingController, CRMNote):
 		region: DF.Link | None
 		request_type: DF.Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
 		salutation: DF.Link | None
-		source: DF.Link
+		source: DF.Link | None
 		state: DF.Data | None
 		status: DF.Literal["Lead", "Contacted", "Replied", "Interested", "Qualified", "Opportunity", "Converted", "Do Not Contact", "Spam"]
 		stringee_data: DF.JSON | None
@@ -700,14 +700,6 @@ class Lead(SellingController, CRMNote):
 
 		if latest_opportunity:
 			if latest_opportunity.status in ["Open", "Quotation", "Negotiation"]:
-				return
-			
-			# If Opportunity was closed, check time
-			# Affter `days_limit` day, Lead can create new Opportunity
-			days_limit = 30 
-			
-			diff_days = date_diff(now_datetime(), latest_opportunity.creation)
-			if diff_days < days_limit:
 				return
 
 		opportunity = make_opportunity(self.name)
