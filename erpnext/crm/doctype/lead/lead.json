@@ -24,15 +24,16 @@
   "phone",
   "first_reach_at",
   "column_break_1",
-  "email_id",
+  "status",
   "job_title",
   "last_name",
   "gender",
+  "lead_owner",
   "qualified_lead_date",
   "col_break123",
-  "lead_owner",
+  "email_id",
   "source",
-  "status",
+  "custom_note",
   "customer",
   "request_type",
   "lead_name",
@@ -120,6 +121,7 @@
   "notes_html",
   "notes",
   "activities_tab",
+  "section_break_wcmy",
   "open_activities_html",
   "all_activities_section",
   "all_activities_html",
@@ -222,7 +224,8 @@
    "label": "Lead Source",
    "oldfieldname": "source",
    "oldfieldtype": "Select",
-   "options": "Lead Source"
+   "options": "Lead Source",
+   "reqd": 1
   },
   {
    "depends_on": "eval:doc.source == 'Existing Customer'",
@@ -256,8 +259,7 @@
   {
    "fieldname": "contact_html",
    "fieldtype": "HTML",
-   "label": "Contact HTML",
-   "read_only": 1
+   "label": "Contact HTML"
   },
   {
    "fieldname": "phone",
@@ -290,6 +292,7 @@
    "default": "Individual",
    "fieldname": "type",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Lead Type",
    "oldfieldname": "type",
    "oldfieldtype": "Select",
@@ -435,8 +438,7 @@
   },
   {
    "fieldname": "column_break_1",
-   "fieldtype": "Column Break",
-   "hidden": 1
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "qualified_by",
@@ -447,12 +449,15 @@
   {
    "fieldname": "qualified_on",
    "fieldtype": "Datetime",
+   "in_list_view": 1,
    "label": "Qualified on",
    "permlevel": 1
   },
   {
    "fieldname": "qualification_status",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Qualification Status",
    "options": "Unqualified\nQualified",
    "permlevel": 1
@@ -515,8 +520,7 @@
   },
   {
    "fieldname": "all_activities_section",
-   "fieldtype": "Section Break",
-   "label": "All Activities"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "all_activities_html",
@@ -622,6 +626,7 @@
    "default": "Now",
    "fieldname": "lead_received_date",
    "fieldtype": "Datetime",
+   "hidden": 1,
    "label": "Lead Received Date",
    "read_only": 1
   },
@@ -733,6 +738,7 @@
   {
    "fieldname": "budget_lead",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Lead Budget",
    "options": "Lead Budget"
   },
@@ -792,6 +798,7 @@
   {
    "fieldname": "contact_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Contact Information"
   },
   {
@@ -808,7 +815,7 @@
    "default": "Lead",
    "fieldname": "lead_stage",
    "fieldtype": "Select",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Lead Stage",
    "options": "Lead\nQualified Lead\nOpportunity\nCustomer",
    "read_only": 1
@@ -834,6 +841,7 @@
    "read_only": 1
   },
   {
+   "default": "Now",
    "fieldname": "first_reach_at",
    "fieldtype": "Datetime",
    "label": "First Reach At"
@@ -860,6 +868,17 @@
    "fieldtype": "Check",
    "label": "Is Assigned",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_wcmy",
+   "fieldtype": "Section Break",
+   "hidden": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "custom_note",
+   "fieldtype": "Small Text",
+   "label": "Note"
   }
  ],
  "grid_page_length": 50,
@@ -867,7 +886,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-05-04 14:22:37.677519",
+ "modified": "2026-06-23 16:17:19.071181",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
@@ -926,6 +945,7 @@
    "role": "Sales User"
   }
  ],
+ "quick_entry": 1,
  "row_format": "Dynamic",
  "search_fields": "lead_name,lead_owner,status",
  "sender_field": "email_id",

@@ -50,6 +50,7 @@ class Lead(SellingController, CRMNote):
 		company: DF.Link | None
 		company_name: DF.Data | None
 		country: DF.Link | None
+		custom_note: DF.SmallText | None
 		customer: DF.Link | None
 		date_of_issuance: DF.Date | None
 		disabled: DF.Check
@@ -95,7 +96,7 @@ class Lead(SellingController, CRMNote):
 		region: DF.Link | None
 		request_type: DF.Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
 		salutation: DF.Link | None
-		source: DF.Link | None
+		source: DF.Link
 		state: DF.Data | None
 		status: DF.Literal["Lead", "Contacted", "Replied", "Interested", "Qualified", "Opportunity", "Converted", "Do Not Contact", "Spam"]
 		stringee_data: DF.JSON | None
@@ -129,6 +130,15 @@ class Lead(SellingController, CRMNote):
 		self.validate_email_id()
 
 	def before_insert(self):
+		# Create Note with quickform
+		if self.custom_note and self.custom_note.strip():
+			self.append("notes", {
+				"note": self.custom_note,
+				"added_by": frappe.session.user or "Administrator",
+				"added_on": frappe.utils.now_datetime()
+			})
+			# Delete cutom note before save
+			self.custom_note = None
 		self.contact_doc = None
 		if frappe.db.get_single_value("CRM Settings", "auto_creation_of_contact"):
 			if self.utm_source == "Existing Customer" and self.customer:

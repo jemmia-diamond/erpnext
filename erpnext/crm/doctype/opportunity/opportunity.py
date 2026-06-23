@@ -45,7 +45,6 @@ class Opportunity(TransactionBase, CRMNote):
 		base_opportunity_amount: DF.Currency
 		base_total: DF.Currency
 		budget_lead: DF.Link | None
-		campaign: DF.Link | None
 		city: DF.Data | None
 		company: DF.Link
 		competitors: DF.TableMultiSelect[CompetitorDetail]
@@ -81,7 +80,8 @@ class Opportunity(TransactionBase, CRMNote):
 		phone: DF.Data | None
 		phone_ext: DF.Data | None
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
-		probability: DF.Literal["Kh\u1ea3 n\u0103ng th\u1ea5p", "C\u00f3 tri\u1ec3n v\u1ecdng", "Kh\u1ea3 n\u0103ng cao", "Ch\u1eafc ch\u1eafn ch\u1ed1t"]
+		probability: DF.Literal["Kh\u1ea3 n\u0103ng th\u1ea5p", "C\u00f3 tri\u1ec3n v\u1ecdng", "Kh\u1ea3 n\u0103ng cao", "Ch\u1eafc ch\u1eafn mua"]
+		proposed_budget: DF.Link | None
 		province: DF.Link | None
 		purpose_lead: DF.Link | None
 		region: DF.Link | None

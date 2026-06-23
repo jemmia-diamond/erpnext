@@ -235,6 +235,14 @@ if (cur_frm) {
 
 frappe.ui.form.on('Lead', {
 	refresh(frm) {
+		frappe.dom.set_style(`
+			.new-task-btn, .new-event-btn, .timeline-actions {
+				display: none !important;
+			}
+		`);
+		if (!frm.is_quick_entry) {
+			frm.set_df_property('custom_note', 'hidden', 1);
+		}
 		// Check Contact associated with this Lead
 		frappe.db.get_list("Contact", {
 			filters: [

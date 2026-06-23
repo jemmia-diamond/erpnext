@@ -14,24 +14,28 @@
  "field_order": [
   "detail_tab",
   "opportunity_section",
-  "naming_series",
-  "opportunity_from",
-  "party_name",
-  "customer_name",
-  "column_break0",
-  "opportunity_type",
-  "sales_stage",
+  "column_break_10",
+  "status",
+  "phone",
+  "expected_closing",
+  "opportunity_owner",
+  "column_break_shzo",
   "probability",
   "opportunity_date",
-  "column_break_10",
-  "opportunity_owner",
-  "status",
-  "expected_closing",
+  "naming_series",
+  "customer_name",
+  "column_break0",
+  "contact_email",
+  "opportunity_type",
+  "opportunity_from",
+  "party_name",
+  "sales_stage",
   "customer_demand_sections",
   "purpose_lead",
   "expected_delivery_date",
   "column_break_pfyx",
   "budget_lead",
+  "proposed_budget",
   "preferred_product_type",
   "column_break_rirs",
   "province",
@@ -80,14 +84,11 @@
   "contact_person",
   "job_title",
   "column_break_54",
-  "contact_email",
   "contact_mobile",
   "column_break_22",
   "whatsapp",
-  "phone",
   "phone_ext",
   "address_contact_section",
-  "column_break_pzyp",
   "address_html",
   "customer_address",
   "address_display",
@@ -103,14 +104,15 @@
   "base_total",
   "column_break_33",
   "total",
-  "activities_tab",
-  "open_activities_html",
-  "all_activities_section",
-  "all_activities_html",
-  "comment",
   "team_sale_tab",
   "sales_team",
-  "dashboard_tab"
+  "dashboard_tab",
+  "comment",
+  "activities_tab",
+  "section_break_urbk",
+  "open_activities_html",
+  "all_activities_section",
+  "all_activities_html"
  ],
  "fields": [
   {
@@ -125,13 +127,16 @@
    "set_only_once": 1
   },
   {
+   "default": "Lead",
    "fieldname": "opportunity_from",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Opportunity From",
    "oldfieldname": "enquiry_from",
    "oldfieldtype": "Select",
    "options": "DocType",
    "print_hide": 1,
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -143,6 +148,7 @@
    "oldfieldtype": "Link",
    "options": "opportunity_from",
    "print_hide": 1,
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -150,8 +156,6 @@
    "fieldname": "customer_name",
    "fieldtype": "Data",
    "hidden": 1,
-   "in_global_search": 1,
-   "in_standard_filter": 1,
    "label": "Customer Name",
    "read_only": 1
   },
@@ -175,7 +179,8 @@
    "label": "Opportunity Type",
    "oldfieldname": "enquiry_type",
    "oldfieldtype": "Select",
-   "options": "Opportunity Type"
+   "options": "Opportunity Type",
+   "read_only": 1
   },
   {
    "default": "Open",
@@ -242,11 +247,12 @@
    "fieldname": "probability",
    "fieldtype": "Select",
    "label": "Probability",
-   "options": "Kh\u1ea3 n\u0103ng th\u1ea5p\nC\u00f3 tri\u1ec3n v\u1ecdng\nKh\u1ea3 n\u0103ng cao\nCh\u1eafc ch\u1eafn ch\u1ed1t"
+   "options": "Kh\u1ea3 n\u0103ng th\u1ea5p\nC\u00f3 tri\u1ec3n v\u1ecdng\nKh\u1ea3 n\u0103ng cao\nCh\u1eafc ch\u1eafn mua"
   },
   {
    "fieldname": "items_section",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Items",
    "options": "fa fa-shopping-cart"
   },
@@ -410,7 +416,6 @@
    "fieldtype": "Currency",
    "label": "Opportunity Amount (Company Currency)",
    "options": "Company:company:default_currency",
-   "precision": "0",
    "print_hide": 1,
    "read_only": 1
   },
@@ -503,7 +508,7 @@
   {
    "fieldname": "address_contact_section",
    "fieldtype": "Section Break",
-   "label": "Contact"
+   "label": "Address & Contact"
   },
   {
    "fieldname": "column_break_36",
@@ -556,7 +561,6 @@
   {
    "fieldname": "primary_contact_section",
    "fieldtype": "Section Break",
-   "hidden": 1,
    "label": "Primary Contact Section"
   },
   {
@@ -610,8 +614,7 @@
   },
   {
    "fieldname": "all_activities_section",
-   "fieldtype": "Section Break",
-   "label": "All Activities"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "all_activities_html",
@@ -685,7 +688,8 @@
   },
   {
    "fieldname": "customer_demand_sections",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Customer Demand Sections"
   },
   {
    "fieldname": "purpose_lead",
@@ -696,6 +700,7 @@
   {
    "fieldname": "budget_lead",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Lead Budget",
    "options": "Lead Budget"
   },
@@ -725,7 +730,8 @@
   },
   {
    "fieldname": "opportunity_section",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Opportunity"
   },
   {
    "fieldname": "province",
@@ -762,16 +768,25 @@
    "options": "Sales Team"
   },
   {
-   "fieldname": "column_break_pzyp",
-   "fieldtype": "Column Break",
-   "hidden": 1
+   "fieldname": "section_break_urbk",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "proposed_budget",
+   "fieldtype": "Link",
+   "label": "Proposed Budget",
+   "options": "Lead Budget"
+  },
+  {
+   "fieldname": "column_break_shzo",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "icon": "fa fa-info-sign",
  "idx": 195,
  "links": [],
- "modified": "2026-06-19 17:14:37.376938",
+ "modified": "2026-06-23 17:16:21.026860",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Opportunity",

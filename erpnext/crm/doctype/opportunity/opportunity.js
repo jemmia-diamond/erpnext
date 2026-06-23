@@ -71,6 +71,11 @@ frappe.ui.form.on("Opportunity", {
 	},
 
 	refresh: function (frm) {
+		frappe.dom.set_style(`
+			.new-task-btn, .new-event-btn, .timeline-actions {
+				display: none !important;
+			}
+		`);
 		var doc = frm.doc;
 		frm.trigger("setup_opportunity_from");
 		erpnext.toggle_naming_series();
