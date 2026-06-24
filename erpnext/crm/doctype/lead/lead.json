@@ -118,6 +118,7 @@
   "column_break_16",
   "phone_ext",
   "note_tab",
+  "section_break_lamm",
   "notes_html",
   "notes",
   "activities_tab",
@@ -180,6 +181,7 @@
    "default": "__user",
    "fieldname": "lead_owner",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Lead Owner",
    "oldfieldname": "lead_owner",
    "oldfieldtype": "Link",
@@ -530,6 +532,7 @@
   {
    "fieldname": "notes",
    "fieldtype": "Table",
+   "hidden": 1,
    "label": "Notes",
    "no_copy": 1,
    "options": "CRM Note",
@@ -879,6 +882,10 @@
    "fieldname": "custom_note",
    "fieldtype": "Small Text",
    "label": "Note"
+  },
+  {
+   "fieldname": "section_break_lamm",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
@@ -886,7 +893,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-06-23 16:17:19.071181",
+ "modified": "2026-06-24 11:19:00.919477",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",

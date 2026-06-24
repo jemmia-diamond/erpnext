@@ -246,6 +246,7 @@
    "default": "C\u00f3 tri\u1ec3n v\u1ecdng",
    "fieldname": "probability",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Probability",
    "options": "Kh\u1ea3 n\u0103ng th\u1ea5p\nC\u00f3 tri\u1ec3n v\u1ecdng\nKh\u1ea3 n\u0103ng cao\nCh\u1eafc ch\u1eafn mua"
   },
@@ -517,6 +518,7 @@
   {
    "fieldname": "opportunity_owner",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Opportunity Owner",
    "options": "User"
   },
@@ -769,7 +771,8 @@
   },
   {
    "fieldname": "section_break_urbk",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "hidden": 1
   },
   {
    "fieldname": "proposed_budget",
@@ -786,7 +789,7 @@
  "icon": "fa fa-info-sign",
  "idx": 195,
  "links": [],
- "modified": "2026-06-23 17:16:21.026860",
+ "modified": "2026-06-24 11:19:21.837054",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Opportunity",

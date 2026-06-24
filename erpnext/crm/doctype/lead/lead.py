@@ -932,7 +932,6 @@ def make_opportunity(source_name, target_doc=None):
 					"email_id": "contact_email",
 					"mobile_no": "contact_mobile",
 					"lead_owner": "opportunity_owner",
-					"notes": "notes",
 				},
 			}
 		},
@@ -1102,3 +1101,66 @@ def add_lead_to_prospect(lead, prospect):
 		title=_("Lead -> Prospect"),
 		indicator="green",
 	)
+
+@frappe.whitelist()
+def get_related_notes(doctype, docname):
+	"""
+	Truy vấn và gộp toàn bộ ghi chú (CRM Note) liên quan đến Lead & Opportunity
+	"""
+	notes = []
+	targets = [(doctype, docname)]
+	
+	if doctype == "Lead":
+		# Lấy các Opportunity liên quan
+		opps = frappe.get_all(
+			"Opportunity",
+			filters={"opportunity_from": "Lead", "party_name": docname},
+			fields=["name"]
+		)
+		for opp in opps:
+			targets.append(("Opportunity", opp["name"]))
+			
+	elif doctype == "Opportunity":
+		opp_doc = frappe.get_doc("Opportunity", docname)
+		if opp_doc.opportunity_from == "Lead" and opp_doc.party_name:
+			lead_name = opp_doc.party_name
+			targets.append(("Lead", lead_name))
+			
+			# Lấy các Opportunity khác cùng Lead gốc này
+			other_opps = frappe.get_all(
+				"Opportunity",
+				filters={
+					"opportunity_from": "Lead",
+					"party_name": lead_name,
+					"name": ["!=", docname]
+				},
+				fields=["name"]
+			)
+			for opp in other_opps:
+				targets.append(("Opportunity", opp["name"]))
+
+	# Truy vấn trực tiếp CRM Note của các đối tượng đích
+	for parenttype, parent in targets:
+		items = frappe.db.get_all(
+			"CRM Note",
+			filters={"parent": parent, "parenttype": parenttype},
+			fields=["name", "note", "added_by", "added_on", "notify_to", "parent", "parenttype"]
+		)
+		notes.extend(items)
+
+	# Resolve notify_to (email) thành full_name từ User doctype
+	notify_emails = list({n["notify_to"] for n in notes if n.get("notify_to")})
+	name_map = {}
+	if notify_emails:
+		users = frappe.db.get_all(
+			"User",
+			filters={"name": ["in", notify_emails]},
+			fields=["name", "full_name"]
+		)
+		name_map = {u["name"]: u["full_name"] for u in users}
+
+	for n in notes:
+		n["notify_to_name"] = name_map.get(n.get("notify_to"), n.get("notify_to") or "")
+
+	return notes
+

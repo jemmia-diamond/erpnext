@@ -255,7 +255,7 @@ class CRMNote(Document):
 		notify_mentions(self.doctype, self.name, note)
 
 	@frappe.whitelist()
-	def edit_note(self, note, notify_to, row_id):
+	def edit_note(self, note, row_id, notify_to=None):
 		for d in self.notes:
 			if cstr(d.name) == row_id:
 				d.note = note
