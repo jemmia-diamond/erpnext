@@ -136,6 +136,9 @@ frappe.ui.form.on("Opportunity", {
 			[data-fieldname="all_activities_html"] .form-footer {
 				display: block !important;
 			}
+			[data-fieldtype="Datetime"] .help-box {
+				display: none !important;
+			}
 		`);
 		var doc = frm.doc;
 		frm.trigger("setup_opportunity_from");

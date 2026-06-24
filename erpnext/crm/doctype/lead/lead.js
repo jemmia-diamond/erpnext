@@ -124,6 +124,9 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 				font-size: 11px;
 				font-weight: 500;
 			}
+			[data-fieldtype="Datetime"] .help-box {
+				display: none !important;
+			}
 		`, "lead-notes-style");
 
 

@@ -21,6 +21,7 @@
   "opportunity_owner",
   "column_break_shzo",
   "probability",
+  "gender",
   "opportunity_date",
   "naming_series",
   "customer_name",
@@ -783,13 +784,19 @@
   {
    "fieldname": "column_break_shzo",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender"
   }
  ],
  "grid_page_length": 50,
  "icon": "fa fa-info-sign",
  "idx": 195,
  "links": [],
- "modified": "2026-06-24 11:19:21.837054",
+ "modified": "2026-06-24 15:54:10.512998",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Opportunity",

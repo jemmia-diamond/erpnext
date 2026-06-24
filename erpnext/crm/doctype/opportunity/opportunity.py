@@ -61,6 +61,7 @@ class Opportunity(TransactionBase, CRMNote):
 		expected_closing: DF.Date | None
 		expected_delivery_date: DF.Date | None
 		first_response_time: DF.Duration | None
+		gender: DF.Link | None
 		industry: DF.Link | None
 		items: DF.Table[OpportunityItem]
 		job_title: DF.Data | None
