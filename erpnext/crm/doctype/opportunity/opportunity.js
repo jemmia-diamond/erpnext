@@ -130,6 +130,12 @@ frappe.ui.form.on("Opportunity", {
 				font-size: 11px;
 				font-weight: 500;
 			}
+			.form-footer {
+				display: none !important;
+			}
+			[data-fieldname="all_activities_html"] .form-footer {
+				display: block !important;
+			}
 		`);
 		var doc = frm.doc;
 		frm.trigger("setup_opportunity_from");

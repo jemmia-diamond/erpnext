@@ -15,6 +15,11 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 
 		// For avoiding integration issues.
 		this.frm.set_df_property("first_name", "reqd", true);
+
+		frappe.dom.set_style(`
+			.form-footer { display: none !important; }
+			[data-fieldname="all_activities_html"] .form-footer { display: block !important; }
+		`, "lead-footer-hide-style");
 	}
 
 	onload() {
@@ -115,7 +120,7 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 				font-size: 11px;
 				font-weight: 500;
 			}
-		`);
+		`, "lead-notes-style");
 
 
 		this.show_notes();
@@ -488,7 +493,7 @@ frappe.ui.form.on('Lead', {
 			.new-task-btn, .new-event-btn, .timeline-actions {
 				display: none !important;
 			}
-		`);
+		`, "lead-timeline-style");
 		if (!frm.is_quick_entry) {
 			frm.set_df_property('custom_note', 'hidden', 1);
 		}
