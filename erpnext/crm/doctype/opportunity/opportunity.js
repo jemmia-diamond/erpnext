@@ -474,14 +474,21 @@ erpnext.crm.Opportunity = class Opportunity extends frappe.ui.form.Controller {
 					let tag = "";
 					const is_foreign = (n.parent !== frm.doc.name || n.parenttype !== frm.doc.doctype);
 					if (is_foreign) {
-						let path = n.parenttype === "Lead" ? "lead" : "opportunity";
-						let bg  = n.parenttype === "Lead" ? "#fef9c3" : "#dbeafe";
-						let clr = n.parenttype === "Lead" ? "#92400e" : "#1e40af";
+						let path = n.parenttype.toLowerCase();
+						let bg = "#f3f4f6";
+						let clr = "#374151";
+						if (n.parenttype === "Lead") {
+							bg = "#fef9c3"; clr = "#92400e";
+						} else if (n.parenttype === "Opportunity") {
+							bg = "#dbeafe"; clr = "#1e40af";
+						} else if (n.parenttype === "Appointment") {
+							bg = "#e0f2fe"; clr = "#0369a1";
+						}
 						tag = `<a href="/app/${path}/${encodeURIComponent(n.parent)}"
 							style="display:inline-block;padding:2px 10px;border-radius:999px;
 							       font-size:11px;font-weight:600;background:${bg};color:${clr};
 							       text-decoration:none;margin-bottom:8px;"
-							onclick="event.stopPropagation();">${n.parenttype}: ${n.parent}</a>`;
+							onclick="event.stopPropagation();">${__(n.parenttype)}: ${n.parent}</a>`;
 					}
 
 					let by = n.added_by || "";

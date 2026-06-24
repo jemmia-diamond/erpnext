@@ -1147,9 +1147,10 @@ def get_related_notes(doctype, docname):
 	"""
 	notes = []
 	targets = [(doctype, docname)]
-	
+	lead_name = None
+
 	if doctype == "Lead":
-		# Lấy các Opportunity liên quan
+		lead_name = docname
 		opps = frappe.get_all(
 			"Opportunity",
 			filters={"opportunity_from": "Lead", "party_name": docname},
@@ -1159,9 +1160,14 @@ def get_related_notes(doctype, docname):
 			targets.append(("Opportunity", opp["name"]))
 			
 	elif doctype == "Opportunity":
-		opp_doc = frappe.get_doc("Opportunity", docname)
-		if opp_doc.opportunity_from == "Lead" and opp_doc.party_name:
-			lead_name = opp_doc.party_name
+		opp_fields = frappe.db.get_value(
+			"Opportunity",
+			docname,
+			["opportunity_from", "party_name"],
+			as_dict=True
+		)
+		if opp_fields and opp_fields.opportunity_from == "Lead" and opp_fields.party_name:
+			lead_name = opp_fields.party_name
 			targets.append(("Lead", lead_name))
 			
 			# Lấy các Opportunity khác cùng Lead gốc này
@@ -1177,16 +1183,40 @@ def get_related_notes(doctype, docname):
 			for opp in other_opps:
 				targets.append(("Opportunity", opp["name"]))
 
-	# Truy vấn trực tiếp CRM Note của các đối tượng đích
-	for parenttype, parent in targets:
+	appointments = []
+	if lead_name:
+		appointments = frappe.get_all(
+			"Appointment",
+			filters={"lead": lead_name},
+			fields=["name", "notes", "owner", "creation"]
+		)
+
+	for app in appointments:
+		targets.append(("Appointment", app["name"]))
+		if app.get("notes") and app["notes"].strip():
+			notes.append({
+				"name": app["name"],
+				"note": app["notes"],
+				"added_by": app["owner"],
+				"added_on": app["creation"],
+				"notify_to": None,
+				"parent": app["name"],
+				"parenttype": "Appointment"
+			})
+
+	from collections import defaultdict
+	grouped_targets = defaultdict(list)
+	for ptype, pname in targets:
+		grouped_targets[ptype].append(pname)
+
+	for parenttype, parents in grouped_targets.items():
 		items = frappe.db.get_all(
 			"CRM Note",
-			filters={"parent": parent, "parenttype": parenttype},
+			filters={"parent": ["in", parents], "parenttype": parenttype},
 			fields=["name", "note", "added_by", "added_on", "notify_to", "parent", "parenttype"]
 		)
 		notes.extend(items)
 
-	# Resolve notify_to (email) thành full_name từ User doctype
 	notify_emails = list({n["notify_to"] for n in notes if n.get("notify_to")})
 	name_map = {}
 	if notify_emails:
