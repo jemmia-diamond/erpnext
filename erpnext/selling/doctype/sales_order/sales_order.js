@@ -73,7 +73,7 @@ frappe.ui.form.on("Sales Order", {
 
 		let message = "";
 		(frm.doc.items || []).forEach(item => {
-			if (item.sku && (item.sku.length === 21 || item.sku.startsWith("SPT"))) {
+			if (erpnext.utils.item.isJewelryItem(item)) {
 				if (!item.serial_numbers) {
 					message = __("Chưa nhập serial number cho sản phẩm {0}", [item.item_name]);
 				}
@@ -87,11 +87,12 @@ frappe.ui.form.on("Sales Order", {
 		}
 
 		// Validate product_availability_status is set on all items
-		const _skip_keywords = ["bảo hành", "quà tặng"];
 		let missing_availability = (frm.doc.items || []).filter(item => {
 			if (!item.product_availability_status) {
-				const name_lower = (item.item_name || "").toLowerCase();
-				return !_skip_keywords.some(kw => name_lower.includes(kw));
+				if (erpnext.utils.item.isWarrantyItem(item) || erpnext.utils.item.isGiftItemByName(item)) {
+					return false;
+				}
+				return true;
 			}
 			return false;
 		});
@@ -206,7 +207,22 @@ frappe.ui.form.on("Sales Order", {
 		}
 	},
 
+	onload_post_render: async function(frm) {
+		if (erpnext.utils.sales_order_gallery && erpnext.utils.sales_order_gallery.render_gallery) {
+			await erpnext.utils.sales_order_gallery.render_gallery(frm);
+		}
+	},
+	attachments_update: async function(frm) {
+		if (erpnext.utils.sales_order_gallery && erpnext.utils.sales_order_gallery.render_gallery) {
+			await erpnext.utils.sales_order_gallery.render_gallery(frm);
+		}
+	},
 	refresh: function (frm) {
+		if (erpnext.utils.sales_order_gallery && erpnext.utils.sales_order_gallery.render_gallery) {
+			erpnext.utils.sales_order_gallery.render_gallery(frm);
+			erpnext.utils.sales_order_gallery.bind_gallery_listeners(frm);
+		}
+		
 		frm.fields_dict["items"].grid.update_docfield_property(
 			"add_schedule",
 			"hidden",

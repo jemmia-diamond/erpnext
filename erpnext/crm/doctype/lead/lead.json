@@ -446,14 +446,15 @@
    "fieldname": "qualified_by",
    "fieldtype": "Link",
    "label": "Qualified By",
-   "options": "User"
+   "options": "User",
+   "read_only": 1
   },
   {
    "fieldname": "qualified_on",
    "fieldtype": "Datetime",
    "in_list_view": 1,
    "label": "Qualified on",
-   "permlevel": 1
+   "read_only": 1
   },
   {
    "fieldname": "qualification_status",
@@ -844,6 +845,7 @@
    "read_only": 1
   },
   {
+   "default": "Now",
    "default": "Now",
    "fieldname": "first_reach_at",
    "fieldtype": "Datetime",

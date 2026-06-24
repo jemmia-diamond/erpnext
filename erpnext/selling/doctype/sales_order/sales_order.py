@@ -52,6 +52,8 @@ form_grid_templates = {"items": "templates/form_grid/item_grid.html"}
 
 class WarehouseRequired(frappe.ValidationError):
 	pass
+class WarehouseRequired(frappe.ValidationError):
+	pass
 
 
 class SalesOrder(SellingController):
@@ -329,7 +331,7 @@ class SalesOrder(SellingController):
 		if self.is_split_order and self.split_order_group:
 			first_order_name = frappe.db.get_value(
 				"Sales Order",
-				{"split_order_group": self.split_order_group, "is_split_order": 1},
+				{"split_order_group": self.split_order_group, "is_split_order": 1, "cancelled_status": "Uncancelled"},
 				"name",
 				order_by="creation asc"
 			)
@@ -455,7 +457,8 @@ class SalesOrder(SellingController):
 			group_orders = frappe.db.get_all("Sales Order",
 				filters={
 					"split_order_group": self.split_order_group,
-					"is_split_order": 1
+					"is_split_order": 1,
+					"cancelled_status": "Uncancelled"
 				},
 				fields=["name"]
 			)
@@ -498,6 +501,13 @@ class SalesOrder(SellingController):
 					visited.add(ref.parent)
 					to_visit.append(ref.parent)
 					related_orders.add(ref.parent)
+
+		if related_orders:
+			valid_orders = frappe.db.get_all("Sales Order",
+				filters={"name": ["in", list(related_orders)], "cancelled_status": "Uncancelled"},
+				fields=["name"]
+			)
+			related_orders = {o.name for o in valid_orders}
 
 		return list(related_orders)
 
@@ -1813,24 +1823,10 @@ class SalesOrder(SellingController):
 		def norm(v):
 			return str(v).strip() if v is not None else None
 
-		def get_gia_from_sku(item):
-			sku = getattr(item, "sku", None)
-			if not sku:
-				return None
-			sku = str(sku)
-			pos = sku.find("GIA")
-			if pos < 0:
-				return None
-			start = pos + 3
-			end = start + 10
-			return sku[start:end] if end <= len(sku) else None
+		from erpnext.selling.doctype.sales_order.item_utils import get_gia_from_item, is_serial_match_jewelry_item
 
 		def is_jewelry(item):
-			sku = str(getattr(item, "sku", "") or "")
-			parts = sku.split("-")
-			is_gift = sku.startswith("QT")
-			is_diamond = any(p.startswith("GIA") for p in parts)
-			return not (is_gift or is_diamond)
+			return is_serial_match_jewelry_item(item)
 
 		def get_serial(item):
 			s = getattr(item, "serial_numbers", "")
@@ -1843,7 +1839,7 @@ class SalesOrder(SellingController):
 			vid = norm(getattr(ref, "haravan_variant_id", None))
 			if vid:
 				ref_by_variant[vid] = ref
-			gia = get_gia_from_sku(ref)
+			gia = get_gia_from_item(ref)
 			if gia and gia not in ref_by_gia:
 				ref_by_gia[gia] = ref
 			serial = get_serial(ref)
@@ -1866,7 +1862,7 @@ class SalesOrder(SellingController):
 		for cur in current_items:
 			if cur.name in matched:
 				continue
-			gia = get_gia_from_sku(cur)
+			gia = get_gia_from_item(cur)
 			if gia and gia in ref_by_gia:
 				pairs.append((cur, ref_by_gia[gia]))
 				matched.add(cur.name)
@@ -2118,16 +2114,16 @@ class SalesOrder(SellingController):
 		if orders_to_update:
 			real_group_grand_total = frappe.db.sql("SELECT SUM(grand_total - return_amount) FROM `tabSales Order` WHERE name IN %s AND cancelled_status = 'Uncancelled'", (tuple(orders_to_update),))[0][0] or 0.0
 		
-		if real_group_grand_total > 0 and group_payment_total >= real_group_grand_total:
+		if real_group_grand_total > 0 and (group_payment_total + group_records_total) >= real_group_grand_total:
 			for so_name in orders_to_update:
 				so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
-				if so.docstatus == 2:
+				if so.docstatus == 2 or so.cancelled_status == 'Cancelled':
 					continue
 				
 				so.paid_amount = so.grand_total
 				so.balance = 0.0
-				so.total_allocated_group_payment = group_payment_total
-				so.balance_group_payment = real_group_grand_total - group_payment_total
+				so.total_allocated_group_payment = group_payment_total + group_records_total
+				so.balance_group_payment = real_group_grand_total - (group_payment_total + group_records_total)
 				
 				if so.name != self.name and save:
 					so.flags.financial_totals_updated = True
@@ -2147,7 +2143,7 @@ class SalesOrder(SellingController):
 
 		for so_name in orders_to_update:
 			so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
-			if so.docstatus == 2:
+			if so.docstatus == 2 or so.cancelled_status == 'Cancelled':
 				continue
 
 			if so_name != self.name:
@@ -2183,17 +2179,11 @@ class SalesOrder(SellingController):
 			so.total_allocated_group_payment = group_payment_total + group_records_total
 			so.balance_group_payment = flt(real_group_grand_total) - flt(so.total_allocated_group_payment)
 
-		if save:
-			for so_name in orders_to_update:
-				if so_name == self.name:
-					continue
-					
-				so = frappe.get_doc("Sales Order", so_name)
-				if so.docstatus != 2:
-					so.flags.financial_totals_updated = True
-					so.flags.ignore_validate_update_after_submit = True
-					so.flags.ignore_links = True
-					so.save(ignore_permissions=True, ignore_version=True)
+			if so_name != self.name and save:
+				so.flags.financial_totals_updated = True
+				so.flags.ignore_validate_update_after_submit = True
+				so.flags.ignore_links = True
+				so.save(ignore_permissions=True, ignore_version=True)
 
 
 def get_unreserved_qty(item: object, reserved_qty_details: dict) -> float:

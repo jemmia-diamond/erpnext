@@ -20,6 +20,7 @@ from erpnext.controllers.selling_controller import SellingController
 from erpnext.crm.utils import CRMNote, copy_comments, link_communications, link_open_events
 from erpnext.selling.doctype.customer.customer import parse_full_name
 from frappe.utils import date_diff, now_datetime
+from frappe.utils import date_diff, now_datetime
 
 
 class Lead(SellingController, CRMNote):
@@ -206,6 +207,23 @@ class Lead(SellingController, CRMNote):
 		if self.lead_stage=="Customer":
 			return
 
+		# Prevent change lead_stage
+		old_db_stage = self.db_get("lead_stage")
+		if old_db_stage in ["Qualified Lead", "Opportunity"] and self.lead_stage == "Lead":
+			is_admin = "System Manager" in frappe.get_roles(frappe.session.user) or frappe.session.user == "Administrator"
+			is_ui_request = frappe.request and frappe.request.path in [
+				"/api/method/frappe.desk.form.save.savedocs",
+				"/api/method/frappe.client.save"
+			]
+			
+			# If NOT an Admin is performing actions on the interface -> Restore to the previous state
+			if not (is_admin and is_ui_request):
+				if is_ui_request:
+					frappe.throw(_("Chỉ Admin mới có quyền hạ cấp Stage của Lead đã Qualified."))
+				# If call by fn
+				self.lead_stage = old_db_stage
+				return
+
 		lead_stage = self.get_lead_stage()
 
 		if lead_stage:
@@ -222,6 +240,26 @@ class Lead(SellingController, CRMNote):
 		Only auto-qualifies when conditions are met, never auto-disqualifies
 		Also set qualified_by and qualified_on when manually changed to Qualified
 		"""
+
+		# Prevent change "Qualified" to "Unqualified"
+		old_db_status = self.db_get("qualification_status")
+		if old_db_status == "Qualified" and self.qualification_status != "Qualified":
+			is_admin = "System Manager" in frappe.get_roles(frappe.session.user) or frappe.session.user == "Administrator"
+			is_ui_request = frappe.request and frappe.request.path in [
+				"/api/method/frappe.desk.form.save.savedocs",
+				"/api/method/frappe.client.save"
+			]
+			
+			# If NOT an Admin is performing actions on the interface -> Restore to the previous state
+			if not (is_admin and is_ui_request):
+				if is_ui_request:
+					frappe.throw(_("Chỉ Admin mới có quyền Unqualified Lead."))
+				# If call by fn
+				self.qualification_status = "Qualified"
+				self.qualified_by = self.db_get("qualified_by") or self.qualified_by
+				self.qualified_on = self.db_get("qualified_on") or self.qualified_on
+				return
+
 		# User manually changed to Qualified
 		if self.has_value_changed("qualification_status") and self.qualification_status == "Qualified":
 			if not self.qualified_by:
@@ -714,6 +752,7 @@ class Lead(SellingController, CRMNote):
 
 		opportunity = make_opportunity(self.name)
 
+		opportunity.insert(ignore_permissions=True)
 		opportunity.insert(ignore_permissions=True)
 	@frappe.whitelist()
 	def create_prospect_and_contact(self, data):

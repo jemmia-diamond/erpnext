@@ -1,6 +1,7 @@
 import "./conf";
 import "./utils";
 import "./utils/item_utils";
+import "./utils/sales_order_gallery";
 import "./stock_reservation";
 import "./queries";
 import "./sms_manager";
