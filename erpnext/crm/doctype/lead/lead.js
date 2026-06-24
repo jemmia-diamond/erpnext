@@ -20,6 +20,10 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 			.form-footer { display: none !important; }
 			[data-fieldname="all_activities_html"] .form-footer { display: block !important; }
 		`, "lead-footer-hide-style");
+
+		$(this.frm.wrapper).on("render_complete.lead_footer", () => {
+			$(".form-footer").not("[data-fieldname='all_activities_html'] .form-footer").css("display", "none");
+		});
 	}
 
 	onload() {
