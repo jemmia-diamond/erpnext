@@ -753,7 +753,6 @@ class Lead(SellingController, CRMNote):
 		opportunity = make_opportunity(self.name)
 
 		opportunity.insert(ignore_permissions=True)
-		opportunity.insert(ignore_permissions=True)
 	@frappe.whitelist()
 	def create_prospect_and_contact(self, data):
 		data = frappe._dict(data)
