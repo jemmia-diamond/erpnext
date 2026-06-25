@@ -29,8 +29,12 @@ class CallLog(Document):
 		from frappe.core.doctype.dynamic_link.dynamic_link import DynamicLink
 		from frappe.types import DF
 
+		ai_action_item_text: DF.LongText | None
+		ai_summary: DF.LongText | None
 		call_received_by: DF.Link | None
 		customer: DF.Link | None
+		customer_sentinent: DF.Literal["Can't detect", "Happy", "Neutral", "Frustrated", "Angry", "Confused", "Concerned", "Excited", "Impatient"]
+		disposition: DF.Data | None
 		duration: DF.Duration | None
 		employee_user_id: DF.Link | None
 		end_time: DF.Datetime | None
@@ -39,10 +43,9 @@ class CallLog(Document):
 		medium: DF.Data | None
 		recording_url: DF.Data | None
 		start_time: DF.Datetime | None
-		status: DF.Literal[
-			"Ringing", "In Progress", "Completed", "Failed", "Busy", "No Answer", "Queued", "Cancelled"
-		]
+		status: DF.Literal["Ringing", "In Progress", "Completed", "Failed", "Busy", "No Answer", "Queued", "Cancelled"]
 		summary: DF.SmallText | None
+		text_extracted: DF.LongText | None
 		to: DF.Data | None
 		type: DF.Literal["Incoming", "Outgoing"]
 		type_of_call: DF.Link | None
