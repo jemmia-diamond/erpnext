@@ -703,7 +703,6 @@
   {
    "fieldname": "budget_lead",
    "fieldtype": "Link",
-   "hidden": 1,
    "label": "Lead Budget",
    "options": "Lead Budget"
   },
@@ -778,6 +777,7 @@
   {
    "fieldname": "proposed_budget",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Proposed Budget",
    "options": "Lead Budget"
   },
@@ -796,7 +796,7 @@
  "icon": "fa fa-info-sign",
  "idx": 195,
  "links": [],
- "modified": "2026-06-24 15:54:10.512998",
+ "modified": "2026-06-25 11:16:40.881800",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Opportunity",

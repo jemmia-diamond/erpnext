@@ -743,13 +743,13 @@
   {
    "fieldname": "budget_lead",
    "fieldtype": "Link",
-   "hidden": 1,
    "label": "Lead Budget",
    "options": "Lead Budget"
   },
   {
    "fieldname": "proposed_budget",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Propose Lead Budget",
    "options": "Lead Budget"
   },
@@ -895,7 +895,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-06-24 11:19:00.919477",
+ "modified": "2026-06-25 11:10:07.827857",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",

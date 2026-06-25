@@ -242,45 +242,25 @@ class Lead(SellingController, CRMNote):
 		"""
 
 		# Prevent change "Qualified" to "Unqualified"
-		old_db_status = self.db_get("qualification_status")
-		if old_db_status == "Qualified" and self.qualification_status != "Qualified":
-			is_admin = "System Manager" in frappe.get_roles(frappe.session.user) or frappe.session.user == "Administrator"
-			is_ui_request = frappe.request and frappe.request.path in [
-				"/api/method/frappe.desk.form.save.savedocs",
-				"/api/method/frappe.client.save"
-			]
+		old_doc = self.get_doc_before_save()
+		if old_doc and old_doc.get("qualification_status") == "Qualified":
+			self.qualification_status = "Qualified"
 			
-			# If NOT an Admin is performing actions on the interface -> Restore to the previous state
-			if not (is_admin and is_ui_request):
-				if is_ui_request:
-					frappe.throw(_("Chỉ Admin mới có quyền Unqualified Lead."))
-				# If call by fn
-				self.qualification_status = "Qualified"
-				self.qualified_by = self.db_get("qualified_by") or self.qualified_by
-				self.qualified_on = self.db_get("qualified_on") or self.qualified_on
-				return
-
-		# User manually changed to Qualified
-		if self.has_value_changed("qualification_status") and self.qualification_status == "Qualified":
+			old_qualified_by = old_doc.get("qualified_by")
+			if old_qualified_by:
+				self.qualified_by = old_qualified_by
+			old_qualified_on = old_doc.get("qualified_on")
+			if old_qualified_on:
+				self.qualified_on = old_qualified_on
+			return
+		new_qualification_status = self.get_qualification_status()
+		old_status = old_doc.get("qualification_status") if old_doc else "Unqualified"
+		
+		self.qualification_status = new_qualification_status
+		if self.qualification_status == "Qualified" and old_status != "Qualified":
 			if not self.qualified_by:
 				self.qualified_by = frappe.session.user
 			self.qualified_on = frappe.utils.now_datetime()
-			return
-
-		new_qualification_status = self.get_qualification_status()
-
-		# Auto-qualification logic based on phone and province
-		if (new_qualification_status == "Qualified" and self.qualification_status != "Qualified") or \
-		   (self.qualification_status != "Qualified"):
-
-			old_status = self.qualification_status
-			self.qualification_status = new_qualification_status
-
-			# Set qualified_by and qualified_on when moving to Qualified
-			if self.qualification_status == "Qualified" and old_status != "Qualified":
-				if not self.qualified_by:
-					self.qualified_by = frappe.session.user
-				self.qualified_on = frappe.utils.now_datetime()
 
 	def update_lead_owner(self, pancake_user_id:str | None):
 		"""
@@ -897,7 +877,7 @@ class Lead(SellingController, CRMNote):
 			elif self.preferred_product_type and self.budget_lead:
 				return "Qualified"
 
-		return self.qualification_status
+		return "Unqualified"
 
 	def normalize_phone(self):
 		if self.phone:
