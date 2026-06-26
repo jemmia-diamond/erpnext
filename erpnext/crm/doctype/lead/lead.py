@@ -20,7 +20,6 @@ from erpnext.controllers.selling_controller import SellingController
 from erpnext.crm.utils import CRMNote, copy_comments, link_communications, link_open_events
 from erpnext.selling.doctype.customer.customer import parse_full_name
 from frappe.utils import date_diff, now_datetime
-from frappe.utils import date_diff, now_datetime
 
 
 class Lead(SellingController, CRMNote):
@@ -1123,7 +1122,7 @@ def add_lead_to_prospect(lead, prospect):
 @frappe.whitelist()
 def get_related_notes(doctype, docname):
 	"""
-	Truy vấn và gộp toàn bộ ghi chú (CRM Note) liên quan đến Lead & Opportunity
+	Query all notes related to the given doctype and docname, including related Opportunities and Appointments.
 	"""
 	notes = []
 	targets = [(doctype, docname)]
@@ -1150,7 +1149,7 @@ def get_related_notes(doctype, docname):
 			lead_name = opp_fields.party_name
 			targets.append(("Lead", lead_name))
 			
-			# Lấy các Opportunity khác cùng Lead gốc này
+			# Get other Opportunities from the same Lead, excluding the current Opportunity
 			other_opps = frappe.get_all(
 				"Opportunity",
 				filters={
