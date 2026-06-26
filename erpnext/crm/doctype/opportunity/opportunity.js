@@ -229,18 +229,6 @@ frappe.ui.form.on("Opportunity", {
 			}
 		}
 
-		if (!frm.is_new()) {
-			frm.add_custom_button(__('Appointment'), () => {
-				frappe.new_doc('Appointment', {
-					opportunity: frm.doc.name,
-					customer_name: frm.doc.customer_name,
-					customer_phone_number: frm.doc.phone,
-					customer_email: frm.doc.contact_email,
-					estimated_budget: frm.doc.proposed_budget || undefined,
-					range_estimated_budget: frm.doc.budget_lead || undefined,
-				});
-			}, __('Create'));
-		}
 	},
 
 	set_contact_link: function (frm) {
