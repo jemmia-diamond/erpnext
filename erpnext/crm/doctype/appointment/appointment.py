@@ -29,13 +29,14 @@ class Appointment(Document):
 		appointment_with: DF.Link | None
 		at_store: DF.Literal["72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh", "63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i", "209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1"]
 		auto_close: DF.Check
+		budget: DF.Currency
 		calendar_event: DF.Link | None
 		conversation_greeting: DF.LongText | None
 		customer_email: DF.Data | None
 		customer_name: DF.Data
 		customer_phone_number: DF.Data | None
 		customer_response: DF.LongText | None
-		estimated_budget: DF.Data | None
+		estimated_budget: DF.Link | None
 		expected_delivery_date: DF.Date | None
 		gender: DF.Link | None
 		lead: DF.Link | None

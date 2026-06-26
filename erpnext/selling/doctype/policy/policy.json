@@ -43,7 +43,10 @@
   }
  ],
  "row_format": "Dynamic",
+ "search_fields": "title",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "title"
 }
