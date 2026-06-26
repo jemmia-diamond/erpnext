@@ -24,9 +24,11 @@ class Appointment(Document):
 		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from frappe.types import DF
 
+		appointment_policy: DF.Link | None
 		appointment_reason: DF.Literal["Warranty Service", "Trade-in", "Purchase", "Consultation", "Cleaning", "Other"]
 		appointment_with: DF.Link | None
 		at_store: DF.Literal["72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh", "63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i", "209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1"]
+		auto_close: DF.Check
 		calendar_event: DF.Link | None
 		conversation_greeting: DF.LongText | None
 		customer_email: DF.Data | None
@@ -38,7 +40,8 @@ class Appointment(Document):
 		gender: DF.Link | None
 		lead: DF.Link | None
 		main_sales: DF.TableMultiSelect[AppointmentSalesPerson]
-		notes: DF.LongText | None
+		notes: DF.TextEditor | None
+		offline_response: DF.TextEditor | None
 		offline_sales: DF.TableMultiSelect[AppointmentSalesPerson]
 		party: DF.DynamicLink | None
 		policy: DF.LongText | None
@@ -47,7 +50,7 @@ class Appointment(Document):
 		range_estimated_budget: DF.Link | None
 		record_id: DF.Data | None
 		scheduled_time: DF.Datetime
-		status: DF.Literal["Open", "Unverified", "Delayed", "Closed"]
+		status: DF.Literal["Open", "Cancelled", "Closed"]
 		store: DF.Literal["72 NCT", "63 KM", "C\u1ea7n Th\u01a1"]
 	# end: auto-generated types
 
@@ -85,6 +88,14 @@ class Appointment(Document):
 			else:
 				self.appointment_with = "Lead"
 				self.party = lead
+
+		if not self.store:
+			if "72 Nguy\u1ec5n C\u01b0 Trinh" in self.at_store:
+				self.store = "72 NCT"
+			elif "63 Kim M\u00e3" in self.at_store:
+				self.store = "63 KM"
+			elif "C\u1ea7n Th\u01a1" in self.at_store:
+				self.store = "Cần Thơ"
 
 	def after_insert(self):
 		if self.party:

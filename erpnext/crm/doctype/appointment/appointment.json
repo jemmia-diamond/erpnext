@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_events_in_timeline": 1,
  "autoname": "format:APMT-{####}",
  "creation": "2019-08-27 10:48:27.926283",
  "doctype": "DocType",
@@ -11,12 +12,14 @@
   "appointment_detail_section",
   "scheduled_time",
   "appointment_reason",
-  "at_store",
   "status",
+  "offline_sales",
   "record_id",
   "column_break_njqi",
+  "at_store",
   "main_sales",
-  "offline_sales",
+  "auto_close",
+  "appointment_policy",
   "customer_details_section",
   "customer_name",
   "gender",
@@ -28,13 +31,14 @@
   "column_break_hvkq",
   "customer_phone_number",
   "range_estimated_budget",
-  "estimated_budget",
   "expected_delivery_date",
+  "estimated_budget",
   "addition_information_section",
   "notes",
-  "policy",
+  "offline_response",
   "customer_response",
   "conversation_greeting",
+  "policy",
   "linked_docs_section",
   "appointment_with",
   "party",
@@ -74,9 +78,7 @@
   {
    "fieldname": "estimated_budget",
    "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Estimated Budget",
-   "read_only": 1
+   "label": "Estimated Budget"
   },
   {
    "fieldname": "scheduled_time",
@@ -90,8 +92,9 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "hidden": 1,
+   "in_list_view": 1,
    "label": "Status",
-   "options": "Open\nUnverified\nDelayed\nClosed",
+   "options": "Open\nCancelled\nClosed",
    "reqd": 1
   },
   {
@@ -179,8 +182,8 @@
   },
   {
    "fieldname": "notes",
-   "fieldtype": "Long Text",
-   "label": "Notes"
+   "fieldtype": "Text Editor",
+   "label": "Note from main sales"
   },
   {
    "fieldname": "policy",
@@ -219,9 +222,9 @@
    "fieldtype": "Column Break"
   },
   {
+   "bold": 1,
    "fieldname": "addition_information_section",
-   "fieldtype": "Section Break",
-   "label": "Addition Information"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "appointment_reason",
@@ -259,10 +262,29 @@
    "label": "Preferred Products",
    "options": "Lead Product Item",
    "read_only": 1
+  },
+  {
+   "fieldname": "offline_response",
+   "fieldtype": "Text Editor",
+   "label": "Offline Response"
+  },
+  {
+   "default": "0",
+   "fieldname": "auto_close",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Auto Close"
+  },
+  {
+   "fieldname": "appointment_policy",
+   "fieldtype": "Link",
+   "label": "Policy",
+   "options": "Policy"
   }
  ],
+ "hide_toolbar": 1,
  "links": [],
- "modified": "2026-06-24 11:18:45.506059",
+ "modified": "2026-06-26 16:12:58.952917",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Appointment",

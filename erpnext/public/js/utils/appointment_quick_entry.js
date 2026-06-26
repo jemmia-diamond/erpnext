@@ -12,11 +12,12 @@ frappe.ui.form.AppointmentQuickEntryForm = class AppointmentQuickEntryForm exten
 	}
 
 	get_custom_fields() {
-		return [
+		let fields = [
 			{
 				fieldname: "existing_appointment_warning",
 				fieldtype: "HTML",
 			},
+
 			{
 				fieldname: "scheduled_time",
 				fieldtype: "Datetime",
@@ -28,51 +29,32 @@ frappe.ui.form.AppointmentQuickEntryForm = class AppointmentQuickEntryForm exten
 				fieldtype: "Select",
 				label: __("At Store"),
 				options: "72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh\n63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i\n209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1"
-			},
-			{
-				fieldname: "appointment_reason",
-				fieldtype: "Select",
-				label: __("Appointment reason"),
-				options: "Warranty Service\nTrade-in\nPurchase\nConsultation\nCleaning\nOther",
-				reqd: 1
-			},
-			{
-				fieldname: "conversation_greeting",
-				fieldtype: "Small Text",
-				label: __("In-Store Greeting Content"),
-			},
-			{
-				fieldname: "conversation_greeting_desc",
-				fieldtype: "HTML",
-				options: '<div class="text-muted small" style="margin-top: -10px; margin-bottom: 10px;">Nhập nội dung đón tiếp; lưu ý; hay các chính sách, chính sách thu mua thu đổi</div>'
 			}
 		];
+
+		let reason_df = frappe.meta.get_docfield("Appointment", "appointment_reason");
+		if (reason_df) fields.push(reason_df);
+
+		return fields;
 	}
 
 	setup_custom_logic() {
-
-		// Fetch Sales Person name for current user email and set as main_sales
 		frappe.db.get_value("Sales Person", {"employee_email": frappe.session.user}, ["name", "sales_person_name"])
 			.then(r => {
 				if (r && r.message && r.message.name) {
 					if (r.message.sales_person_name) {
 						frappe.utils.add_link_title("Sales Person", r.message.name, r.message.sales_person_name);
 					}
-					// Since main_sales is not in the dialog, set it directly on the underlying doc
 					this.doc.main_sales = [{
 						sales_person: r.message.name
 					}];
 				}
 			});
-
-		// Check if there is an existing appointment
 		this.check_existing_appointment();
 	}
 
 	check_existing_appointment() {
 		let get_phone_promise = Promise.resolve(this.doc.customer_phone_number);
-
-		// If phone is not passed, try to fetch it from Lead or Customer
 		if (!this.doc.customer_phone_number) {
 			if (this.doc.lead) {
 				get_phone_promise = frappe.db.get_value("Lead", this.doc.lead, ["mobile_no", "phone"])
@@ -85,7 +67,7 @@ frappe.ui.form.AppointmentQuickEntryForm = class AppointmentQuickEntryForm exten
 
 		get_phone_promise.then(phone => {
 			let or_filters = [];
-			
+
 			if (this.doc.lead) or_filters.push(["lead", "=", this.doc.lead]);
 			if (this.doc.party && this.doc.appointment_with === "Customer") or_filters.push(["party", "=", this.doc.party]);
 			if (phone) or_filters.push(["customer_phone_number", "=", phone]);
@@ -95,7 +77,7 @@ frappe.ui.form.AppointmentQuickEntryForm = class AppointmentQuickEntryForm exten
 			frappe.db.get_list("Appointment", {
 				filters: [
 					["scheduled_time", ">=", frappe.datetime.now_datetime()],
-					["status", "in", ["Open", "Unverified", "Delayed"]]
+					["status", "=", "Open"]
 				],
 				or_filters: or_filters,
 				fields: ["name", "scheduled_time"]
@@ -131,5 +113,4 @@ frappe.ui.form.AppointmentQuickEntryForm = class AppointmentQuickEntryForm exten
 			super.insert().then(resolve).catch(reject);
 		});
 	}
-
 };
