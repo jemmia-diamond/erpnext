@@ -34,13 +34,6 @@ frappe.ui.form.on("Customer", {
 				}),
 			"Pricing Rule": () => frm.trigger("make_pricing_rule"),
 			"Bank Account": () => erpnext.utils.make_bank_account(frm.doc.doctype, frm.doc.name),
-			Appointment: () => frappe.new_doc("Appointment", {
-				appointment_with: "Customer",
-				party: frm.doc.name,
-				customer_name: frm.doc.customer_name,
-				customer_phone_number: frm.doc.mobile_no || frm.doc.phone,
-				gender: frm.doc.gender
-			}),
 		};
 
 		frm.add_fetch("default_sales_partner", "commission_rate", "default_commission_rate");
