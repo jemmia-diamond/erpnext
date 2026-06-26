@@ -79,16 +79,41 @@ class Appointment(Document):
 		if number_of_agents != 0:
 			if number_of_appointments_in_same_slot >= number_of_agents:
 				frappe.throw(_("Time slot is not available"))
-		# Link lead
+		# Link lead or customer ( API Flow )
 		if not self.party:
-			lead = self.find_lead_by_email()
-			customer = self.find_customer_by_email()
-			if customer:
-				self.appointment_with = "Customer"
-				self.party = customer
+			if not self.appointment_with:
+				if self.customer_phone_number:
+					lead = frappe.db.get_value("Lead", {"phone": self.customer_phone_number}, "name")
+					if lead:
+						self.appointment_with = "Lead"
+						self.party = lead
+					else:
+						customer = frappe.db.get_value("Customer", {"mobile_no": self.customer_phone_number}, "name")
+						if not customer:
+							customer = frappe.db.get_value("Customer", {"phone": self.customer_phone_number}, "name")
+						if customer:
+							self.appointment_with = "Customer"
+							self.party = customer
 			else:
-				self.appointment_with = "Lead"
-				self.party = lead
+				lead = self.find_lead_by_email()
+				customer = self.find_customer_by_email()
+				if customer:
+					self.appointment_with = "Customer"
+					self.party = customer
+				elif lead:
+					self.appointment_with = "Lead"
+					self.party = lead
+
+		if self.appointment_with == "Lead" and self.party:
+			lead_doc = frappe.get_doc("Lead", self.party)
+			if not self.expected_delivery_date and lead_doc.expected_delivery_date:
+				self.expected_delivery_date = lead_doc.expected_delivery_date
+			if not self.purchase_purpose and lead_doc.purpose_lead:
+				self.purchase_purpose = lead_doc.purpose_lead
+			if not self.preferred_products and lead_doc.preferred_product_type:
+				self.preferred_products = lead_doc.preferred_product_type
+			if self.meta.has_field("customer_status") and not self.get("customer_status"):
+				self.customer_status = "Khách hẹn đến cửa hàng"
 
 		if not self.at_store and self.store:
 			if self.store == "72 NCT":
