@@ -90,12 +90,20 @@ class Appointment(Document):
 				self.appointment_with = "Lead"
 				self.party = lead
 
-		if not self.store:
-			if "72 Nguy\u1ec5n C\u01b0 Trinh" in self.at_store:
+		if not self.at_store and self.store:
+			if self.store == "72 NCT":
+				self.at_store = "72 Nguyễn Cư Trinh, Phường Bến Thành, TP Hồ Chí Minh"
+			elif self.store == "63 KM":
+				self.at_store = "63 Kim Mã, Phường Giảng Võ, TP Hà Nội"
+			elif self.store == "Cần Thơ":
+				self.at_store = "209 Đường 30 Tháng 4, Phường Ninh Kiều, TP Cần Thơ"
+
+		if not self.store and self.at_store:
+			if "72 Nguyễn Cư Trinh" in self.at_store:
 				self.store = "72 NCT"
-			elif "63 Kim M\u00e3" in self.at_store:
+			elif "63 Kim Mã" in self.at_store:
 				self.store = "63 KM"
-			elif "C\u1ea7n Th\u01a1" in self.at_store:
+			elif "Cần Thơ" in self.at_store:
 				self.store = "Cần Thơ"
 
 	def after_insert(self):
