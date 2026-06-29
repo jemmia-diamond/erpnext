@@ -117,7 +117,6 @@
   "whatsapp_no",
   "column_break_16",
   "phone_ext",
-  "offline_sales_tab",
   "offline_sales_section",
   "age_rage",
   "purchase_objection",
@@ -125,6 +124,7 @@
   "column_break_life",
   "offline_sales_table",
   "order_value",
+  "offline_sales_tab",
   "note_tab",
   "section_break_lamm",
   "notes_html",
@@ -911,7 +911,7 @@
    "fieldname": "age_rage",
    "fieldtype": "Select",
    "label": "Age Range",
-   "options": "<20\n20-25\n26-30\n31-35\n36-40\n41-45\n46-50\n51-55\n56-60\n60-65\n>65\nUnidentified"
+   "options": "\n<20\n20-25\n26-30\n31-35\n36-40\n41-45\n46-50\n51-55\n56-60\n60-65\n>65\nUnidentified"
   },
   {
    "fieldname": "purchase_objection",
@@ -945,7 +945,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-06-29 13:30:19.390263",
+ "modified": "2026-06-29 15:53:37.948124",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",

@@ -35,7 +35,7 @@ class Lead(SellingController, CRMNote):
 
 		account_number: DF.Data | None
 		address: DF.Data | None
-		age_rage: DF.Literal["<20", "20-25", "26-30", "31-35", "36-40", "41-45", "46-50", "51-55", "56-60", "60-65", ">65", "Unidentified"]
+		age_rage: DF.Literal["", "<20", "20-25", "26-30", "31-35", "36-40", "41-45", "46-50", "51-55", "56-60", "60-65", ">65", "Unidentified"]
 		annual_revenue: DF.Currency
 		bank_branch: DF.Literal[None]
 		bank_district: DF.Literal[None]
