@@ -14,32 +14,50 @@
   "information_tab",
   "basic_information_section",
   "column_break_jigo",
+  "lead_received_date",
   "naming_series",
   "type",
   "salutation",
-  "first_name",
-  "gender",
   "middle_name",
   "territory",
   "lead_stage",
   "first_reach_at",
   "column_break_1",
-  "phone",
+  "lead_owner",
   "job_title",
   "last_name",
   "qualified_lead_date",
   "status",
-  "lead_owner",
   "col_break123",
-  "email_id",
-  "source",
-  "custom_note",
+  "offline_sales_table",
   "customer",
   "request_type",
   "lead_name",
-  "lead_received_date",
-  "lead_source_name",
   "lead_source_platform",
+  "lead_source_name",
+  "customer_information_section",
+  "first_name",
+  "age_rage",
+  "referrer",
+  "customer_type",
+  "column_break_wwev",
+  "phone",
+  "gender",
+  "touchpoint",
+  "active_engaged_customer",
+  "column_break_ytqf",
+  "email_id",
+  "source",
+  "custom_note",
+  "point_of_purchase",
+  "section_break_wupd",
+  "jewelry_interest",
+  "other_section",
+  "customer_persona",
+  "column_break_qytx",
+  "details_other_products",
+  "column_break_shbx",
+  "purchase_objection",
   "qualification_tab",
   "qualification_status",
   "is_assigned",
@@ -48,10 +66,10 @@
   "qualified_on",
   "qualified_information_section",
   "purpose_lead",
-  "expected_delivery_date",
   "preferred_product_type",
   "column_break_ugod",
   "budget_lead",
+  "expected_delivery_date",
   "proposed_budget",
   "column_break_wsdb",
   "province",
@@ -117,13 +135,6 @@
   "whatsapp_no",
   "column_break_16",
   "phone_ext",
-  "offline_sales_section",
-  "age_rage",
-  "purchase_objection",
-  "customer_profile",
-  "column_break_life",
-  "offline_sales_table",
-  "order_value",
   "offline_sales_tab",
   "note_tab",
   "section_break_lamm",
@@ -190,7 +201,7 @@
    "fieldname": "lead_owner",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Lead Owner",
+   "label": "Sale ch\u00ednh",
    "oldfieldname": "lead_owner",
    "oldfieldtype": "Link",
    "options": "User",
@@ -201,6 +212,7 @@
    "default": "Lead",
    "fieldname": "status",
    "fieldtype": "Select",
+   "hidden": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Lead Status",
@@ -221,7 +233,7 @@
   {
    "fieldname": "gender",
    "fieldtype": "Link",
-   "label": "Gender",
+   "label": "Gi\u1edbi t\u00ednh",
    "link_filters": "[]",
    "options": "Gender"
   },
@@ -230,7 +242,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Lead Source",
+   "label": "Ngu\u1ed3n",
    "oldfieldname": "source",
    "oldfieldtype": "Select",
    "options": "Lead Source",
@@ -275,7 +287,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Phone",
+   "label": "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i",
    "oldfieldname": "contact_no",
    "oldfieldtype": "Data",
    "options": "Phone",
@@ -390,7 +402,7 @@
    "bold": 1,
    "fieldname": "first_name",
    "fieldtype": "Data",
-   "label": "Lead Name",
+   "label": "T\u00ean",
    "mandatory_depends_on": "eval: !(doc.company_name)"
   },
   {
@@ -640,8 +652,7 @@
    "default": "Now",
    "fieldname": "lead_received_date",
    "fieldtype": "Datetime",
-   "hidden": 1,
-   "label": "Lead Received Date",
+   "label": "Ng\u00e0y",
    "read_only": 1
   },
   {
@@ -744,12 +755,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "purpose_lead",
-   "fieldtype": "Link",
-   "label": "Lead Purpose",
-   "options": "Lead Demand"
-  },
-  {
    "fieldname": "budget_lead",
    "fieldtype": "Link",
    "label": "Lead Budget",
@@ -758,6 +763,7 @@
   {
    "fieldname": "proposed_budget",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Propose Lead Budget",
    "options": "Lead Budget"
   },
@@ -857,6 +863,7 @@
    "default": "Now",
    "fieldname": "first_reach_at",
    "fieldtype": "Datetime",
+   "hidden": 1,
    "label": "First Reach At"
   },
   {
@@ -871,6 +878,7 @@
    "fetch_from": "source.pancake_platform",
    "fieldname": "lead_source_platform",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Lead Source Platform",
    "options": "Lead",
    "read_only": 1
@@ -891,7 +899,7 @@
    "allow_in_quick_entry": 1,
    "fieldname": "custom_note",
    "fieldtype": "Small Text",
-   "label": "Note"
+   "label": "Ghi ch\u00fa"
   },
   {
    "fieldname": "section_break_lamm",
@@ -903,41 +911,102 @@
    "label": "Offline Sales"
   },
   {
-   "fieldname": "offline_sales_section",
-   "fieldtype": "Section Break",
-   "label": "Offline Sales Section"
-  },
-  {
    "fieldname": "age_rage",
    "fieldtype": "Select",
-   "label": "Age Range",
+   "label": "\u0110\u1ed9 tu\u1ed5i",
    "options": "\n<20\n20-25\n26-30\n31-35\n36-40\n41-45\n46-50\n51-55\n56-60\n60-65\n>65\nUnidentified"
   },
   {
    "fieldname": "purchase_objection",
-   "fieldtype": "Data",
-   "label": "Purchase Objection"
-  },
-  {
-   "fieldname": "column_break_life",
-   "fieldtype": "Column Break"
+   "fieldtype": "Small Text",
+   "label": "L\u00ed do kh\u00f4ng mua h\u00e0ng"
   },
   {
    "fieldname": "offline_sales_table",
    "fieldtype": "Link",
-   "label": "Offline Sales In-charge",
+   "label": "Sale ph\u1ee5",
    "options": "Sales Person"
   },
   {
-   "fieldname": "customer_profile",
-   "fieldtype": "Small Text",
-   "label": "Customer Profile"
+   "fieldname": "customer_information_section",
+   "fieldtype": "Section Break",
+   "label": "Customer Information"
   },
   {
-   "fieldname": "order_value",
-   "fieldtype": "Currency",
-   "label": "Order value",
-   "precision": "0"
+   "fieldname": "referrer",
+   "fieldtype": "Data",
+   "label": "Ng\u01b0\u1eddi gi\u1edbi thi\u1ec7u"
+  },
+  {
+   "fieldname": "column_break_wwev",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "touchpoint",
+   "fieldtype": "Select",
+   "label": "\u0110i\u1ec3m ch\u1ea1m",
+   "options": "\nOffline\nOnline"
+  },
+  {
+   "fieldname": "column_break_ytqf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "point_of_purchase",
+   "fieldtype": "Select",
+   "label": "\u0110i\u1ec3m mua h\u00e0ng",
+   "options": "\nOffline\nOnline"
+  },
+  {
+   "fieldname": "customer_type",
+   "fieldtype": "Select",
+   "label": "Lo\u1ea1i kh\u00e1ch h\u00e0ng",
+   "options": "Kh\u00e1ch h\u00e0ng m\u1edbi\nKh\u00e1ch h\u00e0ng c\u0169"
+  },
+  {
+   "default": "0",
+   "fieldname": "active_engaged_customer",
+   "fieldtype": "Check",
+   "label": "Kh\u00e1ch c\u00f3 t\u01b0\u01a1ng t\u00e1c"
+  },
+  {
+   "fieldname": "other_section",
+   "fieldtype": "Section Break",
+   "label": "Other"
+  },
+  {
+   "fieldname": "customer_persona",
+   "fieldtype": "Small Text",
+   "label": "Ch\u00e2n dung kh\u00e1ch h\u00e0ng"
+  },
+  {
+   "fieldname": "column_break_qytx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "details_other_products",
+   "fieldtype": "Small Text",
+   "label": "Chi ti\u1ebft s\u1ea3n ph\u1ea9m kh\u00e1c"
+  },
+  {
+   "fieldname": "column_break_shbx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_wupd",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "jewelry_interest",
+   "fieldtype": "Table",
+   "label": "Product Information",
+   "options": "Lead Jewelry Interest"
+  },
+  {
+   "fieldname": "purpose_lead",
+   "fieldtype": "Link",
+   "label": "Purpose Lead",
+   "options": "Lead Demand"
   }
  ],
  "grid_page_length": 50,
@@ -945,7 +1014,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-06-29 15:53:37.948124",
+ "modified": "2026-06-29 23:01:00.654233",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",

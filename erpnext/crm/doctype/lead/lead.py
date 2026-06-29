@@ -30,10 +30,12 @@ class Lead(SellingController, CRMNote):
 
 	if TYPE_CHECKING:
 		from erpnext.crm.doctype.crm_note.crm_note import CRMNote
+		from erpnext.crm.doctype.lead_jewelry_interest.lead_jewelry_interest import LeadJewelryInterest
 		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from frappe.types import DF
 
 		account_number: DF.Data | None
+		active_engaged_customer: DF.Check
 		address: DF.Data | None
 		age_rage: DF.Literal["", "<20", "20-25", "26-30", "31-35", "36-40", "41-45", "46-50", "51-55", "56-60", "60-65", ">65", "Unidentified"]
 		annual_revenue: DF.Currency
@@ -53,8 +55,10 @@ class Lead(SellingController, CRMNote):
 		country: DF.Link | None
 		custom_note: DF.SmallText | None
 		customer: DF.Link | None
-		customer_profile: DF.SmallText | None
+		customer_persona: DF.SmallText | None
+		customer_type: DF.Literal["Kh\u00e1ch h\u00e0ng m\u1edbi", "Kh\u00e1ch h\u00e0ng c\u0169"]
 		date_of_issuance: DF.Date | None
+		details_other_products: DF.SmallText | None
 		disabled: DF.Check
 		email_id: DF.Data | None
 		expected_delivery_date: DF.Date | None
@@ -66,6 +70,7 @@ class Lead(SellingController, CRMNote):
 		image: DF.AttachImage | None
 		industry: DF.Link | None
 		is_assigned: DF.Check
+		jewelry_interest: DF.Table[LeadJewelryInterest]
 		job_title: DF.Data | None
 		language: DF.Link | None
 		last_name: DF.Data | None
@@ -82,22 +87,23 @@ class Lead(SellingController, CRMNote):
 		no_of_employees: DF.Literal["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"]
 		notes: DF.Table[CRMNote]
 		offline_sales_table: DF.Link | None
-		order_value: DF.Currency
 		pancake_data: DF.JSON | None
 		personal_id: DF.Data | None
 		personal_tax_id: DF.Data | None
 		phone: DF.Data | None
 		phone_ext: DF.Data | None
 		place_of_issuance: DF.Literal["Ministry of Public Security", "Department of Police for Administrative Management of Social Order", "Department of Police for Registration, Residency Management, and National Population Data"]
+		point_of_purchase: DF.Literal["", "Offline", "Online"]
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
 		proposed_budget: DF.Link | None
 		province: DF.Link | None
-		purchase_objection: DF.Data | None
+		purchase_objection: DF.SmallText | None
 		purpose_lead: DF.Link | None
 		qualification_status: DF.Literal["Unqualified", "Qualified"]
 		qualified_by: DF.Link | None
 		qualified_lead_date: DF.Datetime | None
 		qualified_on: DF.Datetime | None
+		referrer: DF.Data | None
 		region: DF.Link | None
 		request_type: DF.Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
 		salutation: DF.Link | None
@@ -108,6 +114,7 @@ class Lead(SellingController, CRMNote):
 		tax_number: DF.Data | None
 		territory: DF.Link | None
 		title: DF.Data | None
+		touchpoint: DF.Literal["", "Offline", "Online"]
 		type: DF.Literal["Individual", "Company", "Consultant", "Channel Partner"]
 		unsubscribed: DF.Check
 		utm_campaign: DF.Link | None

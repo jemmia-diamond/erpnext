@@ -1,0 +1,100 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-06-29 22:15:18.745829",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "purchase_date",
+  "purpose",
+  "offline_budget",
+  "jewelry_type",
+  "size",
+  "design_description",
+  "jewelry_material",
+  "stone_type",
+  "stone_shape",
+  "diamond_specifications",
+  "estimate_value"
+ ],
+ "fields": [
+  {
+   "fieldname": "purchase_date",
+   "fieldtype": "Date",
+   "label": "Ng\u00e0y mua h\u00e0ng"
+  },
+  {
+   "fieldname": "offline_budget",
+   "fieldtype": "Float",
+   "label": "Ng\u00e2n s\u00e1ch",
+   "precision": "0"
+  },
+  {
+   "fieldname": "jewelry_type",
+   "fieldtype": "Data",
+   "label": "Lo\u1ea1i trang s\u1ee9c"
+  },
+  {
+   "fieldname": "size",
+   "fieldtype": "Float",
+   "label": "Size",
+   "precision": "1"
+  },
+  {
+   "fieldname": "purpose",
+   "fieldtype": "Link",
+   "label": "M\u1ee5c \u0111\u00edch",
+   "options": "Purchase Purpose"
+  },
+  {
+   "fieldname": "design_description",
+   "fieldtype": "Small Text",
+   "label": "M\u1eabu"
+  },
+  {
+   "fieldname": "jewelry_material",
+   "fieldtype": "Select",
+   "label": "Ch\u1ea5t li\u1ec7u",
+   "options": "18K\n14K"
+  },
+  {
+   "fieldname": "stone_type",
+   "fieldtype": "Select",
+   "label": "Lo\u1ea1i \u0111\u00e1",
+   "options": "Kim c\u01b0\u01a1ng t\u1ef1 nhi\u00ean\nMoissanite\nKim c\u01b0\u01a1ng t\u1ef1 nhi\u00ean & Moissanite"
+  },
+  {
+   "fieldname": "stone_shape",
+   "fieldtype": "Select",
+   "label": "H\u00ecnh d\u00e1ng",
+   "options": "Round\nPrincess\nAsscher\nEmerald\nMarquise\nOval\nRadiant\nPear\nHeart\nCushion\nBaguette"
+  },
+  {
+   "fieldname": "diamond_specifications",
+   "fieldtype": "Data",
+   "label": "Th\u00f4ng s\u1ed1 n\u01b0\u1edbc"
+  },
+  {
+   "fieldname": "estimate_value",
+   "fieldtype": "Float",
+   "label": "Gi\u00e1 tr\u1ecb",
+   "precision": "0"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-06-29 22:58:10.481718",
+ "modified_by": "Administrator",
+ "module": "CRM",
+ "name": "Lead Jewelry Interest",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
