@@ -7,13 +7,14 @@ from frappe import _
 from frappe.contacts.doctype.contact.contact import get_contact_with_phone_number
 from frappe.core.doctype.dynamic_link.dynamic_link import deduplicate_dynamic_links
 from frappe.model.document import Document
-
+from frappe.utils.file_manager import get_file, save_file
 from erpnext.crm.doctype.lead.lead import get_lead_with_phone_number
 from erpnext.crm.doctype.utils import get_scheduled_employees_for_popup, strip_number
-
 from erpnext.config.config import config
+
 import jwt
 import time
+import requests
 
 END_CALL_STATUSES = ["No Answer", "Completed", "Busy", "Failed"]
 ONGOING_CALL_STATUSES = ["Ringing", "In Progress"]
@@ -71,6 +72,12 @@ class CallLog(Document):
 
 	def after_insert(self):
 		self.trigger_call_popup()
+		if self.recording_url:
+			frappe.enqueue(
+				"erpnext.telephony.doctype.call_log.call_log.download_and_attach_recording",
+				call_log_name=self.name,
+				queue="short"
+			)
 
 	def on_update(self):
 		def _is_call_missed(doc_before_save, doc_after_save):
@@ -93,6 +100,13 @@ class CallLog(Document):
 
 		if _is_call_ended(doc_before_save, self):
 			frappe.publish_realtime(f"call_{self.id}_ended", self)
+
+		if self.recording_url and doc_before_save.recording_url != self.recording_url:
+			frappe.enqueue(
+				"erpnext.telephony.doctype.call_log.call_log.download_and_attach_recording",
+				call_log_name=self.name,
+				queue="short"
+			)
 
 	def is_incoming_call(self):
 		return self.type == "Incoming"
@@ -246,3 +260,30 @@ def get_access_token():
 	}
 	token = jwt.encode(payload, config.STRINGEE_API_KEY_SECRET, algorithm="HS256")
 	return token
+
+@frappe.whitelist()
+def download_and_attach_recording(call_log_name):
+	call_log = frappe.get_doc("Call Log", call_log_name)
+
+	if not call_log.recording_url:
+		return
+
+	if frappe.db.exists("File", {"attached_to_doctype": "Call Log", "attached_to_name": call_log_name, "is_private": 1}):
+		return
+
+	token = get_access_token()
+	download_url = f"{call_log.recording_url}?access_token={token}"
+
+	try:
+		response = requests.get(download_url)
+		if response.status_code == 200:
+			save_file(
+				fname=f"recording_{call_log.name}.mp3",
+				content=response.content,
+				dt="Call Log",
+				dn=call_log.name,
+				is_private=1
+			)
+			frappe.db.commit()
+	except Exception as e:
+		frappe.log_error(f"Failed to download recording for Call Log {call_log_name}: {str(e)}", "Call Log Recording Download")

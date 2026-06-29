@@ -24,11 +24,25 @@ frappe.ui.form.on("Call Log", {
 		if (!frm.doc.recording_url || frm.doc.recording_url == "null") {
 			recording_wrapper.empty();
 		} else {
+			let audio_src = `${frm.doc.recording_url}?access_token=${accessToken}`;
+			if (frm.attachments && frm.attachments.get_attachments) {
+				const attachments = frm.attachments.get_attachments() || [];
+				const attached_mp3 = attachments.find(f => f.file_url && f.file_name && f.file_name.startsWith("recording_"));
+				if (attached_mp3) {
+					audio_src = attached_mp3.file_url;
+				} else {
+					frappe.call({
+						method: "erpnext.telephony.doctype.call_log.call_log.download_and_attach_recording",
+						args: { call_log_name: frm.doc.name }
+					});
+				}
+			}
+
 			recording_wrapper.addClass("input-max-width");
 			recording_wrapper.html(`
 				<audio
 					controls
-					src="${frm.doc.recording_url}?access_token=${accessToken}">
+					src="${audio_src}">
 				</audio>
 			`);
 		}
