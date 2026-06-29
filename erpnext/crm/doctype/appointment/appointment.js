@@ -97,8 +97,8 @@ frappe.ui.form.on("Appointment", {
 			}
 
 			// Fill phone
-			if (lead.phone) {
-				frm.set_value("customer_phone_number", lead.phone);
+			if (lead.mobile_no) {
+				frm.set_value("customer_phone_number", lead.mobile_no);
 			}
 		});
 	},
