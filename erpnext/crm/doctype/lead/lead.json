@@ -200,7 +200,6 @@
    "oldfieldname": "status",
    "oldfieldtype": "Select",
    "options": "Lead\nContacted\nReplied\nInterested\nQualified\nOpportunity\nConverted\nDo Not Contact\nSpam",
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -379,6 +378,7 @@
    "options": "Language"
   },
   {
+   "allow_in_quick_entry": 1,
    "bold": 1,
    "fieldname": "first_name",
    "fieldtype": "Data",
@@ -895,7 +895,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-06-25 12:13:48.308863",
+ "modified": "2026-06-29 08:59:47.608252",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",

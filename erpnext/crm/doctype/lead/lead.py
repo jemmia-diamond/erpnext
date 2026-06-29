@@ -1211,3 +1211,48 @@ def get_related_notes(doctype, docname):
 
 	return notes
 
+
+@frappe.whitelist()
+def search_leads_by_phone(phone):
+	"""Search leads by phone number, checking both 0xx and 84xx formats."""
+	if not phone:
+		return []
+
+	phone = phone.strip()
+
+	# Normalize: build variants for 0xx <-> 84xx
+	variants = [phone]
+	if phone.startswith("0"):
+		variants.append("84" + phone[1:])
+	elif phone.startswith("84"):
+		variants.append("0" + phone[2:])
+	elif phone.startswith("+84"):
+		variants.append("0" + phone[3:])
+		variants.append("84" + phone[3:])
+
+	conditions = []
+	values = {}
+	for i, v in enumerate(variants):
+		key = f"phone_{i}"
+		conditions.append(f"(phone LIKE %({key})s OR mobile_no LIKE %({key})s)")
+		values[key] = f"%{v}%"
+
+	where_clause = " OR ".join(conditions)
+
+	try:
+		leads = frappe.db.sql(
+			f"""
+			SELECT name, first_name, last_name, lead_name, phone, mobile_no, status
+			FROM `tabLead`
+			WHERE {where_clause}
+			ORDER BY creation DESC
+			LIMIT 20
+			""",
+			values=values,
+			as_dict=True,
+		)
+	except Exception:
+		frappe.log_error("search_leads_by_phone failed")
+		leads = []
+
+	return leads
