@@ -298,6 +298,7 @@ class SalesOrder(SellingController):
 	def set_payment_entries(self):
 		"""Fetch and set the payment entries linked to this sales order. Returns total allocated amount."""
 		if self.docstatus == 2 or not self.name:
+			self.set("payment_entries", [])
 			return 0.0
 
 		self.set("payment_entries", [])
@@ -957,7 +958,7 @@ class SalesOrder(SellingController):
 
 		for sibling in sibling_orders:
 			sibling_doc = frappe.get_doc("Sales Order", sibling.name)
-			
+
 			if self_has_order_promos and not sibling_doc.get("promotions"):
 				for row in self.get("promotions"):
 					child = sibling_doc.append("promotions", {"promotion": row.promotion})
@@ -1380,7 +1381,7 @@ class SalesOrder(SellingController):
 		self.validate_primary_sales_team()
 		self.process_debt_history()
 		self.handle_serial_numbers_changes()
-		
+
 		if not self.flags.financial_totals_updated:
 			self.flags.financial_totals_updated = True
 			self.update_financial_totals(save=True)
@@ -1431,7 +1432,7 @@ class SalesOrder(SellingController):
 		self.copy_from_reference_order()
 		self.auto_detect_split_orders()
 		self.update_ref_order_payment_entry_current_order_number()
-		self.copy_ref_order_payment_entries_to_current()
+		self.transfer_payment_entry_references()
 
 	def before_submit(self):
 		frappe.throw(_("Sales Order Submission is not allowed."))
@@ -1519,6 +1520,46 @@ class SalesOrder(SellingController):
 
 		except Exception as e:
 			frappe.log_error(f"Error copying payment entry references to current order: {e!s}")
+
+	def transfer_payment_entry_references(self):
+		try:
+			if not self.haravan_ref_order_id:
+				return
+
+			ref_data = frappe.db.get_value("Sales Order",
+				{"haravan_order_id": self.haravan_ref_order_id}, ["name", "grand_total"])
+
+			if not ref_data:
+				return
+
+			ref_order, old_so_grand_total = ref_data
+
+			if frappe.utils.flt(old_so_grand_total) != frappe.utils.flt(self.grand_total):
+				return
+
+			pes = frappe.db.get_all("Payment Entry Reference",
+				filters={
+					"reference_doctype": "Sales Order",
+					"reference_name": ref_order,
+					"parenttype": "Payment Entry"
+				},
+				fields=["parent"]
+			)
+
+			for pe_data in pes:
+				pe = frappe.get_doc("Payment Entry", pe_data.parent)
+				changed = False
+				for ref in pe.references:
+					if ref.reference_doctype == "Sales Order" and ref.reference_name == ref_order:
+						ref.reference_name = self.name
+						ref.order_number = self.order_number
+						ref.split_order_group_name = self.split_order_group_name
+						changed = True
+				if changed:
+					pe.save(ignore_permissions=True)
+
+		except Exception as e:
+			frappe.log_error(f"Error transferring payment entry references to current order: {e!s}")
 
 	def calculate_customer_cumulative_revenue(self):
 		result = frappe.db.sql("""
@@ -2113,18 +2154,18 @@ class SalesOrder(SellingController):
 		real_group_grand_total = 0.0
 		if orders_to_update:
 			real_group_grand_total = frappe.db.sql("SELECT SUM(grand_total - return_amount) FROM `tabSales Order` WHERE name IN %s AND cancelled_status = 'Uncancelled'", (tuple(orders_to_update),))[0][0] or 0.0
-		
+
 		if real_group_grand_total > 0 and (group_payment_total + group_records_total) >= real_group_grand_total:
 			for so_name in orders_to_update:
 				so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
 				if so.docstatus == 2 or so.cancelled_status == 'Cancelled':
 					continue
-				
+
 				so.paid_amount = so.grand_total
 				so.balance = 0.0
 				so.total_allocated_group_payment = group_payment_total + group_records_total
 				so.balance_group_payment = real_group_grand_total - (group_payment_total + group_records_total)
-				
+
 				if so.name != self.name and save:
 					so.flags.financial_totals_updated = True
 					so.flags.ignore_validate_update_after_submit = True

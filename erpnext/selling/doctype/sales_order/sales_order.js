@@ -222,7 +222,7 @@ frappe.ui.form.on("Sales Order", {
 			erpnext.utils.sales_order_gallery.render_gallery(frm);
 			erpnext.utils.sales_order_gallery.bind_gallery_listeners(frm);
 		}
-		
+
 		frm.fields_dict["items"].grid.update_docfield_property(
 			"add_schedule",
 			"hidden",
@@ -2618,7 +2618,9 @@ function set_reason_options(frm, cdt, cdn) {
 			"Hàng lỗi, đang bảo hành tại xưởng"
 		],
 		"Đã giao – chưa thu đủ tiền": [
-			"Đã giao hàng nhưng chưa thanh toán đủ (quản lý đã duyệt)"
+			"Đã giao hàng nhưng chưa thanh toán đủ (quản lý đã duyệt)",
+			"Chờ đơn vị vận chuyển trả tiền COD",
+			"Chờ hoàn tất thủ tục thu đổi"
 		]
 	};
 
