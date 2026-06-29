@@ -117,6 +117,14 @@
   "whatsapp_no",
   "column_break_16",
   "phone_ext",
+  "offline_sales_tab",
+  "offline_sales_section",
+  "age_rage",
+  "purchase_objection",
+  "customer_profile",
+  "column_break_life",
+  "offline_sales_table",
+  "order_value",
   "note_tab",
   "section_break_lamm",
   "notes_html",
@@ -888,6 +896,48 @@
   {
    "fieldname": "section_break_lamm",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "offline_sales_tab",
+   "fieldtype": "Tab Break",
+   "label": "Offline Sales"
+  },
+  {
+   "fieldname": "offline_sales_section",
+   "fieldtype": "Section Break",
+   "label": "Offline Sales Section"
+  },
+  {
+   "fieldname": "age_rage",
+   "fieldtype": "Select",
+   "label": "Age Range",
+   "options": "<20\n20-25\n26-30\n31-35\n36-40\n41-45\n46-50\n51-55\n56-60\n60-65\n>65\nUnidentified"
+  },
+  {
+   "fieldname": "purchase_objection",
+   "fieldtype": "Data",
+   "label": "Purchase Objection"
+  },
+  {
+   "fieldname": "column_break_life",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "offline_sales_table",
+   "fieldtype": "Link",
+   "label": "Offline Sales In-charge",
+   "options": "Sales Person"
+  },
+  {
+   "fieldname": "customer_profile",
+   "fieldtype": "Small Text",
+   "label": "Customer Profile"
+  },
+  {
+   "fieldname": "order_value",
+   "fieldtype": "Currency",
+   "label": "Order value",
+   "precision": "0"
   }
  ],
  "grid_page_length": 50,
@@ -895,7 +945,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-06-29 08:59:47.608252",
+ "modified": "2026-06-29 13:30:19.390263",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",

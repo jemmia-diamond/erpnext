@@ -35,6 +35,7 @@ class Lead(SellingController, CRMNote):
 
 		account_number: DF.Data | None
 		address: DF.Data | None
+		age_rage: DF.Literal["<20", "20-25", "26-30", "31-35", "36-40", "41-45", "46-50", "51-55", "56-60", "60-65", ">65", "Unidentified"]
 		annual_revenue: DF.Currency
 		bank_branch: DF.Literal[None]
 		bank_district: DF.Literal[None]
@@ -52,6 +53,7 @@ class Lead(SellingController, CRMNote):
 		country: DF.Link | None
 		custom_note: DF.SmallText | None
 		customer: DF.Link | None
+		customer_profile: DF.SmallText | None
 		date_of_issuance: DF.Date | None
 		disabled: DF.Check
 		email_id: DF.Data | None
@@ -79,6 +81,8 @@ class Lead(SellingController, CRMNote):
 		naming_series: DF.Literal["CRM-LEAD-.YYYY.-"]
 		no_of_employees: DF.Literal["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"]
 		notes: DF.Table[CRMNote]
+		offline_sales_table: DF.Link | None
+		order_value: DF.Currency
 		pancake_data: DF.JSON | None
 		personal_id: DF.Data | None
 		personal_tax_id: DF.Data | None
@@ -88,6 +92,7 @@ class Lead(SellingController, CRMNote):
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
 		proposed_budget: DF.Link | None
 		province: DF.Link | None
+		purchase_objection: DF.Data | None
 		purpose_lead: DF.Link | None
 		qualification_status: DF.Literal["Unqualified", "Qualified"]
 		qualified_by: DF.Link | None
