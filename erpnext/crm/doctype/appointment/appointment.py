@@ -36,7 +36,6 @@ class Appointment(Document):
 		main_sales: DF.TableMultiSelect[AppointmentSalesPerson]
 		notes: DF.LongText | None
 		offline_sales: DF.TableMultiSelect[AppointmentSalesPerson]
-		opportunity: DF.Link | None
 		party: DF.DynamicLink | None
 		policy: DF.LongText | None
 		range_estimated_budget: DF.Link | None

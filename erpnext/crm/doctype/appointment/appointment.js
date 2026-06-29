@@ -82,13 +82,13 @@ frappe.ui.form.on("Appointment", {
 			}
 
 			// Fill "Estimated Budget" from Lead annual_revenue (Lead Budget)
-			if (lead.proposed_budget) {
-				frm.set_value("estimated_budget", String(lead.proposed_budget));
+			if (lead.annual_revenue) {
+				frm.set_value("estimated_budget", String(lead.annual_revenue));
 			}
 
 			// Fill "Budget Range" from custom field if it exists (Propose Lead Budget)
-			if (lead.budget_lead) {
-				frm.set_value("range_estimated_budget", lead.budget_lead);
+			if (lead.custom_propose_budget) {
+				frm.set_value("range_estimated_budget", lead.custom_propose_budget);
 			}
 
 			// Fill email if not already set
