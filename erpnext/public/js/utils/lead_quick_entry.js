@@ -126,6 +126,13 @@ frappe.ui.form.LeadQuickEntryForm = class LeadQuickEntryForm extends frappe.ui.f
 		return map[status] || "gray";
 	}
 
+	update_doc() {
+		let search_val = this.dialog.get_value("search_phone");
+		if (search_val) {
+			this.dialog.doc.phone = search_val.trim();
+		}
+		return super.update_doc();
+	}
 	insert() {
 		// Copy search_phone value to phone field if phone is empty
 		let search_val = this.dialog.get_value("search_phone");

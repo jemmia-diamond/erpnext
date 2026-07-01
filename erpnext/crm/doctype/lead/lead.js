@@ -482,7 +482,7 @@ frappe.ui.form.on('Lead', {
 				display: none !important;
 			}
 		`, "lead-timeline-style");
-		if (!frm.is_quick_entry) {
+		if (!frm.is_quick_entry && !frm.doc.custom_note) {
 			frm.set_df_property('custom_note', 'hidden', 1);
 		}
 		// Check Contact associated with this Lead
