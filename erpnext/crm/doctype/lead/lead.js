@@ -125,7 +125,6 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 			}
 		`, "lead-notes-style");
 
-
 		this.show_notes();
 		this.show_activities();
 	}
@@ -399,7 +398,7 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 							const notify_val = vals.notify_to || null;
 
 							if (!note_val.trim()) {
-								frappe.msgprint(__("Ghi chú không được để trống."));
+								frappe.msgprint(__("Note cannot be empty."));
 								return;
 							}
 
@@ -422,7 +421,7 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 										if (r.message && r.message.name) {
 											do_save();
 										} else {
-											frappe.msgprint(__("Người dùng '{0}' không tồn tại.", [notify_val]));
+											frappe.msgprint(__("User '{0}' does not exist.", [notify_val]));
 										}
 									});
 							} else {
@@ -436,7 +435,7 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 
 				$wrapper.find(".delete-note-btn").off("click").on("click", function () {
 					let row_name = $(this).closest(".comment-content").attr("name");
-					frappe.confirm(__("Xác nhận xóa ghi chú này?"), function () {
+					frappe.confirm(__("Are you sure you want to delete this note?"), function () {
 						frappe.call({
 							method: "delete_note",
 							doc: frm.doc,
@@ -506,5 +505,453 @@ frappe.ui.form.on('Lead', {
 				}
 			})
 		});
+
+		frappe.dom.set_style(`
+			[data-fieldname="jewelry_interest"] .form-in-grid .grid-move-row,
+			[data-fieldname="jewelry_interest"] .form-in-grid .grid-duplicate-row,
+			[data-fieldname="jewelry_interest"] .form-in-grid .grid-insert-row,
+			[data-fieldname="jewelry_interest"] .form-in-grid .grid-insert-row-below,
+			[data-fieldname="jewelry_interest"] .form-in-grid .grid-delete-row,
+			
+			[data-fieldname="jewelry_interest"] .form-in-grid .grid-footer-toolbar {
+				display: none !important;
+			}
+		`, "lead-jewelry-budget-align");
+
+		frappe.dom.set_style(`
+			[data-fieldname="jewelry_interest"] .grid-field > .control-label {
+				display: none !important;
+			}
+			[data-fieldname="jewelry_interest"] .rows > .grid-row .grid-static-col[data-fieldname="product_type"] > .field-area,
+			[data-fieldname="jewelry_interest"] .rows > .grid-row .grid-static-col[data-fieldname="product_type"] > .static-area {
+				display: none !important;
+			}
+
+			[data-fieldname="jewelry_interest"] .frappe-control[data-fieldname="product_type"],
+			[data-fieldname="jewelry_interest"] .grid-static-col[data-fieldname="product_type"] {
+				overflow: visible !important;
+			}
+			[data-fieldname="jewelry_interest"] .rows .grid-row {
+				overflow: visible !important;
+			}
+			[data-fieldname="jewelry_interest"] .rows .grid-row > .data-row {
+				overflow: visible !important;
+			}
+			[data-fieldname="jewelry_interest"] .rows {
+				overflow: visible !important;
+			}
+			[data-fieldname="jewelry_interest"] .form-grid {
+				overflow: visible !important;
+			}
+			[data-fieldname="jewelry_interest"] .grid-body {
+				overflow: visible !important;
+			}
+			[data-fieldname="jewelry_interest"] .form-grid-container {
+				overflow: visible !important;
+			}
+
+			[data-fieldname="jewelry_interest"] .grid-body .rows {
+				padding-bottom: 0;
+			}
+			[data-fieldname="jewelry_interest"] .grid-footer {
+				position: relative;
+				z-index: 0;
+			}
+
+			.tag-suggestions {
+				padding: 0 !important;
+			}
+			.tag-suggestions .tag-sug-item {
+				padding: 7px 12px;
+				cursor: pointer;
+				font-size: 13px;
+				font-weight: 500;
+				color: var(--text-color, #333);
+				border-bottom: 1px solid var(--border-color, #f0f0f0);
+				transition: background 0.15s;
+			}
+			.tag-suggestions .tag-sug-item:last-child {
+				border-bottom: none;
+			}
+			.tag-suggestions .tag-sug-item:hover,
+			.tag-suggestions .tag-sug-item.active {
+				background: var(--fg-hover-color, #f5f5f5);
+			}
+			.tag-suggestions .tag-sug-footer {
+				padding: 6px 12px;
+				cursor: pointer;
+				font-size: 12px;
+				font-weight: 500;
+				color: var(--text-muted, #8d99a6);
+				border-top: 1px solid var(--border-color, #d1d8dd);
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				transition: background 0.15s;
+			}
+			.tag-suggestions .tag-sug-footer:hover {
+				background: var(--fg-hover-color, #f5f5f5);
+			}
+			.tag-suggestions .tag-sug-footer .sug-icon {
+				font-size: 14px;
+				color: var(--primary, #2490ef);
+			}
+
+			.custom-tag-widget .tag-input-area {
+				display: flex !important;
+				flex-wrap: wrap !important;
+				gap: 3px !important;
+				align-items: center !important;
+				border: 1px solid var(--border-color, #d1d8dd) !important;
+				border-radius: var(--border-radius, 4px) !important;
+				padding: 3px 6px !important;
+				min-height: 30px !important;
+				background: var(--control-bg, #fff) !important;
+				cursor: text !important;
+				box-sizing: border-box !important;
+			}
+			/* Trong grid table: bỏ viền, bỏ nền, fill đầy ô */
+			.grid-static-col .custom-tag-widget {
+				width: 100% !important;
+				height: 100% !important;
+				position: relative !important;
+			}
+			.grid-static-col .custom-tag-widget .tag-input-area {
+				border: none !important;
+				border-radius: 0 !important;
+				background: transparent !important;
+				min-height: 100% !important;
+				padding: 4px 6px !important;
+				width: 100% !important;
+			}
+			.custom-tag-widget .tag-input {
+				border: none !important;
+				outline: none !important;
+				background: transparent !important;
+				flex: 1 !important;
+				min-width: 60px !important;
+				font-size: var(--text-sm, 12px) !important;
+				padding: 1px 2px !important;
+				height: 22px !important;
+				box-shadow: none !important;
+			}
+		`, "lead-product-type-overflow");
+
+		// === Setup Product Type grid display ===
+		const setup_product_type_grid = () => {
+			const grid = frm.fields_dict.jewelry_interest.grid;
+
+			const render_grid_widgets = () => {
+				grid.wrapper.find('.grid-row[data-name]').each(function () {
+					const cdn = $(this).data('name');
+					const $col = $(this).find('.grid-static-col[data-fieldname="product_type"]');
+					if (!$col.length) return;
+
+					$col.find('.static-area').hide();
+					$col.find('.field-area').hide();
+
+					make_product_type_multiselect(frm, 'Lead Jewelry Interest', cdn, $col, 'grid');
+				});
+			};
+
+			const orig_refresh = grid.refresh.bind(grid);
+			grid.refresh = function () {
+				orig_refresh();
+				setTimeout(render_grid_widgets, 80);
+			};
+			render_grid_widgets();
+
+			grid.wrapper.find('.grid-heading-row .grid-static-col[data-fieldname="product_type"]')
+				.off('click.pt-block')
+				.on('click.pt-block', function (e) {
+					e.stopImmediatePropagation();
+					e.preventDefault();
+				})
+				.css('cursor', 'default');
+		};
+		setup_product_type_grid();
+
+	},
+	jewelry_interest_on_form_rendered(frm, cdt, cdn) {
+		setTimeout(() => {
+			const $form_in_grid = $('[data-fieldname="jewelry_interest"] .form-in-grid:visible');
+			if (!$form_in_grid.length) return;
+
+			const $grid_row = $form_in_grid.closest('.grid-row');
+			const actual_cdn = $grid_row.data('name');
+			const actual_cdt = 'Lead Jewelry Interest';
+			if (!actual_cdn) return;
+
+			$form_in_grid.find('.grid-move-row, .grid-duplicate-row, .grid-insert-row, .grid-insert-row-below, .grid-delete-row')
+				.each(function () { this.style.setProperty('display', 'none', 'important'); });
+			$form_in_grid.find('.grid-footer-toolbar')
+				.each(function () { this.style.setProperty('display', 'none', 'important'); });
+
+			$form_in_grid.find('[data-fieldname="diamond_detail"]').closest('.frappe-control').hide();
+
+			const $pt = $form_in_grid.find('[data-fieldname="product_type"]');
+			if ($pt.length) {
+				$pt.find('.control-input').hide();
+				$pt.find('.control-value').hide();
+				const $target = $pt.find('.control-input-wrapper');
+				if ($target.length) {
+					make_product_type_multiselect(frm, actual_cdt, actual_cdn, $target, 'form');
+				}
+			}
+		}, 150);
+	},
+
+});
+frappe.ui.form.on("Lead Jewelry Interest", {
+	size: function (frm, cdt, cdn) {
+		update_diamond_detail(frm, cdt, cdn);
+	},
+	shape: function (frm, cdt, cdn) {
+		update_diamond_detail(frm, cdt, cdn);
+	},
+	color_grade: function (frm, cdt, cdn) {
+		update_diamond_detail(frm, cdt, cdn);
+	},
+	clarity_grade: function (frm, cdt, cdn) {
+		update_diamond_detail(frm, cdt, cdn);
 	}
 });
+function update_diamond_detail(frm, cdt, cdn) {
+	let child = locals[cdt][cdn];
+	let parts = [];
+
+	if (child.size) {
+		parts.push(child.size);
+	}
+	if (child.shape) {
+		parts.push(child.shape);
+	}
+	if (child.color_grade) {
+		parts.push(child.color_grade);
+	}
+	if (child.clarity_grade) {
+		parts.push(child.clarity_grade);
+	}
+
+	let detail = parts.join(" - ");
+	frappe.model.set_value(cdt, cdn, "diamond_detail", detail);
+}
+
+if (!window._pt_widget_registry) {
+	window._pt_widget_registry = {};
+}
+
+function _pt_get_vals(cdn) {
+	const row = locals['Lead Jewelry Interest'] && locals['Lead Jewelry Interest'][cdn];
+	if (!row) return [];
+	return (row.product_type || "").split(",").map(s => s.trim()).filter(Boolean);
+}
+
+function _pt_render_tags($widget, vals) {
+	const $container = $widget.find(".tags-container");
+	$container.empty();
+	vals.forEach(v => {
+		const $tag = $('<span class="pt-tag"></span>').text(v).css({
+			display: 'inline-flex', alignItems: 'center', gap: '3px',
+			background: 'var(--fg-color,#f0f0f0)',
+			border: '1px solid var(--border-color,#d1d8dd)',
+			borderRadius: 'var(--border-radius,4px)',
+			padding: '1px 6px', fontSize: '11px', lineHeight: '20px', whiteSpace: 'nowrap'
+		});
+		const $remove = $('<span class="tag-remove">&times;</span>').css({
+			cursor: 'pointer', color: 'var(--text-muted,#8d99a6)',
+			fontSize: '13px', fontWeight: 'bold', marginLeft: '2px'
+		});
+		$remove.data('tag-value', v);
+		$tag.append($remove);
+		$container.append($tag);
+	});
+}
+
+function _pt_sync_all(frm, cdn, new_val_str) {
+	const row = locals['Lead Jewelry Interest'] && locals['Lead Jewelry Interest'][cdn];
+	if (row) {
+		row.product_type = new_val_str;
+	}
+	frm.dirty();
+
+	const grid = frm.fields_dict.jewelry_interest && frm.fields_dict.jewelry_interest.grid;
+	if (grid) {
+		const $row = grid.wrapper.find(`.grid-row[data-name="${cdn}"]`);
+		if ($row.length) {
+			$row.find('input[data-fieldname="product_type"]').val(new_val_str);
+		}
+	}
+
+	const vals = (new_val_str || "").split(",").map(s => s.trim()).filter(Boolean);
+	const widgets = window._pt_widget_registry[cdn] || [];
+	widgets.forEach(entry => {
+		if (entry.$widget && entry.$widget.closest('body').length) {
+			_pt_render_tags(entry.$widget, vals);
+		}
+	});
+
+	window._pt_widget_registry[cdn] = widgets.filter(
+		entry => entry.$widget && entry.$widget.closest('body').length
+	);
+}
+
+function make_product_type_multiselect(frm, cdt, cdn, $wrapper, context) {
+	$wrapper.find('.custom-tag-widget').remove();
+
+	if (!window._pt_widget_registry[cdn]) {
+		window._pt_widget_registry[cdn] = [];
+	}
+	window._pt_widget_registry[cdn] = window._pt_widget_registry[cdn].filter(
+		entry => entry.$widget && entry.$widget.closest('body').length
+	);
+
+	const vals = _pt_get_vals(cdn);
+
+	const $widget = $(`
+		<div class="custom-tag-widget" data-cdn="${cdn}" data-context="${context}" style="position:relative; width:100%;">
+			<div class="tag-input-area" style="
+				display:flex;flex-wrap:wrap;gap:3px;align-items:center;
+				border:1px solid var(--border-color,#d1d8dd);
+				border-radius:var(--border-radius,4px);
+				padding:3px 6px;min-height:30px;
+				background:var(--control-bg,#fff);cursor:text;
+			">
+				<div class="tags-container" style="display:contents"></div>
+				<input class="tag-input" placeholder="" autocomplete="off" style="
+					border:none;outline:none;background:transparent;
+					flex:1;min-width:60px;font-size:var(--text-sm,12px);
+					padding:1px 2px;height:22px;
+				"/>
+			</div>
+			<div class="tag-suggestions" style="
+				display:none;position:absolute;z-index:99999;width:100%;
+				background:#fff;border:1px solid var(--border-color,#d1d8dd);
+				border-radius:var(--border-radius,4px);margin-top:2px;
+				box-shadow:0 4px 12px rgba(0,0,0,0.1);
+				max-height:180px;overflow-y:auto;left:0;top:100%;
+			"></div>
+		</div>
+	`);
+	$wrapper.append($widget);
+
+	_pt_render_tags($widget, vals);
+
+	window._pt_widget_registry[cdn].push({ $widget, context });
+
+	$widget.find(".tag-input-area").on("click", (e) => {
+		if ($(e.target).closest('.tag-remove').length) return; // cho phép bubble lên delegation handler
+		e.stopPropagation();
+		$widget.find(".tag-input").focus();
+	});
+
+	$widget.on("click", ".tag-remove", function (e) {
+		e.stopPropagation();
+		e.preventDefault();
+		const remove_val = $(this).data('tag-value');
+		if (!remove_val) return;
+		let current = _pt_get_vals(cdn);
+		current = current.filter(v => v !== remove_val);
+		_pt_sync_all(frm, cdn, current.join(", "));
+	});
+
+	const addTag = (val) => {
+		val = (val || "").trim();
+		if (!val) return;
+		let current = _pt_get_vals(cdn);
+		if (!current.includes(val)) {
+			current.push(val);
+			_pt_sync_all(frm, cdn, current.join(", "));
+
+			// Auto-create Lead Product Type nếu chưa tồn tại
+			frappe.db.get_list("Lead Product Type", {
+				filters: [["product_type", "=", val]],
+				fields: ["name"], limit: 1
+			}).then(results => {
+				if (!results.length) {
+					frappe.db.insert({ doctype: "Lead Product Type", product_type: val });
+				}
+			});
+		}
+		$widget.find(".tag-input").val("");
+		$widget.find(".tag-suggestions").hide();
+	};
+
+	$widget.find(".tag-input").on("keydown", e => {
+		if (e.key === "Enter") { e.preventDefault(); addTag($(e.target).val()); }
+	});
+
+	const showSuggestions = (q) => {
+		const $sug = $widget.find(".tag-suggestions");
+		const currentVals = _pt_get_vals(cdn);
+		const filters = q ? [["product_type", "like", `%${q}%`]] : [];
+		frappe.db.get_list("Lead Product Type", {
+			filters, fields: ["name", "product_type"], limit: 20
+		}).then(results => {
+			$sug.empty();
+			const filtered = results.filter(r => !currentVals.includes(r.product_type));
+			filtered.forEach(r => {
+				const $item = $('<div class="tag-sug-item"></div>')
+					.text(r.product_type)
+					.data('sug-value', r.product_type);
+				$sug.append($item);
+			});
+
+			const create_label = q
+				? `Tạo mới "${frappe.utils.escape_html(q)}"`
+				: 'Tạo mới Lead Product Type';
+			const $create = $('<div class="tag-sug-footer tag-sug-create"></div>')
+				.html(`<span class="sug-icon">+</span> ${create_label}`);
+			if (q) {
+				$create.data('sug-value', q);
+			}
+			$sug.append($create);
+
+			$sug.show();
+		});
+	};
+
+	$widget.find(".tag-input").on("focus", function () {
+		$('.custom-tag-widget .tag-suggestions').not($widget.find('.tag-suggestions')).hide();
+		showSuggestions($(this).val().trim());
+	});
+	$widget.find(".tag-input").on("input", function () { showSuggestions($(this).val().trim()); });
+
+	$widget.on("click", ".tag-sug-item", function (e) {
+		e.stopPropagation();
+		addTag($(this).data('sug-value'));
+		$widget.find(".tag-input").val("").focus();
+	});
+
+	$widget.on("click", ".tag-sug-create", function (e) {
+		e.stopPropagation();
+		const val = $(this).data('sug-value');
+		if (val) {
+			addTag(val);
+			$widget.find(".tag-input").val("").focus();
+		} else {
+			const d = new frappe.ui.Dialog({
+				title: __('New Lead Product Type'),
+				fields: [{ label: 'Product Type', fieldname: 'product_type', fieldtype: 'Data', reqd: 1 }],
+				primary_action_label: __('Create'),
+				primary_action(values) {
+					if (values.product_type) {
+						addTag(values.product_type.trim());
+					}
+					d.hide();
+				}
+			});
+			d.show();
+			$widget.find(".tag-suggestions").hide();
+		}
+	});
+
+	const close_handler = `click.tag-widget-${cdn}-${context}`;
+	$(document).off(close_handler).on(close_handler, e => {
+		if (!$(e.target).closest($widget).length) {
+			$widget.find(".tag-suggestions").hide();
+		}
+	});
+}
+
+

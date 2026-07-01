@@ -15,21 +15,20 @@
   "basic_information_section",
   "column_break_jigo",
   "lead_received_date",
+  "support_sales",
   "naming_series",
   "type",
   "salutation",
   "middle_name",
   "territory",
   "lead_stage",
-  "first_reach_at",
   "column_break_1",
   "lead_owner",
   "job_title",
   "last_name",
   "qualified_lead_date",
-  "status",
   "col_break123",
-  "offline_sales_table",
+  "primary_sale",
   "customer",
   "request_type",
   "lead_name",
@@ -37,32 +36,22 @@
   "lead_source_name",
   "customer_information_section",
   "first_name",
-  "age_rage",
-  "referrer",
-  "customer_type",
+  "gender",
+  "status",
   "column_break_wwev",
   "phone",
-  "gender",
-  "touchpoint",
-  "active_engaged_customer",
+  "age_rage",
   "column_break_ytqf",
   "email_id",
   "source",
   "custom_note",
-  "point_of_purchase",
-  "section_break_wupd",
-  "jewelry_interest",
-  "other_section",
-  "customer_persona",
-  "column_break_qytx",
-  "details_other_products",
-  "column_break_shbx",
-  "purchase_objection",
   "qualification_tab",
   "qualification_status",
-  "is_assigned",
+  "first_reach_at",
   "column_break_64",
   "qualified_by",
+  "is_assigned",
+  "column_break_mpbs",
   "qualified_on",
   "qualified_information_section",
   "purpose_lead",
@@ -74,6 +63,20 @@
   "column_break_wsdb",
   "province",
   "region",
+  "section_break_wupd",
+  "jewelry_interest",
+  "other_section",
+  "customer_persona",
+  "column_break_wexg",
+  "purchase_objection",
+  "other_information_section",
+  "interaction_channels",
+  "point_of_purchase",
+  "column_break_pbaf",
+  "referrer",
+  "active_engaged_customers",
+  "column_break_rrvw",
+  "touchpoint",
   "organization_section",
   "company_name",
   "no_of_employees",
@@ -201,7 +204,7 @@
    "fieldname": "lead_owner",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Sale ch\u00ednh",
+   "label": "Lead Owner",
    "oldfieldname": "lead_owner",
    "oldfieldtype": "Link",
    "options": "User",
@@ -212,7 +215,6 @@
    "default": "Lead",
    "fieldname": "status",
    "fieldtype": "Select",
-   "hidden": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Lead Status",
@@ -233,7 +235,7 @@
   {
    "fieldname": "gender",
    "fieldtype": "Link",
-   "label": "Gi\u1edbi t\u00ednh",
+   "label": "Gender",
    "link_filters": "[]",
    "options": "Gender"
   },
@@ -242,7 +244,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Ngu\u1ed3n",
+   "label": "Lead Source",
    "oldfieldname": "source",
    "oldfieldtype": "Select",
    "options": "Lead Source",
@@ -287,7 +289,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i",
+   "label": "Phone",
    "oldfieldname": "contact_no",
    "oldfieldtype": "Data",
    "options": "Phone",
@@ -402,7 +404,7 @@
    "bold": 1,
    "fieldname": "first_name",
    "fieldtype": "Data",
-   "label": "T\u00ean",
+   "label": "Lead Name",
    "mandatory_depends_on": "eval: !(doc.company_name)"
   },
   {
@@ -490,7 +492,6 @@
   {
    "fieldname": "address_section",
    "fieldtype": "Section Break",
-   "hidden": 1,
    "label": "Address Information"
   },
   {
@@ -652,13 +653,13 @@
    "default": "Now",
    "fieldname": "lead_received_date",
    "fieldtype": "Datetime",
-   "label": "Ng\u00e0y",
+   "label": "Lead Received Date",
    "read_only": 1
   },
   {
    "fieldname": "basic_information_section",
    "fieldtype": "Section Break",
-   "label": "Information"
+   "label": "Sale Information"
   },
   {
    "collapsible": 1,
@@ -817,7 +818,6 @@
   {
    "fieldname": "contact_section",
    "fieldtype": "Section Break",
-   "hidden": 1,
    "label": "Contact Information"
   },
   {
@@ -843,8 +843,7 @@
    "fieldname": "province",
    "fieldtype": "Link",
    "label": "Province",
-   "options": "Province",
-   "permlevel": 1
+   "options": "Province"
   },
   {
    "fieldname": "qualified_lead_date",
@@ -863,8 +862,8 @@
    "default": "Now",
    "fieldname": "first_reach_at",
    "fieldtype": "Datetime",
-   "hidden": 1,
-   "label": "First Reach At"
+   "label": "First Reach At",
+   "read_only": 1
   },
   {
    "fetch_from": "source.source_name",
@@ -887,6 +886,7 @@
    "default": "0",
    "fieldname": "is_assigned",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Is Assigned",
    "read_only": 1
   },
@@ -913,19 +913,13 @@
   {
    "fieldname": "age_rage",
    "fieldtype": "Select",
-   "label": "\u0110\u1ed9 tu\u1ed5i",
-   "options": "\n<20\n20-25\n26-30\n31-35\n36-40\n41-45\n46-50\n51-55\n56-60\n60-65\n>65\nUnidentified"
+   "label": "Ages",
+   "options": "\nUnder 18\n18 to 24\n25 to 34\n35 to 44\n45 to 54\n55 to 64\n65+\nUnidentified"
   },
   {
    "fieldname": "purchase_objection",
    "fieldtype": "Small Text",
-   "label": "L\u00ed do kh\u00f4ng mua h\u00e0ng"
-  },
-  {
-   "fieldname": "offline_sales_table",
-   "fieldtype": "Link",
-   "label": "Sale ph\u1ee5",
-   "options": "Sales Person"
+   "label": "Purchase Objection"
   },
   {
    "fieldname": "customer_information_section",
@@ -933,73 +927,31 @@
    "label": "Customer Information"
   },
   {
-   "fieldname": "referrer",
-   "fieldtype": "Data",
-   "label": "Ng\u01b0\u1eddi gi\u1edbi thi\u1ec7u"
-  },
-  {
    "fieldname": "column_break_wwev",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "touchpoint",
-   "fieldtype": "Select",
-   "label": "\u0110i\u1ec3m ch\u1ea1m",
-   "options": "\nOffline\nOnline"
   },
   {
    "fieldname": "column_break_ytqf",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "point_of_purchase",
-   "fieldtype": "Select",
-   "label": "\u0110i\u1ec3m mua h\u00e0ng",
-   "options": "\nOffline\nOnline"
-  },
-  {
-   "fieldname": "customer_type",
-   "fieldtype": "Select",
-   "label": "Lo\u1ea1i kh\u00e1ch h\u00e0ng",
-   "options": "Kh\u00e1ch h\u00e0ng m\u1edbi\nKh\u00e1ch h\u00e0ng c\u0169"
-  },
-  {
-   "default": "0",
-   "fieldname": "active_engaged_customer",
-   "fieldtype": "Check",
-   "label": "Kh\u00e1ch c\u00f3 t\u01b0\u01a1ng t\u00e1c"
-  },
-  {
    "fieldname": "other_section",
    "fieldtype": "Section Break",
-   "label": "Other"
+   "label": "Note"
   },
   {
    "fieldname": "customer_persona",
    "fieldtype": "Small Text",
-   "label": "Ch\u00e2n dung kh\u00e1ch h\u00e0ng"
-  },
-  {
-   "fieldname": "column_break_qytx",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "details_other_products",
-   "fieldtype": "Small Text",
-   "label": "Chi ti\u1ebft s\u1ea3n ph\u1ea9m kh\u00e1c"
-  },
-  {
-   "fieldname": "column_break_shbx",
-   "fieldtype": "Column Break"
+   "label": "Customer Persona"
   },
   {
    "fieldname": "section_break_wupd",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Product Information"
   },
   {
    "fieldname": "jewelry_interest",
    "fieldtype": "Table",
-   "label": "Product Information",
    "options": "Lead Jewelry Interest"
   },
   {
@@ -1007,6 +959,67 @@
    "fieldtype": "Link",
    "label": "Purpose Lead",
    "options": "Lead Demand"
+  },
+  {
+   "fieldname": "column_break_mpbs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_wexg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "other_information_section",
+   "fieldtype": "Section Break",
+   "label": "Other Information"
+  },
+  {
+   "fieldname": "interaction_channels",
+   "fieldtype": "Data",
+   "label": "Interaction Channels"
+  },
+  {
+   "fieldname": "point_of_purchase",
+   "fieldtype": "Select",
+   "label": "Point of Purchase",
+   "options": "\nOffline\nOnline"
+  },
+  {
+   "fieldname": "column_break_pbaf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "referrer",
+   "fieldtype": "Data",
+   "label": "Referrer"
+  },
+  {
+   "default": "0",
+   "fieldname": "active_engaged_customers",
+   "fieldtype": "Check",
+   "label": "Active Engaged Customers"
+  },
+  {
+   "fieldname": "column_break_rrvw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "touchpoint",
+   "fieldtype": "Select",
+   "label": "Touchpoint",
+   "options": "\nOffline\nOnline"
+  },
+  {
+   "fieldname": "primary_sale",
+   "fieldtype": "Link",
+   "label": "Primary Sale",
+   "options": "Sales Person"
+  },
+  {
+   "fieldname": "support_sales",
+   "fieldtype": "Table MultiSelect",
+   "label": "Sales Support",
+   "options": "Sales Person Child"
   }
  ],
  "grid_page_length": 50,
@@ -1014,7 +1027,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-06-29 23:01:00.654233",
+ "modified": "2026-07-01 13:01:31.276181",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
@@ -1071,6 +1084,30 @@
    "read": 1,
    "report": 1,
    "role": "Sales User"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sale offline",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 2,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sale offline",
+   "share": 1,
+   "write": 1
   }
  ],
  "quick_entry": 1,

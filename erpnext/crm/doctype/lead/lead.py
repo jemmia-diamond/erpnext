@@ -32,12 +32,13 @@ class Lead(SellingController, CRMNote):
 		from erpnext.crm.doctype.crm_note.crm_note import CRMNote
 		from erpnext.crm.doctype.lead_jewelry_interest.lead_jewelry_interest import LeadJewelryInterest
 		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
+		from erpnext.crm.doctype.sales_person_child.sales_person_child import SalesPersonChild
 		from frappe.types import DF
 
 		account_number: DF.Data | None
-		active_engaged_customer: DF.Check
+		active_engaged_customers: DF.Check
 		address: DF.Data | None
-		age_rage: DF.Literal["", "<20", "20-25", "26-30", "31-35", "36-40", "41-45", "46-50", "51-55", "56-60", "60-65", ">65", "Unidentified"]
+		age_rage: DF.Literal["", "Under 18", "18 to 24", "25 to 34", "35 to 44", "45 to 54", "55 to 64", "65+", "Unidentified"]
 		annual_revenue: DF.Currency
 		bank_branch: DF.Literal[None]
 		bank_district: DF.Literal[None]
@@ -56,9 +57,7 @@ class Lead(SellingController, CRMNote):
 		custom_note: DF.SmallText | None
 		customer: DF.Link | None
 		customer_persona: DF.SmallText | None
-		customer_type: DF.Literal["Kh\u00e1ch h\u00e0ng m\u1edbi", "Kh\u00e1ch h\u00e0ng c\u0169"]
 		date_of_issuance: DF.Date | None
-		details_other_products: DF.SmallText | None
 		disabled: DF.Check
 		email_id: DF.Data | None
 		expected_delivery_date: DF.Date | None
@@ -69,6 +68,7 @@ class Lead(SellingController, CRMNote):
 		gender: DF.Link | None
 		image: DF.AttachImage | None
 		industry: DF.Link | None
+		interaction_channels: DF.Data | None
 		is_assigned: DF.Check
 		jewelry_interest: DF.Table[LeadJewelryInterest]
 		job_title: DF.Data | None
@@ -86,7 +86,6 @@ class Lead(SellingController, CRMNote):
 		naming_series: DF.Literal["CRM-LEAD-.YYYY.-"]
 		no_of_employees: DF.Literal["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"]
 		notes: DF.Table[CRMNote]
-		offline_sales_table: DF.Link | None
 		pancake_data: DF.JSON | None
 		personal_id: DF.Data | None
 		personal_tax_id: DF.Data | None
@@ -95,6 +94,7 @@ class Lead(SellingController, CRMNote):
 		place_of_issuance: DF.Literal["Ministry of Public Security", "Department of Police for Administrative Management of Social Order", "Department of Police for Registration, Residency Management, and National Population Data"]
 		point_of_purchase: DF.Literal["", "Offline", "Online"]
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
+		primary_sale: DF.Link | None
 		proposed_budget: DF.Link | None
 		province: DF.Link | None
 		purchase_objection: DF.SmallText | None
@@ -111,6 +111,7 @@ class Lead(SellingController, CRMNote):
 		state: DF.Data | None
 		status: DF.Literal["Lead", "Contacted", "Replied", "Interested", "Qualified", "Opportunity", "Converted", "Do Not Contact", "Spam"]
 		stringee_data: DF.JSON | None
+		support_sales: DF.TableMultiSelect[SalesPersonChild]
 		tax_number: DF.Data | None
 		territory: DF.Link | None
 		title: DF.Data | None
@@ -1268,3 +1269,27 @@ def search_leads_by_phone(phone):
 		leads = []
 
 	return leads
+
+
+def update_primary_sale_from_todo(doc, method=None):
+	"""
+	Hook tự động chạy sau khi ToDo được tạo (after_insert)
+	"""
+	try:
+		if doc.reference_type == "Lead" and doc.status == "Open" and doc.allocated_to:
+			# 1. Tìm Sales Person theo Email
+			sales_person = frappe.db.get_value("Sales Person", {"employee_email": doc.allocated_to}, "name")
+			
+			# 2. Nếu không thấy, tìm qua Employee.user_id
+			if not sales_person:
+				employee = frappe.db.get_value("Employee", {"user_id": doc.allocated_to}, "name")
+				if employee:
+					sales_person = frappe.db.get_value("Sales Person", {"employee": employee}, "name")
+			
+			# 3. Tiến hành gán và xóa cache để cập nhật UI
+			if sales_person:
+				frappe.db.set_value("Lead", doc.reference_name, "primary_sale", sales_person)
+				frappe.clear_document_cache("Lead", doc.reference_name)
+				
+	except Exception as e:
+		frappe.log_error(frappe.get_traceback(), "DEBUG ASSIGN LEAD EXCEPTION")

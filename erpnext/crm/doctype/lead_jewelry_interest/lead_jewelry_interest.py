@@ -14,20 +14,34 @@ class LeadJewelryInterest(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
-		design_description: DF.SmallText | None
-		diamond_specifications: DF.Data | None
-		estimate_value: DF.Float
-		jewelry_material: DF.Literal["18K", "14K"]
-		jewelry_type: DF.Data | None
-		offline_budget: DF.Float
+		clarity_grade: DF.Literal["FL", "IF", "VVS1", "VVS2", "VS1", "VS2", "SI1", "SI2", "I1", "I2", "I3"]
+		color_grade: DF.Literal["D", "E", "F", "G", "H", "I", "J", "K", "L", "M"]
+		diamond_budget: DF.Float
+		diamond_detail: DF.Data | None
+		jewelry_budget: DF.Float
+		material: DF.Literal["", "18K", "14K"]
+		note: DF.SmallText | None
 		parent: DF.Data
 		parentfield: DF.Data
 		parenttype: DF.Data
-		purchase_date: DF.Date | None
-		purpose: DF.Link | None
+		product_type: DF.Data | None
+		shape: DF.Literal["", "Round", "Princess", "Asscher", "Emerald", "Marquise", "Oval", "Radiant", "Pear", "Heart", "Cushion", "Baguette"]
 		size: DF.Float
-		stone_shape: DF.Literal["Round", "Princess", "Asscher", "Emerald", "Marquise", "Oval", "Radiant", "Pear", "Heart", "Cushion", "Baguette"]
-		stone_type: DF.Literal["Kim c\u01b0\u01a1ng t\u1ef1 nhi\u00ean", "Moissanite", "Kim c\u01b0\u01a1ng t\u1ef1 nhi\u00ean & Moissanite"]
 	# end: auto-generated types
 
+	def before_save(self):
+		self.set_diamond_detail()
+		
+	def set_diamond_detail(self):
+		parts = []
+		if self.size:
+			parts.append(f"{self.size}")
+		if self.shape:
+			parts.append(self.shape)
+		if self.color_grade:
+			parts.append(self.color_grade)
+		if self.clarity_grade:
+			parts.append(self.clarity_grade)
+		
+		self.diamond_detail = " - ".join(parts) if parts else ""
 	pass

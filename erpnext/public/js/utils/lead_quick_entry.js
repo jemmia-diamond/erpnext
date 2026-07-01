@@ -7,14 +7,12 @@ frappe.ui.form.LeadQuickEntryForm = class LeadQuickEntryForm extends frappe.ui.f
 			{
 				fieldname: "search_phone",
 				fieldtype: "Data",
-				label: __("Search Phone"),
+				reqd: 1,
+				label: __("Phone"),
 			},
 			{
 				fieldtype: "HTML",
 				fieldname: "phone_search_results",
-			},
-			{
-				fieldtype: "Section Break",
 			},
 			...this.docfields,
 		];
@@ -33,9 +31,10 @@ frappe.ui.form.LeadQuickEntryForm = class LeadQuickEntryForm extends frappe.ui.f
 		$results.css("position", "relative");
 
 		$input.on("input", function () {
+			let val = $(this).val().replace(/[^0-9]/g, "");
+			$(this).val(val);
 			clearTimeout(timer);
-			let val = $(this).val().trim();
-			if (val.length < 3) {
+			if (val.length < 2) {
 				$results.empty();
 				return;
 			}
@@ -47,11 +46,6 @@ frappe.ui.form.LeadQuickEntryForm = class LeadQuickEntryForm extends frappe.ui.f
 						$results.empty();
 
 						if (!r.message || !r.message.length) {
-							$results.html(
-								`<p style="color:var(--text-muted);font-size:var(--text-sm);padding:6px 0;margin:0;">
-									${__("Không tìm thấy lead nào.")}
-								</p>`
-							);
 							return;
 						}
 
