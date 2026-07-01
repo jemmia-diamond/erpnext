@@ -31,6 +31,7 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 		if (!this.frm.is_new() && doc.__onload && !doc.__onload.is_customer) {
 			this.frm.add_custom_button(__("Customer"), this.make_customer.bind(this), __("Create"));
 			this.frm.add_custom_button(__("Opportunity"), this.make_opportunity.bind(this), __("Create"));
+			this.frm.add_custom_button(__("Appointment"), this.make_appointment.bind(this), __("Create"));
 		}
 
 		if (!this.frm.is_new()) {
@@ -79,6 +80,24 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 		frappe.model.open_mapped_doc({
 			method: "erpnext.crm.doctype.lead.lead.make_customer",
 			frm: this.frm,
+		});
+	}
+
+	make_appointment() {
+		frappe.new_doc("Appointment", {
+			lead: this.frm.doc.name,
+			appointment_with: "Lead",
+			party: this.frm.doc.name,
+			customer_name: this.frm.doc.lead_name,
+			customer_phone_number: this.frm.doc.phone,
+			// estimated_budget: this.frm.doc.budget_lead || this.frm.doc.proposed_budget,
+			range_estimated_budget: this.frm.doc.budget_lead || this.frm.doc.proposed_budget,
+			gender: this.frm.doc.gender,
+			expected_delivery_date: this.frm.doc.expected_delivery_date,
+			purchase_purpose: this.frm.doc.purpose_lead,
+			preferred_products: this.frm.doc.preferred_product_type,
+			status: "Open",
+			customer_status: "Khách hẹn đến cửa hàng"
 		});
 	}
 

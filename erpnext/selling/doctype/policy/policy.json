@@ -16,14 +16,14 @@
   },
   {
    "fieldname": "title",
-   "fieldtype": "Data",
+   "fieldtype": "Long Text",
    "label": "Title"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-30 09:39:56.018265",
+ "modified": "2026-06-30 11:05:28.295809",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Policy",
@@ -43,7 +43,10 @@
   }
  ],
  "row_format": "Dynamic",
+ "search_fields": "title",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "title"
 }

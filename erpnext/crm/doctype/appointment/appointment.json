@@ -1,30 +1,46 @@
 {
  "actions": [],
+ "allow_events_in_timeline": 1,
  "autoname": "format:APMT-{####}",
  "creation": "2019-08-27 10:48:27.926283",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "html_section",
+  "info_html",
+  "appointment_detail_section",
   "scheduled_time",
+  "appointment_reason",
   "status",
+  "offline_sales",
   "record_id",
+  "column_break_njqi",
+  "at_store",
+  "main_sales",
+  "auto_close",
+  "policies",
+  "order_status",
   "customer_details_section",
-  "lead",
   "customer_name",
-  "customer_phone_number",
+  "gender",
+  "lead",
   "customer_email",
   "store",
+  "purchase_purpose",
+  "preferred_products",
+  "column_break_hvkq",
+  "customer_phone_number",
   "range_estimated_budget",
+  "expected_delivery_date",
   "estimated_budget",
-  "gender",
-  "main_sales",
-  "offline_sales",
-  "col_br_2",
-  "conversation_greeting",
+  "budget",
+  "addition_information_section",
   "notes",
-  "policy",
+  "offline_response",
   "customer_response",
+  "conversation_greeting",
+  "policy",
   "linked_docs_section",
   "appointment_with",
   "party",
@@ -40,7 +56,7 @@
   {
    "fieldname": "lead",
    "fieldtype": "Link",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Lead",
    "options": "Lead"
   },
@@ -50,12 +66,13 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Name",
+   "read_only": 1,
    "reqd": 1
   },
   {
+   "bold": 1,
    "fieldname": "customer_phone_number",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Phone Number",
    "read_only": 1
@@ -63,6 +80,7 @@
   {
    "fieldname": "estimated_budget",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Estimated Budget",
    "options": "Lead Budget"
   },
@@ -74,12 +92,13 @@
    "reqd": 1
   },
   {
+   "default": "Open",
    "fieldname": "status",
    "fieldtype": "Select",
+   "hidden": 1,
    "in_list_view": 1,
-   "in_standard_filter": 1,
    "label": "Status",
-   "options": "Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng\nKh\u00e1ch h\u1eb9n \u0111\u1ebfn c\u1eeda h\u00e0ng\nKh\u00e1ch ch\u01b0a mua h\u00e0ng\nKh\u00e1ch kh\u00f4ng \u0111\u1ebfn c\u1eeda h\u00e0ng\nKh\u00e1ch ho\u00e3n l\u1ea1i ng\u00e0y \u0111\u1ebfn c\u1eeda h\u00e0ng\nKh\u00e1ch \u0111\u00e3 \u0111\u1ebfn c\u1eeda h\u00e0ng",
+   "options": "Open\nCancelled\nClosed",
    "reqd": 1
   },
   {
@@ -89,17 +108,16 @@
    "options": "Event"
   },
   {
-   "fieldname": "col_br_2",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "customer_email",
    "fieldtype": "Data",
-   "label": "Email"
+   "hidden": 1,
+   "label": "Email",
+   "read_only": 1
   },
   {
    "fieldname": "linked_docs_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Linked Documents"
   },
   {
@@ -121,24 +139,24 @@
   {
    "fieldname": "store",
    "fieldtype": "Select",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
+   "hidden": 1,
    "label": "Store",
-   "options": "72 NCT\n63 KM\nC\u1ea7n Th\u01a1",
-   "reqd": 1
+   "options": "72 NCT\n63 KM\nC\u1ea7n Th\u01a1"
   },
   {
    "fieldname": "range_estimated_budget",
    "fieldtype": "Link",
    "label": "Budget Range",
-   "options": "Lead Budget"
+   "options": "Lead Budget",
+   "read_only": 1
   },
   {
    "fieldname": "gender",
    "fieldtype": "Link",
    "label": "Gender",
    "link_filters": "[]",
-   "options": "Gender"
+   "options": "Gender",
+   "read_only": 1
   },
   {
    "fieldname": "main_sales",
@@ -155,33 +173,135 @@
   {
    "fieldname": "conversation_greeting",
    "fieldtype": "Long Text",
+   "hidden": 1,
    "label": "In-Store Greeting Content"
   },
   {
    "fieldname": "customer_response",
    "fieldtype": "Long Text",
+   "hidden": 1,
    "label": "Offline Feedback"
   },
   {
    "fieldname": "notes",
-   "fieldtype": "Long Text",
-   "label": "Notes"
+   "fieldtype": "Text Editor",
+   "label": "Note from main sales"
   },
   {
    "fieldname": "policy",
    "fieldtype": "Long Text",
+   "hidden": 1,
    "label": "Procurement Policy"
   },
   {
    "description": "This record only needed when migrate data from Larkbase to ERP",
    "fieldname": "record_id",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Record Id",
    "unique": 1
+  },
+  {
+   "fieldname": "at_store",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "At Store",
+   "options": "72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh\n63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i\n209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1",
+   "reqd": 1
+  },
+  {
+   "fieldname": "appointment_detail_section",
+   "fieldtype": "Section Break",
+   "label": "Appointment Detail"
+  },
+  {
+   "fieldname": "column_break_njqi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_hvkq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "bold": 1,
+   "fieldname": "addition_information_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "appointment_reason",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Appointment reason",
+   "options": "Warranty Service\nTrade-in\nPurchase\nConsultation\nCleaning\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "html_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "info_html",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "expected_delivery_date",
+   "fieldtype": "Date",
+   "label": "Expected Delivery Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "purchase_purpose",
+   "fieldtype": "Link",
+   "label": "Purchase Purpose",
+   "options": "Lead Demand",
+   "read_only": 1
+  },
+  {
+   "fieldname": "preferred_products",
+   "fieldtype": "Table MultiSelect",
+   "label": "Preferred Products",
+   "options": "Lead Product Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "offline_response",
+   "fieldtype": "Text Editor",
+   "label": "Offline Response"
+  },
+  {
+   "default": "0",
+   "fieldname": "auto_close",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Auto Close"
+  },
+  {
+   "fieldname": "policies",
+   "fieldtype": "Table MultiSelect",
+   "label": "Policies",
+   "options": "Appointment Policy"
+  },
+  {
+   "description": "<b>Kh\u00f4ng b\u1eaft bu\u1ed9c</b>",
+   "fieldname": "budget",
+   "fieldtype": "Currency",
+   "label": "Budget",
+   "non_negative": 1,
+   "precision": "0"
+  },
+  {
+   "fieldname": "order_status",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Order status",
+   "options": "Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng\nKh\u00e1ch h\u1eb9n \u0111\u1ebfn c\u1eeda h\u00e0ng\nKh\u00e1ch ch\u01b0a mua h\u00e0ng\nKh\u00e1ch kh\u00f4ng \u0111\u1ebfn c\u1eeda h\u00e0ng\nKh\u00e1ch ho\u00e3n l\u1ea1i ng\u00e0y \u0111\u1ebfn c\u1eeda h\u00e0ng\nKh\u00e1ch \u0111\u00e3 \u0111\u1ebfn c\u1eeda h\u00e0ng"
   }
  ],
+ "hide_toolbar": 1,
  "links": [],
- "modified": "2026-05-17 20:18:17.173432",
+ "modified": "2026-06-30 11:00:06.050044",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Appointment",
@@ -197,18 +317,19 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "select": 1,
    "share": 1,
    "write": 1
   },
   {
    "create": 1,
-   "delete": 1,
    "email": 1,
    "export": 1,
    "print": 1,
    "read": 1,
    "report": 1,
    "role": "Sales Manager",
+   "select": 1,
    "share": 1,
    "write": 1
   },
@@ -220,26 +341,53 @@
    "read": 1,
    "report": 1,
    "role": "Sales User",
+   "select": 1,
    "share": 1,
    "write": 1
   },
   {
    "create": 1,
-   "delete": 1,
    "email": 1,
    "export": 1,
    "print": 1,
    "read": 1,
    "report": 1,
    "role": "Employee",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Jemmia Presale",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Jemmia Sales Leader",
+   "select": 1,
    "share": 1,
    "write": 1
   }
  ],
  "quick_entry": 1,
  "row_format": "Dynamic",
+ "show_title_field_in_link": 1,
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
+ "title_field": "status",
  "track_changes": 1
 }

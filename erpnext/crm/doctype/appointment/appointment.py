@@ -20,10 +20,16 @@ class Appointment(Document):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
+		from erpnext.crm.doctype.appointment_policy.appointment_policy import AppointmentPolicy
 		from erpnext.crm.doctype.appointment_sales_person.appointment_sales_person import AppointmentSalesPerson
+		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from frappe.types import DF
 
+		appointment_reason: DF.Literal["Warranty Service", "Trade-in", "Purchase", "Consultation", "Cleaning", "Other"]
 		appointment_with: DF.Link | None
+		at_store: DF.Literal["72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh", "63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i", "209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1"]
+		auto_close: DF.Check
+		budget: DF.Currency
 		calendar_event: DF.Link | None
 		conversation_greeting: DF.LongText | None
 		customer_email: DF.Data | None
@@ -31,17 +37,23 @@ class Appointment(Document):
 		customer_phone_number: DF.Data | None
 		customer_response: DF.LongText | None
 		estimated_budget: DF.Link | None
+		expected_delivery_date: DF.Date | None
 		gender: DF.Link | None
 		lead: DF.Link | None
 		main_sales: DF.TableMultiSelect[AppointmentSalesPerson]
-		notes: DF.LongText | None
+		notes: DF.TextEditor | None
+		offline_response: DF.TextEditor | None
 		offline_sales: DF.TableMultiSelect[AppointmentSalesPerson]
+		order_status: DF.Literal["Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng", "Kh\u00e1ch h\u1eb9n \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch ch\u01b0a mua h\u00e0ng", "Kh\u00e1ch kh\u00f4ng \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch ho\u00e3n l\u1ea1i ng\u00e0y \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch \u0111\u00e3 \u0111\u1ebfn c\u1eeda h\u00e0ng"]
 		party: DF.DynamicLink | None
+		policies: DF.TableMultiSelect[AppointmentPolicy]
 		policy: DF.LongText | None
+		preferred_products: DF.TableMultiSelect[LeadProductItem]
+		purchase_purpose: DF.Link | None
 		range_estimated_budget: DF.Link | None
 		record_id: DF.Data | None
 		scheduled_time: DF.Datetime
-		status: DF.Literal["Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng", "Kh\u00e1ch h\u1eb9n \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch ch\u01b0a mua h\u00e0ng", "Kh\u00e1ch kh\u00f4ng \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch ho\u00e3n l\u1ea1i ng\u00e0y \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch \u0111\u00e3 \u0111\u1ebfn c\u1eeda h\u00e0ng"]
+		status: DF.Literal["Open", "Cancelled", "Closed"]
 		store: DF.Literal["72 NCT", "63 KM", "C\u1ea7n Th\u01a1"]
 	# end: auto-generated types
 
@@ -69,16 +81,57 @@ class Appointment(Document):
 		if number_of_agents != 0:
 			if number_of_appointments_in_same_slot >= number_of_agents:
 				frappe.throw(_("Time slot is not available"))
-		# Link lead
+		# Link lead or customer ( API Flow )
 		if not self.party:
-			lead = self.find_lead_by_email()
-			customer = self.find_customer_by_email()
-			if customer:
-				self.appointment_with = "Customer"
-				self.party = customer
+			if not self.appointment_with:
+				if self.customer_phone_number:
+					lead = frappe.db.get_value("Lead", {"phone": self.customer_phone_number}, "name")
+					if lead:
+						self.appointment_with = "Lead"
+						self.party = lead
+					else:
+						customer = frappe.db.get_value("Customer", {"mobile_no": self.customer_phone_number}, "name")
+						if not customer:
+							customer = frappe.db.get_value("Customer", {"phone": self.customer_phone_number}, "name")
+						if customer:
+							self.appointment_with = "Customer"
+							self.party = customer
 			else:
-				self.appointment_with = "Lead"
-				self.party = lead
+				lead = self.find_lead_by_email()
+				customer = self.find_customer_by_email()
+				if customer:
+					self.appointment_with = "Customer"
+					self.party = customer
+				elif lead:
+					self.appointment_with = "Lead"
+					self.party = lead
+
+		if self.appointment_with == "Lead" and self.party:
+			lead_doc = frappe.get_doc("Lead", self.party)
+			if not self.expected_delivery_date and lead_doc.expected_delivery_date:
+				self.expected_delivery_date = lead_doc.expected_delivery_date
+			if not self.purchase_purpose and lead_doc.purpose_lead:
+				self.purchase_purpose = lead_doc.purpose_lead
+			if not self.preferred_products and lead_doc.preferred_product_type:
+				self.preferred_products = lead_doc.preferred_product_type
+			if self.meta.has_field("customer_status") and not self.get("customer_status"):
+				self.customer_status = "Khách hẹn đến cửa hàng"
+
+		if not self.at_store and self.store:
+			if self.store == "72 NCT":
+				self.at_store = "72 Nguyễn Cư Trinh, Phường Bến Thành, TP Hồ Chí Minh"
+			elif self.store == "63 KM":
+				self.at_store = "63 Kim Mã, Phường Giảng Võ, TP Hà Nội"
+			elif self.store == "Cần Thơ":
+				self.at_store = "209 Đường 30 Tháng 4, Phường Ninh Kiều, TP Cần Thơ"
+
+		if not self.store and self.at_store:
+			if "72 Nguyễn Cư Trinh" in self.at_store:
+				self.store = "72 NCT"
+			elif "63 Kim Mã" in self.at_store:
+				self.store = "63 KM"
+			elif "Cần Thơ" in self.at_store:
+				self.store = "Cần Thơ"
 
 	def after_insert(self):
 		if self.party:

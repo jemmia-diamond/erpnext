@@ -15,6 +15,6 @@ class Policy(Document):
 		from frappe.types import DF
 
 		bizfly_id: DF.Data | None
-		title: DF.Data | None
+		title: DF.LongText | None
 	# end: auto-generated types
 	pass
