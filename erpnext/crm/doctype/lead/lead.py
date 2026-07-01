@@ -19,6 +19,7 @@ from erpnext.config.config import config
 from erpnext.controllers.selling_controller import SellingController
 from erpnext.crm.utils import CRMNote, copy_comments, link_communications, link_open_events
 from erpnext.selling.doctype.customer.customer import parse_full_name
+from frappe.utils import date_diff, now_datetime
 
 
 class Lead(SellingController, CRMNote):
@@ -28,21 +29,18 @@ class Lead(SellingController, CRMNote):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from typing import Literal
-
-		from frappe.types import DF
-
 		from erpnext.crm.doctype.crm_note.crm_note import CRMNote
 		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
+		from frappe.types import DF
 
 		account_number: DF.Data | None
 		address: DF.Data | None
 		annual_revenue: DF.Currency
-		bank_branch: Literal[None]
-		bank_district: Literal[None]
+		bank_branch: DF.Literal[None]
+		bank_district: DF.Literal[None]
 		bank_name: DF.Link | None
-		bank_province: Literal[None]
-		bank_ward: Literal[None]
+		bank_province: DF.Literal[None]
+		bank_ward: DF.Literal[None]
 		birth_date: DF.Date | None
 		blog_subscriber: DF.Check
 		budget_lead: DF.Link | None
@@ -73,38 +71,38 @@ class Lead(SellingController, CRMNote):
 		lead_received_date: DF.Datetime | None
 		lead_source_name: DF.Data | None
 		lead_source_platform: DF.Data | None
-		lead_stage: Literal["Lead", "Qualified Lead", "Opportunity", "Customer"]
+		lead_stage: DF.Literal["Lead", "Qualified Lead", "Opportunity", "Customer"]
 		market_segment: DF.Link | None
 		middle_name: DF.Data | None
 		mobile_no: DF.Data | None
-		naming_series: Literal["CRM-LEAD-.YYYY.-"]
-		no_of_employees: Literal["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"]
+		naming_series: DF.Literal["CRM-LEAD-.YYYY.-"]
+		no_of_employees: DF.Literal["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"]
 		notes: DF.Table[CRMNote]
 		pancake_data: DF.JSON | None
 		personal_id: DF.Data | None
 		personal_tax_id: DF.Data | None
 		phone: DF.Data | None
 		phone_ext: DF.Data | None
-		place_of_issuance: Literal["Ministry of Public Security", "Department of Police for Administrative Management of Social Order", "Department of Police for Registration, Residency Management, and National Population Data"]
+		place_of_issuance: DF.Literal["Ministry of Public Security", "Department of Police for Administrative Management of Social Order", "Department of Police for Registration, Residency Management, and National Population Data"]
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
 		proposed_budget: DF.Link | None
 		province: DF.Link | None
 		purpose_lead: DF.Link | None
-		qualification_status: Literal["Unqualified", "Qualified"]
+		qualification_status: DF.Literal["Unqualified", "Qualified"]
 		qualified_by: DF.Link | None
 		qualified_lead_date: DF.Datetime | None
 		qualified_on: DF.Datetime | None
 		region: DF.Link | None
-		request_type: Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
+		request_type: DF.Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
 		salutation: DF.Link | None
 		source: DF.Link | None
 		state: DF.Data | None
-		status: Literal["Lead", "Contacted", "Replied", "Interested", "Qualified", "Opportunity", "Converted", "Do Not Contact", "Spam"]
+		status: DF.Literal["Lead", "Contacted", "Replied", "Interested", "Qualified", "Opportunity", "Converted", "Do Not Contact", "Spam"]
 		stringee_data: DF.JSON | None
 		tax_number: DF.Data | None
 		territory: DF.Link | None
 		title: DF.Data | None
-		type: Literal["Individual", "Company", "Consultant", "Channel Partner"]
+		type: DF.Literal["Individual", "Company", "Consultant", "Channel Partner"]
 		unsubscribed: DF.Check
 		utm_campaign: DF.Link | None
 		utm_content: DF.Data | None
@@ -397,6 +395,8 @@ class Lead(SellingController, CRMNote):
 	def on_update(self):
 		self.update_prospect()
 		self.update_assignment_status()
+		#Trigger auto create Opportunity
+		self.create_opportunity()
 
 	def on_trash(self):
 		frappe.db.set_value("Issue", {"lead": self.name}, "lead", None)
@@ -684,27 +684,27 @@ class Lead(SellingController, CRMNote):
 
 	def create_opportunity(self):
 		"""
-		every lead stage convert to opportunity will create opportunity if not exist
+		auto create Opportunity when lead was Qualified
 		"""
 
-		if self.lead_stage != "Opportunity":
+		if self.qualification_status != "Qualified":
 			return
 
-		opportunity = None
-		try:
-			opportunity = frappe.get_doc("Lead", {
-				"party_name" : self.name,
-				"opportunity_from" : "Lead"
-			})
-		except Exception:
-			opportunity = None
+		# Get lastest Opportunity
+		latest_opportunity = frappe.db.get_value("Opportunity", 
+			{"party_name": self.name, "opportunity_from": "Lead"},
+			["name", "status", "creation"],
+			as_dict=True,
+			order_by="creation desc"
+		)
 
-		if opportunity:
-			return
+		if latest_opportunity:
+			if latest_opportunity.status in ["Open", "Quotation", "Negotiation"]:
+				return
 
 		opportunity = make_opportunity(self.name)
 
-		opportunity.insert()
+		opportunity.insert(ignore_permissions=True)
 	@frappe.whitelist()
 	def create_prospect_and_contact(self, data):
 		data = frappe._dict(data)

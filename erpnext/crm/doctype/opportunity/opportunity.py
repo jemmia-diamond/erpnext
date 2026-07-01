@@ -81,7 +81,7 @@ class Opportunity(TransactionBase, CRMNote):
 		phone: DF.Data | None
 		phone_ext: DF.Data | None
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
-		probability: DF.Percent
+		probability: DF.Literal["Kh\u1ea3 n\u0103ng th\u1ea5p", "C\u00f3 tri\u1ec3n v\u1ecdng", "Kh\u1ea3 n\u0103ng cao", "Ch\u1eafc ch\u1eafn ch\u1ed1t"]
 		province: DF.Link | None
 		purpose_lead: DF.Link | None
 		region: DF.Link | None
