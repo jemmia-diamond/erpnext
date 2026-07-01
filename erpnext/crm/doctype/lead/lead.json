@@ -823,6 +823,7 @@
   {
    "fieldname": "note_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Notes"
   },
   {
@@ -896,10 +897,9 @@
    "hidden": 1
   },
   {
-   "allow_in_quick_entry": 1,
    "fieldname": "custom_note",
    "fieldtype": "Small Text",
-   "label": "Ghi ch\u00fa"
+   "label": "Note"
   },
   {
    "fieldname": "section_break_lamm",
@@ -1012,7 +1012,7 @@
   {
    "fieldname": "primary_sale",
    "fieldtype": "Link",
-   "label": "Primary Sale",
+   "label": "Primary Sales",
    "options": "Sales Person"
   },
   {
@@ -1027,7 +1027,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-07-01 13:01:31.276181",
+ "modified": "2026-07-01 16:09:10.042847",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
