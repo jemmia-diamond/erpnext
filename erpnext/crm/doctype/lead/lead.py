@@ -19,6 +19,7 @@ from erpnext.config.config import config
 from erpnext.controllers.selling_controller import SellingController
 from erpnext.crm.utils import CRMNote, copy_comments, link_communications, link_open_events
 from erpnext.selling.doctype.customer.customer import parse_full_name
+from frappe.utils import date_diff, now_datetime
 
 
 class Lead(SellingController, CRMNote):
@@ -28,21 +29,22 @@ class Lead(SellingController, CRMNote):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from typing import Literal
-
+		from erpnext.crm.doctype.crm_note.crm_note import CRMNote
+		from erpnext.crm.doctype.lead_jewelry_interest.lead_jewelry_interest import LeadJewelryInterest
+		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
+		from erpnext.crm.doctype.sales_person_child.sales_person_child import SalesPersonChild
 		from frappe.types import DF
 
-		from erpnext.crm.doctype.crm_note.crm_note import CRMNote
-		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
-
 		account_number: DF.Data | None
+		active_engaged_customers: DF.Check
 		address: DF.Data | None
+		age_rage: DF.Literal["", "Under 18", "18 to 24", "25 to 34", "35 to 44", "45 to 54", "55 to 64", "65+", "Unidentified"]
 		annual_revenue: DF.Currency
-		bank_branch: Literal[None]
-		bank_district: Literal[None]
+		bank_branch: DF.Literal[None]
+		bank_district: DF.Literal[None]
 		bank_name: DF.Link | None
-		bank_province: Literal[None]
-		bank_ward: Literal[None]
+		bank_province: DF.Literal[None]
+		bank_ward: DF.Literal[None]
 		birth_date: DF.Date | None
 		blog_subscriber: DF.Check
 		budget_lead: DF.Link | None
@@ -52,7 +54,9 @@ class Lead(SellingController, CRMNote):
 		company: DF.Link | None
 		company_name: DF.Data | None
 		country: DF.Link | None
+		custom_note: DF.SmallText | None
 		customer: DF.Link | None
+		customer_persona: DF.SmallText | None
 		date_of_issuance: DF.Date | None
 		disabled: DF.Check
 		email_id: DF.Data | None
@@ -64,7 +68,9 @@ class Lead(SellingController, CRMNote):
 		gender: DF.Link | None
 		image: DF.AttachImage | None
 		industry: DF.Link | None
+		interaction_channels: DF.Data | None
 		is_assigned: DF.Check
+		jewelry_interest: DF.Table[LeadJewelryInterest]
 		job_title: DF.Data | None
 		language: DF.Link | None
 		last_name: DF.Data | None
@@ -73,38 +79,44 @@ class Lead(SellingController, CRMNote):
 		lead_received_date: DF.Datetime | None
 		lead_source_name: DF.Data | None
 		lead_source_platform: DF.Data | None
-		lead_stage: Literal["Lead", "Qualified Lead", "Opportunity", "Customer"]
+		lead_stage: DF.Literal["Lead", "Qualified Lead", "Opportunity", "Customer"]
 		market_segment: DF.Link | None
 		middle_name: DF.Data | None
 		mobile_no: DF.Data | None
-		naming_series: Literal["CRM-LEAD-.YYYY.-"]
-		no_of_employees: Literal["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"]
+		naming_series: DF.Literal["CRM-LEAD-.YYYY.-"]
+		no_of_employees: DF.Literal["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"]
 		notes: DF.Table[CRMNote]
 		pancake_data: DF.JSON | None
 		personal_id: DF.Data | None
 		personal_tax_id: DF.Data | None
 		phone: DF.Data | None
 		phone_ext: DF.Data | None
-		place_of_issuance: Literal["Ministry of Public Security", "Department of Police for Administrative Management of Social Order", "Department of Police for Registration, Residency Management, and National Population Data"]
+		place_of_issuance: DF.Literal["Ministry of Public Security", "Department of Police for Administrative Management of Social Order", "Department of Police for Registration, Residency Management, and National Population Data"]
+		point_of_purchase: DF.Literal["", "Offline", "Online"]
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
+		primary_sale: DF.Link | None
 		proposed_budget: DF.Link | None
 		province: DF.Link | None
+		purchase_objection: DF.SmallText | None
 		purpose_lead: DF.Link | None
-		qualification_status: Literal["Unqualified", "Qualified"]
+		qualification_status: DF.Literal["Unqualified", "Qualified"]
 		qualified_by: DF.Link | None
 		qualified_lead_date: DF.Datetime | None
 		qualified_on: DF.Datetime | None
+		referrer: DF.Data | None
 		region: DF.Link | None
-		request_type: Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
+		request_type: DF.Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
 		salutation: DF.Link | None
-		source: DF.Link | None
+		source: DF.Link
 		state: DF.Data | None
-		status: Literal["Lead", "Contacted", "Replied", "Interested", "Qualified", "Opportunity", "Converted", "Do Not Contact", "Spam"]
+		status: DF.Literal["Lead", "Contacted", "Replied", "Interested", "Qualified", "Opportunity", "Converted", "Do Not Contact", "Spam"]
 		stringee_data: DF.JSON | None
+		support_sales: DF.TableMultiSelect[SalesPersonChild]
 		tax_number: DF.Data | None
 		territory: DF.Link | None
 		title: DF.Data | None
-		type: Literal["Individual", "Company", "Consultant", "Channel Partner"]
+		touchpoint: DF.Literal["", "Offline", "Online"]
+		type: DF.Literal["Individual", "Company", "Consultant", "Channel Partner"]
 		unsubscribed: DF.Check
 		utm_campaign: DF.Link | None
 		utm_content: DF.Data | None
@@ -131,6 +143,15 @@ class Lead(SellingController, CRMNote):
 		self.validate_email_id()
 
 	def before_insert(self):
+		# Create Note with quickform
+		if self.custom_note and self.custom_note.strip():
+			self.append("notes", {
+				"note": self.custom_note,
+				"added_by": frappe.session.user or "Administrator",
+				"added_on": frappe.utils.now_datetime()
+			})
+			# Delete cutom note before save
+			self.custom_note = None
 		self.contact_doc = None
 		if frappe.db.get_single_value("CRM Settings", "auto_creation_of_contact"):
 			if self.utm_source == "Existing Customer" and self.customer:
@@ -198,6 +219,23 @@ class Lead(SellingController, CRMNote):
 		if self.lead_stage=="Customer":
 			return
 
+		# Prevent change lead_stage
+		old_db_stage = self.db_get("lead_stage")
+		if old_db_stage in ["Qualified Lead", "Opportunity"] and self.lead_stage == "Lead":
+			is_admin = "System Manager" in frappe.get_roles(frappe.session.user) or frappe.session.user == "Administrator"
+			is_ui_request = frappe.request and frappe.request.path in [
+				"/api/method/frappe.desk.form.save.savedocs",
+				"/api/method/frappe.client.save"
+			]
+			
+			# If NOT an Admin is performing actions on the interface -> Restore to the previous state
+			if not (is_admin and is_ui_request):
+				if is_ui_request:
+					frappe.throw(_("Chỉ Admin mới có quyền hạ cấp Stage của Lead đã Qualified."))
+				# If call by fn
+				self.lead_stage = old_db_stage
+				return
+
 		lead_stage = self.get_lead_stage()
 
 		if lead_stage:
@@ -214,27 +252,27 @@ class Lead(SellingController, CRMNote):
 		Only auto-qualifies when conditions are met, never auto-disqualifies
 		Also set qualified_by and qualified_on when manually changed to Qualified
 		"""
-		# User manually changed to Qualified
-		if self.has_value_changed("qualification_status") and self.qualification_status == "Qualified":
+
+		# Prevent change "Qualified" to "Unqualified"
+		old_doc = self.get_doc_before_save()
+		if old_doc and old_doc.get("qualification_status") == "Qualified":
+			self.qualification_status = "Qualified"
+			
+			old_qualified_by = old_doc.get("qualified_by")
+			if old_qualified_by:
+				self.qualified_by = old_qualified_by
+			old_qualified_on = old_doc.get("qualified_on")
+			if old_qualified_on:
+				self.qualified_on = old_qualified_on
+			return
+		new_qualification_status = self.get_qualification_status()
+		old_status = old_doc.get("qualification_status") if old_doc else "Unqualified"
+		
+		self.qualification_status = new_qualification_status
+		if self.qualification_status == "Qualified" and old_status != "Qualified":
 			if not self.qualified_by:
 				self.qualified_by = frappe.session.user
 			self.qualified_on = frappe.utils.now_datetime()
-			return
-
-		new_qualification_status = self.get_qualification_status()
-
-		# Auto-qualification logic based on phone and province
-		if (new_qualification_status == "Qualified" and self.qualification_status != "Qualified") or \
-		   (self.qualification_status != "Qualified"):
-
-			old_status = self.qualification_status
-			self.qualification_status = new_qualification_status
-
-			# Set qualified_by and qualified_on when moving to Qualified
-			if self.qualification_status == "Qualified" and old_status != "Qualified":
-				if not self.qualified_by:
-					self.qualified_by = frappe.session.user
-				self.qualified_on = frappe.utils.now_datetime()
 
 	def update_lead_owner(self, pancake_user_id:str | None):
 		"""
@@ -397,6 +435,8 @@ class Lead(SellingController, CRMNote):
 	def on_update(self):
 		self.update_prospect()
 		self.update_assignment_status()
+		#Trigger auto create Opportunity
+		self.create_opportunity()
 
 	def on_trash(self):
 		frappe.db.set_value("Issue", {"lead": self.name}, "lead", None)
@@ -684,27 +724,27 @@ class Lead(SellingController, CRMNote):
 
 	def create_opportunity(self):
 		"""
-		every lead stage convert to opportunity will create opportunity if not exist
+		auto create Opportunity when lead was Qualified
 		"""
 
-		if self.lead_stage != "Opportunity":
+		if self.qualification_status != "Qualified":
 			return
 
-		opportunity = None
-		try:
-			opportunity = frappe.get_doc("Lead", {
-				"party_name" : self.name,
-				"opportunity_from" : "Lead"
-			})
-		except Exception:
-			opportunity = None
+		# Get lastest Opportunity
+		latest_opportunity = frappe.db.get_value("Opportunity", 
+			{"party_name": self.name, "opportunity_from": "Lead"},
+			["name", "status", "creation"],
+			as_dict=True,
+			order_by="creation desc"
+		)
 
-		if opportunity:
-			return
+		if latest_opportunity:
+			if latest_opportunity.status in ["Open", "Quotation", "Negotiation"]:
+				return
 
 		opportunity = make_opportunity(self.name)
 
-		opportunity.insert()
+		opportunity.insert(ignore_permissions=True)
 	@frappe.whitelist()
 	def create_prospect_and_contact(self, data):
 		data = frappe._dict(data)
@@ -849,7 +889,7 @@ class Lead(SellingController, CRMNote):
 			elif self.preferred_product_type and self.budget_lead:
 				return "Qualified"
 
-		return self.qualification_status
+		return "Unqualified"
 
 	def normalize_phone(self):
 		if self.phone:
@@ -922,7 +962,6 @@ def make_opportunity(source_name, target_doc=None):
 					"email_id": "contact_email",
 					"mobile_no": "contact_mobile",
 					"lead_owner": "opportunity_owner",
-					"notes": "notes",
 				},
 			}
 		},
@@ -1092,3 +1131,165 @@ def add_lead_to_prospect(lead, prospect):
 		title=_("Lead -> Prospect"),
 		indicator="green",
 	)
+
+@frappe.whitelist()
+def get_related_notes(doctype, docname):
+	"""
+	Query all notes related to the given doctype and docname, including related Opportunities and Appointments.
+	"""
+	notes = []
+	targets = [(doctype, docname)]
+	lead_name = None
+
+	if doctype == "Lead":
+		lead_name = docname
+		opps = frappe.get_all(
+			"Opportunity",
+			filters={"opportunity_from": "Lead", "party_name": docname},
+			fields=["name"]
+		)
+		for opp in opps:
+			targets.append(("Opportunity", opp["name"]))
+			
+	elif doctype == "Opportunity":
+		opp_fields = frappe.db.get_value(
+			"Opportunity",
+			docname,
+			["opportunity_from", "party_name"],
+			as_dict=True
+		)
+		if opp_fields and opp_fields.opportunity_from == "Lead" and opp_fields.party_name:
+			lead_name = opp_fields.party_name
+			targets.append(("Lead", lead_name))
+			
+			# Get other Opportunities from the same Lead, excluding the current Opportunity
+			other_opps = frappe.get_all(
+				"Opportunity",
+				filters={
+					"opportunity_from": "Lead",
+					"party_name": lead_name,
+					"name": ["!=", docname]
+				},
+				fields=["name"]
+			)
+			for opp in other_opps:
+				targets.append(("Opportunity", opp["name"]))
+
+	appointments = []
+	if lead_name:
+		appointments = frappe.get_all(
+			"Appointment",
+			filters={"lead": lead_name},
+			fields=["name", "notes", "owner", "creation"]
+		)
+
+	for app in appointments:
+		targets.append(("Appointment", app["name"]))
+		if app.get("notes") and app["notes"].strip():
+			notes.append({
+				"name": app["name"],
+				"note": app["notes"],
+				"added_by": app["owner"],
+				"added_on": app["creation"],
+				"notify_to": None,
+				"parent": app["name"],
+				"parenttype": "Appointment"
+			})
+
+	from collections import defaultdict
+	grouped_targets = defaultdict(list)
+	for ptype, pname in targets:
+		grouped_targets[ptype].append(pname)
+
+	for parenttype, parents in grouped_targets.items():
+		items = frappe.db.get_all(
+			"CRM Note",
+			filters={"parent": ["in", parents], "parenttype": parenttype},
+			fields=["name", "note", "added_by", "added_on", "notify_to", "parent", "parenttype"]
+		)
+		notes.extend(items)
+
+	notify_emails = list({n["notify_to"] for n in notes if n.get("notify_to")})
+	name_map = {}
+	if notify_emails:
+		users = frappe.db.get_all(
+			"User",
+			filters={"name": ["in", notify_emails]},
+			fields=["name", "full_name"]
+		)
+		name_map = {u["name"]: u["full_name"] for u in users}
+
+	for n in notes:
+		n["notify_to_name"] = name_map.get(n.get("notify_to"), n.get("notify_to") or "")
+
+	return notes
+
+
+@frappe.whitelist()
+def search_leads_by_phone(phone):
+	"""Search leads by phone number, checking both 0xx and 84xx formats."""
+	if not phone:
+		return []
+
+	phone = phone.strip()
+
+	# Normalize: build variants for 0xx <-> 84xx
+	variants = [phone]
+	if phone.startswith("0"):
+		variants.append("84" + phone[1:])
+	elif phone.startswith("84"):
+		variants.append("0" + phone[2:])
+	elif phone.startswith("+84"):
+		variants.append("0" + phone[3:])
+		variants.append("84" + phone[3:])
+
+	conditions = []
+	values = {}
+	for i, v in enumerate(variants):
+		key = f"phone_{i}"
+		conditions.append(f"(phone LIKE %({key})s OR mobile_no LIKE %({key})s)")
+		values[key] = f"%{v}%"
+
+	where_clause = " OR ".join(conditions)
+
+	try:
+		leads = frappe.db.sql(
+			f"""
+			SELECT name, first_name, last_name, lead_name, phone, mobile_no, status
+			FROM `tabLead`
+			WHERE {where_clause}
+			ORDER BY creation DESC
+			LIMIT 20
+			""",
+			values=values,
+			as_dict=True,
+		)
+	except Exception:
+		frappe.log_error("search_leads_by_phone failed")
+		leads = []
+
+	return leads
+
+
+def update_primary_sale_from_todo(doc, method=None):
+	"""
+	Hook tự động chạy sau khi ToDo được tạo (after_insert)
+	"""
+	try:
+		if doc.reference_type == "Lead" and doc.status == "Open" and doc.allocated_to:
+			# 1. Tìm Sales Person theo Email
+			sales_person = frappe.db.get_value("Sales Person", {"employee_email": doc.allocated_to}, "name")
+			
+			# 2. Nếu không thấy, tìm qua Employee.user_id
+			if not sales_person:
+				employee = frappe.db.get_value("Employee", {"user_id": doc.allocated_to}, "name")
+				if employee:
+					sales_person = frappe.db.get_value("Sales Person", {"employee": employee}, "name")
+			
+			# 3. Tiến hành gán và xóa cache để cập nhật UI
+			if sales_person:
+				frappe.db.set_value("Lead", doc.reference_name, "primary_sale", sales_person)
+				frappe.clear_document_cache("Lead", doc.reference_name)
+				
+	except Exception as e:
+		frappe.log_error(frappe.get_traceback(), "DEBUG ASSIGN LEAD EXCEPTION")

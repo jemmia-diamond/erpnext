@@ -14,47 +14,69 @@
   "information_tab",
   "basic_information_section",
   "column_break_jigo",
+  "lead_received_date",
+  "support_sales",
   "naming_series",
   "type",
   "salutation",
-  "first_name",
   "middle_name",
   "territory",
   "lead_stage",
-  "phone",
-  "first_reach_at",
   "column_break_1",
-  "email_id",
+  "lead_owner",
   "job_title",
   "last_name",
-  "gender",
   "qualified_lead_date",
   "col_break123",
-  "lead_owner",
-  "source",
-  "status",
+  "primary_sale",
   "customer",
   "request_type",
   "lead_name",
-  "lead_received_date",
-  "lead_source_name",
   "lead_source_platform",
+  "lead_source_name",
+  "customer_information_section",
+  "first_name",
+  "gender",
+  "status",
+  "column_break_wwev",
+  "phone",
+  "age_rage",
+  "column_break_ytqf",
+  "email_id",
+  "source",
+  "custom_note",
   "qualification_tab",
   "qualification_status",
-  "is_assigned",
+  "first_reach_at",
   "column_break_64",
   "qualified_by",
+  "is_assigned",
+  "column_break_mpbs",
   "qualified_on",
   "qualified_information_section",
   "purpose_lead",
-  "expected_delivery_date",
+  "preferred_product_type",
   "column_break_ugod",
   "budget_lead",
+  "expected_delivery_date",
   "proposed_budget",
-  "preferred_product_type",
   "column_break_wsdb",
   "province",
   "region",
+  "section_break_wupd",
+  "jewelry_interest",
+  "other_section",
+  "customer_persona",
+  "column_break_wexg",
+  "purchase_objection",
+  "other_information_section",
+  "interaction_channels",
+  "point_of_purchase",
+  "column_break_pbaf",
+  "referrer",
+  "active_engaged_customers",
+  "column_break_rrvw",
+  "touchpoint",
   "organization_section",
   "company_name",
   "no_of_employees",
@@ -116,10 +138,13 @@
   "whatsapp_no",
   "column_break_16",
   "phone_ext",
+  "offline_sales_tab",
   "note_tab",
+  "section_break_lamm",
   "notes_html",
   "notes",
   "activities_tab",
+  "section_break_wcmy",
   "open_activities_html",
   "all_activities_section",
   "all_activities_html",
@@ -178,6 +203,7 @@
    "default": "__user",
    "fieldname": "lead_owner",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Lead Owner",
    "oldfieldname": "lead_owner",
    "oldfieldtype": "Link",
@@ -196,7 +222,6 @@
    "oldfieldname": "status",
    "oldfieldtype": "Select",
    "options": "Lead\nContacted\nReplied\nInterested\nQualified\nOpportunity\nConverted\nDo Not Contact\nSpam",
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -222,7 +247,8 @@
    "label": "Lead Source",
    "oldfieldname": "source",
    "oldfieldtype": "Select",
-   "options": "Lead Source"
+   "options": "Lead Source",
+   "reqd": 1
   },
   {
    "depends_on": "eval:doc.source == 'Existing Customer'",
@@ -256,8 +282,7 @@
   {
    "fieldname": "contact_html",
    "fieldtype": "HTML",
-   "label": "Contact HTML",
-   "read_only": 1
+   "label": "Contact HTML"
   },
   {
    "fieldname": "phone",
@@ -290,6 +315,7 @@
    "default": "Individual",
    "fieldname": "type",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Lead Type",
    "oldfieldname": "type",
    "oldfieldtype": "Select",
@@ -374,6 +400,7 @@
    "options": "Language"
   },
   {
+   "allow_in_quick_entry": 1,
    "bold": 1,
    "fieldname": "first_name",
    "fieldtype": "Data",
@@ -435,32 +462,36 @@
   },
   {
    "fieldname": "column_break_1",
-   "fieldtype": "Column Break",
-   "hidden": 1
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "qualified_by",
    "fieldtype": "Link",
    "label": "Qualified By",
-   "options": "User"
+   "options": "User",
+   "read_only": 1
   },
   {
    "fieldname": "qualified_on",
    "fieldtype": "Datetime",
+   "in_list_view": 1,
    "label": "Qualified on",
-   "permlevel": 1
+   "permlevel": 1,
+   "read_only": 1
   },
   {
    "fieldname": "qualification_status",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Qualification Status",
    "options": "Unqualified\nQualified",
-   "permlevel": 1
+   "permlevel": 1,
+   "read_only": 1
   },
   {
    "fieldname": "address_section",
    "fieldtype": "Section Break",
-   "hidden": 1,
    "label": "Address Information"
   },
   {
@@ -515,8 +546,7 @@
   },
   {
    "fieldname": "all_activities_section",
-   "fieldtype": "Section Break",
-   "label": "All Activities"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "all_activities_html",
@@ -526,6 +556,7 @@
   {
    "fieldname": "notes",
    "fieldtype": "Table",
+   "hidden": 1,
    "label": "Notes",
    "no_copy": 1,
    "options": "CRM Note",
@@ -628,7 +659,7 @@
   {
    "fieldname": "basic_information_section",
    "fieldtype": "Section Break",
-   "label": "Information"
+   "label": "Sale Information"
   },
   {
    "collapsible": 1,
@@ -725,12 +756,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "purpose_lead",
-   "fieldtype": "Link",
-   "label": "Lead Purpose",
-   "options": "Lead Demand"
-  },
-  {
    "fieldname": "budget_lead",
    "fieldtype": "Link",
    "label": "Lead Budget",
@@ -739,6 +764,7 @@
   {
    "fieldname": "proposed_budget",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Propose Lead Budget",
    "options": "Lead Budget"
   },
@@ -797,6 +823,7 @@
   {
    "fieldname": "note_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Notes"
   },
   {
@@ -808,7 +835,7 @@
    "default": "Lead",
    "fieldname": "lead_stage",
    "fieldtype": "Select",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Lead Stage",
    "options": "Lead\nQualified Lead\nOpportunity\nCustomer",
    "read_only": 1
@@ -817,8 +844,7 @@
    "fieldname": "province",
    "fieldtype": "Link",
    "label": "Province",
-   "options": "Province",
-   "permlevel": 1
+   "options": "Province"
   },
   {
    "fieldname": "qualified_lead_date",
@@ -834,9 +860,11 @@
    "read_only": 1
   },
   {
+   "default": "Now",
    "fieldname": "first_reach_at",
    "fieldtype": "Datetime",
-   "label": "First Reach At"
+   "label": "First Reach At",
+   "read_only": 1
   },
   {
    "fetch_from": "source.source_name",
@@ -850,6 +878,7 @@
    "fetch_from": "source.pancake_platform",
    "fieldname": "lead_source_platform",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Lead Source Platform",
    "options": "Lead",
    "read_only": 1
@@ -858,8 +887,139 @@
    "default": "0",
    "fieldname": "is_assigned",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Is Assigned",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_wcmy",
+   "fieldtype": "Section Break",
+   "hidden": 1
+  },
+  {
+   "fieldname": "custom_note",
+   "fieldtype": "Small Text",
+   "label": "Note"
+  },
+  {
+   "fieldname": "section_break_lamm",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "offline_sales_tab",
+   "fieldtype": "Tab Break",
+   "label": "Offline Sales"
+  },
+  {
+   "fieldname": "age_rage",
+   "fieldtype": "Select",
+   "label": "Ages",
+   "options": "\nUnder 18\n18 to 24\n25 to 34\n35 to 44\n45 to 54\n55 to 64\n65+\nUnidentified"
+  },
+  {
+   "fieldname": "purchase_objection",
+   "fieldtype": "Small Text",
+   "label": "Purchase Objection"
+  },
+  {
+   "fieldname": "customer_information_section",
+   "fieldtype": "Section Break",
+   "label": "Customer Information"
+  },
+  {
+   "fieldname": "column_break_wwev",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ytqf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "other_section",
+   "fieldtype": "Section Break",
+   "label": "Note"
+  },
+  {
+   "fieldname": "customer_persona",
+   "fieldtype": "Small Text",
+   "label": "Customer Persona"
+  },
+  {
+   "fieldname": "section_break_wupd",
+   "fieldtype": "Section Break",
+   "label": "Product Information"
+  },
+  {
+   "fieldname": "jewelry_interest",
+   "fieldtype": "Table",
+   "options": "Lead Jewelry Interest"
+  },
+  {
+   "fieldname": "purpose_lead",
+   "fieldtype": "Link",
+   "label": "Purpose Lead",
+   "options": "Lead Demand"
+  },
+  {
+   "fieldname": "column_break_mpbs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_wexg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "other_information_section",
+   "fieldtype": "Section Break",
+   "label": "Other Information"
+  },
+  {
+   "fieldname": "interaction_channels",
+   "fieldtype": "Data",
+   "label": "Interaction Channels"
+  },
+  {
+   "fieldname": "point_of_purchase",
+   "fieldtype": "Select",
+   "label": "Point of Purchase",
+   "options": "\nOffline\nOnline"
+  },
+  {
+   "fieldname": "column_break_pbaf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "referrer",
+   "fieldtype": "Data",
+   "label": "Referrer"
+  },
+  {
+   "default": "0",
+   "fieldname": "active_engaged_customers",
+   "fieldtype": "Check",
+   "label": "Active Engaged Customers"
+  },
+  {
+   "fieldname": "column_break_rrvw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "touchpoint",
+   "fieldtype": "Select",
+   "label": "Touchpoint",
+   "options": "\nOffline\nOnline"
+  },
+  {
+   "fieldname": "primary_sale",
+   "fieldtype": "Link",
+   "label": "Primary Sales",
+   "options": "Sales Person"
+  },
+  {
+   "fieldname": "support_sales",
+   "fieldtype": "Table MultiSelect",
+   "label": "Sales Support",
+   "options": "Sales Person Child"
   }
  ],
  "grid_page_length": 50,
@@ -867,7 +1027,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-05-04 14:22:37.677519",
+ "modified": "2026-07-01 16:09:10.042847",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
@@ -924,8 +1084,33 @@
    "read": 1,
    "report": 1,
    "role": "Sales User"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sale offline",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 2,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sale offline",
+   "share": 1,
+   "write": 1
   }
  ],
+ "quick_entry": 1,
  "row_format": "Dynamic",
  "search_fields": "lead_name,lead_owner,status",
  "sender_field": "email_id",

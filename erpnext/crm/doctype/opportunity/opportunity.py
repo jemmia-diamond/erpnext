@@ -45,7 +45,6 @@ class Opportunity(TransactionBase, CRMNote):
 		base_opportunity_amount: DF.Currency
 		base_total: DF.Currency
 		budget_lead: DF.Link | None
-		campaign: DF.Link | None
 		city: DF.Data | None
 		company: DF.Link
 		competitors: DF.TableMultiSelect[CompetitorDetail]
@@ -62,6 +61,7 @@ class Opportunity(TransactionBase, CRMNote):
 		expected_closing: DF.Date | None
 		expected_delivery_date: DF.Date | None
 		first_response_time: DF.Duration | None
+		gender: DF.Link | None
 		industry: DF.Link | None
 		items: DF.Table[OpportunityItem]
 		job_title: DF.Data | None
@@ -82,6 +82,8 @@ class Opportunity(TransactionBase, CRMNote):
 		phone_ext: DF.Data | None
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
 		probability: DF.Percent
+		probability_text: DF.Literal["Low Probability", "Considering", "Promising", "High Probability", "Committed to Buy"]
+		proposed_budget: DF.Link | None
 		province: DF.Link | None
 		purpose_lead: DF.Link | None
 		region: DF.Link | None
@@ -151,6 +153,18 @@ class Opportunity(TransactionBase, CRMNote):
 
 		self.calculate_totals()
 
+	def before_save(self):
+		probability_map = {
+			"Low Probability": 10,
+			"Considering": 30,
+			"Promising": 50,
+			"High Probability": 75,
+			"Committed to Buy": 100,
+		}
+
+		if self.probability_text in probability_map:
+			self.probability = probability_map[self.probability_text]
+
 	def on_update(self):
 		self.update_prospect()
 
@@ -165,7 +179,7 @@ class Opportunity(TransactionBase, CRMNote):
 
 	def set_opportunity_type(self):
 		if self.is_new() and not self.opportunity_type:
-			self.opportunity_type = _("Sales")		
+			self.opportunity_type = _("Sales")
 
 	def set_exchange_rate(self):
 		company_currency = frappe.get_cached_value("Company", self.company, "default_currency")

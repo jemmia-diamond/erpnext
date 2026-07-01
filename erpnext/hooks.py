@@ -410,6 +410,9 @@ doc_events = {
 		"after_insert": "erpnext.r2_storage.upload_to_r2",
 		"on_trash": "erpnext.r2_storage.delete_from_r2"
 	},
+	"ToDo": {
+		"after_insert": "erpnext.crm.doctype.lead.lead.update_primary_sale_from_todo"
+	},
 }
 
 # function should expect the variable and doc as arguments
