@@ -19,7 +19,8 @@
   "at_store",
   "main_sales",
   "auto_close",
-  "appointment_policy",
+  "policies",
+  "order_status",
   "customer_details_section",
   "customer_name",
   "gender",
@@ -277,10 +278,10 @@
    "label": "Auto Close"
   },
   {
-   "fieldname": "appointment_policy",
-   "fieldtype": "Link",
-   "label": "Policy",
-   "options": "Policy"
+   "fieldname": "policies",
+   "fieldtype": "Table MultiSelect",
+   "label": "Policies",
+   "options": "Appointment Policy"
   },
   {
    "description": "<b>Kh\u00f4ng b\u1eaft bu\u1ed9c</b>",
@@ -289,11 +290,18 @@
    "label": "Budget",
    "non_negative": 1,
    "precision": "0"
+  },
+  {
+   "fieldname": "order_status",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Order status",
+   "options": "Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng\nKh\u00e1ch h\u1eb9n \u0111\u1ebfn c\u1eeda h\u00e0ng\nKh\u00e1ch ch\u01b0a mua h\u00e0ng\nKh\u00e1ch kh\u00f4ng \u0111\u1ebfn c\u1eeda h\u00e0ng\nKh\u00e1ch ho\u00e3n l\u1ea1i ng\u00e0y \u0111\u1ebfn c\u1eeda h\u00e0ng\nKh\u00e1ch \u0111\u00e3 \u0111\u1ebfn c\u1eeda h\u00e0ng"
   }
  ],
  "hide_toolbar": 1,
  "links": [],
- "modified": "2026-06-26 16:57:32.877147",
+ "modified": "2026-06-30 11:00:06.050044",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Appointment",
