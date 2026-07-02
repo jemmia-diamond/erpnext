@@ -247,8 +247,7 @@
    "label": "Lead Source",
    "oldfieldname": "source",
    "oldfieldtype": "Select",
-   "options": "Lead Source",
-   "reqd": 1
+   "options": "Lead Source"
   },
   {
    "depends_on": "eval:doc.source == 'Existing Customer'",
@@ -1027,7 +1026,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-07-01 16:09:10.042847",
+ "modified": "2026-07-02 14:04:24.399698",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
