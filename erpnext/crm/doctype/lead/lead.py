@@ -107,7 +107,7 @@ class Lead(SellingController, CRMNote):
 		region: DF.Link | None
 		request_type: DF.Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
 		salutation: DF.Link | None
-		source: DF.Link
+		source: DF.Link | None
 		state: DF.Data | None
 		status: DF.Literal["Lead", "Contacted", "Replied", "Interested", "Qualified", "Opportunity", "Converted", "Do Not Contact", "Spam"]
 		stringee_data: DF.JSON | None
@@ -436,7 +436,6 @@ class Lead(SellingController, CRMNote):
 		self.update_prospect()
 		self.update_assignment_status()
 		#Trigger auto create Opportunity
-		self.create_opportunity()
 
 	def on_trash(self):
 		frappe.db.set_value("Issue", {"lead": self.name}, "lead", None)
