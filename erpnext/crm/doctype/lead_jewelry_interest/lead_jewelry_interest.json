@@ -1,0 +1,140 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-06-29 22:15:18.745829",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "jewelry_detail_section",
+  "product_type",
+  "column_break_crye",
+  "material",
+  "column_break_tquz",
+  "jewelry_budget",
+  "diamond_detail_section",
+  "size",
+  "shape",
+  "column_break_dqll",
+  "color_grade",
+  "diamond_budget",
+  "column_break_uvag",
+  "clarity_grade",
+  "diamond_detail",
+  "section_break_oorl",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "size",
+   "fieldtype": "Select",
+   "label": "Size",
+   "options": "\n3.6\n3.7\n3.8\n3.9\n4.0\n4.1\n4.2\n4.3\n4.4\n4.5\n4.6\n4.7\n4.8\n4.9\n5.0\n5.1\n5.2\n5.3\n5.4\n5.5\n5.6\n5.7\n5.8\n5.9\n6.0\n6.1\n6.2\n6.3\n6.4\n6.5\n6.6\n6.7\n6.8\n6.9\n7.0\n7.1\n7.2\n7.3\n7.4\n7.5\n7.6\n7.7\n7.8\n7.9\n8.0\n8.1\n8.2\n8.3\n8.4\n8.5\n8.6\n8.7\n8.8\n8.9\n9.0\n9.1\n9.2\n9.3\n9.4\n9.5\n9.6\n9.7\n9.8\n9.9\n10.0\n10.1\n10.2\n10.3\n10.4\n10.5\n10.6\n10.7\n10.8\n10.9\n11.0\n11.1\n11.2\n11.3\n11.4\n11.5\n11.6\n11.7\n11.8\n11.9\n12.0\n12.1\n12.2\n12.3\n12.4\n12.5\n12.6\n12.7\n12.8\n12.9\n13.0",
+   "precision": "1"
+  },
+  {
+   "fieldname": "column_break_crye",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "jewelry_detail_section",
+   "fieldtype": "Section Break",
+   "label": "Jewelry Detail"
+  },
+  {
+   "columns": 1,
+   "fieldname": "material",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Material",
+   "options": "\nV\u00e0ng 18K\nV\u00e0ng 14K\nPlatinum\nB\u1ea1c 925\nKh\u00e1c"
+  },
+  {
+   "fieldname": "column_break_tquz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "clarity_grade",
+   "fieldtype": "Select",
+   "label": "Clarity Grade",
+   "options": "\nFL\nIF\nVVS1\nVVS2\nVS1\nVS2\nSI1\nSI2\nSI3\nI1\nI2\nI3\nNA"
+  },
+  {
+   "fieldname": "diamond_detail_section",
+   "fieldtype": "Section Break",
+   "label": "Diamond Detail"
+  },
+  {
+   "fieldname": "color_grade",
+   "fieldtype": "Select",
+   "label": "Color Grade",
+   "options": "\nD (Kh\u00f4ng M\u00e0u)\nE (Kh\u00f4ng M\u00e0u)\nF (Kh\u00f4ng M\u00e0u)\nG (G\u1ea7n Nh\u01b0 Kh\u00f4ng M\u00e0u)\nH (G\u1ea7n Nh\u01b0 Kh\u00f4ng M\u00e0u)\nI (G\u1ea7n Nh\u01b0 Kh\u00f4ng M\u00e0u)\nJ (G\u1ea7n Nh\u01b0 Kh\u00f4ng M\u00e0u)\nK (H\u01a1i V\u00e0ng)\nL (H\u01a1i V\u00e0ng)\nM (H\u01a1i V\u00e0ng)\nN (V\u00e0ng Nh\u1ea1t)\nO (V\u00e0ng Nh\u1ea1t)\nP (V\u00e0ng Nh\u1ea1t)\nQ (V\u00e0ng Nh\u1ea1t)\nR (V\u00e0ng Nh\u1ea1t)\nS (V\u00e0ng)\nT (V\u00e0ng)\nU (V\u00e0ng)\nV (V\u00e0ng)\nW (V\u00e0ng)\nX (V\u00e0ng)\nY (V\u00e0ng)\nZ (V\u00e0ng)\nD, E, F\nG, H, I, J\nT\u1eeb K \u0111\u1ebfn Z\nYellow (V\u00e0ng)\nPink (H\u1ed3ng)\nGreen (Xanh l\u00e1)\nBlue (Xanh d\u01b0\u01a1ng)\nKh\u00f4ng ph\u00e2n lo\u1ea1i\nBlack (M\u00e0u \u0110en)\nGrey (M\u00e0u X\u00e1m)\nRed (M\u00e0u \u0110\u1ecf)"
+  },
+  {
+   "fieldname": "column_break_dqll",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_uvag",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "jewelry_budget",
+   "fieldtype": "Float",
+   "label": "Budget",
+   "precision": "0"
+  },
+  {
+   "fieldname": "shape",
+   "fieldtype": "Select",
+   "label": "Shape",
+   "options": "\nRound\nPrincess\nAsscher\nEmerald\nMarquise\nOval\nRadiant\nPear\nHeart\nCushion\nBaguette"
+  },
+  {
+   "fieldname": "diamond_budget",
+   "fieldtype": "Float",
+   "label": "Budget",
+   "precision": "0"
+  },
+  {
+   "fieldname": "section_break_oorl",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Note"
+  },
+  {
+   "columns": 3,
+   "fieldname": "diamond_detail",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Diamond Detail",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "product_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Product Type"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-01 14:26:46.434315",
+ "modified_by": "Administrator",
+ "module": "CRM",
+ "name": "Lead Jewelry Interest",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

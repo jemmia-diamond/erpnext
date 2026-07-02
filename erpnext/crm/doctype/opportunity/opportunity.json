@@ -14,30 +14,36 @@
  "field_order": [
   "detail_tab",
   "opportunity_section",
+  "column_break_10",
+  "title",
+  "gender",
+  "expected_closing",
+  "opportunity_owner",
+  "column_break_shzo",
+  "phone",
+  "status",
+  "opportunity_date",
   "naming_series",
-  "opportunity_from",
-  "party_name",
   "customer_name",
   "column_break0",
-  "opportunity_type",
-  "source",
-  "sales_stage",
+  "contact_email",
   "probability",
-  "opportunity_date",
-  "column_break_10",
-  "opportunity_owner",
-  "status",
-  "expected_closing",
+  "probability_text",
+  "opportunity_type",
+  "opportunity_from",
+  "party_name",
+  "sales_stage",
   "customer_demand_sections",
   "purpose_lead",
   "expected_delivery_date",
+  "preferred_product_type",
   "column_break_pfyx",
   "budget_lead",
-  "preferred_product_type",
+  "proposed_budget",
+  "opportunity_amount",
   "column_break_rirs",
   "province",
   "region",
-  "opportunity_amount",
   "organization_details_section",
   "no_of_employees",
   "annual_revenue",
@@ -69,7 +75,6 @@
   "column_break1",
   "language",
   "amended_from",
-  "title",
   "first_response_time",
   "lost_detail_section",
   "lost_reasons",
@@ -81,11 +86,9 @@
   "contact_person",
   "job_title",
   "column_break_54",
-  "contact_email",
   "contact_mobile",
   "column_break_22",
   "whatsapp",
-  "phone",
   "phone_ext",
   "address_contact_section",
   "address_html",
@@ -103,20 +106,20 @@
   "base_total",
   "column_break_33",
   "total",
-  "activities_tab",
-  "open_activities_html",
-  "all_activities_section",
-  "all_activities_html",
+  "team_sale_tab",
+  "sales_team",
   "dashboard_tab",
   "comment",
-  "team_sale_tab",
-  "sales_team"
+  "activities_tab",
+  "section_break_urbk",
+  "open_activities_html",
+  "all_activities_section",
+  "all_activities_html"
  ],
  "fields": [
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
-   "in_list_view": 1,
    "label": "Series",
    "no_copy": 1,
    "oldfieldname": "naming_series",
@@ -126,36 +129,35 @@
    "set_only_once": 1
   },
   {
+   "default": "Lead",
    "fieldname": "opportunity_from",
    "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
+   "hidden": 1,
    "label": "Opportunity From",
    "oldfieldname": "enquiry_from",
    "oldfieldtype": "Select",
    "options": "DocType",
    "print_hide": 1,
+   "read_only": 1,
    "reqd": 1
   },
   {
    "bold": 1,
    "fieldname": "party_name",
    "fieldtype": "Dynamic Link",
-   "in_standard_filter": 1,
    "label": "Party Name",
    "oldfieldname": "customer",
    "oldfieldtype": "Link",
    "options": "opportunity_from",
    "print_hide": 1,
+   "read_only": 1,
    "reqd": 1
   },
   {
    "bold": 1,
    "fieldname": "customer_name",
    "fieldtype": "Data",
-   "in_global_search": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1,
+   "hidden": 1,
    "label": "Customer Name",
    "read_only": 1
   },
@@ -168,19 +170,18 @@
   {
    "fieldname": "title",
    "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Title",
+   "label": "Name",
    "no_copy": 1
   },
   {
    "fieldname": "opportunity_type",
    "fieldtype": "Link",
    "hidden": 1,
-   "in_list_view": 1,
    "label": "Opportunity Type",
    "oldfieldname": "enquiry_type",
    "oldfieldtype": "Select",
-   "options": "Opportunity Type"
+   "options": "Opportunity Type",
+   "read_only": 1
   },
   {
    "default": "Open",
@@ -227,7 +228,8 @@
    "fieldname": "opportunity_amount",
    "fieldtype": "Currency",
    "label": "Opportunity Amount",
-   "options": "currency"
+   "options": "currency",
+   "precision": "0"
   },
   {
    "fieldname": "column_break_17",
@@ -245,7 +247,9 @@
    "default": "100",
    "fieldname": "probability",
    "fieldtype": "Percent",
-   "label": "Probability"
+   "hidden": 1,
+   "in_list_view": 1,
+   "label": "Probability (number)"
   },
   {
    "fieldname": "items_section",
@@ -515,6 +519,7 @@
   {
    "fieldname": "opportunity_owner",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Opportunity Owner",
    "options": "User"
   },
@@ -587,7 +592,6 @@
    "depends_on": "eval:!doc.__islocal",
    "fieldname": "activities_tab",
    "fieldtype": "Tab Break",
-   "hidden": 1,
    "label": "Activities"
   },
   {
@@ -613,8 +617,7 @@
   },
   {
    "fieldname": "all_activities_section",
-   "fieldtype": "Section Break",
-   "label": "All Activities"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "all_activities_html",
@@ -746,9 +749,11 @@
    "read_only": 1
   },
   {
+   "default": "Now",
    "fieldname": "opportunity_date",
    "fieldtype": "Datetime",
-   "label": "Opportunity Date"
+   "label": "Opportunity Date",
+   "read_only": 1
   },
   {
    "fieldname": "comment",
@@ -764,13 +769,42 @@
    "fieldname": "sales_team",
    "fieldtype": "Table",
    "options": "Sales Team"
+  },
+  {
+   "fieldname": "section_break_urbk",
+   "fieldtype": "Section Break",
+   "hidden": 1
+  },
+  {
+   "fieldname": "proposed_budget",
+   "fieldtype": "Link",
+   "label": "Proposed Budget",
+   "options": "Lead Budget"
+  },
+  {
+   "fieldname": "column_break_shzo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender"
+  },
+  {
+   "default": "Promising",
+   "fieldname": "probability_text",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Probability",
+   "options": "Low Probability\nConsidering\nPromising\nHigh Probability\nCommitted to Buy"
   }
  ],
  "grid_page_length": 50,
  "icon": "fa fa-info-sign",
  "idx": 195,
  "links": [],
- "modified": "2026-06-11 12:20:42.969655",
+ "modified": "2026-06-29 13:09:01.645396",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Opportunity",
