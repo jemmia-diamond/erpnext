@@ -661,6 +661,80 @@ frappe.ui.form.on('Lead', {
 			};
 			render_grid_widgets();
 
+			const orig_setup_add_row = grid.setup_add_row.bind(grid);
+			grid.setup_add_row = function () {
+				orig_setup_add_row();
+				this.wrapper.find('.grid-add-row').off('click').on('click', () => {
+					const child_doctype = 'Lead Jewelry Interest';
+
+					const temp_cdn = frappe.utils.get_random(10);
+					if (!locals[child_doctype]) locals[child_doctype] = {};
+					locals[child_doctype][temp_cdn] = { name: temp_cdn, product_type: '' };
+
+					frappe.model.with_doctype(child_doctype, () => {
+						const meta = frappe.get_meta(child_doctype);
+						const fields = meta.fields.filter(f => f.fieldname !== 'diamond_detail');
+
+						const dialog = new frappe.ui.Dialog({
+							title: __('Thêm sản phẩm'),
+							fields: fields,
+							primary_action_label: __('Lưu'),
+							primary_action(values) {
+								const saved_product_type = (locals[child_doctype][temp_cdn] || {}).product_type || '';
+
+								const child_doc = frappe.model.add_child(
+									frm.doc, child_doctype, 'jewelry_interest'
+								);
+								Object.assign(child_doc, values);
+								child_doc.product_type = saved_product_type;
+
+								const parts = [child_doc.size, child_doc.shape, child_doc.color_grade, child_doc.clarity_grade].filter(Boolean);
+								child_doc.diamond_detail = parts.join(' - ');
+
+								delete locals[child_doctype][temp_cdn];
+
+								frm.refresh_field('jewelry_interest');
+								frm.dirty();
+
+								const the_grid = frm.fields_dict.jewelry_interest.grid;
+								setTimeout(() => {
+									const $col = the_grid.wrapper.find(`.grid-row[data-name="${child_doc.name}"] .grid-static-col[data-fieldname="product_type"]`);
+									if ($col.length) {
+										$col.find('.static-area').hide();
+										$col.find('.field-area').hide();
+										make_product_type_multiselect(frm, child_doctype, child_doc.name, $col, 'grid');
+									}
+								}, 120);
+
+								dialog.hide();
+							},
+							secondary_action_label: __('Hủy'),
+							secondary_action() {
+								delete locals[child_doctype][temp_cdn];
+								dialog.hide();
+							}
+						});
+
+						dialog.show();
+
+						setTimeout(() => {
+							const $pt = dialog.wrapper.find('[data-fieldname="product_type"]');
+							if ($pt.length) {
+								$pt.find('.control-input').hide();
+								$pt.find('.control-value').hide();
+								const $target = $pt.find('.control-input-wrapper');
+								if ($target.length) {
+									make_product_type_multiselect(frm, child_doctype, temp_cdn, $target, 'form');
+								}
+							}
+						}, 100);
+					});
+
+					return false;
+				});
+			};
+			grid.setup_add_row();
+
 			grid.wrapper.find('.grid-heading-row .grid-static-col[data-fieldname="product_type"]')
 				.off('click.pt-block')
 				.on('click.pt-block', function (e) {
@@ -671,6 +745,38 @@ frappe.ui.form.on('Lead', {
 		};
 		setup_product_type_grid();
 
+	},
+	validate(frm) {
+		frm._pt_presave_backup = {};
+		(frm.doc.jewelry_interest || []).forEach(row => {
+			const local_row = locals['Lead Jewelry Interest']?.[row.name];
+			const pt = local_row?.product_type || row.product_type || '';
+			if (pt) frm._pt_presave_backup[row.idx] = pt;
+		});
+	},
+	after_save(frm) {
+		setTimeout(() => {
+			if (!frm.fields_dict.jewelry_interest) return;
+			const grid = frm.fields_dict.jewelry_interest.grid;
+			const backup = frm._pt_presave_backup || {};
+
+			(frm.doc.jewelry_interest || []).forEach(row => {
+				const local_row = locals['Lead Jewelry Interest']?.[row.name];
+				if (local_row && !local_row.product_type && backup[row.idx]) {
+					local_row.product_type = backup[row.idx];
+				}
+			});
+
+			// Re-render custom widget cho tất cả hàng
+			grid.wrapper.find('.grid-row[data-name]').each(function () {
+				const cdn = $(this).data('name');
+				const $col = $(this).find('.grid-static-col[data-fieldname="product_type"]');
+				if (!$col.length) return;
+				$col.find('.static-area').hide();
+				$col.find('.field-area').hide();
+				make_product_type_multiselect(frm, 'Lead Jewelry Interest', cdn, $col, 'grid');
+			});
+		}, 300);
 	},
 	jewelry_interest_on_form_rendered(frm, cdt, cdn) {
 		setTimeout(() => {

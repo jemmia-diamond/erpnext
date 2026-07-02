@@ -141,4 +141,7 @@ frappe.ui.form.LeadQuickEntryForm = class LeadQuickEntryForm extends frappe.ui.f
 		}
 		return super.insert();
 	}
+	open_form_if_not_list() {
+		frappe.set_route("Form", this.doctype, this.doc.name);
+	}
 };
