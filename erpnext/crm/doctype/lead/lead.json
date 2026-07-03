@@ -148,7 +148,6 @@
   "open_activities_html",
   "all_activities_section",
   "all_activities_html",
-  "column_break_bwya",
   "merge_lead_tab",
   "check_duplicate",
   "dashboard_tab"
@@ -751,10 +750,6 @@
    "label": "Personal Tax ID"
   },
   {
-   "fieldname": "column_break_bwya",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "budget_lead",
    "fieldtype": "Link",
    "label": "Lead Budget",
@@ -1026,7 +1021,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-07-02 14:04:24.399698",
+ "modified": "2026-07-03 10:07:35.758594",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
