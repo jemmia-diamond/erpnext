@@ -240,6 +240,7 @@
    "options": "Gender"
   },
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "source",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -974,8 +975,9 @@
   },
   {
    "fieldname": "interaction_channels",
-   "fieldtype": "Data",
-   "label": "Interaction Channels"
+   "fieldtype": "Link",
+   "label": "Interaction Channels",
+   "options": "Lead Source"
   },
   {
    "fieldname": "point_of_purchase",
@@ -1026,7 +1028,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-07-02 14:04:24.399698",
+ "modified": "2026-07-03 13:27:24.465742",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",

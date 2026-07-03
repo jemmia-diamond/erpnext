@@ -7,7 +7,6 @@ frappe.ui.form.LeadQuickEntryForm = class LeadQuickEntryForm extends frappe.ui.f
 			{
 				fieldname: "search_phone",
 				fieldtype: "Data",
-				reqd: 1,
 				label: __("Phone"),
 			},
 			{
