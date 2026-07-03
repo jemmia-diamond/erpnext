@@ -55,6 +55,7 @@ erpnext.utils.CRMActivities = class CRMActivities {
 
 					me.create_task();
 					me.create_event();
+					me.create_task();
 				}
 			},
 		});

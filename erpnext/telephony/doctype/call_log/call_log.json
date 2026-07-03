@@ -5,6 +5,12 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "ai_section",
+  "ai_summary_html",
+  "ai_summary",
+  "text_extracted",
+  "ai_action_item_text",
+  "customer_sentinent",
   "call_details_section",
   "id",
   "from",
@@ -21,6 +27,7 @@
   "duration",
   "recording_url",
   "recording_html",
+  "disposition",
   "section_break_11",
   "type_of_call",
   "summary",
@@ -31,6 +38,7 @@
   {
    "fieldname": "id",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "ID",
    "read_only": 1,
    "unique": 1
@@ -159,12 +167,54 @@
    "label": "Call Received By",
    "options": "Employee",
    "read_only": 1
+  },
+  {
+   "fieldname": "ai_section",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "AI Section"
+  },
+  {
+   "fieldname": "ai_summary_html",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "ai_summary",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "AI summary"
+  },
+  {
+   "fieldname": "text_extracted",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Text extracted"
+  },
+  {
+   "fieldname": "ai_action_item_text",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "AI Action Items"
+  },
+  {
+   "default": "Can't detect",
+   "fieldname": "customer_sentinent",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Customer Sentinent",
+   "options": "Can't detect\nHappy\nNeutral\nFrustrated\nAngry\nConfused\nConcerned\nExcited\nImpatient"
+  },
+  {
+   "fieldname": "disposition",
+   "fieldtype": "Data",
+   "label": "Disposition",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-29 10:37:26.183502",
+ "modified": "2026-06-25 10:47:53.471354",
  "modified_by": "Administrator",
  "module": "Telephony",
  "name": "Call Log",
@@ -180,12 +230,48 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "select": 1,
    "share": 1,
    "write": 1
   },
   {
    "read": 1,
-   "role": "Employee"
+   "role": "Employee",
+   "select": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Jemmia Presale",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales User",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager",
+   "select": 1,
+   "share": 1,
+   "write": 1
   }
  ],
  "row_format": "Dynamic",
