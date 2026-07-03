@@ -687,6 +687,10 @@ frappe.ui.form.on('Lead', {
 								);
 								Object.assign(child_doc, values);
 								child_doc.product_type = saved_product_type;
+								// Store in _pt_value_store so render_grid_widgets can read it
+								// even after frappe.model.sync deletes the old CDN from locals
+								if (!window._pt_value_store) window._pt_value_store = {};
+								window._pt_value_store[child_doc.name] = saved_product_type;
 
 								const parts = [child_doc.size, child_doc.shape, child_doc.color_grade, child_doc.clarity_grade].filter(Boolean);
 								child_doc.diamond_detail = parts.join(' - ');
@@ -750,7 +754,8 @@ frappe.ui.form.on('Lead', {
 		frm._pt_presave_backup = {};
 		(frm.doc.jewelry_interest || []).forEach(row => {
 			const local_row = locals['Lead Jewelry Interest']?.[row.name];
-			const pt = local_row?.product_type || row.product_type || '';
+			const pt = local_row?.product_type || row.product_type
+				|| (window._pt_value_store || {})[row.name] || '';
 			if (pt) frm._pt_presave_backup[row.idx] = pt;
 		});
 	},
@@ -759,12 +764,16 @@ frappe.ui.form.on('Lead', {
 			if (!frm.fields_dict.jewelry_interest) return;
 			const grid = frm.fields_dict.jewelry_interest.grid;
 			const backup = frm._pt_presave_backup || {};
+			if (!window._pt_value_store) window._pt_value_store = {};
 
 			(frm.doc.jewelry_interest || []).forEach(row => {
 				const local_row = locals['Lead Jewelry Interest']?.[row.name];
-				if (local_row && !local_row.product_type && backup[row.idx]) {
-					local_row.product_type = backup[row.idx];
+				const pt = local_row?.product_type || backup[row.idx]
+					|| window._pt_value_store[row.name] || '';
+				if (local_row && !local_row.product_type && pt) {
+					local_row.product_type = pt;
 				}
+				if (pt) window._pt_value_store[row.name] = pt;
 			});
 
 			// Re-render custom widget cho tất cả hàng
@@ -849,8 +858,10 @@ if (!window._pt_widget_registry) {
 
 function _pt_get_vals(cdn) {
 	const row = locals['Lead Jewelry Interest'] && locals['Lead Jewelry Interest'][cdn];
-	if (!row) return [];
-	return (row.product_type || "").split(",").map(s => s.trim()).filter(Boolean);
+	const from_locals = row?.product_type || '';
+	const from_store = (window._pt_value_store || {})[cdn] || '';
+	const pt = from_locals || from_store;
+	return pt.split(",").map(s => s.trim()).filter(Boolean);
 }
 
 function _pt_render_tags($widget, vals) {
@@ -875,6 +886,9 @@ function _pt_render_tags($widget, vals) {
 }
 
 function _pt_sync_all(frm, cdn, new_val_str) {
+	if (!window._pt_value_store) window._pt_value_store = {};
+	window._pt_value_store[cdn] = new_val_str;
+
 	const row = locals['Lead Jewelry Interest'] && locals['Lead Jewelry Interest'][cdn];
 	if (row) {
 		row.product_type = new_val_str;

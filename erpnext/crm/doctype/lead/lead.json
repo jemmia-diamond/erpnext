@@ -240,6 +240,7 @@
    "options": "Gender"
   },
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "source",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -1026,7 +1027,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-07-02 14:04:24.399698",
+ "modified": "2026-07-03 09:19:46.078987",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
