@@ -15,7 +15,11 @@ frappe.ui.form.LeadQuickEntryForm = class LeadQuickEntryForm extends frappe.ui.f
 			},
 			...this.docfields,
 		];
-
+		this.docfields.forEach(df => {
+			if (df.fieldname === "source") {
+				df.reqd = 1;
+			}
+		});
 		super.render_dialog();
 		this._setup_phone_search();
 	}
