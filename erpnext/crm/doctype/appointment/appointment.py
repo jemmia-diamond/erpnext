@@ -49,6 +49,7 @@ class Appointment(Document):
 		policies: DF.TableMultiSelect[AppointmentPolicy]
 		policy: DF.LongText | None
 		preferred_products: DF.TableMultiSelect[LeadProductItem]
+		primary_sales: DF.Link | None
 		purchase_purpose: DF.Link | None
 		range_estimated_budget: DF.Link | None
 		record_id: DF.Data | None

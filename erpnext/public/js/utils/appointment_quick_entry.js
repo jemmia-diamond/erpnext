@@ -48,6 +48,7 @@ frappe.ui.form.AppointmentQuickEntryForm = class AppointmentQuickEntryForm exten
 					this.doc.main_sales = [{
 						sales_person: r.message.name
 					}];
+					this.doc.primary_sales = r.message.name;
 				}
 			});
 		this.check_existing_appointment();
