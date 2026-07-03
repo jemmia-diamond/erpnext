@@ -976,25 +976,24 @@ function make_product_type_multiselect(frm, cdt, cdn, $wrapper, context) {
 	});
 
 	const addTag = (val) => {
-		val = (val || "").trim();
 		if (!val) return;
+		val = val.trim();
 		let current = _pt_get_vals(cdn);
-		if (!current.includes(val)) {
-			current.push(val);
-			_pt_sync_all(frm, cdn, current.join(", "));
 
-			// Auto-create Lead Product Type nếu chưa tồn tại
-			frappe.db.get_list("Lead Product Type", {
-				filters: [["product_type", "=", val]],
-				fields: ["name"], limit: 1
-			}).then(results => {
-				if (!results.length) {
-					frappe.db.insert({ doctype: "Lead Product Type", product_type: val });
+		frappe.db.get_list("Lead Product Type", {
+			filters: [["product_type", "=", val]],
+			fields: ["product_type"], limit: 1
+		}).then(results => {
+			if (results.length > 0) {
+				const matched_val = results[0].product_type;
+				if (!current.includes(matched_val)) {
+					current.push(matched_val);
+					_pt_sync_all(frm, cdn, current.join(", "));
 				}
-			});
-		}
-		$widget.find(".tag-input").val("");
-		$widget.find(".tag-suggestions").hide();
+			}
+			$widget.find(".tag-input").val("");
+			$widget.find(".tag-suggestions").hide();
+		});
 	};
 
 	$widget.find(".tag-input").on("keydown", e => {
@@ -1017,16 +1016,6 @@ function make_product_type_multiselect(frm, cdt, cdn, $wrapper, context) {
 				$sug.append($item);
 			});
 
-			const create_label = q
-				? `Tạo mới "${frappe.utils.escape_html(q)}"`
-				: 'Tạo mới Lead Product Type';
-			const $create = $('<div class="tag-sug-footer tag-sug-create"></div>')
-				.html(`<span class="sug-icon">+</span> ${create_label}`);
-			if (q) {
-				$create.data('sug-value', q);
-			}
-			$sug.append($create);
-
 			$sug.show();
 		});
 	};
@@ -1043,28 +1032,6 @@ function make_product_type_multiselect(frm, cdt, cdn, $wrapper, context) {
 		$widget.find(".tag-input").val("").focus();
 	});
 
-	$widget.on("click", ".tag-sug-create", function (e) {
-		e.stopPropagation();
-		const val = $(this).data('sug-value');
-		if (val) {
-			addTag(val);
-			$widget.find(".tag-input").val("").focus();
-		} else {
-			const d = new frappe.ui.Dialog({
-				title: __('New Lead Product Type'),
-				fields: [{ label: 'Product Type', fieldname: 'product_type', fieldtype: 'Data', reqd: 1 }],
-				primary_action_label: __('Create'),
-				primary_action(values) {
-					if (values.product_type) {
-						addTag(values.product_type.trim());
-					}
-					d.hide();
-				}
-			});
-			d.show();
-			$widget.find(".tag-suggestions").hide();
-		}
-	});
 
 	const close_handler = `click.tag-widget-${cdn}-${context}`;
 	$(document).off(close_handler).on(close_handler, e => {

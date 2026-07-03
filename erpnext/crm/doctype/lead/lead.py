@@ -68,7 +68,7 @@ class Lead(SellingController, CRMNote):
 		gender: DF.Link | None
 		image: DF.AttachImage | None
 		industry: DF.Link | None
-		interaction_channels: DF.Data | None
+		interaction_channels: DF.Link | None
 		is_assigned: DF.Check
 		jewelry_interest: DF.Table[LeadJewelryInterest]
 		job_title: DF.Data | None
