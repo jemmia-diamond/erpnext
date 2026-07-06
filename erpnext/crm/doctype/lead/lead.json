@@ -864,6 +864,7 @@
    "fieldname": "first_reach_at",
    "fieldtype": "Datetime",
    "label": "First Reach At",
+   "permlevel": 1,
    "read_only": 1
   },
   {
@@ -1028,7 +1029,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-07-03 13:27:24.465742",
+ "modified": "2026-07-06 17:27:02.999097",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
