@@ -486,8 +486,7 @@
    "in_standard_filter": 1,
    "label": "Qualification Status",
    "options": "Unqualified\nQualified",
-   "permlevel": 1,
-   "read_only": 1
+   "permlevel": 1
   },
   {
    "fieldname": "address_section",
@@ -864,8 +863,7 @@
    "fieldname": "first_reach_at",
    "fieldtype": "Datetime",
    "label": "First Reach At",
-   "permlevel": 1,
-   "read_only": 1
+   "permlevel": 1
   },
   {
    "fetch_from": "source.source_name",
@@ -1029,7 +1027,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-07-06 17:27:02.999097",
+ "modified": "2026-07-07 09:39:32.265773",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
@@ -1108,6 +1106,20 @@
    "read": 1,
    "report": 1,
    "role": "Sale offline",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Presale Specific Role",
+   "select": 1,
    "share": 1,
    "write": 1
   }
