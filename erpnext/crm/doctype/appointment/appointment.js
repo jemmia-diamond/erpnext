@@ -21,6 +21,20 @@ frappe.ui.form.on("Appointment", {
 		// }
 	},
 
+	upload_attachments: function(frm) {
+		new frappe.ui.FileUploader({
+			doctype: frm.doc.doctype,
+			docname: frm.doc.name,
+			allow_multiple: 1,
+			on_success: (file_doc) => {
+				if (frm.attachments) {
+					frm.attachments.update_attachment(file_doc);
+				}
+				frm.reload_doc();
+			}
+		});
+	},
+
 	onload: function (frm) {
 		// Restrict "Appointment With" to Customer or Lead only
 		frm.set_query("appointment_with", function () {

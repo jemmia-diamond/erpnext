@@ -41,8 +41,8 @@ class Appointment(Document):
 		gender: DF.Link | None
 		lead: DF.Link | None
 		main_sales: DF.TableMultiSelect[AppointmentSalesPerson]
-		notes: DF.TextEditor | None
-		offline_response: DF.TextEditor | None
+		notes: DF.LongText | None
+		offline_response: DF.LongText | None
 		offline_sales: DF.TableMultiSelect[AppointmentSalesPerson]
 		order_status: DF.Literal["Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng", "Kh\u00e1ch h\u1eb9n \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch ch\u01b0a mua h\u00e0ng", "Kh\u00e1ch kh\u00f4ng \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch ho\u00e3n l\u1ea1i ng\u00e0y \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch \u0111\u00e3 \u0111\u1ebfn c\u1eeda h\u00e0ng"]
 		party: DF.DynamicLink | None

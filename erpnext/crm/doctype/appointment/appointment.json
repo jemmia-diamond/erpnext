@@ -38,6 +38,9 @@
   "column_break_zugf",
   "gender",
   "budget",
+  "section_break_jfir",
+  "upload_attachments",
+  "attachment_html",
   "addition_information_section",
   "notes",
   "customer_response",
@@ -182,7 +185,7 @@
   },
   {
    "fieldname": "notes",
-   "fieldtype": "Text Editor",
+   "fieldtype": "Long Text",
    "label": "Note from main sales"
   },
   {
@@ -265,7 +268,7 @@
   },
   {
    "fieldname": "offline_response",
-   "fieldtype": "Text Editor",
+   "fieldtype": "Long Text",
    "label": "Offline Response"
   },
   {
@@ -319,10 +322,24 @@
    "hidden": 1,
    "label": "Main Sales",
    "options": "Appointment Sales Person"
+  },
+  {
+   "fieldname": "upload_attachments",
+   "fieldtype": "Button",
+   "label": "Upload Attachments"
+  },
+  {
+   "fieldname": "section_break_jfir",
+   "fieldtype": "Section Break",
+   "label": "Attached Documents"
+  },
+  {
+   "fieldname": "attachment_html",
+   "fieldtype": "HTML"
   }
  ],
  "links": [],
- "modified": "2026-07-01 12:19:17.804571",
+ "modified": "2026-07-07 11:27:20.094681",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Appointment",
