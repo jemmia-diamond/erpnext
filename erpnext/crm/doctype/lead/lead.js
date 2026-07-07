@@ -706,6 +706,10 @@ frappe.ui.form.on('Lead', {
 								);
 								Object.assign(child_doc, values);
 								child_doc.product_type = saved_product_type;
+								// Store in _pt_value_store so render_grid_widgets can read it
+								// even after frappe.model.sync deletes the old CDN from locals
+								if (!window._pt_value_store) window._pt_value_store = {};
+								window._pt_value_store[child_doc.name] = saved_product_type;
 
 								const parts = [child_doc.size, child_doc.shape, child_doc.color_grade, child_doc.clarity_grade].filter(Boolean);
 								child_doc.diamond_detail = parts.join(' - ');
@@ -769,7 +773,8 @@ frappe.ui.form.on('Lead', {
 		frm._pt_presave_backup = {};
 		(frm.doc.jewelry_interest || []).forEach(row => {
 			const local_row = locals['Lead Jewelry Interest']?.[row.name];
-			const pt = local_row?.product_type || row.product_type || '';
+			const pt = local_row?.product_type || row.product_type
+				|| (window._pt_value_store || {})[row.name] || '';
 			if (pt) frm._pt_presave_backup[row.idx] = pt;
 		});
 	},
@@ -778,12 +783,16 @@ frappe.ui.form.on('Lead', {
 			if (!frm.fields_dict.jewelry_interest) return;
 			const grid = frm.fields_dict.jewelry_interest.grid;
 			const backup = frm._pt_presave_backup || {};
+			if (!window._pt_value_store) window._pt_value_store = {};
 
 			(frm.doc.jewelry_interest || []).forEach(row => {
 				const local_row = locals['Lead Jewelry Interest']?.[row.name];
-				if (local_row && !local_row.product_type && backup[row.idx]) {
-					local_row.product_type = backup[row.idx];
+				const pt = local_row?.product_type || backup[row.idx]
+					|| window._pt_value_store[row.name] || '';
+				if (local_row && !local_row.product_type && pt) {
+					local_row.product_type = pt;
 				}
+				if (pt) window._pt_value_store[row.name] = pt;
 			});
 
 			// Re-render custom widget cho tất cả hàng
@@ -868,8 +877,10 @@ if (!window._pt_widget_registry) {
 
 function _pt_get_vals(cdn) {
 	const row = locals['Lead Jewelry Interest'] && locals['Lead Jewelry Interest'][cdn];
-	if (!row) return [];
-	return (row.product_type || "").split(",").map(s => s.trim()).filter(Boolean);
+	const from_locals = row?.product_type || '';
+	const from_store = (window._pt_value_store || {})[cdn] || '';
+	const pt = from_locals || from_store;
+	return pt.split(",").map(s => s.trim()).filter(Boolean);
 }
 
 function _pt_render_tags($widget, vals) {
@@ -894,6 +905,9 @@ function _pt_render_tags($widget, vals) {
 }
 
 function _pt_sync_all(frm, cdn, new_val_str) {
+	if (!window._pt_value_store) window._pt_value_store = {};
+	window._pt_value_store[cdn] = new_val_str;
+
 	const row = locals['Lead Jewelry Interest'] && locals['Lead Jewelry Interest'][cdn];
 	if (row) {
 		row.product_type = new_val_str;
@@ -981,25 +995,24 @@ function make_product_type_multiselect(frm, cdt, cdn, $wrapper, context) {
 	});
 
 	const addTag = (val) => {
-		val = (val || "").trim();
 		if (!val) return;
+		val = val.trim();
 		let current = _pt_get_vals(cdn);
-		if (!current.includes(val)) {
-			current.push(val);
-			_pt_sync_all(frm, cdn, current.join(", "));
 
-			// Auto-create Lead Product Type nếu chưa tồn tại
-			frappe.db.get_list("Lead Product Type", {
-				filters: [["product_type", "=", val]],
-				fields: ["name"], limit: 1
-			}).then(results => {
-				if (!results.length) {
-					frappe.db.insert({ doctype: "Lead Product Type", product_type: val });
+		frappe.db.get_list("Lead Product Type", {
+			filters: [["product_type", "=", val]],
+			fields: ["product_type"], limit: 1
+		}).then(results => {
+			if (results.length > 0) {
+				const matched_val = results[0].product_type;
+				if (!current.includes(matched_val)) {
+					current.push(matched_val);
+					_pt_sync_all(frm, cdn, current.join(", "));
 				}
-			});
-		}
-		$widget.find(".tag-input").val("");
-		$widget.find(".tag-suggestions").hide();
+			}
+			$widget.find(".tag-input").val("");
+			$widget.find(".tag-suggestions").hide();
+		});
 	};
 
 	$widget.find(".tag-input").on("keydown", e => {
@@ -1022,16 +1035,6 @@ function make_product_type_multiselect(frm, cdt, cdn, $wrapper, context) {
 				$sug.append($item);
 			});
 
-			const create_label = q
-				? `Tạo mới "${frappe.utils.escape_html(q)}"`
-				: 'Tạo mới Lead Product Type';
-			const $create = $('<div class="tag-sug-footer tag-sug-create"></div>')
-				.html(`<span class="sug-icon">+</span> ${create_label}`);
-			if (q) {
-				$create.data('sug-value', q);
-			}
-			$sug.append($create);
-
 			$sug.show();
 		});
 	};
@@ -1048,28 +1051,6 @@ function make_product_type_multiselect(frm, cdt, cdn, $wrapper, context) {
 		$widget.find(".tag-input").val("").focus();
 	});
 
-	$widget.on("click", ".tag-sug-create", function (e) {
-		e.stopPropagation();
-		const val = $(this).data('sug-value');
-		if (val) {
-			addTag(val);
-			$widget.find(".tag-input").val("").focus();
-		} else {
-			const d = new frappe.ui.Dialog({
-				title: __('New Lead Product Type'),
-				fields: [{ label: 'Product Type', fieldname: 'product_type', fieldtype: 'Data', reqd: 1 }],
-				primary_action_label: __('Create'),
-				primary_action(values) {
-					if (values.product_type) {
-						addTag(values.product_type.trim());
-					}
-					d.hide();
-				}
-			});
-			d.show();
-			$widget.find(".tag-suggestions").hide();
-		}
-	});
 
 	const close_handler = `click.tag-widget-${cdn}-${context}`;
 	$(document).off(close_handler).on(close_handler, e => {

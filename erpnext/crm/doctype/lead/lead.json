@@ -239,6 +239,7 @@
    "options": "Gender"
   },
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "source",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -484,8 +485,7 @@
    "in_standard_filter": 1,
    "label": "Qualification Status",
    "options": "Unqualified\nQualified",
-   "permlevel": 1,
-   "read_only": 1
+   "permlevel": 1
   },
   {
    "fieldname": "address_section",
@@ -858,7 +858,7 @@
    "fieldname": "first_reach_at",
    "fieldtype": "Datetime",
    "label": "First Reach At",
-   "read_only": 1
+   "permlevel": 1
   },
   {
    "fetch_from": "source.source_name",
@@ -969,8 +969,9 @@
   },
   {
    "fieldname": "interaction_channels",
-   "fieldtype": "Data",
-   "label": "Interaction Channels"
+   "fieldtype": "Link",
+   "label": "Interaction Channels",
+   "options": "Lead Source"
   },
   {
    "fieldname": "point_of_purchase",
@@ -1021,7 +1022,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-07-03 10:07:35.758594",
+ "modified": "2026-07-07 09:39:32.265773",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
@@ -1100,6 +1101,20 @@
    "read": 1,
    "report": 1,
    "role": "Sale offline",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Presale Specific Role",
+   "select": 1,
    "share": 1,
    "write": 1
   }

@@ -12,13 +12,14 @@
   {
    "fieldname": "product_type",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Product Type"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-30 17:41:05.218309",
+ "modified": "2026-07-03 14:06:05.304556",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead Product Type",
