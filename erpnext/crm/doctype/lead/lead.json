@@ -148,7 +148,6 @@
   "open_activities_html",
   "all_activities_section",
   "all_activities_html",
-  "column_break_bwya",
   "merge_lead_tab",
   "check_duplicate",
   "dashboard_tab"
@@ -749,10 +748,6 @@
    "fieldname": "personal_tax_id",
    "fieldtype": "Data",
    "label": "Personal Tax ID"
-  },
-  {
-   "fieldname": "column_break_bwya",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "budget_lead",
