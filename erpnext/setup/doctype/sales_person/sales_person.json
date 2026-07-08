@@ -25,6 +25,7 @@
   "lft",
   "rgt",
   "old_parent",
+  "pancake_id",
   "target_details_section_break",
   "targets"
  ],
@@ -169,17 +170,23 @@
    "fieldname": "employee_email",
    "fieldtype": "Data",
    "label": "Employee Email"
+  },
+  {
+   "fieldname": "pancake_id",
+   "fieldtype": "Data",
+   "label": "Pancake ID",
+   "permlevel": 2
   }
  ],
  "icon": "icon-user",
  "idx": 1,
  "is_tree": 1,
  "links": [],
- "modified": "2025-06-05 10:06:39.955247",
+ "modified": "2026-07-09 00:53:18.940337",
  "modified_by": "Administrator",
  "module": "Setup",
  "name": "Sales Person",
- "naming_rule": "Expression",
+ "naming_rule": "Expression (old style)",
  "nsm_parent_field": "parent_sales_person",
  "owner": "Administrator",
  "permissions": [
@@ -210,6 +217,7 @@
   }
  ],
  "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
  "search_fields": "parent_sales_person",
  "show_name_in_global_search": 1,
  "show_title_field_in_link": 1,
