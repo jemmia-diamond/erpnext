@@ -36,6 +36,7 @@ class SalesPerson(NestedSet):
 		is_group: DF.Check
 		lft: DF.Int
 		old_parent: DF.Data | None
+		pancake_id: DF.Data | None
 		parent_sales_person: DF.Link | None
 		rgt: DF.Int
 		sales_person_name: DF.Data
