@@ -468,15 +468,14 @@
    "fieldtype": "Link",
    "label": "Qualified By",
    "options": "User",
-   "read_only": 1
+   "permlevel": 3
   },
   {
    "fieldname": "qualified_on",
    "fieldtype": "Datetime",
    "in_list_view": 1,
    "label": "Qualified on",
-   "permlevel": 1,
-   "read_only": 1
+   "permlevel": 3
   },
   {
    "fieldname": "qualification_status",
@@ -485,7 +484,7 @@
    "in_standard_filter": 1,
    "label": "Qualification Status",
    "options": "Unqualified\nQualified",
-   "permlevel": 1
+   "permlevel": 3
   },
   {
    "fieldname": "address_section",
@@ -858,7 +857,7 @@
    "fieldname": "first_reach_at",
    "fieldtype": "Datetime",
    "label": "First Reach At",
-   "permlevel": 1
+   "permlevel": 3
   },
   {
    "fetch_from": "source.source_name",
