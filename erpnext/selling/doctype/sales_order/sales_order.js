@@ -2620,7 +2620,8 @@ function set_reason_options(frm, cdt, cdn) {
 		"Đã giao – chưa thu đủ tiền": [
 			"Đã giao hàng nhưng chưa thanh toán đủ (quản lý đã duyệt)",
 			"Chờ đơn vị vận chuyển trả tiền COD",
-			"Chờ hoàn tất thủ tục thu đổi"
+			"Chờ hoàn tất thủ tục thu đổi",
+			"Đã cà thẻ – Chờ tiền về tài khoản"
 		]
 	};
 
