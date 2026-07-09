@@ -3,16 +3,36 @@
 
 frappe.ui.form.on("Appointment", {
 	refresh: function (frm) {
-		if (frm.doc.lead) {
-			frm.add_custom_button(__("View Lead"), () => {
+		if (frm.doc.party && frm.doc.appointment_with) {
+			// Uses a unified "Customer Info" label but routes dynamically based on appointment_with
+			frm.add_custom_button(__("Customer Info"), () => {
+				frappe.set_route("Form", frm.doc.appointment_with, frm.doc.party);
+			});
+		} else if (frm.doc.lead) {
+			// Fallback just in case older records only have the 'lead' field filled
+			frm.add_custom_button(__("Customer Info"), () => {
 				frappe.set_route("Form", "Lead", frm.doc.lead);
 			});
 		}
-		if (frm.doc.calendar_event) {
-			frm.add_custom_button(__(frm.doc.calendar_event), () => {
-				frappe.set_route("Form", "Event", frm.doc.calendar_event);
-			});
-		}
+		// if (frm.doc.calendar_event) {
+		// 	frm.add_custom_button(__(frm.doc.calendar_event), () => {
+		// 		frappe.set_route("Form", "Event", frm.doc.calendar_event);
+		// 	});
+		// }
+	},
+
+	upload_attachments: function(frm) {
+		new frappe.ui.FileUploader({
+			doctype: frm.doc.doctype,
+			docname: frm.doc.name,
+			allow_multiple: 1,
+			on_success: (file_doc) => {
+				if (frm.attachments) {
+					frm.attachments.update_attachment(file_doc);
+				}
+				frm.reload_doc();
+			}
+		});
 	},
 
 	onload: function (frm) {

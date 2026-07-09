@@ -1,11 +1,11 @@
-# Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
+# Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
 # import frappe
 from frappe.model.document import Document
 
 
-class Policy(Document):
+class LeadProductType(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
 
@@ -14,7 +14,7 @@ class Policy(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
-		bizfly_id: DF.Data | None
-		title: DF.LongText | None
+		product_type: DF.Data | None
 	# end: auto-generated types
+
 	pass

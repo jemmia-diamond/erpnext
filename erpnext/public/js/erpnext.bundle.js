@@ -18,6 +18,7 @@ import "./utils/item_selector";
 import "./help_links";
 import "./templates/item_quick_entry.html";
 import "./utils/contact_address_quick_entry";
+import "./utils/lead_quick_entry";
 import "./utils/customer_quick_entry";
 import "./utils/supplier_quick_entry";
 import "./call_popup/call_popup";
@@ -39,5 +40,7 @@ import "./utils/demo.js";
 import "./financial_statements.js";
 import "./sales_trends_filters.js";
 import "./purchase_trends_filters.js";
+
+import "./utils/appointment_quick_entry";
 
 // import { sum } from 'frappe/public/utils/util.js'

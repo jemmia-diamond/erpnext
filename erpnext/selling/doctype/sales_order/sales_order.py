@@ -297,7 +297,7 @@ class SalesOrder(SellingController):
 
 	def set_payment_entries(self):
 		"""Fetch and set the payment entries linked to this sales order. Returns total allocated amount."""
-		if self.docstatus == 2 or not self.name or self.cancelled_status == "Cancelled":
+		if self.docstatus == 2 or not self.name:
 			self.set("payment_entries", [])
 			return 0.0
 
@@ -380,7 +380,7 @@ class SalesOrder(SellingController):
 	def set_group_payment_entries(self):
 		"""Fetch and set the payment entries linked to the split order group and reference tree.
 		Returns (group_payment_total, group_grand_total, orders_to_update)."""
-		if self.docstatus == 2 or self.cancelled_status == "Cancelled":
+		if self.docstatus == 2:
 			self.set("group_payment_entries", [])
 			return 0.0, 0.0, []
 
