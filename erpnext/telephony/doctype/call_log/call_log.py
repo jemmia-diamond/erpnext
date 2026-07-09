@@ -33,7 +33,6 @@ class CallLog(Document):
 		ai_action_item_text: DF.LongText | None
 		ai_summary: DF.LongText | None
 		call_received_by: DF.Link | None
-		customer: DF.Link | None
 		customer_sentinent: DF.Literal["Can't detect", "Happy", "Neutral", "Frustrated", "Angry", "Confused", "Concerned", "Excited", "Impatient"]
 		disposition: DF.Data | None
 		duration: DF.Duration | None
@@ -42,6 +41,9 @@ class CallLog(Document):
 		id: DF.Data | None
 		links: DF.Table[DynamicLink]
 		medium: DF.Data | None
+		participant: DF.DynamicLink | None
+		participant_type: DF.Link | None
+		provider: DF.Data | None
 		recording_url: DF.Data | None
 		start_time: DF.Datetime | None
 		status: DF.Literal["Ringing", "In Progress", "Completed", "Failed", "Busy", "No Answer", "Queued", "Cancelled"]
@@ -248,7 +250,7 @@ def get_linked_call_logs(doctype, docname):
 	return timeline_contents
 
 @frappe.whitelist()
-def get_access_token():
+def get_stringee_access_token():
 	now = int(time.time())
 	exp_in_second = 30
 	exp = now + exp_in_second
@@ -271,11 +273,17 @@ def download_and_attach_recording(call_log_name):
 	if frappe.db.exists("File", {"attached_to_doctype": "Call Log", "attached_to_name": call_log_name, "is_private": 1}):
 		return
 
-	token = get_access_token()
-	download_url = f"{call_log.recording_url}?access_token={token}"
+	headers = {}
+	if getattr(call_log, "provider", "stringee") == "stringee":
+		token = get_stringee_access_token()
+		download_url = f"{call_log.recording_url}?access_token={token}"
+	else:
+		download_url = call_log.recording_url
+		if config.CC_API_KEY:
+			headers["X-API-Key"] = config.CC_API_KEY
 
 	try:
-		response = requests.get(download_url)
+		response = requests.get(download_url, headers=headers)
 		if response.status_code == 200:
 			save_file(
 				fname=f"recording_{call_log.name}.mp3",

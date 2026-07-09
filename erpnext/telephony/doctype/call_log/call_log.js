@@ -11,20 +11,27 @@ frappe.ui.form.on("Call Log", {
 		});
 
 		try {
-			frappe.call({
-				method: "erpnext.telephony.doctype.call_log.call_log.get_access_token",
-				callback: function (r) {
-					frm.events.setup_recording_audio_control(frm, r.message);
-				},
-			});
+			if (!frm.doc.provider || frm.doc.provider === "stringee") {
+				frappe.call({
+					method: "erpnext.telephony.doctype.call_log.call_log.get_stringee_access_token",
+					callback: function (r) {
+						frm.events.setup_recording_audio_control(frm, r.message);
+					},
+				});
+			} else {
+				frm.events.setup_recording_audio_control(frm, null);
+			}
 		} catch {}
 	},
 	setup_recording_audio_control(frm, accessToken) {
 		const recording_wrapper = frm.get_field("recording_html").$wrapper;
-		if (!frm.doc.recording_url || frm.doc.recording_url == "null") {
+		if (!frm.doc.recording_url) {
 			recording_wrapper.empty();
 		} else {
-			let audio_src = `${frm.doc.recording_url}?access_token=${accessToken}`;
+			let audio_src = frm.doc.recording_url;
+			if (accessToken) {
+				audio_src = `${frm.doc.recording_url}?access_token=${accessToken}`;
+			}
 			if (frm.attachments && frm.attachments.get_attachments) {
 				const attachments = frm.attachments.get_attachments() || [];
 				const attached_mp3 = attachments.find(f => f.file_url && f.file_name && f.file_name.startsWith("recording_"));
@@ -33,7 +40,10 @@ frappe.ui.form.on("Call Log", {
 				} else {
 					frappe.call({
 						method: "erpnext.telephony.doctype.call_log.call_log.download_and_attach_recording",
-						args: { call_log_name: frm.doc.name }
+						args: { call_log_name: frm.doc.name },
+						callback: function() {
+							frm.reload_doc();
+						}
 					});
 				}
 			}

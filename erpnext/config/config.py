@@ -11,5 +11,7 @@ class BaseConfig:
     PRIORITY_BASE_URL: str = frappe.conf.get("priority_base_url")
     FN_BEARER_TOKEN: str = frappe.conf.get("fn_bearer_token")
     FN_BASE_URL: str = frappe.conf.get("fn_base_url")
+    VBOT_BASE_URL: str = frappe.conf.get("vbot_base_url")
+    CC_API_KEY: str = frappe.conf.get("cc_api_key")
 
 config = BaseConfig()
