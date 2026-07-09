@@ -22,12 +22,14 @@
   "end_time",
   "column_break_4",
   "type",
-  "customer",
+  "participant_type",
+  "participant",
   "status",
   "duration",
   "recording_url",
   "recording_html",
   "disposition",
+  "provider",
   "section_break_11",
   "type_of_call",
   "summary",
@@ -136,13 +138,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "customer",
-   "fieldtype": "Link",
-   "label": "Customer",
-   "options": "Customer",
-   "read_only": 1
-  },
-  {
    "fieldname": "call_details_section",
    "fieldtype": "Section Break",
    "label": "Call Details"
@@ -209,12 +204,36 @@
    "fieldtype": "Data",
    "label": "Disposition",
    "read_only": 1
+  },
+  {
+   "fieldname": "provider",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Provider",
+   "search_index": 1
+  },
+  {
+   "fieldname": "participant_type",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Participant Type",
+   "link_filters": "[[\"DocType\", \"name\", \"in\", [\"Lead\", \"Customer\"]]]",
+   "options": "DocType",
+   "search_index": 1
+  },
+  {
+   "fieldname": "participant",
+   "fieldtype": "Dynamic Link",
+   "hidden": 1,
+   "label": "Participant",
+   "options": "participant_type",
+   "search_index": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-25 10:47:53.471354",
+ "modified": "2026-07-09 16:17:31.240245",
  "modified_by": "Administrator",
  "module": "Telephony",
  "name": "Call Log",
