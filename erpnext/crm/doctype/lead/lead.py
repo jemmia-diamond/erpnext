@@ -250,12 +250,16 @@ class Lead(SellingController, CRMNote):
 		"""
 		Update qualification status based on phone and province
 		Only auto-qualifies when conditions are met, never auto-disqualifies
-		Also set qualified_by and qualified_on when manually changed to Qualified
+		Also set qualified_by and qualified_on when manually changed to Qualified.
+		Allows Administrator, Developer, and Presale Specific Role to modify these fields.
 		"""
+		allowed_roles = ["Administrator", "Developer", "Presale Specific Role"]
+		has_permission = any(role in frappe.get_roles() for role in allowed_roles)
 
-		# Prevent change "Qualified" to "Unqualified"
 		old_doc = self.get_doc_before_save()
-		if old_doc and old_doc.get("qualification_status") == "Qualified":
+		old_status = old_doc.get("qualification_status") if old_doc else "Unqualified"
+
+		if old_doc and old_status == "Qualified" and not has_permission:
 			self.qualification_status = "Qualified"
 			
 			old_qualified_by = old_doc.get("qualified_by")
@@ -265,14 +269,21 @@ class Lead(SellingController, CRMNote):
 			if old_qualified_on:
 				self.qualified_on = old_qualified_on
 			return
-		new_qualification_status = self.get_qualification_status()
-		old_status = old_doc.get("qualification_status") if old_doc else "Unqualified"
-		
-		self.qualification_status = new_qualification_status
-		if self.qualification_status == "Qualified" and old_status != "Qualified":
-			if not self.qualified_by:
-				self.qualified_by = frappe.session.user
-			self.qualified_on = frappe.utils.now_datetime()
+
+		if has_permission:
+			if self.qualification_status == "Qualified" and old_status != "Qualified":
+				if not self.qualified_by:
+					self.qualified_by = frappe.session.user
+				if not self.qualified_on:
+					self.qualified_on = frappe.utils.now_datetime()
+		else:
+			new_qualification_status = self.get_qualification_status()
+			self.qualification_status = new_qualification_status
+			if self.qualification_status == "Qualified" and old_status != "Qualified":
+				if not self.qualified_by:
+					self.qualified_by = frappe.session.user
+				self.qualified_on = frappe.utils.now_datetime()
+
 
 	def update_lead_owner(self, pancake_user_id:str | None):
 		"""
