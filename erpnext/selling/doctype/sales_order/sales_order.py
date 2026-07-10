@@ -1857,7 +1857,57 @@ class SalesOrder(SellingController):
 
 			# Only copy if reference has value and current doesn't
 			if ref_value and not current_value:
+				if field == 'new_promotions':
+					if not self._is_promotion_valid_for_item(current_item, ref_value):
+						continue
 				setattr(current_item, field, ref_value)
+
+	def _is_promotion_valid_for_item(self, item, new_promotions_str):
+		"""Validate if a copied promotion makes sense for this item's price_list_rate vs rate"""
+		if not new_promotions_str:
+			return True
+		try:
+			import json
+			from frappe.utils import flt
+			
+			promos = json.loads(new_promotions_str)
+			if not promos:
+				return True
+			
+			expected_price = flt(item.price_list_rate)
+			if not expected_price:
+				return True
+
+			for p_name in promos:
+				try:
+					p = frappe.get_cached_doc("Promotion", p_name)
+				except frappe.DoesNotExistError:
+					continue
+				
+				if not p:
+					continue
+				
+				# Mirror of frontend apply_promo_discount for Line Item
+				if p.priority == "G0":
+					pass
+				elif p.priority == "G1":
+					expected_price = expected_price * (1 - flt(p.discount_percent) / 100.0)
+				elif p.priority == "G2":
+					expected_price = expected_price - flt(p.discount_amount)
+				elif p.priority in ("G3", "G6", "G7", "G4"):
+					if p.discount_type == "Percentage":
+						expected_price = expected_price * (1 - flt(p.discount_percent) / 100.0)
+					elif p.discount_type == "Fix Amount":
+						expected_price = expected_price - flt(p.discount_amount)
+			
+			diff = abs(flt(item.rate) * flt(item.qty) - expected_price * flt(item.qty))
+			if expected_price >= 0 and diff > 5000:
+				return False
+				
+			return True
+		except Exception as e:
+			frappe.log_error(f"Error validating copied promotion for item {item.item_code}: {str(e)[:100]}")
+			return True
 
 	def _map_current_and_ref_items(self, current_items, ref_items):
 		"""Return (current_item, ref_item) pairs."""
@@ -2023,6 +2073,9 @@ class SalesOrder(SellingController):
 				items_updated = True
 			# For other fields, only copy if reference has value and current item doesn't have value
 			elif ref_value and not current_value:
+				if field == 'new_promotions':
+					if not self._is_promotion_valid_for_item(current_item, ref_value):
+						continue
 				current_item.db_set(field, ref_value)
 				items_updated = True
 
