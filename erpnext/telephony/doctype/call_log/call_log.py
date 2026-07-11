@@ -30,6 +30,7 @@ class CallLog(Document):
 		from frappe.core.doctype.dynamic_link.dynamic_link import DynamicLink
 		from frappe.types import DF
 
+		agent_id: DF.Data | None
 		ai_action_item_text: DF.LongText | None
 		ai_summary: DF.LongText | None
 		call_received_by: DF.Link | None
@@ -73,6 +74,7 @@ class CallLog(Document):
 			self.update_received_by()
 
 	def after_insert(self):
+		self.update_participant_if_missing()
 		self.trigger_call_popup()
 		if self.recording_url:
 			frappe.enqueue(
@@ -82,6 +84,8 @@ class CallLog(Document):
 			)
 
 	def on_update(self):
+		self.update_participant_if_missing()
+
 		def _is_call_missed(doc_before_save, doc_after_save):
 			# FIXME: This works for Exotel but not for all telepony providers
 			return doc_before_save.to != doc_after_save.to and doc_after_save.status not in END_CALL_STATUSES
@@ -112,6 +116,38 @@ class CallLog(Document):
 
 	def is_incoming_call(self):
 		return self.type == "Incoming"
+
+	def update_participant_if_missing(self):
+		if self.participant:
+			return
+
+		format_phone = self.get("from") if self.is_incoming_call() else self.get("to")
+		if not format_phone:
+			return
+
+		customers = frappe.get_all(
+			"Customer",
+			or_filters={"mobile_no": format_phone, "phone": format_phone},
+			fields=["name"],
+			limit=1
+		)
+		if customers:
+			self.participant_type = "Customer"
+			self.participant = customers[0].name
+			frappe.db.set_value(self.doctype, self.name, {
+				"participant_type": "Customer",
+				"participant": customers[0].name
+			})
+			return
+
+		lead = frappe.get_value("Lead", {"phone": format_phone}, "name")
+		if lead:
+			self.participant_type = "Lead"
+			self.participant = lead
+			frappe.db.set_value(self.doctype, self.name, {
+				"participant_type": "Lead",
+				"participant": lead
+			})
 
 	def add_link(self, link_type, link_name):
 		self.append("links", {"link_doctype": link_type, "link_name": link_name})
