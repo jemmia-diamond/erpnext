@@ -41,6 +41,7 @@
   "column_break_wwev",
   "phone",
   "age_rage",
+  "last_message_at",
   "column_break_ytqf",
   "email_id",
   "source",
@@ -1014,6 +1015,11 @@
    "fieldtype": "Table MultiSelect",
    "label": "Sales Support",
    "options": "Sales Person Child"
+  },
+  {
+   "fieldname": "last_message_at",
+   "fieldtype": "Datetime",
+   "label": "Last Message At"
   }
  ],
  "grid_page_length": 50,
@@ -1021,7 +1027,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-07-07 09:39:32.265773",
+ "modified": "2026-07-13 13:04:39.136200",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",

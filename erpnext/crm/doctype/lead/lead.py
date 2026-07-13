@@ -19,7 +19,7 @@ from erpnext.config.config import config
 from erpnext.controllers.selling_controller import SellingController
 from erpnext.crm.utils import CRMNote, copy_comments, link_communications, link_open_events
 from erpnext.selling.doctype.customer.customer import parse_full_name
-from frappe.utils import date_diff, now_datetime
+from frappe.utils import date_diff, now_datetime, get_datetime
 
 
 class Lead(SellingController, CRMNote):
@@ -73,6 +73,7 @@ class Lead(SellingController, CRMNote):
 		jewelry_interest: DF.Table[LeadJewelryInterest]
 		job_title: DF.Data | None
 		language: DF.Link | None
+		last_message_at: DF.Datetime | None
 		last_name: DF.Data | None
 		lead_name: DF.Data | None
 		lead_owner: DF.Link | None
@@ -199,17 +200,23 @@ class Lead(SellingController, CRMNote):
 		self.fetch_region_from_province()
 		self.update_first_reach_at()
 		self.upsert_lead_source()
-		self.update_pancake_lead_owner()
+		self.sync_pancake_data_fields()
 		self.process_notes()
 
 	def process_notes(self):
 		for note in self.notes:
 			note.update_added_by()
 
-	def update_pancake_lead_owner(self):
+	def sync_pancake_data_fields(self):
 		try:
 			if self.pancake_data:
-				pancake_user_id = frappe.parse_json(self.pancake_data).get("pancake_user_id", None)
+				parsed_data = frappe.parse_json(self.pancake_data)
+				latest_message_at = parsed_data.get("latest_message_at")
+				if latest_message_at:
+					if not self.last_message_at or get_datetime(self.last_message_at) < get_datetime(latest_message_at):
+						self.last_message_at = latest_message_at
+
+				pancake_user_id = parsed_data.get("pancake_user_id", None)
 				if pancake_user_id and (not self.lead_owner or self.lead_owner == "tech@jemmia.vn"):
 					self.update_lead_owner(pancake_user_id)
 		except Exception as _:
@@ -227,7 +234,7 @@ class Lead(SellingController, CRMNote):
 				"/api/method/frappe.desk.form.save.savedocs",
 				"/api/method/frappe.client.save"
 			]
-			
+
 			# If NOT an Admin is performing actions on the interface -> Restore to the previous state
 			if not (is_admin and is_ui_request):
 				if is_ui_request:
@@ -261,7 +268,7 @@ class Lead(SellingController, CRMNote):
 
 		if old_doc and old_status == "Qualified" and not has_permission:
 			self.qualification_status = "Qualified"
-			
+
 			old_qualified_by = old_doc.get("qualified_by")
 			if old_qualified_by:
 				self.qualified_by = old_qualified_by
@@ -741,7 +748,7 @@ class Lead(SellingController, CRMNote):
 			return
 
 		# Get lastest Opportunity
-		latest_opportunity = frappe.db.get_value("Opportunity", 
+		latest_opportunity = frappe.db.get_value("Opportunity",
 			{"party_name": self.name, "opportunity_from": "Lead"},
 			["name", "status", "creation"],
 			as_dict=True,
@@ -1160,7 +1167,7 @@ def get_related_notes(doctype, docname):
 		)
 		for opp in opps:
 			targets.append(("Opportunity", opp["name"]))
-			
+
 	elif doctype == "Opportunity":
 		opp_fields = frappe.db.get_value(
 			"Opportunity",
@@ -1171,7 +1178,7 @@ def get_related_notes(doctype, docname):
 		if opp_fields and opp_fields.opportunity_from == "Lead" and opp_fields.party_name:
 			lead_name = opp_fields.party_name
 			targets.append(("Lead", lead_name))
-			
+
 			# Get other Opportunities from the same Lead, excluding the current Opportunity
 			other_opps = frappe.get_all(
 				"Opportunity",
@@ -1289,17 +1296,17 @@ def update_primary_sale_from_todo(doc, method=None):
 		if doc.reference_type == "Lead" and doc.status == "Open" and doc.allocated_to:
 			# 1. Tìm Sales Person theo Email
 			sales_person = frappe.db.get_value("Sales Person", {"employee_email": doc.allocated_to}, "name")
-			
+
 			# 2. Nếu không thấy, tìm qua Employee.user_id
 			if not sales_person:
 				employee = frappe.db.get_value("Employee", {"user_id": doc.allocated_to}, "name")
 				if employee:
 					sales_person = frappe.db.get_value("Sales Person", {"employee": employee}, "name")
-			
+
 			# 3. Tiến hành gán và xóa cache để cập nhật UI
 			if sales_person:
 				frappe.db.set_value("Lead", doc.reference_name, "primary_sale", sales_person)
 				frappe.clear_document_cache("Lead", doc.reference_name)
-				
+
 	except Exception as e:
 		frappe.log_error(frappe.get_traceback(), "DEBUG ASSIGN LEAD EXCEPTION")
