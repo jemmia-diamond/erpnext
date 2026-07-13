@@ -11,6 +11,7 @@ from frappe.utils.file_manager import get_file, save_file
 from erpnext.crm.doctype.lead.lead import get_lead_with_phone_number
 from erpnext.crm.doctype.utils import get_scheduled_employees_for_popup, strip_number
 from erpnext.config.config import config
+from erpnext.utilities.phone_utils import get_phone_variants
 
 import jwt
 import time
@@ -125,9 +126,10 @@ class CallLog(Document):
 		if not format_phone:
 			return
 
+		variants = get_phone_variants(format_phone)
 		customers = frappe.get_all(
 			"Customer",
-			or_filters={"mobile_no": format_phone, "phone": format_phone},
+			or_filters={"mobile_no": ["in", variants], "phone": ["in", variants]},
 			fields=["name"],
 			limit=1
 		)
@@ -140,13 +142,18 @@ class CallLog(Document):
 			})
 			return
 
-		lead = frappe.get_value("Lead", {"phone": format_phone}, "name")
-		if lead:
+		leads = frappe.get_all(
+			"Lead",
+			or_filters={"mobile_no": ["in", variants], "phone": ["in", variants]},
+			fields=["name"],
+			limit=1
+		)
+		if leads:
 			self.participant_type = "Lead"
-			self.participant = lead
+			self.participant = leads[0].name
 			frappe.db.set_value(self.doctype, self.name, {
 				"participant_type": "Lead",
-				"participant": lead
+				"participant": leads[0].name
 			})
 
 	def add_link(self, link_type, link_name):
