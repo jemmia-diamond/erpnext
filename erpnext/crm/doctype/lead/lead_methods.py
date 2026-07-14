@@ -517,9 +517,21 @@ def _transfer_lead_fields(master_doc, loser_doc):
 	if not master_has_real_owner and loser_has_real_owner:
 		master_doc.lead_owner = loser_doc.lead_owner
 
-	# Overwrite default placeholder names with valid data from loser.
+	# Overwrite default placeholder names or phone numbers with valid data from loser.
 	placeholder_names = [None, "Chưa rõ", "Unknown", ""]
-	if (master_doc.get("lead_name") in placeholder_names) and (loser_doc.get("lead_name") not in placeholder_names):
+
+	def is_invalid_name(name_val):
+		name_str = str(name_val or "").strip()
+		if name_str in placeholder_names:
+			return True
+
+		# If string ONLY contains digits, spaces, and phone symbols -> invalid name
+		if not re.search(r'[^\d\s\+\-\(\)]', name_str):
+			return True
+
+		return False
+
+	if is_invalid_name(master_doc.get("lead_name")) and not is_invalid_name(loser_doc.get("lead_name")):
 		master_doc.lead_name = loser_doc.lead_name
 		master_doc.first_name = loser_doc.first_name
 		master_doc.middle_name = loser_doc.middle_name
