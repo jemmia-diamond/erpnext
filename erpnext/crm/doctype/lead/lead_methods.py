@@ -15,6 +15,7 @@ from erpnext.crm.doctype.lead.lead_dao import get_lead_by_name, get_lead_name_by
 from erpnext.crm.doctype.lead_budget.lead_budget_dao import find_range_budget
 from erpnext.crm.doctype.lead_demand.lead_demand_dao import get_lead_purpose
 from erpnext.crm.doctype.lead_product.lead_product_dao import create_lead_product, get_lead_product
+from erpnext.utilities.phone_utils import normalize_to_standard_format
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
@@ -37,19 +38,8 @@ def normalize_phone_number(phone: str | None) -> str | None:
 		+1 (555)-000-4321 -> 15550004321
 		+86 138 0013 8000 -> 8613800138000
 	"""
-	if not phone:
-		return None
-	phone = re.sub(r'[\s\-\(\)]', '', phone.strip())
-	if phone.startswith('+'):
-		phone = phone[1:]
-	if phone.startswith('00'):
-		phone = phone[2:]
-	if phone.startswith('840') and len(phone) >= 12:
-		phone = '84' + phone[3:]
-	elif phone.startswith('0'):
-		phone = '84' + phone[1:]
-
-	return phone
+	res = normalize_to_standard_format(phone)
+	return res if res else None
 
 @frappe.whitelist(methods=["POST", "PUT"])
 def insert_lead_by_batch(docs=None):
