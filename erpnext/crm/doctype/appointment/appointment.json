@@ -23,6 +23,8 @@
   "column_break_wnab",
   "appointment_reason",
   "policies",
+  "offline_sales_name",
+  "primary_sales_name",
   "customer_details_section",
   "customer_name",
   "lead",
@@ -336,10 +338,25 @@
   {
    "fieldname": "attachment_html",
    "fieldtype": "HTML"
+  },
+  {
+   "fetch_from": "primary_sales.sales_person_name",
+   "fetch_if_empty": 1,
+   "fieldname": "primary_sales_name",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Primary Sales Name"
+  },
+  {
+   "fetch_if_empty": 1,
+   "fieldname": "offline_sales_name",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Sales Support Name"
   }
  ],
  "links": [],
- "modified": "2026-07-07 11:27:20.094681",
+ "modified": "2026-07-15 14:49:29.930317",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Appointment",

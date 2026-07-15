@@ -44,12 +44,14 @@ class Appointment(Document):
 		notes: DF.LongText | None
 		offline_response: DF.LongText | None
 		offline_sales: DF.TableMultiSelect[AppointmentSalesPerson]
+		offline_sales_name: DF.Data | None
 		order_status: DF.Literal["Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng", "Kh\u00e1ch h\u1eb9n \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch ch\u01b0a mua h\u00e0ng", "Kh\u00e1ch kh\u00f4ng \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch ho\u00e3n l\u1ea1i ng\u00e0y \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch \u0111\u00e3 \u0111\u1ebfn c\u1eeda h\u00e0ng"]
 		party: DF.DynamicLink | None
 		policies: DF.TableMultiSelect[AppointmentPolicy]
 		policy: DF.LongText | None
 		preferred_products: DF.TableMultiSelect[LeadProductItem]
 		primary_sales: DF.Link | None
+		primary_sales_name: DF.Data | None
 		purchase_purpose: DF.Link | None
 		range_estimated_budget: DF.Link | None
 		record_id: DF.Data | None
@@ -73,6 +75,11 @@ class Appointment(Document):
 		if customer_list:
 			return customer_list[0].name
 		return None
+
+	def before_save(self):
+		if self.offline_sales:
+			names = [d.sales_person_name for d in self.offline_sales if d.sales_person_name]
+			self.offline_sales_name = ", ".join(names)
 
 	def before_insert(self):
 		number_of_appointments_in_same_slot = frappe.db.count(
