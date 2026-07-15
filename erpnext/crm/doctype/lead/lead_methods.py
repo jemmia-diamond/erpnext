@@ -15,6 +15,7 @@ from erpnext.crm.doctype.lead.lead_dao import get_lead_by_name, get_lead_name_by
 from erpnext.crm.doctype.lead_budget.lead_budget_dao import find_range_budget
 from erpnext.crm.doctype.lead_demand.lead_demand_dao import get_lead_purpose
 from erpnext.crm.doctype.lead_product.lead_product_dao import create_lead_product, get_lead_product
+from erpnext.utilities.phone_utils import normalize_to_standard_format
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
@@ -27,6 +28,18 @@ def truncate_string(value: str | None, max_length: int = 140) -> str | None:
 		return value[:max_length]
 	return value
 
+def is_valid_lead_name(name_val: str | None) -> bool:
+	name_str = str(name_val or "").strip()
+	placeholder_names = [None, "Chưa rõ", "Unknown", ""]
+	if name_str in placeholder_names:
+		return False
+
+	# If string ONLY contains digits, spaces, and phone symbols -> invalid name
+	if not re.search(r'[^\d\s\+\-\(\)]', name_str):
+		return False
+
+	return True
+
 def normalize_phone_number(phone: str | None) -> str | None:
 	"""Normalize phone number to standard format (country code + number, no prefix).
 	Examples:
@@ -37,19 +50,8 @@ def normalize_phone_number(phone: str | None) -> str | None:
 		+1 (555)-000-4321 -> 15550004321
 		+86 138 0013 8000 -> 8613800138000
 	"""
-	if not phone:
-		return None
-	phone = re.sub(r'[\s\-\(\)]', '', phone.strip())
-	if phone.startswith('+'):
-		phone = phone[1:]
-	if phone.startswith('00'):
-		phone = phone[2:]
-	if phone.startswith('840') and len(phone) >= 12:
-		phone = '84' + phone[3:]
-	elif phone.startswith('0'):
-		phone = '84' + phone[1:]
-
-	return phone
+	res = normalize_to_standard_format(phone)
+	return res if res else None
 
 @frappe.whitelist(methods=["POST", "PUT"])
 def insert_lead_by_batch(docs=None):
@@ -312,7 +314,7 @@ def update_lead_by_batch(docs):
 
 			# exist phone not update
 			if existing_doc.phone and existing_doc.phone != "":
-				doc["phone"] = existing_doc.phone
+				doc["phone"] = normalize_phone_number(existing_doc.phone)
 
 			# Check if the new phone number already exists in another lead
 			new_phone = doc.get("phone")
@@ -322,7 +324,7 @@ def update_lead_by_batch(docs):
 					new_phone
 				)
 
-			if existing_doc.lead_name  and existing_doc.lead_name != "" and existing_doc.lead_name != "Chưa rõ":
+			if is_valid_lead_name(existing_doc.lead_name):
 				doc["first_name"] = existing_doc.lead_name
 				doc["lead_name"] = existing_doc.lead_name
 
@@ -517,9 +519,7 @@ def _transfer_lead_fields(master_doc, loser_doc):
 	if not master_has_real_owner and loser_has_real_owner:
 		master_doc.lead_owner = loser_doc.lead_owner
 
-	# Overwrite default placeholder names with valid data from loser.
-	placeholder_names = [None, "Chưa rõ", "Unknown", ""]
-	if (master_doc.get("lead_name") in placeholder_names) and (loser_doc.get("lead_name") not in placeholder_names):
+	if not is_valid_lead_name(master_doc.get("lead_name")) and is_valid_lead_name(loser_doc.get("lead_name")):
 		master_doc.lead_name = loser_doc.lead_name
 		master_doc.first_name = loser_doc.first_name
 		master_doc.middle_name = loser_doc.middle_name

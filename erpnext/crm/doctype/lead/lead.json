@@ -14,6 +14,7 @@
   "information_tab",
   "basic_information_section",
   "column_break_jigo",
+  "first_reach_at",
   "lead_received_date",
   "support_sales",
   "naming_series",
@@ -48,7 +49,6 @@
   "custom_note",
   "qualification_tab",
   "qualification_status",
-  "first_reach_at",
   "column_break_64",
   "qualified_by",
   "is_assigned",
@@ -651,6 +651,7 @@
    "default": "Now",
    "fieldname": "lead_received_date",
    "fieldtype": "Datetime",
+   "hidden": 1,
    "label": "Lead Received Date",
    "read_only": 1
   },
@@ -976,6 +977,7 @@
   {
    "fieldname": "point_of_purchase",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Point of Purchase",
    "options": "\nOffline\nOnline"
   },
@@ -992,6 +994,7 @@
    "default": "0",
    "fieldname": "active_engaged_customers",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Active Engaged Customers"
   },
   {
@@ -1019,6 +1022,7 @@
   {
    "fieldname": "last_message_at",
    "fieldtype": "Datetime",
+   "hidden": 1,
    "label": "Last Message At"
   }
  ],
@@ -1027,7 +1031,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-07-13 13:04:39.136200",
+ "modified": "2026-07-14 17:40:17.136924",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
