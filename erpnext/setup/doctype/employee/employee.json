@@ -32,6 +32,8 @@
   "user_email",
   "column_break_xwnm",
   "create_user_automatically",
+  "column_break_oxpa",
+  "vbot_id",
   "company_details_section",
   "company",
   "department",
@@ -836,6 +838,16 @@
   {
    "fieldname": "column_break_xwnm",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_oxpa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "vbot_id",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "VBot ID"
   }
  ],
  "icon": "fa fa-user",
@@ -843,7 +855,7 @@
  "image_field": "image",
  "is_tree": 1,
  "links": [],
- "modified": "2026-03-23 15:26:05.149280",
+ "modified": "2026-07-15 15:14:12.859598",
  "modified_by": "Administrator",
  "module": "Setup",
  "name": "Employee",
