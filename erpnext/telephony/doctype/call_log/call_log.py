@@ -32,6 +32,7 @@ class CallLog(Document):
 		from frappe.types import DF
 
 		agent_id: DF.Data | None
+		agent_name: DF.Data | None
 		ai_action_item_text: DF.LongText | None
 		ai_summary: DF.LongText | None
 		call_received_by: DF.Link | None
@@ -71,8 +72,7 @@ class CallLog(Document):
 			self.add_link(link_type="Lead", link_name=lead)
 
 		# Add Employee Name
-		if self.is_incoming_call():
-			self.update_received_by()
+		self.update_received_by()
 
 	def after_insert(self):
 		self.update_participant_if_missing()
@@ -187,9 +187,34 @@ class CallLog(Document):
 			frappe.publish_realtime("show_call_popup", self, user=email)
 
 	def update_received_by(self):
-		if employees := get_employees_with_number(self.get("to")):
-			self.call_received_by = employees[0].get("name")
-			self.employee_user_id = employees[0].get("user_id")
+		if self.call_received_by or getattr(self, "provider", "stringee") != "vbot" or not self.agent_id:
+			return
+
+		employee_data = frappe.db.get_value("Employee", {"vbot_id": self.agent_id, "status": "Active"}, ["name", "employee_name", "user_id"], as_dict=True)
+		if employee_data:
+			self.agent_name = employee_data.get("employee_name")
+			self.call_received_by = employee_data.get("name")
+			self.employee_user_id = employee_data.get("user_id")
+			return
+
+		try:
+			url = f"{config.VBOT_BASE_URL}/api/member/getByMemberNo?member_no={self.agent_id}"
+			response = requests.get(url, headers={"X-API-Key": config.CC_API_KEY}, timeout=10)
+			if response.status_code != 200:
+				return
+
+			member_name = (response.json().get("data") or {}).get("member_name")
+			if not member_name:
+				return
+
+			self.agent_name = member_name
+			if employee_name := frappe.db.get_value("Employee", {"employee_name": member_name, "status": "Active"}, "name"):
+				self.call_received_by = employee_name
+				self.employee_user_id = frappe.db.get_value("Employee", employee_name, "user_id")
+				frappe.db.set_value("Employee", employee_name, "vbot_id", self.agent_id)
+
+		except Exception as e:
+			frappe.log_error(f"Failed to fetch Vbot agent for Call Log {self.name}: {str(e)}", "Vbot Agent Lookup")
 
 
 @frappe.whitelist()
