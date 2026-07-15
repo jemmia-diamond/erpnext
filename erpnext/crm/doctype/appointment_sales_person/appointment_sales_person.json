@@ -6,6 +6,7 @@
     "engine": "InnoDB",
     "field_order": [
         "sales_person",
+        "sales_person_name",
         "employee_email"
     ],
     "fields": [
@@ -16,6 +17,14 @@
             "label": "Sales Person",
             "options": "Sales Person",
             "reqd": 1
+        },
+        {
+            "fieldname": "sales_person_name",
+            "fieldtype": "Data",
+            "label": "Sales Person Name",
+            "fetch_from": "sales_person.sales_person_name",
+            "in_list_view": 1,
+            "read_only": 1
         },
         {
             "fieldname": "employee_email",
