@@ -191,30 +191,25 @@ class CallLog(Document):
 			return
 
 		employee_data = frappe.db.get_value("Employee", {"vbot_id": self.agent_id, "status": "Active"}, ["name", "employee_name", "user_id"], as_dict=True)
+		if not employee_data:
+			try:
+				url = f"{config.VBOT_BASE_URL}/api/member/getByMemberNo?member_no={self.agent_id}"
+				response = requests.get(url, headers={"X-API-Key": config.CC_API_KEY}, timeout=10)
+
+				if response.ok and (member_name := (response.json().get("data") or {}).get("member_name")):
+					self.agent_name = member_name
+					if emp_data := frappe.db.get_value("Employee", {"employee_name": member_name, "status": "Active"}, ["name", "user_id"], as_dict=True):
+						employee_data = {"name": emp_data.get("name"), "employee_name": member_name, "user_id": emp_data.get("user_id")}
+						frappe.db.set_value("Employee", emp_data.get("name"), "vbot_id", self.agent_id)
+			except Exception as e:
+				frappe.log_error(f"Failed to fetch Vbot agent for Call Log {self.name}: {str(e)}", "Vbot Agent Lookup")
+
 		if employee_data:
 			self.agent_name = employee_data.get("employee_name")
 			self.call_received_by = employee_data.get("name")
 			self.employee_user_id = employee_data.get("user_id")
-			return
-
-		try:
-			url = f"{config.VBOT_BASE_URL}/api/member/getByMemberNo?member_no={self.agent_id}"
-			response = requests.get(url, headers={"X-API-Key": config.CC_API_KEY}, timeout=10)
-			if response.status_code != 200:
-				return
-
-			member_name = (response.json().get("data") or {}).get("member_name")
-			if not member_name:
-				return
-
-			self.agent_name = member_name
-			if employee_name := frappe.db.get_value("Employee", {"employee_name": member_name, "status": "Active"}, "name"):
-				self.call_received_by = employee_name
-				self.employee_user_id = frappe.db.get_value("Employee", employee_name, "user_id")
-				frappe.db.set_value("Employee", employee_name, "vbot_id", self.agent_id)
-
-		except Exception as e:
-			frappe.log_error(f"Failed to fetch Vbot agent for Call Log {self.name}: {str(e)}", "Vbot Agent Lookup")
+			self.agent_type = "User"
+			self.agent = employee_data.get("user_id")
 
 
 @frappe.whitelist()

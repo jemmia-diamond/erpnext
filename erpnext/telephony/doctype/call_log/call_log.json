@@ -25,6 +25,8 @@
   "to",
   "participant_type",
   "participant",
+  "agent_type",
+  "agent",
   "disposition",
   "status",
   "end_time",
@@ -233,6 +235,23 @@
    "hidden": 1,
    "label": "Participant",
    "options": "participant_type",
+   "search_index": 1
+  },
+  {
+   "default": "User",
+   "fieldname": "agent_type",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Agent Type",
+   "options": "DocType",
+   "search_index": 1
+  },
+  {
+   "fieldname": "agent",
+   "fieldtype": "Dynamic Link",
+   "hidden": 1,
+   "label": "Agent",
+   "options": "agent_type",
    "search_index": 1
   },
   {
