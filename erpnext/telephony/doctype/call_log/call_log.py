@@ -190,7 +190,7 @@ class CallLog(Document):
 		if self.call_received_by or getattr(self, "provider", "stringee") != "vbot" or not self.agent_id:
 			return
 
-		employee_data = frappe.db.get_value("Employee", {"vbot_id": self.agent_id, "status": "Active"}, ["name", "employee_name", "user_id"], as_dict=True)
+		employee_data = frappe.db.get_value("Employee", {"vbot_id": self.agent_id}, ["name", "employee_name", "user_id"], as_dict=True)
 		if not employee_data:
 			try:
 				url = f"{config.VBOT_BASE_URL}/api/member/getByMemberNo?member_no={self.agent_id}"
@@ -198,7 +198,7 @@ class CallLog(Document):
 
 				if response.ok and (member_name := (response.json().get("data") or {}).get("member_name")):
 					self.agent_name = member_name
-					if emp_data := frappe.db.get_value("Employee", {"employee_name": member_name, "status": "Active"}, ["name", "user_id"], as_dict=True):
+					if emp_data := frappe.db.get_value("Employee", {"employee_name": member_name}, ["name", "user_id"], as_dict=True):
 						employee_data = {"name": emp_data.get("name"), "employee_name": member_name, "user_id": emp_data.get("user_id")}
 						frappe.db.set_value("Employee", emp_data.get("name"), "vbot_id", self.agent_id)
 			except Exception as e:
