@@ -81,7 +81,8 @@ class CallLog(Document):
 			frappe.enqueue(
 				"erpnext.telephony.doctype.call_log.call_log.download_and_attach_recording",
 				call_log_name=self.name,
-				queue="short"
+				queue="short",
+				enqueue_after_commit=True
 			)
 
 	def on_update(self):
