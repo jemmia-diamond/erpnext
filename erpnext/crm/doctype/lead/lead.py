@@ -265,31 +265,30 @@ class Lead(SellingController, CRMNote):
 
 		old_doc = self.get_doc_before_save()
 		old_status = old_doc.get("qualification_status") if old_doc else "Unqualified"
+		status_changed = (self.qualification_status != old_status)
 
-		if old_doc and old_status == "Qualified" and not has_permission:
-			self.qualification_status = "Qualified"
+		if status_changed and has_permission:
+			pass
+		else:
+			auto_status = self.get_qualification_status()
+			if old_status == "Qualified" and auto_status == "Unqualified":
+				self.qualification_status = "Qualified"
+			else:
+				self.qualification_status = auto_status
 
+		if self.qualification_status == "Qualified" and old_status == "Unqualified":
+			if not self.qualified_by:
+				self.qualified_by = frappe.session.user
+			if not self.qualified_on:
+				self.qualified_on = frappe.utils.now_datetime()
+
+		if old_status == "Qualified" and self.qualification_status == "Qualified":
 			old_qualified_by = old_doc.get("qualified_by")
-			if old_qualified_by:
+			if old_qualified_by and not self.qualified_by:
 				self.qualified_by = old_qualified_by
 			old_qualified_on = old_doc.get("qualified_on")
-			if old_qualified_on:
+			if old_qualified_on and not self.qualified_on:
 				self.qualified_on = old_qualified_on
-			return
-
-		if has_permission:
-			if self.qualification_status == "Qualified" and old_status != "Qualified":
-				if not self.qualified_by:
-					self.qualified_by = frappe.session.user
-				if not self.qualified_on:
-					self.qualified_on = frappe.utils.now_datetime()
-		else:
-			new_qualification_status = self.get_qualification_status()
-			self.qualification_status = new_qualification_status
-			if self.qualification_status == "Qualified" and old_status != "Qualified":
-				if not self.qualified_by:
-					self.qualified_by = frappe.session.user
-				self.qualified_on = frappe.utils.now_datetime()
 
 
 	def update_lead_owner(self, pancake_user_id:str | None):
