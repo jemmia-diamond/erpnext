@@ -30,13 +30,11 @@ class Lead(SellingController, CRMNote):
 
 	if TYPE_CHECKING:
 		from erpnext.crm.doctype.crm_note.crm_note import CRMNote
-		from erpnext.crm.doctype.lead_jewelry_interest.lead_jewelry_interest import LeadJewelryInterest
 		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from erpnext.crm.doctype.sales_person_child.sales_person_child import SalesPersonChild
 		from frappe.types import DF
 
 		account_number: DF.Data | None
-		active_engaged_customers: DF.Check
 		address: DF.Data | None
 		age_rage: DF.Literal["", "Under 18", "18 to 24", "25 to 34", "35 to 44", "45 to 54", "55 to 64", "65+", "Unidentified"]
 		annual_revenue: DF.Currency
@@ -54,9 +52,7 @@ class Lead(SellingController, CRMNote):
 		company: DF.Link | None
 		company_name: DF.Data | None
 		country: DF.Link | None
-		custom_note: DF.SmallText | None
 		customer: DF.Link | None
-		customer_persona: DF.SmallText | None
 		date_of_issuance: DF.Date | None
 		disabled: DF.Check
 		email_id: DF.Data | None
@@ -70,7 +66,6 @@ class Lead(SellingController, CRMNote):
 		industry: DF.Link | None
 		interaction_channels: DF.Link | None
 		is_assigned: DF.Check
-		jewelry_interest: DF.Table[LeadJewelryInterest]
 		job_title: DF.Data | None
 		language: DF.Link | None
 		last_message_at: DF.Datetime | None
@@ -93,18 +88,15 @@ class Lead(SellingController, CRMNote):
 		phone: DF.Data | None
 		phone_ext: DF.Data | None
 		place_of_issuance: DF.Literal["Ministry of Public Security", "Department of Police for Administrative Management of Social Order", "Department of Police for Registration, Residency Management, and National Population Data"]
-		point_of_purchase: DF.Literal["", "Offline", "Online"]
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
 		primary_sale: DF.Link | None
 		proposed_budget: DF.Link | None
 		province: DF.Link | None
-		purchase_objection: DF.SmallText | None
 		purpose_lead: DF.Link | None
 		qualification_status: DF.Literal["Unqualified", "Qualified"]
 		qualified_by: DF.Link | None
 		qualified_lead_date: DF.Datetime | None
 		qualified_on: DF.Datetime | None
-		referrer: DF.Data | None
 		region: DF.Link | None
 		request_type: DF.Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
 		salutation: DF.Link | None
@@ -144,15 +136,6 @@ class Lead(SellingController, CRMNote):
 		self.validate_email_id()
 
 	def before_insert(self):
-		# Create Note with quickform
-		if self.custom_note and self.custom_note.strip():
-			self.append("notes", {
-				"note": self.custom_note,
-				"added_by": frappe.session.user or "Administrator",
-				"added_on": frappe.utils.now_datetime()
-			})
-			# Delete cutom note before save
-			self.custom_note = None
 		self.contact_doc = None
 		if frappe.db.get_single_value("CRM Settings", "auto_creation_of_contact"):
 			if self.utm_source == "Existing Customer" and self.customer:
@@ -225,23 +208,6 @@ class Lead(SellingController, CRMNote):
 	def update_lead_stage(self):
 		if self.lead_stage=="Customer":
 			return
-
-		# Prevent change lead_stage
-		old_db_stage = self.db_get("lead_stage")
-		if old_db_stage in ["Qualified Lead", "Opportunity"] and self.lead_stage == "Lead":
-			is_admin = "System Manager" in frappe.get_roles(frappe.session.user) or frappe.session.user == "Administrator"
-			is_ui_request = frappe.request and frappe.request.path in [
-				"/api/method/frappe.desk.form.save.savedocs",
-				"/api/method/frappe.client.save"
-			]
-
-			# If NOT an Admin is performing actions on the interface -> Restore to the previous state
-			if not (is_admin and is_ui_request):
-				if is_ui_request:
-					frappe.throw(_("Chỉ Admin mới có quyền hạ cấp Stage của Lead đã Qualified."))
-				# If call by fn
-				self.lead_stage = old_db_stage
-				return
 
 		lead_stage = self.get_lead_stage()
 
@@ -452,7 +418,6 @@ class Lead(SellingController, CRMNote):
 	def on_update(self):
 		self.update_prospect()
 		self.update_assignment_status()
-		#Trigger auto create Opportunity
 
 	def on_trash(self):
 		frappe.db.set_value("Issue", {"lead": self.name}, "lead", None)
