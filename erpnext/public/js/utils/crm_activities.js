@@ -24,6 +24,8 @@ erpnext.utils.CRMActivities = class CRMActivities {
 		}
 
 		// open activities
+		// BinDK: As of now, we do not using Frappe's New Task and New Event features
+		return;
 		frappe.call({
 			method: "erpnext.crm.utils.get_open_activities",
 			args: {
@@ -55,7 +57,6 @@ erpnext.utils.CRMActivities = class CRMActivities {
 
 					me.create_task();
 					me.create_event();
-					me.create_task();
 				}
 			},
 		});
