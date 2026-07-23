@@ -141,6 +141,7 @@
  ],
  "fields": [
   {
+   "default": "CRM-LEAD-.YYYY.-",
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "hidden": 1,
@@ -901,7 +902,7 @@
   {
    "fieldname": "purpose_lead",
    "fieldtype": "Link",
-   "label": "Purpose Lead",
+   "label": "Lead Purpose",
    "options": "Lead Demand"
   },
   {
@@ -949,7 +950,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-07-22 17:16:51.968862",
+ "modified": "2026-07-23 10:11:59.936668",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
