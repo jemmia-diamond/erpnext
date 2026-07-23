@@ -13,6 +13,7 @@
   "customer_sentinent",
   "call_details_section",
   "id",
+  "participant_name",
   "from",
   "type",
   "call_received_by",
@@ -21,6 +22,7 @@
   "start_time",
   "agent_name",
   "agent_id",
+  "recording_html",
   "column_break_4",
   "to",
   "participant_type",
@@ -32,7 +34,6 @@
   "end_time",
   "recording_url",
   "duration",
-  "recording_html",
   "provider",
   "provider_recording_url",
   "section_break_11",
@@ -53,14 +54,12 @@
   {
    "fieldname": "from",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "From",
    "read_only": 1
   },
   {
    "fieldname": "to",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "To",
    "read_only": 1
   },
@@ -114,7 +113,8 @@
    "fieldname": "links",
    "fieldtype": "Table",
    "label": "Links",
-   "options": "Dynamic Link"
+   "options": "Dynamic Link",
+   "permlevel": 9
   },
   {
    "fieldname": "column_break_4",
@@ -249,9 +249,10 @@
   {
    "fieldname": "agent",
    "fieldtype": "Dynamic Link",
-   "hidden": 1,
+   "in_list_view": 1,
    "label": "Agent",
    "options": "agent_type",
+   "read_only": 1,
    "search_index": 1
   },
   {
@@ -271,12 +272,19 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Provider Recording URL"
+  },
+  {
+   "default": "Unidentified",
+   "fieldname": "participant_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Participant Name"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-23 15:15:10.803898",
+ "modified": "2026-07-23 17:07:54.128166",
  "modified_by": "Administrator",
  "module": "Telephony",
  "name": "Call Log",

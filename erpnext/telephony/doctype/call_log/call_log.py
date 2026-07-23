@@ -47,6 +47,7 @@ class CallLog(Document):
 		links: DF.Table[DynamicLink]
 		medium: DF.Data | None
 		participant: DF.DynamicLink | None
+		participant_name: DF.Data | None
 		participant_type: DF.Link | None
 		provider: DF.Data | None
 		provider_recording_url: DF.Data | None
@@ -93,6 +94,7 @@ class CallLog(Document):
 	def before_save(self):
 		self.update_participant_if_missing()
 		self.link_participant()
+		self.set_participant_name()
 
 	def on_update(self):
 		def _is_call_missed(doc_before_save, doc_after_save):
@@ -155,6 +157,12 @@ class CallLog(Document):
 		if leads:
 			self.participant_type = "Lead"
 			self.participant = leads[0].name
+
+
+	def set_participant_name(self):
+		if (not self.participant_name or self.participant_name == "Unidentified") and self.participant_type and self.participant:
+			field = "customer_name" if self.participant_type == "Customer" else "first_name"
+			self.participant_name = frappe.db.get_value(self.participant_type, self.participant, field)
 
 	def link_participant(self):
 		if not self.participant_type or not self.participant:

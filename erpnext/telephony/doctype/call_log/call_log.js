@@ -5,10 +5,10 @@ frappe.ui.form.on("Call Log", {
 	refresh: function (frm) {
 
 		const incoming_call = frm.doc.type == "Incoming";
-		frm.add_custom_button(incoming_call ? __("Callback") : __("Call Again"), () => {
-			const number = incoming_call ? frm.doc.from : frm.doc.to;
-			frappe.phone_call.handler(number, frm);
-		});
+		// frm.add_custom_button(incoming_call ? __("Callback") : __("Call Again"), () => {
+		// 	const number = incoming_call ? frm.doc.from : frm.doc.to;
+		// 	frappe.phone_call.handler(number, frm);
+		// });
 
 		try {
 			if (!frm.doc.provider || frm.doc.provider === "stringee") {
