@@ -127,14 +127,15 @@ erpnext.utils.CRMNotes = class CRMNotes {
 		this.add_note();
 
 		$(".notes-section")
-			.find(".edit-note-btn")
+			.find(".note-card")
 			.on("click", function () {
 				me.edit_note(this);
 			});
 
 		$(".notes-section")
 			.find(".delete-note-btn")
-			.on("click", function () {
+			.on("click", function (e) {
+				e.stopPropagation();
 				me.delete_note(this);
 			});
 	}
@@ -146,12 +147,19 @@ erpnext.utils.CRMNotes = class CRMNotes {
 				title: __("Add a Note"),
 				fields: [
 					{
+						label: "Title",
+						fieldname: "type",
+						fieldtype: "Select",
+						options: ["Chân dung khách hàng", "Xử lý từ chối", "Khác"],
+						default: "Chân dung khách hàng",
+					},
+					{
 						label: "Note",
 						fieldname: "note",
 						fieldtype: "Text Editor",
 						reqd: 1,
 						enable_mentions: true,
-					},
+					}
 				],
 				primary_action: function () {
 					var data = d.get_values();
@@ -160,6 +168,7 @@ erpnext.utils.CRMNotes = class CRMNotes {
 						doc: me.frm.doc,
 						args: {
 							note: data.note,
+							type: data.type,
 						},
 						freeze: true,
 						callback: function (r) {
@@ -182,17 +191,26 @@ erpnext.utils.CRMNotes = class CRMNotes {
 		var me = this;
 		let row = $(edit_btn).closest(".comment-content");
 		let row_id = row.attr("name");
-		let row_content = $(row).find(".content").html();
+		let note_doc = me.frm.doc.notes.find(n => String(n.name) === String(row_id));
+		let row_content = note_doc ? note_doc.note : $(row).find(".content").html();
+		let row_type = note_doc ? note_doc.type : "Chân dung khách hàng";
 		if (row_content) {
 			var d = new frappe.ui.Dialog({
 				title: __("Edit Note"),
 				fields: [
 					{
+						label: "Title",
+						fieldname: "type",
+						fieldtype: "Select",
+						options: ["Chân dung khách hàng", "Xử lý từ chối", "Khác"],
+						default: row_type,
+					},
+					{
 						label: "Note",
 						fieldname: "note",
 						fieldtype: "Text Editor",
 						default: row_content,
-					},
+					}
 				],
 				primary_action: function () {
 					var data = d.get_values();
@@ -202,6 +220,7 @@ erpnext.utils.CRMNotes = class CRMNotes {
 						args: {
 							note: data.note,
 							row_id: row_id,
+							type: data.type,
 						},
 						freeze: true,
 						callback: function (r) {
