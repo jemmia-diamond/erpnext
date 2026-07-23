@@ -77,13 +77,12 @@ class Opportunity(TransactionBase, CRMNote):
 		opportunity_owner: DF.Link | None
 		opportunity_type: DF.Link | None
 		order_lost_reason: DF.SmallText | None
-		party_name: DF.DynamicLink
+		party_name: DF.DynamicLink | None
 		phone: DF.Data | None
 		phone_ext: DF.Data | None
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
 		probability: DF.Percent
 		probability_text: DF.Literal["Low Probability", "Considering", "Promising", "High Probability", "Committed to Buy"]
-		proposed_budget: DF.Link | None
 		province: DF.Link | None
 		purpose_lead: DF.Link | None
 		region: DF.Link | None
