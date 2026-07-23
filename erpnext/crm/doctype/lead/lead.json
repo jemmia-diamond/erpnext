@@ -43,18 +43,12 @@
   "phone",
   "age_rage",
   "last_message_at",
+  "first_visited_at",
   "touchpoint",
   "column_break_ytqf",
   "email_id",
   "source",
   "interaction_channels",
-  "qualification_tab",
-  "qualification_status",
-  "column_break_64",
-  "qualified_by",
-  "is_assigned",
-  "column_break_mpbs",
-  "qualified_on",
   "qualified_information_section",
   "purpose_lead",
   "preferred_product_type",
@@ -78,6 +72,13 @@
   "ceo_name",
   "contact_section",
   "contact_html",
+  "qualification_tab",
+  "qualification_status",
+  "column_break_64",
+  "qualified_by",
+  "is_assigned",
+  "column_break_mpbs",
+  "qualified_on",
   "address_section",
   "address_html",
   "advanced_information_selection",
@@ -763,7 +764,6 @@
    "options": "Lead Product Item"
   },
   {
-   "collapsible": 1,
    "fieldname": "qualified_information_section",
    "fieldtype": "Section Break",
    "label": "Qualified Information"
@@ -797,6 +797,7 @@
    "options": "Lead"
   },
   {
+   "collapsible": 1,
    "fieldname": "contact_section",
    "fieldtype": "Section Break",
    "label": "Contact Information"
@@ -918,6 +919,7 @@
   {
    "fieldname": "touchpoint",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Touchpoint",
    "options": "\nOffline\nOnline"
   },
@@ -943,6 +945,11 @@
   {
    "fieldname": "column_break_ezcb",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "first_visited_at",
+   "fieldtype": "Datetime",
+   "label": "First Visited Store At"
   }
  ],
  "grid_page_length": 50,
@@ -950,7 +957,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-07-23 10:11:59.936668",
+ "modified": "2026-07-23 13:31:11.544830",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
