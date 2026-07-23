@@ -31,8 +31,10 @@ class CallLog(Document):
 		from frappe.core.doctype.dynamic_link.dynamic_link import DynamicLink
 		from frappe.types import DF
 
+		agent: DF.DynamicLink | None
 		agent_id: DF.Data | None
 		agent_name: DF.Data | None
+		agent_type: DF.Link | None
 		ai_action_item_text: DF.LongText | None
 		ai_summary: DF.LongText | None
 		call_received_by: DF.Link | None
@@ -47,6 +49,7 @@ class CallLog(Document):
 		participant: DF.DynamicLink | None
 		participant_type: DF.Link | None
 		provider: DF.Data | None
+		provider_recording_url: DF.Data | None
 		recording_url: DF.Data | None
 		start_time: DF.Datetime | None
 		status: DF.Literal["Ringing", "In Progress", "Completed", "Failed", "Busy", "No Answer", "Queued", "Cancelled"]
@@ -73,9 +76,11 @@ class CallLog(Document):
 
 		# Add Employee Name
 		self.update_received_by()
+		# Saved recording_url to provider_recording_url
+		if self.recording_url and not self.provider_recording_url:
+			self.provider_recording_url = self.recording_url
 
 	def after_insert(self):
-		self.update_participant_if_missing()
 		self.trigger_call_popup()
 		if self.recording_url:
 			frappe.enqueue(
@@ -85,9 +90,11 @@ class CallLog(Document):
 				enqueue_after_commit=True
 			)
 
-	def on_update(self):
+	def before_save(self):
 		self.update_participant_if_missing()
+		self.link_participant()
 
+	def on_update(self):
 		def _is_call_missed(doc_before_save, doc_after_save):
 			# FIXME: This works for Exotel but not for all telepony providers
 			return doc_before_save.to != doc_after_save.to and doc_after_save.status not in END_CALL_STATUSES
@@ -137,10 +144,6 @@ class CallLog(Document):
 		if customers:
 			self.participant_type = "Customer"
 			self.participant = customers[0].name
-			frappe.db.set_value(self.doctype, self.name, {
-				"participant_type": "Customer",
-				"participant": customers[0].name
-			})
 			return
 
 		leads = frappe.get_all(
@@ -152,10 +155,18 @@ class CallLog(Document):
 		if leads:
 			self.participant_type = "Lead"
 			self.participant = leads[0].name
-			frappe.db.set_value(self.doctype, self.name, {
-				"participant_type": "Lead",
-				"participant": leads[0].name
-			})
+
+	def link_participant(self):
+		if not self.participant_type or not self.participant:
+			return
+
+		link_exists = any(
+			d.link_doctype == self.participant_type and d.link_name == self.participant
+			for d in self.get("links")
+		)
+		if link_exists:
+			return
+		self.add_link(link_type=self.participant_type, link_name=self.participant)
 
 	def add_link(self, link_type, link_name):
 		self.append("links", {"link_doctype": link_type, "link_name": link_name})
@@ -349,13 +360,14 @@ def download_and_attach_recording(call_log_name):
 	try:
 		response = requests.get(download_url, headers=headers)
 		if response.status_code == 200:
-			save_file(
+			file_doc = save_file(
 				fname=f"recording_{call_log.name}.mp3",
 				content=response.content,
 				dt="Call Log",
 				dn=call_log.name,
 				is_private=1
 			)
+			frappe.db.set_value("Call Log", call_log_name, "recording_url", file_doc.file_url)
 			frappe.db.commit()
 	except Exception as e:
 		frappe.log_error(f"Failed to download recording for Call Log {call_log_name}: {str(e)}", "Call Log Recording Download")
