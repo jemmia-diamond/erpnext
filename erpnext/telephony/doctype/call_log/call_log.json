@@ -274,7 +274,7 @@
    "label": "Provider Recording URL"
   },
   {
-   "default": "Kh\u00f4ng x\u00e1c \u0111\u1ecbnh",
+   "default": "Unidentified",
    "fieldname": "participant_name",
    "fieldtype": "Data",
    "in_list_view": 1,
