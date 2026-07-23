@@ -71,97 +71,28 @@ frappe.ui.form.on("Opportunity", {
 	},
 
 	refresh: function (frm) {
-		frappe.dom.set_style(`
-			.new-task-btn, .new-event-btn, .timeline-actions { display: none !important; }
-			/* Notes card layout */
-			.notes-section .all-notes {
-				border: 1px solid #e5e7eb;
-				border-radius: 8px;
-				overflow: hidden;
-				margin-top: 4px;
-			}
-			.comment-content {
-				position: relative;
-				padding: 14px 100px 14px 16px !important;
-				border: none !important;
-				border-bottom: 1px solid #f3f4f6 !important;
-				margin: 0 !important;
-				background: #fff !important;
-				box-shadow: none !important;
-				border-radius: 0 !important;
-				display: block !important;
-			}
-			.comment-content:last-child { border-bottom: none !important; }
-			.comment-content .head { display: none !important; }
-			.comment-content .content { width: 100% !important; padding: 0 !important; float: none !important; }
-			.comment-content > .col-xs-1.text-right {
-				position: absolute !important;
-				top: 10px !important;
-				right: 10px !important;
-				width: auto !important;
-				float: none !important;
-				z-index: 10 !important;
-				display: flex !important;
-				flex-direction: column !important;
-				gap: 2px !important;
-			}
-			.comment-content > .col-xs-1.text-right .btn-link {
-				pointer-events: all !important;
-				cursor: pointer !important;
-				padding: 2px 4px !important;
-				line-height: 1 !important;
-			}
-			.note-text {
-				font-size: 14px !important;
-				font-weight: 500 !important;
-				color: #111827 !important;
-				line-height: 1.6 !important;
-				word-break: break-word !important;
-			}
-			.note-meta { font-size: 11px; color: #9ca3af; margin-top: 6px; }
-			.note-notify {
-				display: inline-flex;
-				align-items: center;
-				gap: 3px;
-				background: #eff6ff;
-				color: #2563eb;
-				border-radius: 999px;
-				padding: 1px 8px;
-				font-size: 11px;
-				font-weight: 500;
-			}
-			.form-footer {
-				display: none !important;
-			}
-			[data-fieldname="all_activities_html"] .form-footer {
-				display: block !important;
-			}
-			[data-fieldtype="Datetime"] .help-box {
-				display: none !important;
-			}
-		`);
 		var doc = frm.doc;
 		frm.trigger("setup_opportunity_from");
 		erpnext.toggle_naming_series();
 
 		if (!frm.is_new() && doc.status !== "Lost") {
-			// if (doc.items) {
-			// 	frm.add_custom_button(
-			// 		__("Supplier Quotation"),
-			// 		function () {
-			// 			frm.trigger("make_supplier_quotation");
-			// 		},
-			// 		__("Create")
-			// 	);
+			if (doc.items) {
+				frm.add_custom_button(
+					__("Supplier Quotation"),
+					function () {
+						frm.trigger("make_supplier_quotation");
+					},
+					__("Create")
+				);
 
-			// 	frm.add_custom_button(
-			// 		__("Request For Quotation"),
-			// 		function () {
-			// 			frm.trigger("make_request_for_quotation");
-			// 		},
-			// 		__("Create")
-			// 	);
-			// }
+				frm.add_custom_button(
+					__("Request For Quotation"),
+					function () {
+						frm.trigger("make_request_for_quotation");
+					},
+					__("Create")
+				);
+			}
 
 			if (frm.doc.opportunity_from != "Customer") {
 				frm.add_custom_button(
@@ -173,13 +104,13 @@ frappe.ui.form.on("Opportunity", {
 				);
 			}
 
-			// frm.add_custom_button(
-			// 	__("Quotation"),
-			// 	function () {
-			// 		frm.trigger("create_quotation");
-			// 	},
-			// 	__("Create")
-			// );
+			frm.add_custom_button(
+				__("Quotation"),
+				function () {
+					frm.trigger("create_quotation");
+				},
+				__("Create")
+			);
 
 			let company_currency = erpnext.get_currency(frm.doc.company);
 			if (company_currency != frm.doc.currency) {
@@ -214,21 +145,6 @@ frappe.ui.form.on("Opportunity", {
 		if (frm.doc.opportunity_from && frm.doc.party_name) {
 			frm.trigger("set_contact_link");
 		}
-
-		if (frm.doc && frm.doc.name && !frm.doc.__islocal) {
-			render_custom_comments(frm);
-		} else {
-			let html_notice = `
-				<div style="text-align: center; color: #8c99a6; padding: 30px; background-color: #fff; border-radius: 8px;">
-					<i class="fa fa-info-circle" style="font-size: 24px; margin-bottom: 10px; color: #ffb100;"></i>
-					<p style="margin: 0; font-size: 13px;">Vui lòng bấm nút <b>Save (Lưu)</b> Cơ hội này trước để kích hoạt tính năng Bình luận.</p>
-				</div>
-			`;
-			if (frm.fields_dict['custom_comment_list']) {
-				frm.fields_dict['custom_comment_list'].$wrapper.html(html_notice);
-			}
-		}
-
 	},
 
 	set_contact_link: function (frm) {
@@ -335,7 +251,6 @@ frappe.ui.form.on("Opportunity", {
 
 		frm.set_value({
 			total: flt(total),
-			opportunity_amount: flt(total),
 			base_total: flt(base_total),
 		});
 	},
@@ -439,192 +354,12 @@ erpnext.crm.Opportunity = class Opportunity extends frappe.ui.form.Controller {
 	}
 
 	show_notes() {
-		if (this.frm.is_new()) return;
-
-		const frm = this.frm;
-		const $wrapper = $(frm.fields_dict.notes_html.wrapper);
-
-		const get_all_notes = () => new Promise((resolve) => {
-			frappe.call({
-				method: "erpnext.crm.doctype.lead.lead.get_related_notes",
-				args: { doctype: frm.doc.doctype, docname: frm.doc.name },
-				callback: (r) => resolve(r.message || [])
-			});
+		const crm_notes = new erpnext.utils.CRMNotes({
+			frm: this.frm,
+			notes_wrapper: $(this.frm.fields_dict.notes_html.wrapper),
 		});
-
-		const render_notes = () => {
-			$wrapper.find(".notes-section").remove();
-
-			get_all_notes().then(notes => {
-				notes.sort((a, b) => new Date(b.added_on) - new Date(a.added_on));
-
-				notes.forEach(n => {
-					let raw = n.note || "";
-					let cleaned = raw;
-					if (raw.includes('custom-note-card')) {
-						let m = raw.match(/<div class="note-text">([\s\S]*?)<\/div>/);
-						cleaned = m ? m[1] : raw;
-					}
-
-					n._raw_note = cleaned;
-
-					let tag = "";
-					const is_foreign = (n.parent !== frm.doc.name || n.parenttype !== frm.doc.doctype);
-					if (is_foreign) {
-						let path = n.parenttype.toLowerCase();
-						let bg = "#f3f4f6";
-						let clr = "#374151";
-						if (n.parenttype === "Lead") {
-							bg = "#fef9c3"; clr = "#92400e";
-						} else if (n.parenttype === "Opportunity") {
-							bg = "#dbeafe"; clr = "#1e40af";
-						} else if (n.parenttype === "Appointment") {
-							bg = "#e0f2fe"; clr = "#0369a1";
-						}
-						tag = `<a href="/app/${path}/${encodeURIComponent(n.parent)}"
-							style="display:inline-block;padding:2px 10px;border-radius:999px;
-							       font-size:11px;font-weight:600;background:${bg};color:${clr};
-							       text-decoration:none;margin-bottom:8px;"
-							onclick="event.stopPropagation();">${__(n.parenttype)}: ${n.parent}</a>`;
-					}
-
-					let by = n.added_by || "";
-					let dt = n.added_on ? frappe.datetime.global_date_format(n.added_on) : "";
-					let notify = n.notify_to_name
-						? `<span class="note-notify">→ ${frappe.utils.escape_html(n.notify_to_name)}</span>`
-						: "";
-					let meta = by
-						? `<div class="note-meta">${by}${dt ? " · " + dt : ""}${notify ? " · " + notify : ""}</div>`
-						: "";
-
-					n.note = `<div class="custom-note-card">${tag}<div class="note-text">${cleaned}</div>${meta}</div>`;
-					n._is_foreign = is_foreign;
-				});
-
-				let html = frappe.render_template("crm_notes", { notes });
-				$(html).appendTo($wrapper);
-
-				$wrapper.find(".new-note-btn").off("click").on("click", () => {
-					let d = new frappe.ui.Dialog({
-						title: __("Add a Note"),
-						fields: [
-							{ label: "Note", fieldname: "note", fieldtype: "Text Editor", enable_mentions: true },
-							{ label: "Notify To", fieldname: "notify_to", fieldtype: "Link", options: "User" }
-						],
-						primary_action_label: __("Add"),
-						primary_action(vals) {
-							let note_val = vals.note || "";
-							let plain_text = note_val.replace(/<[^>]*>/g, "").trim();
-							if (!plain_text) {
-								frappe.msgprint(__("Ghi chú không được để trống."));
-								return;
-							}
-							frappe.call({
-								method: "add_note",
-								doc: frm.doc,
-								args: { note: note_val, notify_to: vals.notify_to },
-								freeze: true,
-								callback(r) {
-									if (!r.exc) { frm.refresh_field("notes"); render_notes(); }
-									d.hide();
-								}
-							});
-						}
-					});
-					d.show();
-				});
-
-				notes.forEach(n => {
-					if (n._is_foreign) {
-						$wrapper.find(`[name="${n.name}"] .edit-note-btn`).remove();
-						$wrapper.find(`[name="${n.name}"] .delete-note-btn`).remove();
-					} else {
-						let $card = $wrapper.find(`[name="${n.name}"]`);
-						$card.data('note_content', n._raw_note || "");
-						$card.data('notify_to', n.notify_to || "");
-
-						if (n.added_by !== frappe.session.user) {
-							$card.find(".delete-note-btn").remove();
-							$card.find(".edit-note-btn").remove();
-						}
-					}
-				});
-
-				$wrapper.find(".edit-note-btn").off("click").on("click", function () {
-					let $card = $(this).closest(".comment-content");
-					let row_name = $card.attr("name");
-					let note_content = $card.data("note_content") || "";
-					let notify_to = $card.data("notify_to") || "";
-
-					let d = new frappe.ui.Dialog({
-						title: __("Edit Note"),
-						fields: [
-							{ label: "Note", fieldname: "note", fieldtype: "Text Editor" },
-							{ label: "Notify To", fieldname: "notify_to", fieldtype: "Link", options: "User", default: notify_to }
-						],
-						primary_action_label: __("Done"),
-						primary_action(vals) {
-							const note_val = vals.note || "";
-							const notify_val = vals.notify_to || null;
-
-							let plain_text = note_val.replace(/<[^>]*>/g, "").trim();
-							if (!plain_text) {
-								frappe.msgprint(__("Ghi chú không được để trống."));
-								return;
-							}
-
-							const do_save = () => {
-								frappe.call({
-									method: "edit_note",
-									doc: frm.doc,
-									args: { note: note_val, notify_to: notify_val, row_id: row_name },
-									freeze: true,
-									callback(r) {
-										if (!r.exc) { frm.refresh_field("notes"); render_notes(); d.hide(); }
-									}
-								});
-							};
-
-							if (notify_val) {
-								frappe.db.get_value("User", notify_val, "name")
-									.then(r => {
-										if (r.message && r.message.name) {
-											do_save();
-										} else {
-											frappe.msgprint(__("Người dùng '{0}' không tồn tại.", [notify_val]));
-										}
-									});
-							} else {
-								do_save();
-							}
-						}
-					});
-					d.show();
-					if (note_content) d.set_value("note", note_content);
-				});
-
-				$wrapper.find(".delete-note-btn").off("click").on("click", function () {
-					let row_name = $(this).closest(".comment-content").attr("name");
-					frappe.confirm(__("Xác nhận xóa ghi chú này?"), function () {
-						frappe.call({
-							method: "delete_note",
-							doc: frm.doc,
-							args: { row_id: row_name },
-							freeze: true,
-							callback(r) {
-								if (!r.exc) { frm.refresh_field("notes"); render_notes(); }
-							}
-						});
-					});
-				});
-			});
-		};
-
-		render_notes();
+		crm_notes.refresh();
 	}
-
-
-
 
 	show_activities() {
 		const crm_activities = new erpnext.utils.CRMActivities({
@@ -656,126 +391,3 @@ cur_frm.cscript.item_code = function (doc, cdt, cdn) {
 		});
 	}
 };
-function render_custom_comments(frm) {
-	frappe.call({
-		method: 'frappe.client.get_list',
-		args: {
-			doctype: 'Comment',
-			fields: ['name', 'comment_by', 'content', 'creation', 'owner'],
-			filters: {
-				reference_doctype: frm.doc.doctype,
-				reference_name: frm.doc.name,
-				comment_type: 'Comment'
-			},
-			order_by: 'creation desc',
-			limit: 100
-		},
-		callback: function (r) {
-			let comments = r.message || [];
-
-			let html_content = `
-				<div class="frappe-custom-comments-wrapper" style="padding: 10px 0; font-family: inherit;">
-					<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-						<div style="font-size: 16px; font-weight: 600; color: var(--text-color);">${__('Comments')} (${comments.length})</div>
-						<button class="btn btn-primary btn-sm button-style" id="btn-custom-new-comment" style="display: inline-flex; align-items: center; gap: 6px;">
-							<svg class="icon icon-sm" style="stroke: #fff; fill: none;"><use href="#icon-add"></use></svg>
-							<span>${__('New Comment')}</span>
-						</button>
-					</div>
-					
-					<div id="custom-comments-container" style="max-height: 600px; overflow-y: auto; padding-left: 8px;">
-			`;
-
-			if (comments.length === 0) {
-				html_content += `
-					<div style="text-align: center; color: var(--text-muted); padding: 40px 20px; border: 1px dashed var(--border-color); border-radius: 8px;">
-						<p style="margin: 0; font-size: 13px;">${__('No comments yet. Start the conversation!')}</p>
-					</div>
-				`;
-			} else {
-				comments.forEach((comment, index) => {
-					// Format thời gian sang dạng DD-MM-YYYY HH:MM chuẩn Việt Nam
-					let time_display = '';
-					if (comment.creation) {
-						let dt = comment.creation.split(' ');
-						let date_part = dt[0].split('-').reverse().join('-');
-						let time_part = dt[1].split('.')[0].substring(0, 5);
-						time_display = `${time_part} ${date_part}`;
-					}
-					let sender_name = comment.comment_by || comment.owner || 'User';
-
-					// Đổ CSS Flat chuẩn của các block element trong Frappe Form Timeline
-					html_content += `
-						<div class="custom-comment-item" style="display: flex; align-items: flex-start; margin-bottom: 20px; position: relative;">
-							
-							${index !== comments.length - 1 ? `<div style="position: absolute; left: 16px; top: 32px; bottom: -28px; width: 1px; background-color: var(--border-color);"></div>` : ''}
-
-							<div style="width: 32px; height: 32px; background-color: var(--gray-100); border: 1px solid var(--border-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 500; color: var(--text-color); margin-right: 16px; flex-shrink: 0; font-size: 12px; text-transform: uppercase;">
-								${sender_name.charAt(0)}
-							</div>
-							
-							<div style="flex-grow: 1; padding-top: 2px;">
-								<div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
-									<span style="font-weight: 600; color: var(--text-color); font-size: 13px;">${sender_name}</span>
-									<span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">• ${time_display}</span>
-								</div>
-								<div style="color: var(--text-color); font-size: 13px; line-height: 1.6; word-break: break-word; white-space: pre-line;">
-									${comment.content}
-								</div>
-							</div>
-						</div>
-					`;
-				});
-			}
-
-			html_content += `</div></div>`;
-
-			if (frm.fields_dict['custom_comment_list'] && frm.fields_dict['custom_comment_list'].$wrapper) {
-				frm.fields_dict['custom_comment_list'].$wrapper.html(html_content);
-			}
-
-			// Xử lý sự kiện click nút thêm mới bình luận
-			$('#btn-custom-new-comment').off('click').on('click', function () {
-				let d = new frappe.ui.Dialog({
-					title: __('Add Comment'),
-					fields: [
-						{
-							label: __('Comment'),
-							fieldname: 'comment_text',
-							fieldtype: 'Small Text',
-							reqd: 1
-						}
-					],
-					primary_action_label: __('Submit'),
-					primary_action(values) {
-						d.get_primary_btn().attr('disabled', true).html(__('Saving...'));
-						frappe.call({
-							method: 'frappe.client.insert',
-							args: {
-								doc: {
-									doctype: 'Comment',
-									comment_type: 'Comment',
-									reference_doctype: frm.doc.doctype,
-									reference_name: frm.doc.name,
-									content: values.comment_text,
-									comment_by: frappe.session.user_fullname || frappe.session.user
-								}
-							},
-							callback: function (res) {
-								d.hide();
-								frappe.show_alert({ message: __('Comment posted'), indicators: 'green' });
-								frm.reload_doc().then(() => {
-									render_custom_comments(frm);
-								});
-							},
-							error: function () {
-								d.get_primary_btn().attr('disabled', false).html(__('Submit'));
-							}
-						});
-					}
-				});
-				d.show();
-			});
-		}
-	});
-}

@@ -16,7 +16,6 @@
   "column_break_jigo",
   "first_reach_at",
   "lead_received_date",
-  "support_sales",
   "naming_series",
   "type",
   "salutation",
@@ -29,6 +28,7 @@
   "last_name",
   "qualified_lead_date",
   "col_break123",
+  "support_sales",
   "primary_sale",
   "customer",
   "request_type",
@@ -43,10 +43,11 @@
   "phone",
   "age_rage",
   "last_message_at",
+  "touchpoint",
   "column_break_ytqf",
   "email_id",
   "source",
-  "custom_note",
+  "interaction_channels",
   "qualification_tab",
   "qualification_status",
   "column_break_64",
@@ -61,23 +62,9 @@
   "budget_lead",
   "expected_delivery_date",
   "proposed_budget",
-  "column_break_wsdb",
-  "province",
   "region",
-  "section_break_wupd",
-  "jewelry_interest",
-  "other_section",
-  "customer_persona",
-  "column_break_wexg",
-  "purchase_objection",
-  "other_information_section",
-  "interaction_channels",
-  "point_of_purchase",
-  "column_break_pbaf",
-  "referrer",
-  "active_engaged_customers",
-  "column_break_rrvw",
-  "touchpoint",
+  "column_break_ezcb",
+  "province",
   "organization_section",
   "company_name",
   "no_of_employees",
@@ -139,7 +126,6 @@
   "whatsapp_no",
   "column_break_16",
   "phone_ext",
-  "offline_sales_tab",
   "note_tab",
   "section_break_lamm",
   "notes_html",
@@ -155,6 +141,7 @@
  ],
  "fields": [
   {
+   "default": "CRM-LEAD-.YYYY.-",
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "hidden": 1,
@@ -449,6 +436,7 @@
    "label": "Phone Ext."
   },
   {
+   "collapsible": 1,
    "fieldname": "qualification_tab",
    "fieldtype": "Section Break",
    "label": "Qualification"
@@ -490,6 +478,7 @@
   {
    "fieldname": "address_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Address Information"
   },
   {
@@ -658,7 +647,7 @@
   {
    "fieldname": "basic_information_section",
    "fieldtype": "Section Break",
-   "label": "Sale Information"
+   "label": "Sales Information"
   },
   {
    "collapsible": 1,
@@ -774,6 +763,7 @@
    "options": "Lead Product Item"
   },
   {
+   "collapsible": 1,
    "fieldname": "qualified_information_section",
    "fieldtype": "Section Break",
    "label": "Qualified Information"
@@ -782,10 +772,6 @@
    "fieldname": "expected_delivery_date",
    "fieldtype": "Date",
    "label": "Expected Delivery Date"
-  },
-  {
-   "fieldname": "column_break_wsdb",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "pancake_data",
@@ -818,7 +804,6 @@
   {
    "fieldname": "note_tab",
    "fieldtype": "Tab Break",
-   "hidden": 1,
    "label": "Notes"
   },
   {
@@ -850,6 +835,7 @@
   {
    "fieldname": "region",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Region",
    "options": "Region",
    "read_only": 1
@@ -888,33 +874,17 @@
   },
   {
    "fieldname": "section_break_wcmy",
-   "fieldtype": "Section Break",
-   "hidden": 1
-  },
-  {
-   "fieldname": "custom_note",
-   "fieldtype": "Small Text",
-   "label": "Note"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "section_break_lamm",
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "offline_sales_tab",
-   "fieldtype": "Tab Break",
-   "label": "Offline Sales"
-  },
-  {
    "fieldname": "age_rage",
    "fieldtype": "Select",
    "label": "Ages",
    "options": "\nUnder 18\n18 to 24\n25 to 34\n35 to 44\n45 to 54\n55 to 64\n65+\nUnidentified"
-  },
-  {
-   "fieldname": "purchase_objection",
-   "fieldtype": "Small Text",
-   "label": "Purchase Objection"
   },
   {
    "fieldname": "customer_information_section",
@@ -930,29 +900,9 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "other_section",
-   "fieldtype": "Section Break",
-   "label": "Note"
-  },
-  {
-   "fieldname": "customer_persona",
-   "fieldtype": "Small Text",
-   "label": "Customer Persona"
-  },
-  {
-   "fieldname": "section_break_wupd",
-   "fieldtype": "Section Break",
-   "label": "Product Information"
-  },
-  {
-   "fieldname": "jewelry_interest",
-   "fieldtype": "Table",
-   "options": "Lead Jewelry Interest"
-  },
-  {
    "fieldname": "purpose_lead",
    "fieldtype": "Link",
-   "label": "Purpose Lead",
+   "label": "Lead Purpose",
    "options": "Lead Demand"
   },
   {
@@ -960,46 +910,10 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "column_break_wexg",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "other_information_section",
-   "fieldtype": "Section Break",
-   "label": "Other Information"
-  },
-  {
    "fieldname": "interaction_channels",
    "fieldtype": "Link",
    "label": "Interaction Channels",
    "options": "Lead Source"
-  },
-  {
-   "fieldname": "point_of_purchase",
-   "fieldtype": "Select",
-   "hidden": 1,
-   "label": "Point of Purchase",
-   "options": "\nOffline\nOnline"
-  },
-  {
-   "fieldname": "column_break_pbaf",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "referrer",
-   "fieldtype": "Data",
-   "label": "Referrer"
-  },
-  {
-   "default": "0",
-   "fieldname": "active_engaged_customers",
-   "fieldtype": "Check",
-   "hidden": 1,
-   "label": "Active Engaged Customers"
-  },
-  {
-   "fieldname": "column_break_rrvw",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "touchpoint",
@@ -1010,6 +924,7 @@
   {
    "fieldname": "primary_sale",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Primary Sales",
    "options": "Sales Person"
   },
@@ -1024,6 +939,10 @@
    "fieldtype": "Datetime",
    "hidden": 1,
    "label": "Last Message At"
+  },
+  {
+   "fieldname": "column_break_ezcb",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
@@ -1031,7 +950,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-07-14 17:40:17.136924",
+ "modified": "2026-07-23 10:11:59.936668",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",

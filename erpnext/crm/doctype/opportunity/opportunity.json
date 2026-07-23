@@ -15,35 +15,37 @@
   "detail_tab",
   "opportunity_section",
   "column_break_10",
-  "title",
-  "gender",
   "expected_closing",
-  "opportunity_owner",
-  "column_break_shzo",
-  "phone",
   "status",
   "opportunity_date",
+  "column_break_shzo",
+  "opportunity_owner",
+  "party_name",
+  "opportunity_from",
   "naming_series",
   "customer_name",
   "column_break0",
-  "contact_email",
   "probability",
   "probability_text",
   "opportunity_type",
-  "opportunity_from",
-  "party_name",
   "sales_stage",
+  "lead_section",
+  "title",
+  "gender",
+  "column_break_snpe",
+  "phone",
+  "column_break_ubbq",
+  "contact_email",
   "customer_demand_sections",
   "purpose_lead",
-  "expected_delivery_date",
   "preferred_product_type",
   "column_break_pfyx",
   "budget_lead",
-  "proposed_budget",
-  "opportunity_amount",
+  "expected_delivery_date",
   "column_break_rirs",
   "province",
   "region",
+  "opportunity_amount",
   "organization_details_section",
   "no_of_employees",
   "annual_revenue",
@@ -118,8 +120,10 @@
  ],
  "fields": [
   {
+   "default": "CRM-OPP-.YYYY.-",
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Series",
    "no_copy": 1,
    "oldfieldname": "naming_series",
@@ -145,13 +149,13 @@
    "bold": 1,
    "fieldname": "party_name",
    "fieldtype": "Dynamic Link",
+   "hidden": 1,
    "label": "Party Name",
    "oldfieldname": "customer",
    "oldfieldtype": "Link",
    "options": "opportunity_from",
    "print_hide": 1,
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   },
   {
    "bold": 1,
@@ -267,6 +271,7 @@
   {
    "fieldname": "contact_info",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Contact",
    "options": "fa fa-bullhorn"
   },
@@ -574,6 +579,7 @@
    "depends_on": "eval:!doc.__islocal",
    "fieldname": "dashboard_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Connections",
    "show_dashboard": 1
   },
@@ -687,6 +693,7 @@
    "collapsible": 1,
    "fieldname": "utm_analytics_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Analytics"
   },
   {
@@ -744,6 +751,7 @@
   {
    "fieldname": "region",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Region",
    "options": "Region",
    "read_only": 1
@@ -763,6 +771,7 @@
   {
    "fieldname": "team_sale_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Team sale"
   },
   {
@@ -774,12 +783,6 @@
    "fieldname": "section_break_urbk",
    "fieldtype": "Section Break",
    "hidden": 1
-  },
-  {
-   "fieldname": "proposed_budget",
-   "fieldtype": "Link",
-   "label": "Proposed Budget",
-   "options": "Lead Budget"
   },
   {
    "fieldname": "column_break_shzo",
@@ -798,13 +801,26 @@
    "in_list_view": 1,
    "label": "Probability",
    "options": "Low Probability\nConsidering\nPromising\nHigh Probability\nCommitted to Buy"
+  },
+  {
+   "fieldname": "lead_section",
+   "fieldtype": "Section Break",
+   "label": "Lead"
+  },
+  {
+   "fieldname": "column_break_snpe",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ubbq",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "icon": "fa fa-info-sign",
  "idx": 195,
  "links": [],
- "modified": "2026-06-29 13:09:01.645396",
+ "modified": "2026-07-23 10:13:24.183116",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Opportunity",

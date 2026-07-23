@@ -1,43 +1,35 @@
-<div class="notes-section col-xs-12">
-	<div class="new-btn pb-3">
-		<button class="btn btn-sm small new-note-btn mr-1">
-			<svg class="icon icon-sm">
-				<use href="#icon-add"></use>
-			</svg>
+<div class="notes-section">
+	<div class="new-btn pb-3 text-right">
+		<button class="btn btn-sm btn-default new-note-btn">
+			<svg class="icon icon-sm"><use href="#icon-add"></use></svg>
 			{{ __("New Note") }}
 		</button>
 	</div>
+
 	<div class="all-notes">
 		{% if (notes.length) { %}
 			{% for(var i=0, l=notes.length; i<l; i++) { %}
-				<div class="comment-content p-3 row" name="{{ notes[i].name }}">
-					<div class="mb-2 head col-xs-3">
-						{% if (notes[i].added_by && notes[i].added_on) %}
-						<div class="row">
-							<div class="col-xs-2">
-								{{ frappe.avatar(notes[i].added_by) }}
-							</div>
-							<div class="col-xs-10">
-								<div class="mr-2 title font-weight-bold ellipsis" title="{{ strip_html(notes[i].added_by) }}">
-									{{ strip_html(notes[i].added_by) }}
-								</div>
-								<div class="time small text-muted">
-									{{ frappe.datetime.global_date_format(notes[i].added_on) }}
-								</div>
-							</div>
+				<div class="note-card comment-content" name="{{ notes[i].name }}">
+					<div class="note-card-header">
+						<h5 class="note-title ellipsis">{{ notes[i].type || 'Note' }}</h5>
+						<div class="note-actions">
+							<span class="delete-note-btn btn btn-link p-0" title="Delete">
+								<svg class="icon icon-md"><use xlink:href="#icon-delete"></use></svg>
+							</span>
 						</div>
-						{% } %}
 					</div>
-					<div class="content col-xs-8">
-						{{ notes[i].note }}
+					<div class="note-card-body">
+						{% var plain_text = strip_html(notes[i].note) || ''; %}
+						{{ plain_text.length > 50 ? plain_text.substring(0, 50) + '...' : plain_text }}
 					</div>
-					<div class="col-xs-1 text-right">
-						<span class="edit-note-btn btn btn-link">
-							<svg class="icon icon-sm"><use xlink:href="#icon-edit"></use></svg>
-						</span>
-						<span class="delete-note-btn  btn btn-link pl-2">
-							<svg class="icon icon-xs"><use xlink:href="#icon-delete"></use></svg>
-						</span>
+					<div class="note-card-footer">
+						<div class="note-author">
+							{{ frappe.avatar(notes[i].added_by, "avatar-xs") }}
+							<span class="author-name ml-2">{{ frappe.user_info(notes[i].added_by).fullname || notes[i].added_by }}</span>
+						</div>
+						<div class="note-time text-muted small">
+							{{ frappe.datetime.comment_when(notes[i].added_on) }}
+						</div>
 					</div>
 				</div>
 			{% } %}
@@ -45,32 +37,90 @@
             <div class="no-activity text-muted pt-6">
                 {{ __("No Notes") }}
             </div>
-		    {% } %}
+		{% } %}
 	</div>
 </div>
 
 <style>
-
-.comment-content {
-    border: 1px solid var(--border-color);
-	border-bottom: none;
+.notes-section {
+	padding: 15px 0;
 }
-
-.comment-content:last-child {
-    border-bottom: 1px solid var(--border-color);
+.all-notes {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 15px;
 }
-
-.new-btn {
-	text-align: right;
+.note-card {
+	background-color: var(--bg-color);
+	border: 1px solid var(--border-color);
+	border-radius: var(--border-radius, 8px);
+	padding: 15px;
+	display: flex;
+	flex-direction: column;
+	transition: background-color 0.2s, box-shadow 0.2s;
+	cursor: pointer;
 }
-
+.note-card:hover {
+	background-color: var(--control-bg);
+	box-shadow: var(--shadow-sm);
+}
+.note-card-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 10px;
+}
+.note-title {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--text-color);
+	max-width: 80%;
+}
+.note-actions {
+	display: flex;
+	opacity: 0;
+	transition: opacity 0.2s;
+}
+.note-card:hover .note-actions {
+	opacity: 1;
+}
+.note-card-body {
+	flex-grow: 1;
+	font-size: 13px;
+	color: var(--text-color);
+	line-height: 1.5;
+	margin-bottom: 15px;
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-line-clamp: 5;
+	-webkit-box-orient: vertical;
+	padding: 0 !important;
+}
+.note-card-body p {
+	margin-bottom: 0.5em;
+}
+.note-card-footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding-top: 10px;
+	border-top: 2px solid var(--border-color);
+}
+.note-author {
+	display: flex;
+	align-items: center;
+	font-size: 12px;
+	color: var(--text-color);
+}
+.author-name {
+	font-weight: 500;
+}
 .notes-section .no-activity {
 	min-height: 100px;
-	text-align: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	grid-column: 1 / -1;
 }
-
-.notes-section .btn {
-	padding: 0.2rem 0.2rem;
-}
-
 </style>
