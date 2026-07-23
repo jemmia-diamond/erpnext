@@ -20,6 +20,7 @@ from erpnext.controllers.selling_controller import SellingController
 from erpnext.crm.utils import CRMNote, copy_comments, link_communications, link_open_events
 from erpnext.selling.doctype.customer.customer import parse_full_name
 from frappe.utils import date_diff, now_datetime, get_datetime
+from erpnext.utilities.phone_utils import get_phone_variants
 
 
 class Lead(SellingController, CRMNote):
@@ -1076,12 +1077,13 @@ def get_lead_with_phone_number(number):
 	if not number:
 		return
 
+	variants = get_phone_variants(number)
 	leads = frappe.get_all(
 		"Lead",
 		or_filters={
-			"phone": ["like", f"%{number}"],
-			"whatsapp_no": ["like", f"%{number}"],
-			"mobile_no": ["like", f"%{number}"],
+			"phone": ["in", variants],
+			"whatsapp_no": ["in", variants],
+			"mobile_no": ["in", variants],
 		},
 		limit=1,
 		order_by="creation DESC",
