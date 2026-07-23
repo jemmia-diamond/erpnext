@@ -34,6 +34,7 @@
   "duration",
   "recording_html",
   "provider",
+  "provider_recording_url",
   "section_break_11",
   "type_of_call",
   "summary",
@@ -127,7 +128,6 @@
   {
    "fieldname": "section_break_11",
    "fieldtype": "Section Break",
-   "hidden": 1,
    "hide_border": 1,
    "label": "Call Summary"
   },
@@ -265,12 +265,18 @@
    "fieldtype": "Data",
    "label": "Agent Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "provider_recording_url",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Provider Recording URL"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-15 14:14:31.936118",
+ "modified": "2026-07-23 15:15:10.803898",
  "modified_by": "Administrator",
  "module": "Telephony",
  "name": "Call Log",
