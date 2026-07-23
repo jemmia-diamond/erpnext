@@ -13,6 +13,7 @@
   "customer_sentinent",
   "call_details_section",
   "id",
+  "participant_name",
   "from",
   "type",
   "call_received_by",
@@ -53,14 +54,12 @@
   {
    "fieldname": "from",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "From",
    "read_only": 1
   },
   {
    "fieldname": "to",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "To",
    "read_only": 1
   },
@@ -249,9 +248,10 @@
   {
    "fieldname": "agent",
    "fieldtype": "Dynamic Link",
-   "hidden": 1,
+   "in_list_view": 1,
    "label": "Agent",
    "options": "agent_type",
+   "read_only": 1,
    "search_index": 1
   },
   {
@@ -271,12 +271,19 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Provider Recording URL"
+  },
+  {
+   "default": "Unidentified",
+   "fieldname": "participant_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Participant Name"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-23 15:15:10.803898",
+ "modified": "2026-07-23 16:25:08.278512",
  "modified_by": "Administrator",
  "module": "Telephony",
  "name": "Call Log",
@@ -337,7 +344,7 @@
   }
  ],
  "row_format": "Dynamic",
- "sort_field": "creation",
+ "sort_field": "start_time",
  "sort_order": "DESC",
  "states": [],
  "title_field": "type",
