@@ -113,7 +113,8 @@
    "fieldname": "links",
    "fieldtype": "Table",
    "label": "Links",
-   "options": "Dynamic Link"
+   "options": "Dynamic Link",
+   "permlevel": 9
   },
   {
    "fieldname": "column_break_4",
@@ -273,7 +274,7 @@
    "label": "Provider Recording URL"
   },
   {
-   "default": "Unidentified",
+   "default": "Kh\u00f4ng x\u00e1c \u0111\u1ecbnh",
    "fieldname": "participant_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -283,7 +284,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-23 16:25:08.278512",
+ "modified": "2026-07-23 16:53:34.637511",
  "modified_by": "Administrator",
  "module": "Telephony",
  "name": "Call Log",
@@ -344,7 +345,7 @@
   }
  ],
  "row_format": "Dynamic",
- "sort_field": "start_time",
+ "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
  "title_field": "type",
