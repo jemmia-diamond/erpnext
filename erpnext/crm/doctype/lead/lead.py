@@ -299,15 +299,6 @@ class Lead(SellingController, CRMNote):
 					if inserted_at_dt < first_reach_at_dt:
 						self.first_reach_at = inserted_at_dt
 
-		if self.first_visited_at:
-			first_visited_at_dt = frappe.utils.get_datetime(self.first_visited_at)
-			if not self.first_reach_at:
-				self.first_reach_at = self.first_visited_at
-			else:
-				first_reach_at_dt = frappe.utils.get_datetime(self.first_reach_at)
-				if first_visited_at_dt < first_reach_at_dt:
-					self.first_reach_at = self.first_visited_at
-
 	def upsert_lead_source(self):
 		# Update source if source is None
 		if self.source is None or self.source.strip() == "":

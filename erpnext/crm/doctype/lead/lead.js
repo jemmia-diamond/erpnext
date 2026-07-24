@@ -255,5 +255,19 @@ frappe.ui.form.on('Lead', {
 				}
 			})
 		});
+	},
+	first_visited_at(frm) {
+		frm.set_df_property('source', 'reqd', 1);
+		if (frm.doc.source) {
+			let old_source = frm.doc.source;
+			frm.set_value('source', '');
+			frappe.db.get_value("Lead Source", old_source, "source_name").then(r => {
+				let source_name = (r && r.message && r.message.source_name) ? r.message.source_name : old_source;
+				frm.set_df_property('source', 'description', `<b>Vui lòng chọn lại nguồn mong muốn, khi cập nhật ngày đến cửa hàng. <span style="color: red;">(Nguồn cũ: ${source_name})</span></b>`);
+			});
+		} else {
+			frm.set_value('source', '');
+			frm.set_df_property('source', 'description', '<b style="color: red;">Vui lòng chọn lại nguồn mong muốn, khi cập nhật ngày đến cửa hàng.</b>');
+		}
 	}
 })
