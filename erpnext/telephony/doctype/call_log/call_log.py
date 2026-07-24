@@ -50,8 +50,8 @@ class CallLog(Document):
 		participant_name: DF.Data | None
 		participant_type: DF.Link | None
 		provider: DF.Data | None
-		provider_recording_url: DF.Data | None
-		recording_url: DF.Data | None
+		provider_recording_url: DF.Text | None
+		recording_url: DF.Text | None
 		start_time: DF.Datetime | None
 		status: DF.Literal["Ringing", "In Progress", "Completed", "Failed", "Busy", "No Answer", "Queued", "Cancelled"]
 		summary: DF.SmallText | None
