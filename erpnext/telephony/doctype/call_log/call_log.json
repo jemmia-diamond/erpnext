@@ -81,7 +81,7 @@
   },
   {
    "fieldname": "recording_url",
-   "fieldtype": "Data",
+   "fieldtype": "Text",
    "hidden": 1,
    "label": "Recording URL"
   },
@@ -269,7 +269,7 @@
   },
   {
    "fieldname": "provider_recording_url",
-   "fieldtype": "Data",
+   "fieldtype": "Text",
    "hidden": 1,
    "label": "Provider Recording URL"
   },
@@ -284,7 +284,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-23 17:07:54.128166",
+ "modified": "2026-07-24 10:47:35.523234",
  "modified_by": "Administrator",
  "module": "Telephony",
  "name": "Call Log",
