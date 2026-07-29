@@ -15,13 +15,11 @@
   "detail_tab",
   "opportunity_section",
   "column_break_10",
-  "expected_closing",
-  "status",
   "opportunity_date",
+  "expected_closing",
   "column_break_shzo",
   "opportunity_owner",
   "party_name",
-  "opportunity_from",
   "naming_series",
   "customer_name",
   "column_break0",
@@ -29,13 +27,16 @@
   "probability_text",
   "opportunity_type",
   "sales_stage",
+  "support_sales",
   "lead_section",
   "title",
   "gender",
   "column_break_snpe",
   "phone",
+  "age_rage",
   "column_break_ubbq",
   "contact_email",
+  "status",
   "customer_demand_sections",
   "purpose_lead",
   "preferred_product_type",
@@ -113,6 +114,10 @@
   "dashboard_tab",
   "comment",
   "activities_tab",
+  "opportunity_from",
+  "column_break_xsfw",
+  "last_sales_message_at",
+  "last_customer_message_at",
   "section_break_urbk",
   "open_activities_html",
   "all_activities_section",
@@ -136,7 +141,6 @@
    "default": "Lead",
    "fieldname": "opportunity_from",
    "fieldtype": "Link",
-   "hidden": 1,
    "label": "Opportunity From",
    "oldfieldname": "enquiry_from",
    "oldfieldtype": "Select",
@@ -193,18 +197,18 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Status",
+   "label": "Opportunity Status",
    "no_copy": 1,
    "oldfieldname": "status",
    "oldfieldtype": "Select",
-   "options": "Open\nQuotation\nConverted\nLost\nNegotiation\nClosed",
+   "options": "Open\nNurturing\nNegotiation\nDelayed\nWon\nLost",
    "print_hide": 1,
    "reqd": 1
   },
   {
    "fieldname": "order_lost_reason",
    "fieldtype": "Small Text",
-   "label": "Order Lost Reason",
+   "label": "Lost detail",
    "no_copy": 1,
    "read_only": 1
   },
@@ -252,7 +256,6 @@
    "fieldname": "probability",
    "fieldtype": "Percent",
    "hidden": 1,
-   "in_list_view": 1,
    "label": "Probability (number)"
   },
   {
@@ -699,7 +702,7 @@
   {
    "fieldname": "customer_demand_sections",
    "fieldtype": "Section Break",
-   "label": "Customer Demand Sections"
+   "label": "Qualified Information"
   },
   {
    "fieldname": "purpose_lead",
@@ -798,14 +801,14 @@
    "default": "Promising",
    "fieldname": "probability_text",
    "fieldtype": "Select",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Probability",
    "options": "Low Probability\nConsidering\nPromising\nHigh Probability\nCommitted to Buy"
   },
   {
    "fieldname": "lead_section",
    "fieldtype": "Section Break",
-   "label": "Lead"
+   "label": "Customer information"
   },
   {
    "fieldname": "column_break_snpe",
@@ -814,13 +817,39 @@
   {
    "fieldname": "column_break_ubbq",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "support_sales",
+   "fieldtype": "Table MultiSelect",
+   "label": "Sales Support",
+   "options": "Sales Person Child"
+  },
+  {
+   "fieldname": "last_sales_message_at",
+   "fieldtype": "Datetime",
+   "label": "Last Sales Message At"
+  },
+  {
+   "fieldname": "last_customer_message_at",
+   "fieldtype": "Datetime",
+   "label": "Last Customer Message At"
+  },
+  {
+   "fieldname": "age_rage",
+   "fieldtype": "Select",
+   "label": "Ages",
+   "options": "\nUnder 18\n18 to 24\n25 to 34\n35 to 44\n45 to 54\n55 to 64\n65+\nUnidentified"
+  },
+  {
+   "fieldname": "column_break_xsfw",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "icon": "fa fa-info-sign",
  "idx": 195,
  "links": [],
- "modified": "2026-07-23 10:13:24.183116",
+ "modified": "2026-07-28 12:11:07.651456",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Opportunity",

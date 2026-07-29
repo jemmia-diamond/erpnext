@@ -72,68 +72,73 @@ frappe.ui.form.on("Opportunity", {
 
 	refresh: function (frm) {
 		var doc = frm.doc;
+		// const is_auto_lost = doc.status === "Lost" && (doc.lost_reasons || []).some(r => r.lost_reason === "Auto Lost");
+		// if (is_auto_lost) {
+		// 	frm.set_read_only();
+		// }
 		frm.trigger("setup_opportunity_from");
-		erpnext.toggle_naming_series();
+		// erpnext.toggle_naming_series();
 
-		if (!frm.is_new() && doc.status !== "Lost") {
-			if (doc.items) {
-				frm.add_custom_button(
-					__("Supplier Quotation"),
-					function () {
-						frm.trigger("make_supplier_quotation");
-					},
-					__("Create")
-				);
+		// if (!frm.is_new() && doc.status !== "Lost") {
+		// 	if (doc.items) {
+		// 		frm.add_custom_button(
+		// 			__("Supplier Quotation"),
+		// 			function () {
+		// 				frm.trigger("make_supplier_quotation");
+		// 			},
+		// 			__("Create")
+		// 		);
 
-				frm.add_custom_button(
-					__("Request For Quotation"),
-					function () {
-						frm.trigger("make_request_for_quotation");
-					},
-					__("Create")
-				);
-			}
+		// 		frm.add_custom_button(
+		// 			__("Request For Quotation"),
+		// 			function () {
+		// 				frm.trigger("make_request_for_quotation");
+		// 			},
+		// 			__("Create")
+		// 		);
+		// 	}
 
-			if (frm.doc.opportunity_from != "Customer") {
-				frm.add_custom_button(
-					__("Customer"),
-					function () {
-						frm.trigger("make_customer");
-					},
-					__("Create")
-				);
-			}
+		// 	if (frm.doc.opportunity_from != "Customer") {
+		// 		frm.add_custom_button(
+		// 			__("Customer"),
+		// 			function () {
+		// 				frm.trigger("make_customer");
+		// 			},
+		// 			__("Create")
+		// 		);
+		// 	}
 
-			frm.add_custom_button(
-				__("Quotation"),
-				function () {
-					frm.trigger("create_quotation");
-				},
-				__("Create")
-			);
+		// 	frm.add_custom_button(
+		// 		__("Quotation"),
+		// 		function () {
+		// 			frm.trigger("create_quotation");
+		// 		},
+		// 		__("Create")
+		// 	);
 
-			let company_currency = erpnext.get_currency(frm.doc.company);
-			if (company_currency != frm.doc.currency) {
-				frm.add_custom_button(__("Fetch Latest Exchange Rate"), function () {
-					frm.trigger("currency");
-				});
-			}
-		}
+		// 	let company_currency = erpnext.get_currency(frm.doc.company);
+		// 	if (company_currency != frm.doc.currency) {
+		// 		frm.add_custom_button(__("Fetch Latest Exchange Rate"), function () {
+		// 			frm.trigger("currency");
+		// 		});
+		// 	}
+		// }
 
-		if (!frm.doc.__islocal && frm.perm[0].write && frm.doc.docstatus == 0) {
-			if (frm.doc.status === "Open") {
-				frm.add_custom_button(__("Close"), function () {
-					frm.set_value("status", "Closed");
-					frm.save();
-				});
-			} else {
-				frm.add_custom_button(__("Reopen"), function () {
-					frm.set_value("lost_reasons", []);
-					frm.set_value("status", "Open");
-					frm.save();
-				});
-			}
-		}
+		// if (!frm.doc.__islocal && frm.perm[0].write && frm.doc.docstatus == 0) {
+			// if (frm.doc.status === "Open") {
+			// 	frm.add_custom_button(__("Won"), function () {
+			// 		frm.set_value("status", "Won");
+			// 		frm.save();
+			// 	});
+			// } else {
+				// frm.add_custom_button(__("Reopen"), function () {
+				// 	frm.set_value("lost_reasons", []);
+				// 	frm.set_value("status", "Open");
+				// 	frm.save();
+				// });
+			// }
+
+		// }
 
 		if (!frm.is_new()) {
 			frappe.contacts.render_address_and_contact(frm);
@@ -144,6 +149,11 @@ frappe.ui.form.on("Opportunity", {
 
 		if (frm.doc.opportunity_from && frm.doc.party_name) {
 			frm.trigger("set_contact_link");
+
+			let label = frm.doc.opportunity_from === "Customer" ? __("Go to Customer") : __("Go to Lead");
+			frm.add_custom_button(label, function () {
+				frappe.set_route("Form", frm.doc.opportunity_from, frm.doc.party_name);
+			});
 		}
 	},
 
