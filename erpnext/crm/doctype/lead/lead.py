@@ -86,6 +86,7 @@ class Lead(SellingController, CRMNote):
 		no_of_employees: DF.Literal["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"]
 		notes: DF.Table[CRMNote]
 		pancake_data: DF.JSON | None
+		performed_by: DF.Data | None
 		personal_id: DF.Data | None
 		personal_tax_id: DF.Data | None
 		phone: DF.Data | None
