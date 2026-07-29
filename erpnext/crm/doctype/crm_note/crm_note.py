@@ -23,7 +23,7 @@ class CRMNote(Document):
 		parent: DF.Data
 		parentfield: DF.Data
 		parenttype: DF.Data
-		type: DF.Literal["Ch\u00e2n dung kh\u00e1ch h\u00e0ng", "X\u1eed l\u00fd t\u1eeb ch\u1ed1i", "Kh\u00e1c"]
+		type: DF.Literal["Status Update", "Customer Profile", "Objection Handling", "System", "Other", "Ch\u00e2n dung kh\u00e1ch h\u00e0ng", "X\u1eed l\u00fd t\u1eeb ch\u1ed1i", "Kh\u00e1c"]
 	# end: auto-generated types
 
 	def update_added_by(self):
