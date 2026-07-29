@@ -11,9 +11,13 @@
   "allow_lead_duplication_based_on_emails",
   "column_break_4",
   "auto_creation_of_contact",
+  "auto_nurture_leads",
   "opportunity_section",
+  "auto_close_opportunity",
   "close_opportunity_after_days",
   "column_break_9",
+  "auto_create_opportunity",
+  "auto_create_opportunity_on_converted_lead",
   "quotation_section",
   "default_valid_till",
   "section_break_13",
@@ -50,6 +54,24 @@
    "label": "Allow Lead Duplication based on Emails"
   },
   {
+   "default": "0",
+   "fieldname": "auto_nurture_leads",
+   "fieldtype": "Check",
+   "label": "Auto Nurture Inactive Leads"
+  },
+  {
+   "default": "0",
+   "fieldname": "auto_create_opportunity",
+   "fieldtype": "Check",
+   "label": "Auto Create Opportunity when Lead has Core Info"
+  },
+  {
+   "default": "0",
+   "fieldname": "auto_create_opportunity_on_converted_lead",
+   "fieldtype": "Check",
+   "label": "Auto Create Opportunity for Converted Leads on Interaction"
+  },
+  {
    "default": "1",
    "fieldname": "auto_creation_of_contact",
    "fieldtype": "Check",
@@ -65,7 +87,13 @@
    "description": "Auto close Opportunity Replied after the no. of days mentioned above",
    "fieldname": "close_opportunity_after_days",
    "fieldtype": "Int",
-   "label": "Close Replied Opportunity After Days"
+   "label": "Close Opportunity After Days"
+  },
+  {
+   "default": "0",
+   "fieldname": "auto_close_opportunity",
+   "fieldtype": "Check",
+   "label": "Auto Close Inactive Opportunities"
   },
   {
    "fieldname": "column_break_4",
@@ -101,12 +129,11 @@
   }
  ],
  "grid_page_length": 50,
- "hide_toolbar": 0,
  "icon": "fa fa-cog",
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-03-16 13:28:19.573964",
+ "modified": "2026-07-29 09:57:52.188305",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "CRM Settings",
