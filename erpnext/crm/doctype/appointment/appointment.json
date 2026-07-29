@@ -20,6 +20,7 @@
   "auto_close",
   "offline_sales",
   "order_status",
+  "performed_by",
   "column_break_wnab",
   "appointment_reason",
   "policies",
@@ -353,10 +354,16 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Sales Support Name"
+  },
+  {
+   "fieldname": "performed_by",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Performed By"
   }
  ],
  "links": [],
- "modified": "2026-07-15 14:49:29.930317",
+ "modified": "2026-07-29 06:33:17.952926",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Appointment",
