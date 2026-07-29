@@ -27,6 +27,7 @@
   "job_title",
   "last_name",
   "qualified_lead_date",
+  "performed_by",
   "col_break123",
   "support_sales",
   "primary_sale",
@@ -968,6 +969,12 @@
   {
    "fieldname": "column_break_oznw",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "performed_by",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Performed By"
   }
  ],
  "grid_page_length": 50,
@@ -975,7 +982,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-07-28 14:30:25.567811",
+ "modified": "2026-07-29 05:52:41.151770",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
