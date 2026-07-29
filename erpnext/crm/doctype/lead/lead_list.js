@@ -3,8 +3,17 @@ const VISIBLE_PHONE_DIGITS = 5;
 frappe.listview_settings["Lead"] = {
 	hide_name_column: true,
 	get_indicator: function (doc) {
-		var indicator = [__(doc.status), frappe.utils.guess_colour(doc.status), "status,=," + doc.status];
-		return indicator;
+		const colors = {
+			"Lead": "blue",
+			"Prospecting": "orange",
+			"Nurturing": "purple",
+			"Qualified": "green",
+			"Converted": "darkgreen",
+			"Do Not Contact": "gray",
+			"Spam": "red"
+		};
+		const color = colors[doc.status] || "gray";
+		return [__(doc.status), color, "status,=," + doc.status];
 	},
 	onload: function (listview) {
 		const CONVERTIBLE_OPERATORS = ['like', 'not like', '=', '!='];

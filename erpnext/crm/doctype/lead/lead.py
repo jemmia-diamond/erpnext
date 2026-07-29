@@ -66,12 +66,13 @@ class Lead(SellingController, CRMNote):
 		gender: DF.Link | None
 		image: DF.AttachImage | None
 		industry: DF.Link | None
-		interaction_channels: DF.Link | None
 		is_assigned: DF.Check
 		job_title: DF.Data | None
 		language: DF.Link | None
+		last_customer_message_at: DF.Datetime | None
 		last_message_at: DF.Datetime | None
 		last_name: DF.Data | None
+		last_sales_message_at: DF.Datetime | None
 		lead_name: DF.Data | None
 		lead_owner: DF.Link | None
 		lead_received_date: DF.Datetime | None
@@ -104,7 +105,8 @@ class Lead(SellingController, CRMNote):
 		salutation: DF.Link | None
 		source: DF.Link | None
 		state: DF.Data | None
-		status: DF.Literal["Lead", "Contacted", "Replied", "Interested", "Qualified", "Opportunity", "Converted", "Do Not Contact", "Spam"]
+		status: DF.Literal["Lead", "Prospecting", "Nurturing", "Qualified", "Converted", "Do Not Contact", "Spam"]
+		store: DF.Link | None
 		stringee_data: DF.JSON | None
 		support_sales: DF.TableMultiSelect[SalesPersonChild]
 		tax_number: DF.Data | None
@@ -180,13 +182,82 @@ class Lead(SellingController, CRMNote):
 			self.update_lead_owner(pancake_user_id)
 
 	def before_save(self):
+		self.set_store_from_source()
 		self.update_lead_stage()
 		self.update_qualification_status()
 		self.fetch_region_from_province()
 		self.update_first_reach_at()
 		self.upsert_lead_source()
 		self.sync_pancake_data_fields()
+		self.set_spam_status()
+		self.update_status_from_message_timestamps()
+		self.check_and_auto_create_opportunity()
+		self.check_and_auto_create_opportunity_for_converted_lead()
 		self.process_notes()
+
+	def check_and_auto_create_opportunity_for_converted_lead(self):
+		"""Auto create a new Opportunity when a Converted Lead interacts again and has no active Opportunity."""
+		enabled = frappe.db.get_single_value("CRM Settings", "auto_create_opportunity_on_converted_lead")
+		if not enabled or self.status != "Converted" or self.is_new():
+			return
+
+		if not (self.last_customer_message_at and self.has_value_changed("last_customer_message_at")):
+			return
+
+		active_opp = frappe.db.exists(
+			"Opportunity",
+			{
+				"opportunity_from": "Lead",
+				"party_name": self.name,
+				"status": ["not in", ["Won", "Lost"]],
+			},
+		)
+		if active_opp:
+			return
+
+		opp = make_opportunity(self.name)
+		opp.flags.ignore_permissions = True
+		opp.insert()
+
+	def check_and_auto_create_opportunity(self):
+		enabled = frappe.db.get_single_value("CRM Settings", "auto_create_opportunity")
+		if not enabled or self.is_new():
+			return
+
+		purpose = self.get("purpose_lead") or self.get("lead_purpose")
+		product_type = self.get("preferred_product_type")
+		phone = self.get("phone")
+		province = self.get("province")
+		exp_date = self.get("expected_delivery_date")
+
+		if not (purpose and product_type and phone and province and exp_date):
+			return
+
+		if frappe.utils.getdate(exp_date) < frappe.utils.getdate(frappe.utils.nowdate()):
+			return
+
+		active_opp = frappe.db.exists(
+			"Opportunity",
+			{
+				"opportunity_from": "Lead",
+				"party_name": self.name,
+				"status": ["not in", ["Won", "Lost"]],
+			},
+		)
+		if active_opp:
+			return
+
+		opp = make_opportunity(self.name)
+		opp.flags.ignore_permissions = True
+		opp.insert()
+
+	def set_store_from_source(self):
+		if self.source:
+			source_code = frappe.db.get_value("Lead Source", self.source, "code")
+			if source_code and str(source_code).lower().startswith("store"):
+				self.store = self.source
+				if not self.first_visited_at:
+					self.first_visited_at = frappe.utils.now_datetime()
 
 	def process_notes(self):
 		for note in self.notes:
@@ -201,11 +272,75 @@ class Lead(SellingController, CRMNote):
 					if not self.last_message_at or get_datetime(self.last_message_at) < get_datetime(latest_message_at):
 						self.last_message_at = latest_message_at
 
+				customer_msg_at = parsed_data.get("last_customer_message_at") or latest_message_at
+				if customer_msg_at:
+					self.last_customer_message_at = customer_msg_at
+					if self.status in ("Lead", "Nurturing", "Do Not Contact"):
+						self.status = "Prospecting"
+
+				sales_msg_at = parsed_data.get("last_sales_message_at")
+				if sales_msg_at:
+					self.last_sales_message_at = sales_msg_at
+					if self.status == "Lead":
+						self.status = "Prospecting"
+
 				pancake_user_id = parsed_data.get("pancake_user_id", None)
 				if pancake_user_id and (not self.lead_owner or self.lead_owner == "tech@jemmia.vn"):
 					self.update_lead_owner(pancake_user_id)
 		except Exception as _:
 			pass
+
+	def set_spam_status(self):
+		"""Set status to Spam if pancake_data or tags contain spam indicator."""
+		if self.pancake_data:
+			try:
+				parsed_data = frappe.parse_json(self.pancake_data)
+				tags = parsed_data.get("tags") or []
+				if any("spam" in str(tag).strip().lower() for tag in tags):
+					self.status = "Spam"
+			except Exception:
+				pass
+
+	def update_status_from_message_timestamps(self):
+		"""
+		Automatically transition status to Prospecting whenever last_customer_message_at
+		or last_sales_message_at is changed (whether via pancake_data sync or manual edits by sales/admin/dev).
+		"""
+		if self.last_customer_message_at and self.has_value_changed("last_customer_message_at"):
+			if self.status in ("Lead", "Nurturing", "Do Not Contact"):
+				self.status = "Prospecting"
+
+		if self.last_sales_message_at and self.has_value_changed("last_sales_message_at"):
+			if self.status == "Lead":
+				self.status = "Prospecting"
+
+		self.sync_timestamps_to_opportunity()
+
+	def sync_timestamps_to_opportunity(self):
+		"""Sync last_customer_message_at and last_sales_message_at to active Opportunities linked to this Lead."""
+		try:
+			if not self.name or self.is_new():
+				return
+
+			updates = {}
+			if self.has_value_changed("last_customer_message_at") and self.last_customer_message_at:
+				updates["last_customer_message_at"] = self.last_customer_message_at
+			if self.has_value_changed("last_sales_message_at") and self.last_sales_message_at:
+				updates["last_sales_message_at"] = self.last_sales_message_at
+
+			if updates:
+				opps = frappe.get_all(
+					"Opportunity",
+					filters={
+						"party_name": self.name,
+						"status": ["not in", ["Won", "Lost"]],
+					},
+					pluck="name"
+				)
+				if opps:
+					frappe.db.set_value("Opportunity", opps, updates)
+		except Exception as e:
+			frappe.log_error(f"Failed to sync timestamps to opportunity for lead {self.name}: {e}")
 
 	def update_lead_stage(self):
 		if self.lead_stage=="Customer":

@@ -19,9 +19,9 @@ def validate_status(status, options):
 
 status_map = {
 	"Lead": [
-		["Lost Quotation", "has_lost_quotation"],
-		["Opportunity", "has_opportunity"],
-		["Quotation", "has_quotation"],
+		# ["Lost Quotation", "has_lost_quotation"],
+		["Qualified", "has_opportunity"],
+		# ["Quotation", "has_quotation"],
 		["Converted", "has_customer"],
 	],
 	"Opportunity": [

@@ -350,6 +350,9 @@ doc_events = {
 	tuple(period_closing_doctypes): {
 		"validate": "erpnext.accounts.doctype.accounting_period.accounting_period.validate_accounting_period_on_doc_save",
 	},
+	"Payment Entry": {
+		"on_update": "erpnext.crm.doctype.opportunity.custom.opportunity_custom.mark_opportunity_as_won_on_payment",
+	},
 	"Stock Entry": {
 		"on_submit": "erpnext.stock.doctype.material_request.material_request.update_completed_and_requested_qty",
 		"on_cancel": "erpnext.stock.doctype.material_request.material_request.update_completed_and_requested_qty",
@@ -434,7 +437,8 @@ scheduler_events = {
 		"0/15 * * * *": [
 			"erpnext.manufacturing.doctype.bom_update_log.bom_update_log.resume_bom_cost_update_jobs",
 			"erpnext.accounts.doctype.payment_entry.payment_entry.daily_run_success_batch",
-			"erpnext.crm.doctype.lead.lead_methods.sync_lead_is_assigned"
+			"erpnext.crm.doctype.lead.lead_methods.sync_lead_is_assigned",
+			"erpnext.crm.doctype.lead.lead_methods.auto_nurture_leads"
 		],
 		"0/30 * * * *": [
 			# "erpnext.stock.doctype.repost_item_valuation.repost_item_valuation.run_parallel_reposting",

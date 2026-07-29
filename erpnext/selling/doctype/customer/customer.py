@@ -463,8 +463,8 @@ class Customer(TransactionBase):
 			self.db_set("customer_primary_address", None)
 
 		delete_contact_and_address("Customer", self.name)
-		if self.lead_name:
-			frappe.db.sql("update `tabLead` set status='Interested' where name=%s", self.lead_name)
+		# if self.lead_name:
+		# 	frappe.db.sql("update `tabLead` set status='Interested' where name=%s", self.lead_name)
 
 	def before_rename(self, olddn, newdn, merge=False):
 		if merge:

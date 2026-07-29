@@ -29,8 +29,20 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 		erpnext.toggle_naming_series();
 
 		if (!this.frm.is_new() && doc.__onload && !doc.__onload.is_customer) {
-			this.frm.add_custom_button(__("Customer"), this.make_customer.bind(this), __("Create"));
-			this.frm.add_custom_button(__("Opportunity"), this.make_opportunity.bind(this), __("Create"));
+			// this.frm.add_custom_button(__("Customer"), this.make_customer.bind(this), __("Create"));
+			// this.frm.add_custom_button(__("Opportunity"), () => {
+			// 	frappe.db.get_value("Opportunity", {
+			// 		"opportunity_from": "Lead",
+			// 		"party_name": me.frm.doc.name,
+			// 		"status": ["not in", ["Won", "Lost"]]
+			// 	}, "name").then(r => {
+			// 		if (r && r.message && r.message.name) {
+			// 			frappe.msgprint(__("Lead already has an active Opportunity ({0}) in progress. Cannot create another until it is Won or Lost.", [r.message.name]));
+			// 		} else {
+			// 			me.make_opportunity();
+			// 		}
+			// 	});
+			// }, __("Create"));
 			this.frm.add_custom_button(__("Appointment"), this.make_appointment.bind(this), __("Create"));
 		}
 
@@ -232,28 +244,3 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 if (cur_frm) {
 	extend_cscript(cur_frm.cscript, new erpnext.LeadController({ frm: cur_frm }));
 }
-
-frappe.ui.form.on('Lead', {
-	refresh(frm) {
-		// Check Contact associated with this Lead
-		frappe.db.get_list("Contact", {
-			filters: [
-				["Dynamic Link", "link_doctype", "=", "Lead"],
-				["Dynamic Link", "link_name", "=", frm.doc.name]
-			],
-			fields: ["name", "pancake_conversation_id", "pancake_page_id", "source"]
-		}).then(data => {
-			data.forEach(contact => {
-				if (contact.pancake_conversation_id && contact.pancake_page_id) {
-					if (contact.source) {
-						frappe.db.get_doc("Lead Source", contact.source).then(source => {
-							frm.add_web_link(`https://pancake.vn/${contact.pancake_page_id}?c_id=` + contact.pancake_conversation_id, `${source.source_name}`);
-						})
-					} else {
-						frm.add_web_link(`https://pancake.vn/${contact.pancake_page_id}?c_id=` + contact.pancake_conversation_id, `Pancake Conversation`);
-					}
-				}
-			})
-		});
-	}
-})

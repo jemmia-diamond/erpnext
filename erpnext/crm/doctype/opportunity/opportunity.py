@@ -12,7 +12,7 @@ from frappe.model.mapper import get_mapped_doc
 from frappe.query_builder import DocType, Interval
 from frappe.query_builder.functions import Now
 from frappe.utils import flt, get_fullname
-from frappe.utils import  date_diff
+from frappe.utils import  date_diff, getdate, nowdate
 from erpnext.crm.utils import (
 	CRMNote,
 	copy_comments,
@@ -36,10 +36,12 @@ class Opportunity(TransactionBase, CRMNote):
 		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from erpnext.crm.doctype.opportunity_item.opportunity_item import OpportunityItem
 		from erpnext.crm.doctype.opportunity_lost_reason_detail.opportunity_lost_reason_detail import OpportunityLostReasonDetail
+		from erpnext.crm.doctype.sales_person_child.sales_person_child import SalesPersonChild
 		from erpnext.selling.doctype.sales_team.sales_team import SalesTeam
 		from frappe.types import DF
 
 		address_display: DF.TextEditor | None
+		age_rage: DF.Literal["", "Under 18", "18 to 24", "25 to 34", "35 to 44", "45 to 54", "55 to 64", "65+", "Unidentified"]
 		amended_from: DF.Link | None
 		annual_revenue: DF.Currency
 		base_opportunity_amount: DF.Currency
@@ -66,6 +68,8 @@ class Opportunity(TransactionBase, CRMNote):
 		items: DF.Table[OpportunityItem]
 		job_title: DF.Data | None
 		language: DF.Link | None
+		last_customer_message_at: DF.Datetime | None
+		last_sales_message_at: DF.Datetime | None
 		lost_reasons: DF.TableMultiSelect[OpportunityLostReasonDetail]
 		market_segment: DF.Link | None
 		naming_series: DF.Literal["CRM-OPP-.YYYY.-"]
@@ -89,7 +93,8 @@ class Opportunity(TransactionBase, CRMNote):
 		sales_stage: DF.Link | None
 		sales_team: DF.Table[SalesTeam]
 		state: DF.Data | None
-		status: DF.Literal["Open", "Quotation", "Converted", "Lost", "Negotiation", "Closed"]
+		status: DF.Literal["Open", "Nurturing", "Negotiation", "Delayed", "Won", "Lost"]
+		support_sales: DF.TableMultiSelect[SalesPersonChild]
 		territory: DF.Link | None
 		title: DF.Data | None
 		total: DF.Currency
@@ -139,6 +144,8 @@ class Opportunity(TransactionBase, CRMNote):
 		self.opportunity_owner = self.owner
 
 	def validate(self):
+		self.validate_single_active_opportunity()
+		self.validate_expected_delivery_date()
 		self.set_opportunity_type()
 		self.make_new_lead_if_required()
 		self.validate_item_details()
@@ -151,6 +158,34 @@ class Opportunity(TransactionBase, CRMNote):
 			self.title = self.customer_name
 
 		self.calculate_totals()
+
+	def validate_expected_delivery_date(self):
+		if not self.expected_delivery_date:
+			frappe.throw(_("Expected Delivery Date is required to create an Opportunity."))
+
+		if getdate(self.expected_delivery_date) < getdate(nowdate()):
+			frappe.throw(
+				_("Expected Delivery Date ({0}) cannot be in the past.").format(self.expected_delivery_date)
+			)
+
+	def validate_single_active_opportunity(self):
+		if self.opportunity_from and self.party_name and self.status not in ["Won", "Lost"]:
+			active_opp = frappe.db.get_value(
+				"Opportunity",
+				{
+					"opportunity_from": self.opportunity_from,
+					"party_name": self.party_name,
+					"status": ["not in", ["Won", "Lost"]],
+					"name": ["!=", self.name or ""],
+				},
+				"name",
+			)
+			if active_opp:
+				frappe.throw(
+					_("{0} {1} already has an active Opportunity ({2}) in progress.").format(
+						self.opportunity_from, self.party_name, active_opp
+					)
+				)
 
 	def before_save(self):
 		probability_map = {
@@ -526,6 +561,11 @@ def set_multiple_status(names, status):
 
 def auto_close_opportunity():
 	"""auto close the `Replied` Opportunities after 7 days"""
+	from erpnext.crm.doctype.opportunity.custom.opportunity_custom import (
+		auto_close_opportunity as custom_auto_close,
+	)
+	return custom_auto_close()
+
 	auto_close_after_days = frappe.db.get_single_value("CRM Settings", "close_opportunity_after_days") or 15
 
 	table = frappe.qb.DocType("Opportunity")

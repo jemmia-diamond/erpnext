@@ -15,7 +15,11 @@ class CRMSettings(Document):
 		from frappe.types import DF
 
 		allow_lead_duplication_based_on_emails: DF.Check
+		auto_close_opportunity: DF.Check
+		auto_create_opportunity: DF.Check
+		auto_create_opportunity_on_converted_lead: DF.Check
 		auto_creation_of_contact: DF.Check
+		auto_nurture_leads: DF.Check
 		campaign_naming_by: DF.Literal["Campaign Name", "Naming Series"]
 		carry_forward_communication_and_comments: DF.Check
 		close_opportunity_after_days: DF.Int
