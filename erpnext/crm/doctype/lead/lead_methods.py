@@ -170,6 +170,8 @@ def insert_lead(doc) -> "Document":
 		if pancake_list_tags:
 			for tag in pancake_list_tags:
 				frappe_doc.add_tag(tag)
+				if str(tag).strip().lower() == "spam":
+					frappe_doc.db_set("status", "Spam")
 
 		# only exist when migrate from pancake
 		# lead reach at before 2025/06/15 21:00:00
@@ -606,17 +608,19 @@ def _transfer_notes(from_lead: str, master_doc):
 	# Append system audit trail note
 	master_doc.append("notes", {
 		"note": f"System: Lead {from_lead} was identified as a duplicate and merged into this record.",
+		"type": "System",
 		"added_by": getattr(frappe.session, "user", "Administrator"),
 		"added_on": frappe.utils.now_datetime()
 	})
 
 	loser_notes = frappe.get_all("CRM Note",
 		filters={"parent": from_lead, "parenttype": "Lead"},
-		fields=["note", "added_by", "added_on", "notify_to"])
+		fields=["note", "added_by", "added_on", "notify_to", "type"])
 
 	for n in loser_notes:
 		master_doc.append("notes", {
 			"note": f"[Merged from {from_lead}] {n.note}",
+			"type": n.type or "Other",
 			"added_by": n.added_by,
 			"added_on": n.added_on,
 			"notify_to": n.notify_to
@@ -782,3 +786,51 @@ def sync_lead_is_assigned():
 	""")
 
 	frappe.db.commit()
+
+
+def auto_nurture_leads():
+	"""
+	Auto-transition Leads to Nurturing status if no customer or sales message for 48 hours.
+	Triggered via scheduler cron. Checked against CRM Settings 'auto_nurture_leads'.
+	"""
+	enabled = frappe.db.get_single_value("CRM Settings", "auto_nurture_leads")
+	if not enabled:
+		return
+
+	cutoff_time = frappe.utils.add_hours(frappe.utils.now_datetime(), -48)
+
+	leads = frappe.get_all(
+		"Lead",
+		filters=[
+			["status", "=", "Prospecting"],
+			["creation", "<", cutoff_time],
+		],
+		fields=[
+			"name",
+			"last_customer_message_at",
+			"last_sales_message_at",
+			"last_message_at",
+			"creation",
+		],
+	)
+
+	target_leads = []
+	for lead in leads:
+		msg_times = [
+			lead.last_customer_message_at,
+			lead.last_sales_message_at,
+			lead.last_message_at,
+		]
+		valid_msg_times = [get_datetime(t) for t in msg_times if t]
+
+		if valid_msg_times:
+			latest_msg = max(valid_msg_times)
+			if latest_msg < get_datetime(cutoff_time):
+				target_leads.append(lead.name)
+		else:
+			if get_datetime(lead.creation) < get_datetime(cutoff_time):
+				target_leads.append(lead.name)
+
+	if target_leads:
+		frappe.db.set_value("Lead", target_leads, "status", "Nurturing", update_modified=False)
+
