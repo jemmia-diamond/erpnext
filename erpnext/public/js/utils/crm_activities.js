@@ -147,14 +147,20 @@ erpnext.utils.CRMNotes = class CRMNotes {
 				title: __("Add a Note"),
 				fields: [
 					{
-						label: "Title",
+						label: __("Title"),
 						fieldname: "type",
 						fieldtype: "Select",
-						options: ["Chân dung khách hàng", "Xử lý từ chối", "Khác"],
-						default: "Chân dung khách hàng",
+						options: [
+							__("Status Update"),
+							__("Customer Persona"),
+							__("Objection Handling"),
+							__("System"),
+							__("Other")
+						],
+						default: __("Customer Persona"),
 					},
 					{
-						label: "Note",
+						label: __("Note"),
 						fieldname: "note",
 						fieldtype: "Text Editor",
 						reqd: 1,
@@ -193,16 +199,22 @@ erpnext.utils.CRMNotes = class CRMNotes {
 		let row_id = row.attr("name");
 		let note_doc = me.frm.doc.notes.find(n => String(n.name) === String(row_id));
 		let row_content = note_doc ? note_doc.note : $(row).find(".content").html();
-		let row_type = note_doc ? note_doc.type : "Chân dung khách hàng";
+		let row_type = note_doc ? note_doc.type : "Customer Persona";
 		if (row_content) {
 			var d = new frappe.ui.Dialog({
 				title: __("Edit Note"),
 				fields: [
 					{
-						label: "Title",
+						label: __("Title"),
 						fieldname: "type",
 						fieldtype: "Select",
-						options: ["Chân dung khách hàng", "Xử lý từ chối", "Khác"],
+						options: [
+							__("Status Update"),
+							__("Customer Persona"),
+							__("Objection Handling"),
+							__("System"),
+							__("Other")
+						],
 						default: row_type,
 					},
 					{
