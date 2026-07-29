@@ -147,24 +147,24 @@ erpnext.utils.CRMNotes = class CRMNotes {
 				title: __("Add a Note"),
 				fields: [
 					{
-						label: __("Title"),
-						fieldname: "type",
-						fieldtype: "Select",
-						options: [
-							__("Status Update"),
-							__("Customer Persona"),
-							__("Objection Handling"),
-							__("System"),
-							__("Other")
-						],
-						default: __("Customer Persona"),
-					},
-					{
 						label: __("Note"),
 						fieldname: "note",
 						fieldtype: "Text Editor",
 						reqd: 1,
 						enable_mentions: true,
+					},
+					{
+						label: __("Type of note"),
+						fieldname: "type",
+						fieldtype: "Select",
+						options: [
+							{ label: __("Status Update"), value: "Status Update" },
+							{ label: __("Customer Persona"), value: "Customer Persona" },
+							{ label: __("Products of Interest"), value: "Products of Interest" },
+							{ label: __("Store Visit"), value: "Store Visit" },
+							{ label: __("Other"), value: "Other" }
+						],
+						default: "Status Update",
 					}
 				],
 				primary_action: function () {
@@ -199,29 +199,31 @@ erpnext.utils.CRMNotes = class CRMNotes {
 		let row_id = row.attr("name");
 		let note_doc = me.frm.doc.notes.find(n => String(n.name) === String(row_id));
 		let row_content = note_doc ? note_doc.note : $(row).find(".content").html();
-		let row_type = note_doc ? note_doc.type : "Customer Persona";
+		let row_type = note_doc ? note_doc.type : "Status Update";
 		if (row_content) {
 			var d = new frappe.ui.Dialog({
 				title: __("Edit Note"),
 				fields: [
 					{
-						label: __("Title"),
+						label: __("Note"),
+						fieldname: "note",
+						fieldtype: "Text Editor",
+						reqd: 1,
+						enable_mentions: true,
+						default: row_content,
+					},
+					{
+						label: __("Type of note"),
 						fieldname: "type",
 						fieldtype: "Select",
 						options: [
-							__("Status Update"),
-							__("Customer Persona"),
-							__("Objection Handling"),
-							__("System"),
-							__("Other")
+							{ label: __("Status Update"), value: "Status Update" },
+							{ label: __("Customer Persona"), value: "Customer Persona" },
+							{ label: __("Products of Interest"), value: "Products of Interest" },
+							{ label: __("Store Visit"), value: "Store Visit" },
+							{ label: __("Other"), value: "Other" }
 						],
 						default: row_type,
-					},
-					{
-						label: "Note",
-						fieldname: "note",
-						fieldtype: "Text Editor",
-						default: row_content,
 					}
 				],
 				primary_action: function () {
