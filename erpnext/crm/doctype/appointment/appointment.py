@@ -78,6 +78,9 @@ class Appointment(Document):
 		return None
 
 	def before_save(self):
+		if frappe.session.user != "tech@jemmia.vn":
+			self.performed_by = frappe.session.user
+
 		if self.offline_sales:
 			names = [d.sales_person_name for d in self.offline_sales if d.sales_person_name]
 			self.offline_sales_name = ", ".join(names)
