@@ -41,21 +41,29 @@
   "column_break_zugf",
   "gender",
   "budget",
-  "section_break_jfir",
-  "upload_attachments",
-  "attachment_html",
   "addition_information_section",
-  "notes",
   "customer_response",
   "conversation_greeting",
   "policy",
   "column_break_zkmu",
-  "offline_response",
   "linked_docs_section",
   "appointment_with",
   "party",
   "col_br_3",
-  "calendar_event"
+  "calendar_event",
+  "sales_online_tab",
+  "notes",
+  "section_break_jfir",
+  "upload_attachments",
+  "attachment_html",
+  "sales_offline_break",
+  "offline_response",
+  "offline_attachment_break",
+  "offline_upload_attachments",
+  "offline_attachment_html",
+  "activity_tab",
+  "activity_section",
+  "activities_html"
  ],
  "fields": [
   {
@@ -360,10 +368,47 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Performed By"
+  },
+  {
+   "fieldname": "sales_online_tab",
+   "fieldtype": "Tab Break",
+   "label": "Sales Online"
+  },
+  {
+   "fieldname": "sales_offline_break",
+   "fieldtype": "Tab Break",
+   "label": "Sales Offline"
+  },
+  {
+   "fieldname": "offline_attachment_break",
+   "fieldtype": "Section Break",
+   "label": "Offline Attachement Document"
+  },
+  {
+   "fieldname": "offline_upload_attachments",
+   "fieldtype": "Button",
+   "label": "Upload Attachments"
+  },
+  {
+   "fieldname": "offline_attachment_html",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "activity_tab",
+   "fieldtype": "Tab Break",
+   "label": "Activities"
+  },
+  {
+   "fieldname": "activities_html",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "activity_section",
+   "fieldtype": "Section Break"
   }
  ],
  "links": [],
- "modified": "2026-07-29 06:33:17.952926",
+ "modified": "2026-07-30 09:49:23.298175",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Appointment",
