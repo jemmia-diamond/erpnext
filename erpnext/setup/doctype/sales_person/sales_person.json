@@ -26,6 +26,7 @@
   "rgt",
   "old_parent",
   "pancake_id",
+  "actual_person",
   "target_details_section_break",
   "targets"
  ],
@@ -176,13 +177,19 @@
    "fieldtype": "Data",
    "label": "Pancake ID",
    "permlevel": 2
+  },
+  {
+   "default": "\"0\"",
+   "fieldname": "actual_person",
+   "fieldtype": "Check",
+   "label": "Actuall Person"
   }
  ],
  "icon": "icon-user",
  "idx": 1,
  "is_tree": 1,
  "links": [],
- "modified": "2026-07-09 00:53:18.940337",
+ "modified": "2026-07-30 08:24:07.022008",
  "modified_by": "Administrator",
  "module": "Setup",
  "name": "Sales Person",
