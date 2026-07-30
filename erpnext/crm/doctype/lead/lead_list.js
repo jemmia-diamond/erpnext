@@ -5,6 +5,7 @@ frappe.listview_settings["Lead"] = {
 	get_indicator: function (doc) {
 		const colors = {
 			"Lead": "blue",
+			"New": "blue",
 			"Prospecting": "orange",
 			"Nurturing": "purple",
 			"Qualified": "green",

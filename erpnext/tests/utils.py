@@ -678,7 +678,7 @@ class BootStrapTestData:
 				"doctype": "Lead",
 				"email_id": "test_lead2@example.com",
 				"lead_name": "_Test Lead 2",
-				"status": "Lead",
+				"status": "New",
 				"naming_series": "_T-Lead-",
 			},
 			{

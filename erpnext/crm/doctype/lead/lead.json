@@ -204,7 +204,7 @@
    "search_index": 1
   },
   {
-   "default": "Lead",
+   "default": "New",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -213,7 +213,7 @@
    "no_copy": 1,
    "oldfieldname": "status",
    "oldfieldtype": "Select",
-   "options": "Lead\nProspecting\nNurturing\nQualified\nConverted\nDo Not Contact\nSpam",
+   "options": "New\nProspecting\nNurturing\nQualified\nConverted\nDo Not Contact\nSpam",
    "search_index": 1
   },
   {
@@ -982,7 +982,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-07-29 05:52:41.151770",
+ "modified": "2026-07-30 16:53:33.869711",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",

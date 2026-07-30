@@ -545,8 +545,8 @@ def _transfer_lead_fields(master_doc, loser_doc):
 		if loser_doc.qualified_on:
 			master_doc.qualified_on = loser_doc.qualified_on
 
-	# Status has a default of "Lead", so if Master is untouched and Loser has progress, inherit it.
-	if master_doc.status == "Lead" and loser_doc.status != "Lead":
+	# Status has a default of "New" / "Lead", so if Master is untouched and Loser has progress, inherit it.
+	if master_doc.status in ("Lead", "New") and loser_doc.status not in ("Lead", "New"):
 		master_doc.status = loser_doc.status
 
 
