@@ -2165,7 +2165,7 @@ class SalesOrder(SellingController):
 				if so.docstatus == 2 or so.cancelled_status == 'Cancelled':
 					continue
 
-				so.paid_amount = so.grand_total
+				so.paid_amount = flt(so.grand_total) - flt(so.return_amount)
 				so.balance = 0.0
 				so.total_allocated_group_payment = real_group_grand_total
 				so.balance_group_payment = 0.0
