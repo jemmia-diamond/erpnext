@@ -62,7 +62,8 @@ class R2FileManager:
 			"signed_url_expiry": frappe.conf.get("r2_signed_url_expiry", 3600),
 			"delete_local_after_upload": frappe.conf.get("r2_delete_local_after_upload", True),
 		}
-	
+
+
 	def generate_key(self, file_name, parent_doctype=None, content_hash=None):
 		"""
 		Generate S3 key with organized folder structure
@@ -181,6 +182,14 @@ class R2FileManager:
 			frappe.logger().error(f"R2 Presigned URL Error: {str(e)}")
 			return None
 	
+	def get_r2_url(self, s3_key, file_name=None, is_private=True):
+		"""Get direct R2 URL (public or presigned)"""
+		public_url = self.settings.get("public_url")
+		if public_url and not is_private:
+			encoded_key = quote(s3_key, safe="/")
+			return f"{public_url.rstrip('/')}/{encoded_key}"
+		return self.generate_presigned_url(s3_key, file_name)
+
 	def delete_file(self, s3_key):
 		"""Delete file from R2"""
 		try:
@@ -188,6 +197,13 @@ class R2FileManager:
 			frappe.logger().info(f"Deleted file from R2: {s3_key}")
 		except Exception as e:
 			frappe.logger().error(f"R2 Delete Error: {str(e)}")
+
+
+def get_r2_manager():
+	"""Get cached R2FileManager for current request"""
+	if not hasattr(frappe.local, "r2_file_manager"):
+		frappe.local.r2_file_manager = R2FileManager()
+	return frappe.local.r2_file_manager
 
 
 # ==============================================================================
@@ -199,8 +215,7 @@ def upload_to_r2(doc, method=None):
 	Hook: Called after File document is inserted
 	Uploads file to R2 and updates file_url
 	"""
-	# Skip if R2 not enabled
-	manager = R2FileManager()
+	manager = get_r2_manager()
 	if not manager.settings.get("enabled"):
 		return
 	
@@ -266,7 +281,7 @@ def delete_from_r2(doc, method=None):
 	Hook: Called when File document is deleted
 	Deletes file from R2
 	"""
-	manager = R2FileManager()
+	manager = get_r2_manager()
 	if not manager.settings.get("enabled"):
 		return
 	
@@ -294,7 +309,7 @@ def stream_from_r2(key=None, file_name=None):
 	if not key:
 		frappe.throw(_("Key not provided"))
 	
-	manager = R2FileManager()
+	manager = get_r2_manager()
 	if not manager.settings.get("enabled"):
 		frappe.throw(_("R2 not configured"))
 	
@@ -322,7 +337,7 @@ def migrate_existing_files():
 	Migrate all existing files from local storage to R2
 	Can be called from UI or console
 	"""
-	manager = R2FileManager()
+	manager = get_r2_manager()
 	if not manager.settings.get("enabled"):
 		frappe.throw(_("R2 not configured"))
 	
@@ -356,6 +371,65 @@ def migrate_existing_files():
 	}
 
 
+@frappe.whitelist()
+def get_r2_url(file_url=None, key=None, file_name=None):
+	"""
+	API endpoint / helper to get direct R2 URL for a file URL or key
+	Usage: /api/method/erpnext.r2_storage.get_r2_url?file_url=xxx or ?key=yyy
+	"""
+	if not file_url and not key:
+		frappe.throw(_("file_url or key is required"))
+
+	manager = get_r2_manager()
+	if not manager.settings.get("enabled"):
+		return file_url
+
+	if file_url and not key:
+		key = extract_key_from_url(file_url)
+
+	if not key:
+		return file_url
+
+	return manager.get_r2_url(key, file_name)
+
+
+@frappe.whitelist()
+def get_files(filters=None, fields=None, or_filters=None, order_by=None, limit_start=0, limit_page_length=None):
+	"""Get File list with r2_file_url computed for every item"""
+	if isinstance(filters, str):
+		filters = frappe.parse_json(filters)
+	if isinstance(fields, str):
+		fields = frappe.parse_json(fields)
+	if isinstance(or_filters, str):
+		or_filters = frappe.parse_json(or_filters)
+
+	files = frappe.get_list(
+		"File",
+		filters=filters,
+		fields=fields,
+		or_filters=or_filters,
+		order_by=order_by,
+		limit_start=limit_start,
+		limit_page_length=limit_page_length,
+	)
+
+	manager = get_r2_manager()
+	is_enabled = manager.settings.get("enabled")
+
+	for f in files:
+		if is_enabled:
+			file_url = f.get("file_url")
+			key = extract_key_from_url(file_url)
+			if key:
+				f["r2_file_url"] = manager.get_r2_url(key, f.get("file_name"), f.get("is_private", 1))
+			else:
+				f["r2_file_url"] = file_url
+		else:
+			f["r2_file_url"] = f.get("file_url")
+
+	return files
+
+
 # ==============================================================================
 # UTILITY FUNCTIONS
 # ==============================================================================
@@ -371,9 +445,32 @@ def is_r2_file(file_url):
 
 def extract_key_from_url(file_url):
 	"""Extract S3 key from file URL"""
+	if not file_url:
+		return None
 	if "/api/method/" in file_url:
 		# Extract from API URL
 		match = re.search(r"key=([^&]+)", file_url)
 		if match:
 			return match.group(1)
 	return None
+
+
+def get_r2_url_for_file(doc_or_name):
+	"""Get direct R2 URL for a File doc or name"""
+	if isinstance(doc_or_name, str):
+		doc = frappe.get_doc("File", doc_or_name)
+	else:
+		doc = doc_or_name
+
+	if not doc or not doc.file_url:
+		return None
+
+	s3_key = doc.content_hash
+	if not s3_key or not is_r2_file(doc.file_url):
+		s3_key = extract_key_from_url(doc.file_url)
+
+	if not s3_key:
+		return doc.file_url
+
+	manager = get_r2_manager()
+	return manager.get_r2_url(s3_key, doc.file_name, doc.is_private)
