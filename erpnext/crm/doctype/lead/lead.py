@@ -106,7 +106,7 @@ class Lead(SellingController, CRMNote):
 		salutation: DF.Link | None
 		source: DF.Link | None
 		state: DF.Data | None
-		status: DF.Literal["Lead", "Prospecting", "Nurturing", "Qualified", "Converted", "Do Not Contact", "Spam"]
+		status: DF.Literal["New", "Prospecting", "Nurturing", "Qualified", "Converted", "Do Not Contact", "Spam"]
 		store: DF.Link | None
 		stringee_data: DF.JSON | None
 		support_sales: DF.TableMultiSelect[SalesPersonChild]
