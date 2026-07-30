@@ -438,7 +438,7 @@ class SalesOrder(SellingController):
 						"doctype": "Payment Entry Reference",
 				})
 
-		group_grand_total = frappe.db.sql("SELECT SUM(grand_total) FROM `tabSales Order` WHERE name IN %s AND cancelled_status = 'Uncancelled'", (tuple(orders_to_update),))[0][0] or 0.0
+		group_grand_total = frappe.db.sql("SELECT SUM(grand_total - return_amount) FROM `tabSales Order` WHERE name IN %s AND cancelled_status = 'Uncancelled'", (tuple(orders_to_update),))[0][0] or 0.0
 		group_payment_total = sum(flt(r.allocated_amount) for r in group_payment_references) if group_payment_references else 0.0
 
 		return group_payment_total, group_grand_total, orders_to_update
@@ -1410,6 +1410,10 @@ class SalesOrder(SellingController):
 					self.total_group_balance = balance_group_payment - fetched_return_amount
 				else:
 					self.total_group_balance = None
+			
+			# Allow 1000 VND tolerance for total_group_balance
+			if self.total_group_balance is not None and 0 < self.total_group_balance <= 1000:
+				self.total_group_balance = 0.0
 		except Exception:
 			pass
 
@@ -2155,7 +2159,7 @@ class SalesOrder(SellingController):
 		if orders_to_update:
 			real_group_grand_total = frappe.db.sql("SELECT SUM(grand_total - return_amount) FROM `tabSales Order` WHERE name IN %s AND cancelled_status = 'Uncancelled'", (tuple(orders_to_update),))[0][0] or 0.0
 
-		if real_group_grand_total > 0 and (group_payment_total + group_records_total) >= real_group_grand_total:
+		if real_group_grand_total > 0 and flt(real_group_grand_total - (group_payment_total + group_records_total), 2) <= 1000:
 			for so_name in orders_to_update:
 				so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
 				if so.docstatus == 2 or so.cancelled_status == 'Cancelled':
@@ -2163,8 +2167,9 @@ class SalesOrder(SellingController):
 
 				so.paid_amount = so.grand_total
 				so.balance = 0.0
-				so.total_allocated_group_payment = group_payment_total + group_records_total
-				so.balance_group_payment = real_group_grand_total - (group_payment_total + group_records_total)
+				so.total_allocated_group_payment = real_group_grand_total
+				so.balance_group_payment = 0.0
+				so.financial_status = "Paid"
 
 				if so.name != self.name and save:
 					so.flags.financial_totals_updated = True
@@ -2181,6 +2186,14 @@ class SalesOrder(SellingController):
 			self.paid_amount = total_allocated + payment_records_total
 
 		self.balance = sales_order_grand_total - flt(self.paid_amount)
+		
+		# Allow 1000 VND tolerance
+		if 0 < flt(self.balance, 2) <= 1000:
+			self.paid_amount = sales_order_grand_total
+			self.balance = 0.0
+			
+		if self.balance <= 0 and self.grand_total > 0:
+			self.financial_status = "Paid"
 
 		for so_name in orders_to_update:
 			so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
