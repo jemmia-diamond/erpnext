@@ -413,19 +413,22 @@ def get_files(filters=None, fields=None, or_filters=None, order_by=None, limit_s
 		limit_page_length=limit_page_length,
 	)
 
+	return process_file_list(files)
+
+
+def process_file_list(files):
+	"""Attach r2_file_url to a list of File records"""
+	if not isinstance(files, list):
+		return files
+
 	manager = get_r2_manager()
 	is_enabled = manager.settings.get("enabled")
 
 	for f in files:
-		if is_enabled:
+		if isinstance(f, dict):
 			file_url = f.get("file_url")
-			key = extract_key_from_url(file_url)
-			if key:
-				f["r2_file_url"] = manager.get_r2_url(key, f.get("file_name"), f.get("is_private", 1))
-			else:
-				f["r2_file_url"] = file_url
-		else:
-			f["r2_file_url"] = f.get("file_url")
+			key = extract_key_from_url(file_url) if is_enabled else None
+			f["r2_file_url"] = manager.get_r2_url(key, f.get("file_name"), f.get("is_private", 1)) if key else file_url
 
 	return files
 
