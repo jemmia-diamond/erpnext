@@ -276,13 +276,13 @@ class Lead(SellingController, CRMNote):
 				customer_msg_at = parsed_data.get("last_customer_message_at") or latest_message_at
 				if customer_msg_at:
 					self.last_customer_message_at = customer_msg_at
-					if self.status in ("Lead", "Nurturing", "Do Not Contact"):
+					if self.status in ("Lead", "New", "Nurturing", "Do Not Contact"):
 						self.status = "Prospecting"
 
 				sales_msg_at = parsed_data.get("last_sales_message_at")
 				if sales_msg_at:
 					self.last_sales_message_at = sales_msg_at
-					if self.status == "Lead":
+					if self.status in ("Lead", "New"):
 						self.status = "Prospecting"
 
 				pancake_user_id = parsed_data.get("pancake_user_id", None)
@@ -308,11 +308,11 @@ class Lead(SellingController, CRMNote):
 		or last_sales_message_at is changed (whether via pancake_data sync or manual edits by sales/admin/dev).
 		"""
 		if self.last_customer_message_at and self.has_value_changed("last_customer_message_at"):
-			if self.status in ("Lead", "Nurturing", "Do Not Contact"):
+			if self.status in ("Lead", "New", "Nurturing", "Do Not Contact"):
 				self.status = "Prospecting"
 
 		if self.last_sales_message_at and self.has_value_changed("last_sales_message_at"):
-			if self.status == "Lead":
+			if self.status in ("Lead", "New"):
 				self.status = "Prospecting"
 
 		self.sync_timestamps_to_opportunity()
