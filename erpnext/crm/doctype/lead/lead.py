@@ -1397,6 +1397,22 @@ def update_primary_sale_from_todo(doc, method=None):
 	"""
 	try:
 		if doc.reference_type == "Lead" and doc.status == "Open" and doc.allocated_to:
+			# Transfer assigned user to lead_owner if enabled in CRM Settings
+			if frappe.db.get_single_value("CRM Settings", "transfer_assign_to_lead_owner"):
+				current_owner = frappe.db.get_value("Lead", doc.reference_name, "lead_owner")
+
+				# Rule 1: if current lead_owner is tech@jemmia.vn (or empty), transfer
+				if not current_owner or current_owner == "tech@jemmia.vn":
+					frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
+
+				# Rule 2: if current lead_owner is not tech@jemmia.vn and allocated_to is tech@jemmia.vn, skip
+				elif current_owner != "tech@jemmia.vn" and doc.allocated_to == "tech@jemmia.vn":
+					pass
+
+				# Rule 3: if current lead_owner is not tech@jemmia.vn and allocated_to is not tech@jemmia.vn, transfer
+				elif current_owner != "tech@jemmia.vn" and doc.allocated_to != "tech@jemmia.vn":
+					frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
+
 			# 1. Tìm Sales Person theo Email
 			sales_person = frappe.db.get_value("Sales Person", {"employee_email": doc.allocated_to}, "name")
 
@@ -1409,7 +1425,8 @@ def update_primary_sale_from_todo(doc, method=None):
 			# 3. Tiến hành gán và xóa cache để cập nhật UI
 			if sales_person:
 				frappe.db.set_value("Lead", doc.reference_name, "primary_sale", sales_person)
-				frappe.clear_document_cache("Lead", doc.reference_name)
+
+			frappe.clear_document_cache("Lead", doc.reference_name)
 
 	except Exception as e:
 		frappe.log_error(frappe.get_traceback(), "DEBUG ASSIGN LEAD EXCEPTION")

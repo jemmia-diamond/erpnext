@@ -9,6 +9,7 @@
   "section_break_5",
   "campaign_naming_by",
   "allow_lead_duplication_based_on_emails",
+  "transfer_assign_to_lead_owner",
   "column_break_4",
   "auto_creation_of_contact",
   "auto_nurture_leads",
@@ -52,6 +53,12 @@
    "fieldname": "allow_lead_duplication_based_on_emails",
    "fieldtype": "Check",
    "label": "Allow Lead Duplication based on Emails"
+  },
+  {
+   "default": "0",
+   "fieldname": "transfer_assign_to_lead_owner",
+   "fieldtype": "Check",
+   "label": "Transfer Assigned To User as Lead Owner"
   },
   {
    "default": "0",
