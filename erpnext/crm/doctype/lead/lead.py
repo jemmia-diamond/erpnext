@@ -231,10 +231,7 @@ class Lead(SellingController, CRMNote):
 		province = self.get("province")
 		exp_date = self.get("expected_delivery_date")
 
-		if not (purpose and product_type and phone and province and exp_date):
-			return
-
-		if frappe.utils.getdate(exp_date) < frappe.utils.getdate(frappe.utils.nowdate()):
+		if not (purpose and product_type and phone and province):
 			return
 
 		active_opp = frappe.db.exists(
@@ -249,6 +246,8 @@ class Lead(SellingController, CRMNote):
 			return
 
 		opp = make_opportunity(self.name)
+		if opp.expected_delivery_date and frappe.utils.getdate(opp.expected_delivery_date) < frappe.utils.getdate(frappe.utils.nowdate()):
+			opp.expected_delivery_date = None
 		opp.flags.ignore_permissions = True
 		opp.insert()
 
@@ -1399,19 +1398,37 @@ def update_primary_sale_from_todo(doc, method=None):
 		if doc.reference_type == "Lead" and doc.status == "Open" and doc.allocated_to:
 			# Transfer assigned user to lead_owner if enabled in CRM Settings
 			if frappe.db.get_single_value("CRM Settings", "transfer_assign_to_lead_owner"):
-				current_owner = frappe.db.get_value("Lead", doc.reference_name, "lead_owner")
+				lead_info = frappe.db.get_value("Lead", doc.reference_name, ["lead_owner", "first_reach_at"], as_dict=True) or {}
+				current_owner = lead_info.get("lead_owner")
+				first_reach_at = lead_info.get("first_reach_at")
 
-				# Rule 1: if current lead_owner is tech@jemmia.vn (or empty), transfer
-				if not current_owner or current_owner == "tech@jemmia.vn":
-					frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
+				# New Leads (>= 2026-07-31 14:00:00)
+				if first_reach_at and frappe.utils.get_datetime(first_reach_at) >= frappe.utils.get_datetime("2026-07-31 14:00:00"):
+					# Rule 1: if current lead_owner is tech@jemmia.vn (or empty), transfer
+					if not current_owner or current_owner == "tech@jemmia.vn":
+						frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
 
-				# Rule 2: if current lead_owner is not tech@jemmia.vn and allocated_to is tech@jemmia.vn, skip
-				elif current_owner != "tech@jemmia.vn" and doc.allocated_to == "tech@jemmia.vn":
-					pass
+					# Rule 2: if current lead_owner is not tech@jemmia.vn and allocated_to is tech@jemmia.vn, skip
+					elif current_owner != "tech@jemmia.vn" and doc.allocated_to == "tech@jemmia.vn":
+						pass
 
-				# Rule 3: if current lead_owner is not tech@jemmia.vn and allocated_to is not tech@jemmia.vn, transfer
-				elif current_owner != "tech@jemmia.vn" and doc.allocated_to != "tech@jemmia.vn":
-					frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
+					# Rule 3: if current lead_owner is not tech@jemmia.vn and allocated_to is not tech@jemmia.vn, transfer
+					elif current_owner != "tech@jemmia.vn" and doc.allocated_to != "tech@jemmia.vn":
+						frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
+
+				# Legacy Leads (< 2026-07-31 14:00:00)
+				else:
+					# Rule 1: if current lead_owner is tech@jemmia.vn (or empty), transfer
+					if not current_owner or current_owner == "tech@jemmia.vn":
+						frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
+
+					# Rule 2: if current lead_owner is not tech@jemmia.vn and allocated_to is tech@jemmia.vn, skip
+					elif current_owner != "tech@jemmia.vn" and doc.allocated_to == "tech@jemmia.vn":
+						pass
+
+					# Rule 3: if current lead_owner is not tech@jemmia.vn and allocated_to is not tech@jemmia.vn, transfer
+					elif current_owner != "tech@jemmia.vn" and doc.allocated_to != "tech@jemmia.vn":
+						frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
 
 			# 1. Tìm Sales Person theo Email
 			sales_person = frappe.db.get_value("Sales Person", {"employee_email": doc.allocated_to}, "name")
