@@ -146,15 +146,16 @@ class Appointment(Document):
 				self.store = "Cần Thơ"
 
 	def after_insert(self):
-		if self.party:
-			# Create Calendar event
-			self.auto_assign()
-			self.create_calendar_event()
-		else:
-			# Set status to unverified
-			self.db_set("status", "Unverified")
-			# Send email to confirm
-			self.send_confirmation_email()
+		# if self.party:
+		# 	# Auto assign agent
+		# 	# self.auto_assign()
+		# 	# self.create_calendar_event()
+		# else:
+		# 	# Set status to unverified
+		# 	self.db_set("status", "Unverified")
+		# 	# Send email to confirm
+		# 	self.send_confirmation_email()
+		pass
 
 	def send_confirmation_email(self):
 		verify_url = self._get_verify_url()
@@ -178,23 +179,25 @@ class Appointment(Document):
 			)
 
 	def on_change(self):
-		# Sync Calendar
-		if not self.calendar_event:
-			return
-		cal_event = frappe.get_doc("Event", self.calendar_event)
-		cal_event.starts_on = self.scheduled_time
-		cal_event.save(ignore_permissions=True)
-
+		# # Sync Calendar
+		# if not self.calendar_event:
+		# 	return
+		# cal_event = frappe.get_doc("Event", self.calendar_event)
+		# cal_event.starts_on = self.scheduled_time
+		# cal_event.save(ignore_permissions=True)
+		# Sync Calendar disabled
+		pass
+	
 	def set_verified(self, email):
 		if email != self.customer_email:
 			frappe.throw(_("Email verification failed."))
 		# Create new lead
 		self.create_lead_and_link()
 		# Remove unverified status
-		self.status = "Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng"
-		# Create calender event
-		self.auto_assign()
-		self.create_calendar_event()
+		# self.status = "Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng"
+		# Auto assign agent
+		# self.auto_assign()
+		# self.create_calendar_event()
 		self.save(ignore_permissions=True)
 		if not frappe.in_test:
 			frappe.db.commit()
