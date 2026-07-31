@@ -192,7 +192,7 @@
    "read_only": 1
   },
   {
-   "default": "Open",
+   "default": "Proposal",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -201,7 +201,7 @@
    "no_copy": 1,
    "oldfieldname": "status",
    "oldfieldtype": "Select",
-   "options": "Open\nNurturing\nNegotiation\nDelayed\nWon\nLost",
+   "options": "Proposal\nNurturing\nNegotiation\nDelayed\nWon\nLost",
    "print_hide": 1,
    "reqd": 1
   },

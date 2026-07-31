@@ -20,7 +20,7 @@ def auto_close_opportunity():
 	opps = frappe.get_all(
 		"Opportunity",
 		filters={
-			"status": ["in", ["Nurturing", "Open", "Negotiation", "Delayed"]],
+			"status": ["in", ["Nurturing", "Proposal", "Negotiation", "Delayed"]],
 		},
 		fields=["name", "status", "expected_delivery_date", "last_customer_message_at", "last_sales_message_at", "modified"],
 	)
