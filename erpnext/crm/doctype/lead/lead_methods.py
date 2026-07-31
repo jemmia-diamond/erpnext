@@ -15,7 +15,7 @@ from erpnext.crm.doctype.lead.lead_dao import get_lead_by_name, get_lead_name_by
 from erpnext.crm.doctype.lead_budget.lead_budget_dao import find_range_budget
 from erpnext.crm.doctype.lead_demand.lead_demand_dao import get_lead_purpose
 from erpnext.crm.doctype.lead_product.lead_product_dao import create_lead_product, get_lead_product
-from erpnext.utilities.phone_utils import normalize_to_standard_format
+from erpnext.utilities.phone_utils import is_valid_phone_number, normalize_to_standard_format
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
@@ -373,8 +373,15 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 	if not is_non_empty(new_phone):
 		return existing_doc
 
-	new_phone = normalize_phone_number(new_phone)
-	conflicting_lead = frappe.db.get_value("Lead", {"phone": new_phone}, "name")
+	# Do not merge on invalid or dummy phone numbers (e.g., "0")
+	if not is_valid_phone_number(new_phone):
+		return existing_doc
+
+	normalized_phone = normalize_phone_number(new_phone)
+	if not normalized_phone:
+		return existing_doc
+
+	conflicting_lead = frappe.db.get_value("Lead", {"phone": normalized_phone}, "name")
 
 	if not conflicting_lead or conflicting_lead == existing_doc.name:
 		return existing_doc

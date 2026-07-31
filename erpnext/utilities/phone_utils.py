@@ -36,6 +36,27 @@ def normalize_to_standard_format(phone: str, default_country: str = "VN") -> str
 
     return digits
 
+def is_valid_phone_number(phone: str, default_country: str = "VN") -> bool:
+    if not phone or not str(phone).strip():
+        return False
+    phone_str = str(phone).strip()
+    try:
+        parsed = phonenumbers.parse(phone_str, default_country)
+        if phonenumbers.is_valid_number(parsed):
+            return True
+    except Exception:
+        pass
+
+    if not phone_str.startswith("+"):
+        try:
+            parsed = phonenumbers.parse("+" + phone_str)
+            if phonenumbers.is_valid_number(parsed):
+                return True
+        except Exception:
+            pass
+
+    return False
+
 def get_phone_variants(phone: str, default_country: str = "VN") -> list:
     """Generate different formatting variants of a phone number for DB search."""
     if not phone:
