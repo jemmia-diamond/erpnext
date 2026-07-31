@@ -93,7 +93,7 @@ class Opportunity(TransactionBase, CRMNote):
 		sales_stage: DF.Link | None
 		sales_team: DF.Table[SalesTeam]
 		state: DF.Data | None
-		status: DF.Literal["Open", "Nurturing", "Negotiation", "Delayed", "Won", "Lost"]
+		status: DF.Literal["Proposal", "Nurturing", "Negotiation", "Delayed", "Won", "Lost"]
 		support_sales: DF.TableMultiSelect[SalesPersonChild]
 		territory: DF.Link | None
 		title: DF.Data | None

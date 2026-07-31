@@ -285,7 +285,7 @@ frappe.ui.form.on("Opportunity Item", {
 erpnext.crm.Opportunity = class Opportunity extends frappe.ui.form.Controller {
 	onload() {
 		if (!this.frm.doc.status) {
-			this.frm.set_value("status", "Open");
+			this.frm.set_value("status", "Proposal");
 		}
 		if (!this.frm.doc.company && frappe.defaults.get_user_default("Company")) {
 			this.frm.set_value("company", frappe.defaults.get_user_default("Company"));
