@@ -160,12 +160,14 @@ class Opportunity(TransactionBase, CRMNote):
 		self.calculate_totals()
 
 	def validate_expected_delivery_date(self):
-		if not self.expected_delivery_date:
-			frappe.throw(_("Expected Delivery Date is required to create an Opportunity."))
+		# if not self.expected_delivery_date:
+		# 	frappe.throw(_("Expected Delivery Date is required to create an Opportunity."))
 
-		if getdate(self.expected_delivery_date) < getdate(nowdate()):
+		if self.expected_delivery_date and getdate(self.expected_delivery_date) < getdate(nowdate()):
 			frappe.throw(
-				_("Expected Delivery Date ({0}) cannot be in the past.").format(self.expected_delivery_date)
+				_(
+					"Expected Delivery Date ({0}) cannot be in the past. Please update Expected Delivery Date or leave it blank."
+				).format(self.expected_delivery_date)
 			)
 
 	def validate_single_active_opportunity(self):

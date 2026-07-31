@@ -231,10 +231,7 @@ class Lead(SellingController, CRMNote):
 		province = self.get("province")
 		exp_date = self.get("expected_delivery_date")
 
-		if not (purpose and product_type and phone and province and exp_date):
-			return
-
-		if frappe.utils.getdate(exp_date) < frappe.utils.getdate(frappe.utils.nowdate()):
+		if not (purpose and product_type and phone and province):
 			return
 
 		active_opp = frappe.db.exists(
@@ -249,6 +246,8 @@ class Lead(SellingController, CRMNote):
 			return
 
 		opp = make_opportunity(self.name)
+		if opp.expected_delivery_date and frappe.utils.getdate(opp.expected_delivery_date) < frappe.utils.getdate(frappe.utils.nowdate()):
+			opp.expected_delivery_date = None
 		opp.flags.ignore_permissions = True
 		opp.insert()
 
