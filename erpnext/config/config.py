@@ -13,5 +13,6 @@ class BaseConfig:
     FN_BASE_URL: str = frappe.conf.get("fn_base_url")
     VBOT_BASE_URL: str = frappe.conf.get("vbot_base_url")
     CC_API_KEY: str = frappe.conf.get("cc_api_key")
+    HARAVAN_TOKEN: str = frappe.conf.get("haravan_token")
 
 config = BaseConfig()
