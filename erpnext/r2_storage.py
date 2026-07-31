@@ -68,12 +68,12 @@ class R2FileManager:
 		"""
 		Generate S3 key with organized folder structure
 		"""
-		# Clean file name
-		file_name = file_name.replace(" ", "_")
+		# Clean file name: unquote existing URL encoding, replace spaces/commas with underscores
+		file_name = unquote(file_name or "").replace(" ", "_").replace(",", "_")
 		# Normalize to NFC so composed characters are consistent
 		file_name = unicodedata.normalize("NFC", file_name)
-		# Keep Unicode; remove only unsafe path/URL characters
-		file_name = re.sub(r'[<>:"/\\|?*\[\]{}%#]', "", file_name)
+		# Keep Unicode; remove unsafe path/URL characters
+		file_name = re.sub(r'[<>:"/\\|?*\[\]{}%#,]', "", file_name)
 		
 		# Use content_hash if available (from Frappe), else generate random
 		if content_hash:
@@ -454,7 +454,7 @@ def extract_key_from_url(file_url):
 		# Extract from API URL
 		match = re.search(r"key=([^&]+)", file_url)
 		if match:
-			return match.group(1)
+			return unquote(match.group(1))
 	return None
 
 
