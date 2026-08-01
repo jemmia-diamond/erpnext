@@ -21,6 +21,7 @@ from erpnext.crm.utils import CRMNote, copy_comments, link_communications, link_
 from erpnext.selling.doctype.customer.customer import parse_full_name
 from frappe.utils import date_diff, now_datetime, get_datetime
 from erpnext.utilities.phone_utils import get_phone_variants
+from frappe.integrations.doctype.webhook.webhook import enqueue_webhook
 
 
 class Lead(SellingController, CRMNote):
@@ -1444,6 +1445,34 @@ def update_primary_sale_from_todo(doc, method=None):
 				frappe.db.set_value("Lead", doc.reference_name, "primary_sale", sales_person)
 
 			frappe.clear_document_cache("Lead", doc.reference_name)
+			frappe.db.commit()
+			try:
+				manual_lead_owner_enqueue(doc.reference_name)
+			except Exception:
+				frappe.log_error(title="Manual Lead Webhook Call Failed", message=frappe.get_traceback())
 
 	except Exception as e:
-		frappe.log_error(frappe.get_traceback(), "DEBUG ASSIGN LEAD EXCEPTION")
+		frappe.log_error(title="DEBUG ASSIGN LEAD EXCEPTION", message=frappe.get_traceback())
+
+
+def manual_lead_owner_enqueue(lead_name):
+	try:
+		webhook_name = frappe.db.get_value(
+			"Webhook",
+			{
+				"webhook_doctype": "Lead",
+				"enabled_backend_enqueue": 1,
+				"enqueue_name": ["like", "%to_pancake"],
+			},
+			"name",
+		)
+
+		if not webhook_name:
+			return
+
+		webhook = frappe.get_doc("Webhook", webhook_name)
+		lead_doc = frappe.get_doc("Lead", lead_name)
+		enqueue_webhook(lead_doc, webhook)
+		frappe.logger().info(f"Manual webhook '{webhook_name}' triggered successfully for Lead: {lead_name}")
+	except Exception:
+		frappe.log_error(title=f"Manual Lead Webhook Enqueue Error for {lead_name}", message=frappe.get_traceback())
