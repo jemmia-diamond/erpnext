@@ -1,7 +1,26 @@
 import frappe
+import json
+
 from frappe.query_builder import DocType, Interval
 from frappe.query_builder.functions import Now
 from erpnext.utilities.phone_utils import get_phone_variants
+
+
+DEFAULT_LEAD_OPPORTUNITY_FIELD_MAPPINGS = [
+	("first_name", "title"),
+	("phone", "phone"),
+	("email_id", "contact_email"),
+	("gender", "gender"),
+	("age_rage", "age_rage"),
+	("purpose_lead", "purpose_lead"),
+	("budget_lead", "budget_lead"),
+	("province", "province"),
+	("region", "region"),
+	("preferred_product_type", "preferred_product_type"),
+	("expected_delivery_date", "expected_delivery_date"),
+	("last_customer_message_at", "last_customer_message_at"),
+	("last_sales_message_at", "last_sales_message_at"),
+]
 
 
 def auto_close_opportunity():
@@ -97,3 +116,87 @@ def mark_opportunity_as_won_on_payment(doc, method=None):
 
 	if opp_names:
 		frappe.db.set_value("Opportunity", opp_names, "status", "Won")
+
+
+def sync_lead_fields_to_active_opportunities(doc, method=None):
+	"""Sync specified Lead fields to active/in-progress Opportunities (status NOT IN ['Won', 'Lost'])."""
+	enabled, raw_mappings = frappe.db.get_value(
+		"CRM Settings",
+		"CRM Settings",
+		["sync_lead_to_in_progress_opportunity", "opportunity_sync_field_mappings"]
+	) or (0, None)
+
+	if not enabled or not doc or not getattr(doc, "name", None):
+		return
+
+	or_filters = [["party_name", "=", doc.name]]
+	if doc.get("phone"):
+		or_filters.append(["phone", "=", doc.phone])
+
+	opp_names = frappe.get_all(
+		"Opportunity",
+		filters=[
+			["opportunity_from", "=", "Lead"],
+			["status", "not in", ["Won", "Lost"]],
+		],
+		or_filters=or_filters,
+		pluck="name",
+	)
+
+	if not opp_names:
+		return
+
+	field_mappings = get_lead_to_opportunity_field_mappings(raw_mappings)
+	today = frappe.utils.getdate(frappe.utils.nowdate())
+
+	for opp_name in opp_names:
+		opp = frappe.get_doc("Opportunity", opp_name)
+		updated = False
+
+		for lead_field, opp_field in field_mappings:
+			val = doc.get(lead_field)
+			if not val:
+				continue
+
+			if lead_field == "preferred_product_type":
+				lead_items = [r.product_type for r in val if getattr(r, "product_type", None)]
+				opp_items = [r.product_type for r in opp.preferred_product_type if getattr(r, "product_type", None)]
+				if lead_items != opp_items:
+					opp.set("preferred_product_type", [])
+					for pt in lead_items:
+						opp.append("preferred_product_type", {"product_type": pt})
+					updated = True
+
+			elif lead_field == "expected_delivery_date":
+				if not opp.expected_delivery_date:
+					doc_exp = frappe.utils.getdate(val)
+					if doc_exp >= today:
+						opp.expected_delivery_date = val
+						updated = True
+
+			else:
+				if opp.get(opp_field) != val:
+					opp.set(opp_field, val)
+					updated = True
+
+		if updated:
+			opp.flags.ignore_permissions = True
+			opp.flags.ignore_mandatory = True
+			opp.save()
+
+def get_lead_to_opportunity_field_mappings(raw_mappings=None):
+	"""Parse custom JSON field mappings from CRM Settings or return default mapping list."""
+	if raw_mappings:
+		try:
+			parsed = frappe.parse_json(raw_mappings)
+			if parsed:
+				return parsed
+		except Exception:
+			frappe.log_error(
+				title="Invalid Opportunity Sync Field Mappings JSON",
+				message=frappe.get_traceback()
+			)
+
+	return DEFAULT_LEAD_OPPORTUNITY_FIELD_MAPPINGS
+
+

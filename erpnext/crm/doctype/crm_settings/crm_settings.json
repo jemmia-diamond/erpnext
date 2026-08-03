@@ -8,16 +8,22 @@
  "field_order": [
   "section_break_5",
   "campaign_naming_by",
+  "auto_creation_of_contact",
   "allow_lead_duplication_based_on_emails",
   "transfer_assign_to_lead_owner",
-  "column_break_4",
-  "auto_creation_of_contact",
   "auto_nurture_leads",
+  "column_break_4",
+  "allow_auto_create_lead_product",
+  "allowed_product_types",
+  "not_allowed_product_types",
   "opportunity_section",
+  "sync_lead_to_in_progress_opportunity",
+  "opportunity_sync_field_mappings",
   "auto_close_opportunity",
   "close_opportunity_after_days",
   "column_break_9",
   "auto_create_opportunity",
+  "allow_subsequent_auto_opportunity",
   "auto_create_opportunity_on_converted_lead",
   "quotation_section",
   "default_valid_till",
@@ -73,6 +79,13 @@
    "label": "Auto Create Opportunity when Lead has Core Info"
   },
   {
+   "default": "1",
+   "description": "If disabled, auto-creation only creates the 1st Opportunity for a Lead.",
+   "fieldname": "allow_subsequent_auto_opportunity",
+   "fieldtype": "Check",
+   "label": "Allow Subsequent Auto Opportunity Creation"
+  },
+  {
    "default": "0",
    "fieldname": "auto_create_opportunity_on_converted_lead",
    "fieldtype": "Check",
@@ -85,9 +98,40 @@
    "label": "Auto Creation of Contact"
   },
   {
+   "default": "1",
+   "fieldname": "allow_auto_create_lead_product",
+   "fieldtype": "Check",
+   "label": "Allow Auto Create Lead Product"
+  },
+  {
+   "description": "Comma-separated list of product types allowed to be created (e.g. s\u1ea3n ph\u1ea9m 1, s\u1ea3n ph\u1ea9m 2,). Leave empty to allow all.",
+   "fieldname": "allowed_product_types",
+   "fieldtype": "Text",
+   "label": "Allowed Product Types"
+  },
+  {
+   "description": "Comma-separated list of product types NOT allowed to be created.",
+   "fieldname": "not_allowed_product_types",
+   "fieldtype": "Text",
+   "label": "Not Allowed Product Types"
+  },
+  {
    "fieldname": "opportunity_section",
    "fieldtype": "Section Break",
    "label": "Opportunity"
+  },
+  {
+   "default": "1",
+   "fieldname": "sync_lead_to_in_progress_opportunity",
+   "fieldtype": "Check",
+   "label": "Sync Lead Information to In-Progress Opportunities"
+  },
+  {
+   "description": "JSON array of [lead_fieldname, opportunity_fieldname] tuples for lead -> opportunity sync.",
+   "fieldname": "opportunity_sync_field_mappings",
+   "fieldtype": "Code",
+   "label": "Opportunity Sync Field Mappings",
+   "options": "JSON"
   },
   {
    "default": "15",
@@ -140,7 +184,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-07-29 09:57:52.188305",
+ "modified": "2026-08-03 05:11:01.252642",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "CRM Settings",

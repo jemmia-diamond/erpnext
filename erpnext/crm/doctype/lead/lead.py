@@ -193,8 +193,8 @@ class Lead(SellingController, CRMNote):
 		self.sync_pancake_data_fields()
 		self.set_spam_status()
 		self.update_status_from_message_timestamps()
-		self.check_and_auto_create_opportunity()
 		self.check_and_auto_create_opportunity_for_converted_lead()
+		self.check_and_auto_create_opportunity()
 		self.process_notes()
 
 	def check_and_auto_create_opportunity_for_converted_lead(self):
@@ -221,9 +221,14 @@ class Lead(SellingController, CRMNote):
 		opp.flags.ignore_permissions = True
 		opp.insert()
 
+
 	def check_and_auto_create_opportunity(self):
-		enabled = frappe.db.get_single_value("CRM Settings", "auto_create_opportunity")
-		if not enabled or self.is_new():
+		enabled, allow_subsequent = frappe.db.get_value(
+			"CRM Settings",
+			"CRM Settings",
+			["auto_create_opportunity", "allow_subsequent_auto_opportunity"],
+		) or (0, 1)
+		if not enabled or self.is_new() or self.status == "Converted":
 			return
 
 		purpose = self.get("purpose_lead") or self.get("lead_purpose")
@@ -235,15 +240,15 @@ class Lead(SellingController, CRMNote):
 		if not (purpose and product_type and phone and province):
 			return
 
-		active_opp = frappe.db.exists(
-			"Opportunity",
-			{
-				"opportunity_from": "Lead",
-				"party_name": self.name,
-				"status": ["not in", ["Won", "Lost"]],
-			},
-		)
-		if active_opp:
+		# Check existing Opportunity (ANY opp if subsequent disabled, or ACTIVE opp if enabled)
+		opp_filter = {
+			"opportunity_from": "Lead",
+			"party_name": self.name,
+		}
+		if allow_subsequent:
+			opp_filter["status"] = ["not in", ["Won", "Lost"]]
+
+		if frappe.db.exists("Opportunity", opp_filter):
 			return
 
 		opp = make_opportunity(self.name)
@@ -556,6 +561,13 @@ class Lead(SellingController, CRMNote):
 	def on_update(self):
 		self.update_prospect()
 		self.update_assignment_status()
+		self.sync_active_opportunities()
+
+	def sync_active_opportunities(self):
+		from erpnext.crm.doctype.opportunity.custom.opportunity_custom import (
+			sync_lead_fields_to_active_opportunities,
+		)
+		sync_lead_fields_to_active_opportunities(self)
 
 	def on_trash(self):
 		frappe.db.set_value("Issue", {"lead": self.name}, "lead", None)
