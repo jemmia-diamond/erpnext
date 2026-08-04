@@ -6,7 +6,8 @@
  "engine": "InnoDB",
  "field_order": [
   "title",
-  "bizfly_id"
+  "bizfly_id",
+  "activated"
  ],
  "fields": [
   {
@@ -18,12 +19,18 @@
    "fieldname": "title",
    "fieldtype": "Long Text",
    "label": "Title"
+  },
+  {
+   "default": "0",
+   "fieldname": "activated",
+   "fieldtype": "Check",
+   "label": "Activated"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-30 11:05:28.295809",
+ "modified": "2026-08-04 18:27:36.930904",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Policy",

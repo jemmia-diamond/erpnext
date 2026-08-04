@@ -14,7 +14,9 @@ class Policy(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		activated: DF.Check
 		bizfly_id: DF.Data | None
 		title: DF.LongText | None
 	# end: auto-generated types
+
 	pass
