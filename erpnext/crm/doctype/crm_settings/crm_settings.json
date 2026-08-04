@@ -18,6 +18,7 @@
   "not_allowed_product_types",
   "opportunity_section",
   "sync_lead_to_in_progress_opportunity",
+  "sync_opportunity_date_from_old_lead_qualified_on",
   "opportunity_sync_field_mappings",
   "auto_close_opportunity",
   "close_opportunity_after_days",
@@ -125,6 +126,13 @@
    "fieldname": "sync_lead_to_in_progress_opportunity",
    "fieldtype": "Check",
    "label": "Sync Lead Information to In-Progress Opportunities"
+  },
+  {
+   "default": "1",
+   "description": "If enabled, auto-created Opportunities for leads qualified before 2026-07-31 14:00 will use the Lead's qualified_on date as opportunity_date.",
+   "fieldname": "sync_opportunity_date_from_old_lead_qualified_on",
+   "fieldtype": "Check",
+   "label": "Sync Opportunity Date from Old Lead Qualified On Date"
   },
   {
    "description": "JSON array of [lead_fieldname, opportunity_fieldname] tuples for lead -> opportunity sync.",
