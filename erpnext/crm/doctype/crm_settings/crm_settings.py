@@ -3,7 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
-
+from erpnext.crm.doctype.crm_settings.crm_settings_service import clear_crm_settings_cache
 
 class CRMSettings(Document):
 	# begin: auto-generated types
@@ -33,3 +33,9 @@ class CRMSettings(Document):
 
 	def validate(self):
 		frappe.db.set_default("campaign_naming_by", self.get("campaign_naming_by", ""))
+
+	def on_update(self):
+		clear_crm_settings_cache()
+
+	def on_change(self):
+		clear_crm_settings_cache()

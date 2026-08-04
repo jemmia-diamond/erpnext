@@ -10,6 +10,7 @@ from frappe.utils import get_datetime, validate_phone_number
 from frappe.www.contact import get_contacts_by_conversation_id
 
 from erpnext.config.config import config
+from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
 from erpnext.crm.doctype.lead.lead import Lead
 from erpnext.crm.doctype.lead.lead_dao import get_lead_by_name, get_lead_name_by_conversation_id
 from erpnext.crm.doctype.lead_budget.lead_budget_dao import find_range_budget
@@ -800,7 +801,7 @@ def auto_nurture_leads():
 	Auto-transition Leads to Nurturing status if no customer or sales message for 48 hours.
 	Triggered via scheduler cron. Checked against CRM Settings 'auto_nurture_leads'.
 	"""
-	enabled = frappe.db.get_single_value("CRM Settings", "auto_nurture_leads")
+	enabled = get_crm_settings().get("auto_nurture_leads", 0)
 	if not enabled:
 		return
 

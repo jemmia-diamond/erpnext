@@ -20,6 +20,7 @@ from erpnext.crm.utils import (
 	link_open_events,
 	link_open_tasks,
 )
+from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
 from erpnext.setup.utils import get_exchange_rate
 from erpnext.utilities.transaction_base import TransactionBase
 
@@ -137,7 +138,7 @@ class Opportunity(TransactionBase, CRMNote):
 
 			link_open_tasks(self.opportunity_from, self.party_name, self)
 			link_open_events(self.opportunity_from, self.party_name, self)
-			if frappe.db.get_single_value("CRM Settings", "carry_forward_communication_and_comments"):
+			if get_crm_settings().get("carry_forward_communication_and_comments"):
 				copy_comments(self.opportunity_from, self.party_name, self)
 				link_communications(self.opportunity_from, self.party_name, self)
 		self.opportunity_date = self.creation
@@ -568,7 +569,7 @@ def auto_close_opportunity():
 	)
 	return custom_auto_close()
 
-	auto_close_after_days = frappe.db.get_single_value("CRM Settings", "close_opportunity_after_days") or 15
+	auto_close_after_days = get_crm_settings().get("close_opportunity_after_days") or 15
 
 	table = frappe.qb.DocType("Opportunity")
 	opportunities = (

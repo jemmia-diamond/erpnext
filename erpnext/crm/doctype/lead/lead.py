@@ -22,7 +22,7 @@ from erpnext.selling.doctype.customer.customer import parse_full_name
 from frappe.utils import date_diff, now_datetime, get_datetime
 from erpnext.utilities.phone_utils import get_phone_variants
 from frappe.integrations.doctype.webhook.webhook import enqueue_webhook
-
+from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
 
 class Lead(SellingController, CRMNote):
 	# begin: auto-generated types
@@ -143,7 +143,7 @@ class Lead(SellingController, CRMNote):
 
 	def before_insert(self):
 		self.contact_doc = None
-		if frappe.db.get_single_value("CRM Settings", "auto_creation_of_contact"):
+		if get_crm_settings().get("auto_creation_of_contact"):
 			if self.utm_source == "Existing Customer" and self.customer:
 				contact = frappe.db.get_value(
 					"Dynamic Link",
@@ -199,7 +199,7 @@ class Lead(SellingController, CRMNote):
 
 	def check_and_auto_create_opportunity_for_converted_lead(self):
 		"""Auto create a new Opportunity when a Converted Lead interacts again and has no active Opportunity."""
-		enabled = frappe.db.get_single_value("CRM Settings", "auto_create_opportunity_on_converted_lead")
+		enabled = get_crm_settings().get("auto_create_opportunity_on_converted_lead")
 		if not enabled or self.status != "Converted" or self.is_new():
 			return
 
@@ -223,11 +223,11 @@ class Lead(SellingController, CRMNote):
 
 
 	def check_and_auto_create_opportunity(self):
-		enabled, allow_subsequent = frappe.db.get_value(
-			"CRM Settings",
-			"CRM Settings",
-			["auto_create_opportunity", "allow_subsequent_auto_opportunity"],
-		) or (0, 1)
+		crm_settings = get_crm_settings()
+		enabled = crm_settings.get("auto_create_opportunity", 0)
+		allow_subsequent = crm_settings.get("allow_subsequent_auto_opportunity", 1)
+		sync_old_qualified_date = crm_settings.get("sync_opportunity_date_from_old_lead_qualified_on", 1)
+
 		if not enabled or self.is_new() or self.status == "Converted":
 			return
 
@@ -252,6 +252,11 @@ class Lead(SellingController, CRMNote):
 			return
 
 		opp = make_opportunity(self.name)
+		if sync_old_qualified_date and self.qualified_on:
+			cutoff_time = frappe.utils.get_datetime("2026-07-31 14:00:00")
+			if frappe.utils.get_datetime(self.qualified_on) < cutoff_time:
+				opp.opportunity_date = frappe.utils.getdate(self.qualified_on)
+
 		if opp.expected_delivery_date and frappe.utils.getdate(opp.expected_delivery_date) < frappe.utils.getdate(frappe.utils.nowdate()):
 			opp.expected_delivery_date = None
 		opp.flags.ignore_permissions = True
@@ -616,7 +621,7 @@ class Lead(SellingController, CRMNote):
 	def check_email_id_is_unique(self):
 		if self.email_id:
 			# validate email is unique
-			if not frappe.db.get_single_value("CRM Settings", "allow_lead_duplication_based_on_emails"):
+			if not get_crm_settings().get("allow_lead_duplication_based_on_emails"):
 				duplicate_leads = frappe.get_all(
 					"Lead", filters={"email_id": self.email_id, "name": ["!=", self.name]}
 				)
@@ -1256,9 +1261,7 @@ def add_lead_to_prospect(lead, prospect):
 	prospect.append("leads", {"lead": lead})
 	prospect.save(ignore_permissions=True)
 
-	carry_forward_communication_and_comments = frappe.db.get_single_value(
-		"CRM Settings", "carry_forward_communication_and_comments"
-	)
+	carry_forward_communication_and_comments = get_crm_settings().get("carry_forward_communication_and_comments")
 
 	if carry_forward_communication_and_comments:
 		copy_comments("Lead", lead, prospect)
@@ -1417,7 +1420,7 @@ def update_primary_sale_from_todo(doc, method=None):
 	try:
 		if doc.reference_type == "Lead" and doc.status == "Open" and doc.allocated_to:
 			# Transfer assigned user to lead_owner if enabled in CRM Settings
-			if frappe.db.get_single_value("CRM Settings", "transfer_assign_to_lead_owner"):
+			if get_crm_settings().get("transfer_assign_to_lead_owner"):
 				lead_info = frappe.db.get_value("Lead", doc.reference_name, ["lead_owner", "first_reach_at"], as_dict=True) or {}
 				current_owner = lead_info.get("lead_owner")
 				first_reach_at = lead_info.get("first_reach_at")
