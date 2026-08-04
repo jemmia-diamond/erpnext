@@ -257,6 +257,12 @@ class Lead(SellingController, CRMNote):
 		opp.flags.ignore_permissions = True
 		opp.insert()
 
+		self.qualification_status = "Qualified"
+		if not self.qualified_on:
+			self.qualified_on = getattr(opp, "opportunity_date", None) or getattr(opp, "creation", None) or frappe.utils.now_datetime()
+		if not self.qualified_by:
+			self.qualified_by = frappe.session.user
+
 	def set_store_from_source(self):
 		if self.source:
 			source_code = frappe.db.get_value("Lead Source", self.source, "code")
@@ -1009,15 +1015,16 @@ class Lead(SellingController, CRMNote):
 		return "Qualified Lead"
 	def get_qualification_status(self):
 		"""
-		Determine qualification status based on:
+		Determine qualification status based on 4 core fields:
 		  1. Must have phone and province
-		  2. Must have preferred_product_type and budget_lead
+		  2. Must have preferred_product_type and purpose_lead (or lead_purpose)
 		Only auto-qualifies, never auto-disqualifies.
 		"""
 		if self.phone and self.province:
-			if self.source == 'CRM-LEAD-SOURCE-0000023':
+			if self.source == "CRM-LEAD-SOURCE-0000023":
 				return "Qualified"
-			elif self.preferred_product_type and self.budget_lead:
+			purpose = self.get("purpose_lead")
+			if self.preferred_product_type and purpose:
 				return "Qualified"
 
 		return "Unqualified"
