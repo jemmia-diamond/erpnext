@@ -1,4 +1,5 @@
 import frappe 
+from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
 
 def get_products_in_names(product_names):
 
@@ -22,25 +23,22 @@ def get_lead_product(product_type):
 
 def create_lead_product(product_type):
 	try:
-		# Single DB query to fetch all 3 CRM Settings fields
-		enabled, not_allowed_raw, allowed_raw = frappe.db.get_value(
-			"CRM Settings",
-			"CRM Settings",
-			["allow_auto_create_lead_product", "not_allowed_product_types", "allowed_product_types"]
-		) or (1, None, None)
-
+		crm_settings = get_crm_settings()
+		enabled = crm_settings.get("allow_auto_create_lead_product", 1)
 		if not enabled:
 			return None
 
 		target_product = product_type.strip()
 
 		# 1. Check NOT allowed list
+		not_allowed_raw = crm_settings.get("not_allowed_product_types")
 		if not_allowed_raw:
 			not_allowed_types = [item.strip() for item in not_allowed_raw.split(",") if item.strip()]
 			if target_product in not_allowed_types:
 				return None
 
 		# 2. Check allowed list
+		allowed_raw = crm_settings.get("allowed_product_types")
 		if allowed_raw:
 			allowed_types = [item.strip() for item in allowed_raw.split(",") if item.strip()]
 			if allowed_types and target_product not in allowed_types:

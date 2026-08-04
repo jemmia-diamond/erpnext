@@ -4,6 +4,7 @@ import json
 from frappe.query_builder import DocType, Interval
 from frappe.query_builder.functions import Now
 from erpnext.utilities.phone_utils import get_phone_variants
+from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
 
 
 DEFAULT_LEAD_OPPORTUNITY_FIELD_MAPPINGS = [
@@ -28,11 +29,12 @@ def auto_close_opportunity():
 	1. Past expected_delivery_date + 7 days without interaction -> Lost.
 	2. 7 days inactive in Nurturing status without interaction -> Lost.
 	"""
-	enabled = frappe.db.get_single_value("CRM Settings", "auto_close_opportunity")
+	crm_settings = get_crm_settings()
+	enabled = crm_settings.get("auto_close_opportunity", 0)
 	if not enabled:
 		return
 
-	auto_close_after_days = frappe.db.get_single_value("CRM Settings", "close_opportunity_after_days") or 7
+	auto_close_after_days = crm_settings.get("close_opportunity_after_days") or 7
 	cutoff = frappe.utils.add_days(frappe.utils.now_datetime(), -auto_close_after_days)
 	today_date = frappe.utils.nowdate()
 
@@ -120,11 +122,9 @@ def mark_opportunity_as_won_on_payment(doc, method=None):
 
 def sync_lead_fields_to_active_opportunities(doc, method=None):
 	"""Sync specified Lead fields to active/in-progress Opportunities (status NOT IN ['Won', 'Lost'])."""
-	enabled, raw_mappings = frappe.db.get_value(
-		"CRM Settings",
-		"CRM Settings",
-		["sync_lead_to_in_progress_opportunity", "opportunity_sync_field_mappings"]
-	) or (0, None)
+	crm_settings = get_crm_settings()
+	enabled = crm_settings.get("sync_lead_to_in_progress_opportunity", 0)
+	raw_mappings = crm_settings.get("opportunity_sync_field_mappings")
 
 	if not enabled or not doc or not getattr(doc, "name", None):
 		return
