@@ -24,8 +24,9 @@
   "close_opportunity_after_days",
   "column_break_9",
   "auto_create_opportunity",
-  "allow_subsequent_auto_opportunity",
   "auto_create_opportunity_on_converted_lead",
+  "allow_subsequent_auto_opportunity",
+  "auto_opportunity_mandatory_fields",
   "quotation_section",
   "default_valid_till",
   "section_break_13",
@@ -91,6 +92,12 @@
    "fieldname": "auto_create_opportunity_on_converted_lead",
    "fieldtype": "Check",
    "label": "Auto Create Opportunity for Converted Leads on Interaction"
+  },
+  {
+   "description": "Comma-separated list of fieldnames required to auto-create an Opportunity (e.g. phone, province, budget_lead)",
+   "fieldname": "auto_opportunity_mandatory_fields",
+   "fieldtype": "Text",
+   "label": "Mandatory Fields for Auto Opportunity"
   },
   {
    "default": "1",
@@ -192,7 +199,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-08-03 05:11:01.252642",
+ "modified": "2026-08-05 15:43:40.082042",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "CRM Settings",

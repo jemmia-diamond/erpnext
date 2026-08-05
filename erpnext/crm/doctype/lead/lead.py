@@ -258,14 +258,12 @@ class Lead(SellingController, CRMNote):
 		if not enabled or self.is_new() or self.status == "Converted":
 			return
 
-		purpose = self.get("purpose_lead") or self.get("lead_purpose")
-		product_type = self.get("preferred_product_type")
-		phone = self.get("phone")
-		province = self.get("province")
-		exp_date = self.get("expected_delivery_date")
+		mandatory_fields_str = crm_settings.get("auto_opportunity_mandatory_fields") or "budget_lead, phone, province"
+		mandatory_fields = [f.strip() for f in mandatory_fields_str.split(",") if f.strip()]
 
-		if not (purpose and product_type and phone and province):
-			return
+		for field in mandatory_fields:
+			if not self.get(field):
+				return
 
 		# Check existing Opportunity (ANY opp if subsequent disabled, or ACTIVE opp if enabled)
 		opp_filter = {
