@@ -246,8 +246,7 @@ class Lead(SellingController, CRMNote):
 			opp = make_opportunity(self.name)
 
 		opp.flags.ignore_permissions = True
-		opp.insert(ignore_permissions=True)
-		opp.save()
+		opp.insert()
 
 
 	def check_and_auto_create_opportunity(self):
