@@ -8,6 +8,7 @@
  "field_order": [
   "section_break_5",
   "campaign_naming_by",
+  "enable_auto_lead_insert",
   "auto_creation_of_contact",
   "allow_lead_duplication_based_on_emails",
   "transfer_assign_to_lead_owner",
@@ -55,6 +56,12 @@
    "fieldname": "section_break_5",
    "fieldtype": "Section Break",
    "label": "Lead"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_auto_lead_insert",
+   "fieldtype": "Check",
+   "label": "Enable Auto Lead Insert / Update API"
   },
   {
    "default": "0",

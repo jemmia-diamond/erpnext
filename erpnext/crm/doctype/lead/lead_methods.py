@@ -63,6 +63,11 @@ def insert_lead_by_batch(docs=None):
 	"""Insert multiple lead
 
 	:param docs: JSON or list of dict objects to be inserted in one request"""
+	
+	crm_settings = get_crm_settings()
+	if not crm_settings.get("enable_auto_lead_insert", 1):
+		frappe.throw("currently backfilling")
+
 	if isinstance(docs, str):
 		docs = json.loads(docs)
 
@@ -282,6 +287,11 @@ def update_lead_by_batch(docs):
 	"""Bulk update leads
 
 	:param docs: JSON list of documents to be updated remotely. Each document must have `docname` property"""
+	
+	crm_settings = get_crm_settings()
+	if not crm_settings.get("enable_auto_lead_insert", 1):
+		frappe.throw("currently backfilling")
+
 	if isinstance(docs, str):
 		docs = json.loads(docs)
 	failed_docs = []
