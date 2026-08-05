@@ -440,7 +440,7 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 
 	return master_doc
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def merge_leads_by_phone(phone, first_reach_at=None, current_lead_name=None):
 	"""
 	API for frontend to trigger merge for a specific phone number.
