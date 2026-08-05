@@ -13,6 +13,7 @@
   "auto_creation_of_contact",
   "allow_lead_duplication_based_on_emails",
   "transfer_assign_to_lead_owner",
+  "overwrite_existing_lead_owner",
   "auto_nurture_leads",
   "column_break_4",
   "allow_auto_create_lead_product",
@@ -81,6 +82,13 @@
    "fieldname": "transfer_assign_to_lead_owner",
    "fieldtype": "Check",
    "label": "Transfer Assigned To User as Lead Owner"
+  },
+  {
+   "default": "0",
+   "description": "If enabled, assigning a ToDo will overwrite the Lead Owner even if the current owner is already a human (not tech@jemmia.vn).",
+   "fieldname": "overwrite_existing_lead_owner",
+   "fieldtype": "Check",
+   "label": "Overwrite Existing Lead Owner on Assignment"
   },
   {
    "default": "0",

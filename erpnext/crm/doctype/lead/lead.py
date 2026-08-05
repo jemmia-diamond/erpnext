@@ -602,6 +602,27 @@ class Lead(SellingController, CRMNote):
 		self.update_prospect()
 		self.update_assignment_status()
 		self.sync_active_opportunities()
+		self.sync_lead_owner_to_todos()
+
+	def sync_lead_owner_to_todos(self):
+		if not self.has_value_changed("lead_owner") or not self.lead_owner:
+			return
+
+		open_todos = frappe.get_all("ToDo", filters={
+			"reference_type": "Lead",
+			"reference_name": self.name,
+			"status": "Open",
+			"allocated_to": ["!=", self.lead_owner]
+		}, fields=["name"], limit=1)
+
+		if open_todos:
+			todo_name = open_todos[0].name
+			frappe.db.set_value("ToDo", todo_name, "allocated_to", self.lead_owner)
+			frappe.clear_document_cache("ToDo", todo_name)
+			try:
+				manual_lead_owner_enqueue(self.name)
+			except Exception:
+				frappe.log_error(title="Manual Lead Webhook Call Failed", message=frappe.get_traceback())
 
 	def sync_active_opportunities(self):
 		from erpnext.crm.doctype.opportunity.custom.opportunity_custom import (
@@ -1465,7 +1486,8 @@ def update_primary_sale_from_todo(doc, method=None):
 
 					# Rule 3: if current lead_owner is not tech@jemmia.vn and allocated_to is not tech@jemmia.vn, transfer
 					elif current_owner != "tech@jemmia.vn" and doc.allocated_to != "tech@jemmia.vn":
-						frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
+						if get_crm_settings().get("overwrite_existing_lead_owner"):
+							frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
 
 				# Legacy Leads (< 2026-07-31 14:00:00)
 				else:
@@ -1479,7 +1501,8 @@ def update_primary_sale_from_todo(doc, method=None):
 
 					# Rule 3: if current lead_owner is not tech@jemmia.vn and allocated_to is not tech@jemmia.vn, transfer
 					elif current_owner != "tech@jemmia.vn" and doc.allocated_to != "tech@jemmia.vn":
-						frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
+						if get_crm_settings().get("overwrite_existing_lead_owner"):
+							frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
 
 			# 1. Tìm Sales Person theo Email
 			sales_person = frappe.db.get_value("Sales Person", {"employee_email": doc.allocated_to}, "name")
