@@ -20,7 +20,7 @@ from erpnext.crm.doctype.lead.lead_dao import get_lead_by_name, get_lead_name_by
 from erpnext.crm.doctype.lead_budget.lead_budget_dao import find_range_budget
 from erpnext.crm.doctype.lead_demand.lead_demand_dao import get_lead_purpose
 from erpnext.crm.doctype.lead_product.lead_product_dao import create_lead_product, get_lead_product
-from erpnext.utilities.phone_utils import is_valid_phone_number, normalize_to_standard_format
+from erpnext.utilities.phone_utils import is_valid_phone_number, normalize_to_standard_format, get_phone_variants
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
@@ -439,6 +439,100 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 		raise
 
 	return master_doc
+
+@frappe.whitelist()
+def merge_leads_by_phone(phone, first_reach_at=None, current_lead_name=None):
+	"""
+	API for frontend to trigger merge for a specific phone number.
+	Input: phone, first_reach_at (optional), current_lead_name (optional)
+	Returns the Master Lead name.
+	"""
+	if not phone:
+		frappe.throw("Phone is required")
+
+	normalized = normalize_phone_number(phone)
+	if not normalized:
+		frappe.throw("Invalid phone number")
+
+	variants = get_phone_variants(phone)
+	if not variants:
+		variants = [normalized]
+
+	leads_data = frappe.get_all(
+		"Lead",
+		or_filters={"phone": ["in", variants], "mobile_no": ["in", variants]},
+		fields=["name", "first_reach_at", "creation"]
+	)
+
+	# Ensure current_lead_name is in the list to be considered
+	if current_lead_name and frappe.db.exists("Lead", current_lead_name):
+		if not any(l.name == current_lead_name for l in leads_data):
+			current_lead_data = frappe.get_all(
+				"Lead",
+				filters={"name": current_lead_name},
+				fields=["name", "first_reach_at", "creation"]
+			)
+			if current_lead_data:
+				leads_data.append(current_lead_data[0])
+
+	if not leads_data:
+		return None
+
+	# Sort leads by first_reach_at ASC, creation ASC in Python
+	def sort_key(l):
+		# Use a far future date if first_reach_at is None
+		reach = l.first_reach_at or get_datetime("2999-01-01")
+		creation = l.creation or get_datetime("2999-01-01")
+		return (reach, creation)
+
+	leads_data.sort(key=sort_key)
+
+	# If there's only one lead (which could be the current_lead_name), just update it
+	if len(leads_data) == 1:
+		master_name = leads_data[0].name
+		doc = frappe.get_doc("Lead", master_name)
+		changed = False
+		if doc.phone != normalized:
+			doc.phone = normalized
+			changed = True
+				
+		if changed:
+			doc.flags.ignore_permissions = True
+			doc.save()
+			frappe.db.commit()
+			
+		return master_name
+
+	# Multiple leads found
+	master_name = leads_data[0].name
+	master_doc = frappe.get_doc("Lead", master_name)
+
+	if master_doc.phone != normalized:
+		master_doc.phone = normalized
+
+	loser_leads = [l.name for l in leads_data[1:]]
+	for loser_name in loser_leads:
+		try:
+			loser_doc = frappe.get_doc("Lead", loser_name)
+			frappe.db.savepoint("api_merge")
+			_relink_dynamic_links(loser_doc.name, master_doc.name)
+			_relink_downstream_docs(loser_doc.name, master_doc.name)
+			_transfer_lead_fields(master_doc, loser_doc)
+			_merge_system_fields(master_doc, loser_doc)
+			_transfer_child_tables(master_doc, loser_doc)
+			transfer_lead_todos(loser_doc.name, master_doc.name)
+			frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True, force=1)
+			frappe.db.commit()
+		except Exception as e:
+			frappe.db.rollback(save_point="api_merge")
+			frappe.log_error(f"API Merge failed {loser_name} into {master_name}: {e!s}", "Lead Merge Error")
+
+	master_doc.set_first_lead_source()
+	master_doc.save(ignore_permissions=True)
+	frappe.db.commit()
+
+	return master_doc.name
+
 
 @frappe.whitelist()
 def bulk_merge_duplicate_leads(enqueue=True):

@@ -23,6 +23,7 @@ from frappe.utils import date_diff, now_datetime, get_datetime
 from erpnext.utilities.phone_utils import get_phone_variants
 from frappe.integrations.doctype.webhook.webhook import enqueue_webhook
 from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
+from erpnext.selling.doctype.customer.customer import make_opportunity as make_opp_from_customer
 
 class Lead(SellingController, CRMNote):
 	# begin: auto-generated types
@@ -206,20 +207,47 @@ class Lead(SellingController, CRMNote):
 		if not (self.last_customer_message_at and self.has_value_changed("last_customer_message_at")):
 			return
 
-		active_opp = frappe.db.exists(
-			"Opportunity",
-			{
-				"opportunity_from": "Lead",
-				"party_name": self.name,
-				"status": ["not in", ["Won", "Lost"]],
-			},
-		)
-		if active_opp:
-			return
+		customer = getattr(self, "customer", None) or frappe.db.get_value("Customer", {"lead_name": self.name})
+		if not customer and self.phone:
+			variants = get_phone_variants(self.phone)
+			if variants:
+				customers = frappe.get_all(
+					"Customer",
+					or_filters={"mobile_no": ["in", variants], "phone": ["in", variants]},
+					fields=["name"],
+					limit=1
+				)
+				if customers:
+					customer = customers[0].name
+		if customer:
+			active_opp = frappe.db.exists(
+				"Opportunity",
+				{
+					"opportunity_from": "Customer",
+					"party_name": customer,
+					"status": ["not in", ["Won", "Lost"]],
+				},
+			)
+			if active_opp:
+				return
+			opp = make_opp_from_customer(customer)
+		else:
+			active_opp = frappe.db.exists(
+				"Opportunity",
+				{
+					"opportunity_from": "Lead",
+					"party_name": self.name,
+					"status": ["not in", ["Won", "Lost"]],
+				},
+			)
+			if active_opp:
+				return
+				
+			opp = make_opportunity(self.name)
 
-		opp = make_opportunity(self.name)
 		opp.flags.ignore_permissions = True
-		opp.insert()
+		opp.insert(ignore_permissions=True)
+		opp.save()
 
 
 	def check_and_auto_create_opportunity(self):
@@ -885,7 +913,6 @@ class Lead(SellingController, CRMNote):
 				return
 
 		opportunity = make_opportunity(self.name)
-
 		opportunity.insert(ignore_permissions=True)
 	@frappe.whitelist()
 	def create_prospect_and_contact(self, data):
