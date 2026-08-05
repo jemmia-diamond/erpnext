@@ -23,7 +23,8 @@ from frappe.utils import date_diff, now_datetime, get_datetime
 from erpnext.utilities.phone_utils import get_phone_variants
 from frappe.integrations.doctype.webhook.webhook import enqueue_webhook
 from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
-
+from erpnext.selling.doctype.customer.customer import make_opportunity as make_opp_from_customer
+from erpnext.crm.doctype.lead.lead_methods import normalize_phone_number
 class Lead(SellingController, CRMNote):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
@@ -137,6 +138,10 @@ class Lead(SellingController, CRMNote):
 		self.set_lead_name()
 		self.set_title()
 		self.set_status()
+		# Skip normalization if backfilling flag (enable_auto_lead_insert) is turned off
+		if get_crm_settings().get("enable_auto_lead_insert", 1):
+			self.normalize_phone()
+			
 		self.check_email_id_is_unique()
 		self.check_phone_is_unique()
 		self.validate_email_id()
@@ -144,6 +149,10 @@ class Lead(SellingController, CRMNote):
 	def before_insert(self):
 		self.contact_doc = None
 		if get_crm_settings().get("auto_creation_of_contact"):
+			if self.source:
+				source_code = frappe.db.get_value("Lead Source", self.source, "code")
+				if source_code == "CallLog":
+					return
 			if self.utm_source == "Existing Customer" and self.customer:
 				contact = frappe.db.get_value(
 					"Dynamic Link",
@@ -206,18 +215,44 @@ class Lead(SellingController, CRMNote):
 		if not (self.last_customer_message_at and self.has_value_changed("last_customer_message_at")):
 			return
 
-		active_opp = frappe.db.exists(
-			"Opportunity",
-			{
-				"opportunity_from": "Lead",
-				"party_name": self.name,
-				"status": ["not in", ["Won", "Lost"]],
-			},
-		)
-		if active_opp:
-			return
+		customer = getattr(self, "customer", None) or frappe.db.get_value("Customer", {"lead_name": self.name})
+		if not customer and self.phone:
+			variants = get_phone_variants(self.phone)
+			if variants:
+				customers = frappe.get_all(
+					"Customer",
+					or_filters={"mobile_no": ["in", variants], "phone": ["in", variants]},
+					fields=["name"],
+					limit=1
+				)
+				if customers:
+					customer = customers[0].name
+		if customer:
+			active_opp = frappe.db.exists(
+				"Opportunity",
+				{
+					"opportunity_from": "Customer",
+					"party_name": customer,
+					"status": ["not in", ["Won", "Lost"]],
+				},
+			)
+			if active_opp:
+				return
+			opp = make_opp_from_customer(customer)
+		else:
+			active_opp = frappe.db.exists(
+				"Opportunity",
+				{
+					"opportunity_from": "Lead",
+					"party_name": self.name,
+					"status": ["not in", ["Won", "Lost"]],
+				},
+			)
+			if active_opp:
+				return
+				
+			opp = make_opportunity(self.name)
 
-		opp = make_opportunity(self.name)
 		opp.flags.ignore_permissions = True
 		opp.insert()
 
@@ -231,14 +266,12 @@ class Lead(SellingController, CRMNote):
 		if not enabled or self.is_new() or self.status == "Converted":
 			return
 
-		purpose = self.get("purpose_lead") or self.get("lead_purpose")
-		product_type = self.get("preferred_product_type")
-		phone = self.get("phone")
-		province = self.get("province")
-		exp_date = self.get("expected_delivery_date")
+		mandatory_fields_str = crm_settings.get("auto_opportunity_mandatory_fields") or "budget_lead, phone, province"
+		mandatory_fields = [f.strip() for f in mandatory_fields_str.split(",") if f.strip()]
 
-		if not (purpose and product_type and phone and province):
-			return
+		for field in mandatory_fields:
+			if not self.get(field):
+				return
 
 		# Check existing Opportunity (ANY opp if subsequent disabled, or ACTIVE opp if enabled)
 		opp_filter = {
@@ -573,6 +606,27 @@ class Lead(SellingController, CRMNote):
 		self.update_prospect()
 		self.update_assignment_status()
 		self.sync_active_opportunities()
+		self.sync_lead_owner_to_todos()
+
+	def sync_lead_owner_to_todos(self):
+		if not self.has_value_changed("lead_owner") or not self.lead_owner:
+			return
+
+		open_todos = frappe.get_all("ToDo", filters={
+			"reference_type": "Lead",
+			"reference_name": self.name,
+			"status": "Open",
+			"allocated_to": ["!=", self.lead_owner]
+		}, fields=["name"], limit=1)
+
+		if open_todos:
+			todo_name = open_todos[0].name
+			frappe.db.set_value("ToDo", todo_name, "allocated_to", self.lead_owner)
+			frappe.clear_document_cache("ToDo", todo_name)
+			try:
+				manual_lead_owner_enqueue(self.name)
+			except Exception:
+				frappe.log_error(title="Manual Lead Webhook Call Failed", message=frappe.get_traceback())
 
 	def sync_active_opportunities(self):
 		from erpnext.crm.doctype.opportunity.custom.opportunity_custom import (
@@ -885,7 +939,6 @@ class Lead(SellingController, CRMNote):
 				return
 
 		opportunity = make_opportunity(self.name)
-
 		opportunity.insert(ignore_permissions=True)
 	@frappe.whitelist()
 	def create_prospect_and_contact(self, data):
@@ -1036,7 +1089,6 @@ class Lead(SellingController, CRMNote):
 
 	def normalize_phone(self):
 		if self.phone:
-			from erpnext.crm.doctype.lead.lead_methods import normalize_phone_number
 			self.phone = normalize_phone_number(self.phone)
 
 @frappe.whitelist()
@@ -1437,7 +1489,8 @@ def update_primary_sale_from_todo(doc, method=None):
 
 					# Rule 3: if current lead_owner is not tech@jemmia.vn and allocated_to is not tech@jemmia.vn, transfer
 					elif current_owner != "tech@jemmia.vn" and doc.allocated_to != "tech@jemmia.vn":
-						frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
+						if get_crm_settings().get("overwrite_existing_lead_owner"):
+							frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
 
 				# Legacy Leads (< 2026-07-31 14:00:00)
 				else:
@@ -1451,7 +1504,8 @@ def update_primary_sale_from_todo(doc, method=None):
 
 					# Rule 3: if current lead_owner is not tech@jemmia.vn and allocated_to is not tech@jemmia.vn, transfer
 					elif current_owner != "tech@jemmia.vn" and doc.allocated_to != "tech@jemmia.vn":
-						frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
+						if get_crm_settings().get("overwrite_existing_lead_owner"):
+							frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
 
 			# 1. Tìm Sales Person theo Email
 			sales_person = frappe.db.get_value("Sales Person", {"employee_email": doc.allocated_to}, "name")

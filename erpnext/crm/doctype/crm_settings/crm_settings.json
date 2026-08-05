@@ -8,9 +8,12 @@
  "field_order": [
   "section_break_5",
   "campaign_naming_by",
+  "enable_auto_lead_insert",
+  "enable_lead_phone_update_or_merge",
   "auto_creation_of_contact",
   "allow_lead_duplication_based_on_emails",
   "transfer_assign_to_lead_owner",
+  "overwrite_existing_lead_owner",
   "auto_nurture_leads",
   "column_break_4",
   "allow_auto_create_lead_product",
@@ -24,8 +27,9 @@
   "close_opportunity_after_days",
   "column_break_9",
   "auto_create_opportunity",
-  "allow_subsequent_auto_opportunity",
   "auto_create_opportunity_on_converted_lead",
+  "allow_subsequent_auto_opportunity",
+  "auto_opportunity_mandatory_fields",
   "quotation_section",
   "default_valid_till",
   "section_break_13",
@@ -56,6 +60,18 @@
    "label": "Lead"
   },
   {
+   "default": "1",
+   "fieldname": "enable_auto_lead_insert",
+   "fieldtype": "Check",
+   "label": "Enable Auto Lead Insert / Update API"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_lead_phone_update_or_merge",
+   "fieldtype": "Check",
+   "label": "Enable Lead Phone Merge API"
+  },
+  {
    "default": "0",
    "fieldname": "allow_lead_duplication_based_on_emails",
    "fieldtype": "Check",
@@ -66,6 +82,13 @@
    "fieldname": "transfer_assign_to_lead_owner",
    "fieldtype": "Check",
    "label": "Transfer Assigned To User as Lead Owner"
+  },
+  {
+   "default": "0",
+   "description": "If enabled, assigning a ToDo will overwrite the Lead Owner even if the current owner is already a human (not tech@jemmia.vn).",
+   "fieldname": "overwrite_existing_lead_owner",
+   "fieldtype": "Check",
+   "label": "Overwrite Existing Lead Owner on Assignment"
   },
   {
    "default": "0",
@@ -91,6 +114,12 @@
    "fieldname": "auto_create_opportunity_on_converted_lead",
    "fieldtype": "Check",
    "label": "Auto Create Opportunity for Converted Leads on Interaction"
+  },
+  {
+   "description": "Comma-separated list of fieldnames required to auto-create an Opportunity (e.g. phone, province, budget_lead)",
+   "fieldname": "auto_opportunity_mandatory_fields",
+   "fieldtype": "Text",
+   "label": "Mandatory Fields for Auto Opportunity"
   },
   {
    "default": "1",
@@ -192,7 +221,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-08-03 05:11:01.252642",
+ "modified": "2026-08-05 15:43:40.082042",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "CRM Settings",

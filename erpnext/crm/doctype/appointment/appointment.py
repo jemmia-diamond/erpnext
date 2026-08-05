@@ -41,6 +41,7 @@ class Appointment(Document):
 		gender: DF.Link | None
 		lead: DF.Link | None
 		main_sales: DF.TableMultiSelect[AppointmentSalesPerson]
+		message_id: DF.Data | None
 		notes: DF.LongText | None
 		offline_response: DF.LongText | None
 		offline_sales: DF.TableMultiSelect[AppointmentSalesPerson]

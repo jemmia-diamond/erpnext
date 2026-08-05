@@ -146,7 +146,6 @@ class Opportunity(TransactionBase, CRMNote):
 
 	def validate(self):
 		self.validate_single_active_opportunity()
-		self.validate_expected_delivery_date()
 		self.set_opportunity_type()
 		self.make_new_lead_if_required()
 		self.validate_item_details()

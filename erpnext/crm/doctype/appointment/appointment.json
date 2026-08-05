@@ -14,6 +14,7 @@
   "primary_sales",
   "scheduled_time",
   "record_id",
+  "message_id",
   "main_sales",
   "column_break_njqi",
   "at_store",
@@ -405,10 +406,17 @@
   {
    "fieldname": "activity_section",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "message_id",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Lark Message ID",
+   "search_index": 1
   }
  ],
  "links": [],
- "modified": "2026-07-30 09:49:23.298175",
+ "modified": "2026-08-05 16:53:02.728493",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Appointment",
