@@ -9,6 +9,7 @@
   "section_break_5",
   "campaign_naming_by",
   "enable_auto_lead_insert",
+  "enable_lead_phone_update_or_merge",
   "auto_creation_of_contact",
   "allow_lead_duplication_based_on_emails",
   "transfer_assign_to_lead_owner",
@@ -62,6 +63,12 @@
    "fieldname": "enable_auto_lead_insert",
    "fieldtype": "Check",
    "label": "Enable Auto Lead Insert / Update API"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_lead_phone_update_or_merge",
+   "fieldtype": "Check",
+   "label": "Enable Lead Phone Merge API"
   },
   {
    "default": "0",

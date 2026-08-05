@@ -457,6 +457,12 @@ def merge_leads_by_phone(phone, first_reach_at=None, current_lead_name=None):
 	Input: phone, first_reach_at (optional), current_lead_name (optional)
 	Returns the Master Lead name.
 	"""
+	
+	crm_settings = get_crm_settings()
+	if not crm_settings.get("enable_lead_phone_update_or_merge", 1):
+		frappe.local.response["http_status_code"] = 400
+		return {"status": "disabled", "message": "currently disabled"}
+
 	if not phone:
 		frappe.throw("Phone is required")
 
