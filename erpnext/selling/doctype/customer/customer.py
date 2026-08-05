@@ -125,6 +125,7 @@ class Customer(TransactionBase):
 		mobile_no: DF.ReadOnly | None
 		naming_series: DF.Literal["CUST-.YYYY.-"]
 		no_of_employees: DF.Data | None
+		normalized_phone: DF.ReadOnly | None
 		opportunity_name: DF.Link | None
 		partner_role: DF.Data | None
 		passport_expiry_date: DF.Date | None
