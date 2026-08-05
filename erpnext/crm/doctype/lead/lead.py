@@ -20,11 +20,10 @@ from erpnext.controllers.selling_controller import SellingController
 from erpnext.crm.utils import CRMNote, copy_comments, link_communications, link_open_events
 from erpnext.selling.doctype.customer.customer import parse_full_name
 from frappe.utils import date_diff, now_datetime, get_datetime
-from erpnext.utilities.phone_utils import get_phone_variants
+from erpnext.utilities.phone_utils import get_phone_variants, normalize_to_standard_format
 from frappe.integrations.doctype.webhook.webhook import enqueue_webhook
 from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
 from erpnext.selling.doctype.customer.customer import make_opportunity as make_opp_from_customer
-from erpnext.crm.doctype.lead.lead_methods import normalize_phone_number
 class Lead(SellingController, CRMNote):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
@@ -1089,7 +1088,9 @@ class Lead(SellingController, CRMNote):
 
 	def normalize_phone(self):
 		if self.phone:
-			self.phone = normalize_phone_number(self.phone)
+			normalized = normalize_to_standard_format(self.phone)
+			if normalized:
+				self.phone = normalized
 
 @frappe.whitelist()
 def make_customer(source_name, target_doc=None):
