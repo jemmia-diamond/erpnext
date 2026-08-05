@@ -5,6 +5,10 @@ import time
 from typing import TYPE_CHECKING
 
 import frappe
+import pymysql
+from pymysql.constants import ER, FIELD_TYPE
+from pymysql.converters import conversions, escape_string
+
 from frappe import _
 from frappe.utils import get_datetime, validate_phone_number
 from frappe.www.contact import get_contacts_by_conversation_id
@@ -435,6 +439,166 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 		raise
 
 	return master_doc
+
+@frappe.whitelist()
+def bulk_merge_duplicate_leads(enqueue=True):
+	"""
+	Enqueues background job to merge duplicate leads grouped by last 8 digits of phone.
+	"""
+	frappe.only_for("System Manager")
+
+	duplicate_phones = frappe.db.sql("""
+		SELECT RIGHT(phone, 8) as phone_suffix
+		FROM `tabLead`
+		WHERE phone IS NOT NULL AND phone != ''
+		GROUP BY RIGHT(phone, 8)
+		HAVING COUNT(*) > 1
+	""", as_dict=True)
+
+	if str(enqueue).lower() in ["true", "1", "yes"]:
+		frappe.enqueue(
+			"erpnext.crm.doctype.lead.lead_methods.process_bulk_merge",
+			duplicate_phones=duplicate_phones,
+			queue="long"
+		)
+		return f"Enqueued bulk merge for {len(duplicate_phones)} duplicate groups."
+	else:
+		process_bulk_merge(duplicate_phones)
+		return f"Processed {len(duplicate_phones)} duplicate groups directly."
+
+def process_bulk_merge(duplicate_phones):
+	"""
+	Processes bulk merge of leads.
+	Master = oldest first_reach_at (or creation).
+	Losers = merged into master.
+	"""
+	total = len(duplicate_phones)
+	for idx, row in enumerate(duplicate_phones):
+		suffix = row.phone_suffix
+		leads = frappe.db.sql("""
+			SELECT name
+			FROM `tabLead`
+			WHERE RIGHT(phone, 8) = %s
+			ORDER BY IFNULL(first_reach_at, '2999-01-01') ASC, creation ASC
+		""", (suffix,), as_dict=True)
+
+		if len(leads) <= 1:
+			continue
+
+		master_lead = leads[0].name
+		loser_leads = [l.name for l in leads[1:]]
+		master_doc = frappe.get_doc("Lead", master_lead)
+
+		for loser_name in loser_leads:
+			try:
+				loser_doc = frappe.get_doc("Lead", loser_name)
+				frappe.db.savepoint("lead_merge")
+				_relink_dynamic_links(loser_doc.name, master_doc.name)
+				_relink_downstream_docs(loser_doc.name, master_doc.name)
+				_transfer_lead_fields(master_doc, loser_doc)
+				_merge_system_fields(master_doc, loser_doc)
+				_transfer_child_tables(master_doc, loser_doc)
+				transfer_lead_todos(loser_doc.name, master_doc.name)
+				frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True, force=1)
+				frappe.db.commit()
+			except Exception as e:
+				frappe.db.rollback(save_point="lead_merge")
+				frappe.log_error(
+					f"Bulk Merge: Failed {loser_name} into {master_lead}: {e!s}",
+					"Lead Merge Error"
+				)
+
+		try:
+			master_doc.set_first_lead_source()
+			master_doc.save(ignore_permissions=True)
+			frappe.db.commit()
+		except Exception as e:
+			frappe.log_error(f"Bulk Merge: Failed save master {master_lead}: {e!s}", "Lead Merge Error")
+
+@frappe.whitelist()
+def fix_unnormalized_leads(enqueue=False):
+	leads = frappe.db.sql("""
+		SELECT name, phone 
+		FROM `tabLead` 
+		WHERE phone LIKE '+%%' or phone like '0%%'
+	""", as_dict=True)
+	
+	if str(enqueue).lower() in ["true", "1", "yes"]:
+		frappe.enqueue(
+			"erpnext.crm.doctype.lead.lead_methods.process_fix_unnormalized",
+			leads=leads,
+			queue="long",
+			timeout=3600
+		)
+		return f"Enqueued fix for {len(leads)} leads."
+	else:
+		process_fix_unnormalized(leads)
+		return f"Processed {len(leads)} leads directly."
+
+def process_fix_unnormalized(leads):
+	for row in leads:
+		lead_name = row.name
+		old_phone = row.phone
+		
+		normalized = normalize_to_standard_format(old_phone)
+		if not normalized or normalized == old_phone:
+			continue
+			
+		try:
+			doc = frappe.get_doc("Lead", lead_name)
+			doc.phone = normalized
+			doc.save(ignore_permissions=True)
+			frappe.db.commit()
+			
+		except Exception as e:
+			frappe.db.rollback()
+			err_str = str(e)
+			
+			if isinstance(e, (frappe.UniqueValidationError, pymysql.err.IntegrityError)) or "must be unique" in err_str or "already used in" in err_str:
+				# Catch unique error -> Find conflicting lead
+				conflicting_lead = frappe.db.get_value("Lead", {"phone": normalized}, "name")
+				if not conflicting_lead or conflicting_lead == lead_name:
+					frappe.log_error(f"Fix failed for {lead_name}, not duplicate: {e!s}", "Lead Fix Error")
+					continue
+					
+				# Conflict exist -> Merge
+				master_doc = frappe.get_doc("Lead", conflicting_lead)
+				loser_doc = frappe.get_doc("Lead", lead_name)
+				
+				# Pick Master by first_reach_at
+				master_older = False
+				if master_doc.first_reach_at and loser_doc.first_reach_at:
+					if get_datetime(master_doc.first_reach_at) < get_datetime(loser_doc.first_reach_at):
+						master_older = True
+				elif master_doc.first_reach_at:
+					master_older = True
+				elif not loser_doc.first_reach_at:
+					# Both no reach date -> Use creation
+					if master_doc.creation < loser_doc.creation:
+						master_older = True
+						
+				if not master_older:
+					# Swap roles
+					master_doc, loser_doc = loser_doc, master_doc
+				try:
+					frappe.db.savepoint("fix_merge")
+					_relink_dynamic_links(loser_doc.name, master_doc.name)
+					_relink_downstream_docs(loser_doc.name, master_doc.name)
+					_transfer_lead_fields(master_doc, loser_doc)
+					_merge_system_fields(master_doc, loser_doc)
+					_transfer_child_tables(master_doc, loser_doc)
+					transfer_lead_todos(loser_doc.name, master_doc.name)
+					
+					frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True, force=1)
+					
+					master_doc.set_first_lead_source()
+					master_doc.save(ignore_permissions=True)
+					frappe.db.commit()
+				except Exception as merge_e:
+					frappe.db.rollback(save_point="fix_merge")
+					frappe.log_error(f"Fix Merge fail {loser_doc.name} into {master_doc.name}: {merge_e!s}", "Lead Merge Error")
+			else:
+				frappe.log_error(f"Fix fail {lead_name}: {e!s}", "Lead Fix Error")
 
 
 def _relink_dynamic_links(from_lead: str, to_lead: str):
