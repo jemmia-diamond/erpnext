@@ -24,7 +24,7 @@ from erpnext.utilities.phone_utils import get_phone_variants
 from frappe.integrations.doctype.webhook.webhook import enqueue_webhook
 from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
 from erpnext.selling.doctype.customer.customer import make_opportunity as make_opp_from_customer
-
+from erpnext.crm.doctype.lead.lead_methods import normalize_phone_number
 class Lead(SellingController, CRMNote):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
@@ -138,6 +138,10 @@ class Lead(SellingController, CRMNote):
 		self.set_lead_name()
 		self.set_title()
 		self.set_status()
+		# Skip normalization if backfilling flag (enable_auto_lead_insert) is turned off
+		if get_crm_settings().get("enable_auto_lead_insert", 1):
+			self.normalize_phone()
+			
 		self.check_email_id_is_unique()
 		self.check_phone_is_unique()
 		self.validate_email_id()
@@ -1085,7 +1089,6 @@ class Lead(SellingController, CRMNote):
 
 	def normalize_phone(self):
 		if self.phone:
-			from erpnext.crm.doctype.lead.lead_methods import normalize_phone_number
 			self.phone = normalize_phone_number(self.phone)
 
 @frappe.whitelist()
