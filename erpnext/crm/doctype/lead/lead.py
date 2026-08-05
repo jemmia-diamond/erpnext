@@ -145,6 +145,10 @@ class Lead(SellingController, CRMNote):
 	def before_insert(self):
 		self.contact_doc = None
 		if get_crm_settings().get("auto_creation_of_contact"):
+			if self.source:
+				source_code = frappe.db.get_value("Lead Source", self.source, "code")
+				if source_code == "CallLog":
+					return
 			if self.utm_source == "Existing Customer" and self.customer:
 				contact = frappe.db.get_value(
 					"Dynamic Link",
