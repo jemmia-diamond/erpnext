@@ -232,6 +232,15 @@ class Customer(TransactionBase):
 	def after_insert(self):
 		"""If customer created from Lead, update customer id in quotations, opportunities"""
 		self.update_lead_status()
+		
+	def before_save(self):
+		target_phone = self.phone if self.phone else self.mobile_no
+		if target_phone:
+			try:
+				from erpnext.utilities.phone_utils import normalize_to_standard_format
+				self.normalized_phone = normalize_to_standard_format(target_phone)
+			except Exception:
+				self.normalized_phone = target_phone
 
 	def validate(self):
 		self.flags.is_new_doc = self.is_new()
@@ -367,6 +376,23 @@ class Customer(TransactionBase):
 	def update_lead_status(self):
 		"""If Customer created from Lead, update lead status to "Converted"
 		update Customer link in Quotation, Opportunity"""
+		if not self.lead_name:
+			target_phone = self.phone or self.mobile_no
+			if target_phone:
+				from erpnext.utilities.phone_utils import get_phone_variants
+				variants = get_phone_variants(target_phone)
+				if variants:
+					leads = frappe.get_all(
+						"Lead",
+						filters={"phone": ["in", list(variants)]},
+						fields=["name"],
+						order_by="first_reach_at asc",
+						limit=1
+					)
+					if leads:
+						self.lead_name = leads[0].name
+						frappe.db.set_value("Customer", self.name, "lead_name", self.lead_name)
+
 		if self.lead_name:
 			update_values = {"status": "Converted"}
 			update_values["lead_stage"] = "Customer"

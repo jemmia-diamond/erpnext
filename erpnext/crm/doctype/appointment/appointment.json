@@ -117,7 +117,7 @@
    "hidden": 1,
    "in_list_view": 1,
    "label": "Status",
-   "options": "Open\nCancelled\nClosed",
+   "options": "Open\nCancelled\nDone",
    "reqd": 1
   },
   {
@@ -416,7 +416,7 @@
   }
  ],
  "links": [],
- "modified": "2026-08-05 16:53:02.728493",
+ "modified": "2026-08-06 18:30:25.558258",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Appointment",

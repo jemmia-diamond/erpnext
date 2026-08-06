@@ -21,6 +21,7 @@ from erpnext.crm.utils import (
 	link_open_tasks,
 )
 from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
+from erpnext.utilities.phone_utils import normalize_to_standard_format
 from erpnext.setup.utils import get_exchange_rate
 from erpnext.utilities.transaction_base import TransactionBase
 
@@ -190,6 +191,7 @@ class Opportunity(TransactionBase, CRMNote):
 				)
 
 	def before_save(self):
+		self.phone = normalize_to_standard_format(self.phone)
 		probability_map = {
 			"Low Probability": 10,
 			"Considering": 30,

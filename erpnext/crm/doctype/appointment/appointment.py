@@ -58,7 +58,7 @@ class Appointment(Document):
 		range_estimated_budget: DF.Link | None
 		record_id: DF.Data | None
 		scheduled_time: DF.Datetime
-		status: DF.Literal["Open", "Cancelled", "Closed"]
+		status: DF.Literal["Open", "Cancelled", "Done"]
 		store: DF.Literal["72 NCT", "63 KM", "C\u1ea7n Th\u01a1"]
 	# end: auto-generated types
 

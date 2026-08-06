@@ -28,6 +28,7 @@
   "column_break_9",
   "auto_create_opportunity",
   "auto_create_opportunity_on_converted_lead",
+  "lost_reason_messages",
   "allow_subsequent_auto_opportunity",
   "auto_opportunity_mandatory_fields",
   "quotation_section",
@@ -114,6 +115,13 @@
    "fieldname": "auto_create_opportunity_on_converted_lead",
    "fieldtype": "Check",
    "label": "Auto Create Opportunity for Converted Leads on Interaction"
+  },
+  {
+   "description": "JSON object mapping scenarios to lost reasons (e.g. {\"spam_from_lead\": \"Lead marked as Spam\"}).",
+   "fieldname": "lost_reason_messages",
+   "fieldtype": "Code",
+   "options": "JSON",
+   "label": "Lost Reason Messages"
   },
   {
    "description": "Comma-separated list of fieldnames required to auto-create an Opportunity (e.g. phone, province, budget_lead)",

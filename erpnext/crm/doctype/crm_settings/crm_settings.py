@@ -30,6 +30,7 @@ class CRMSettings(Document):
 		default_valid_till: DF.Data | None
 		not_allowed_product_types: DF.Text | None
 		opportunity_sync_field_mappings: DF.Code | None
+		lost_reason_messages: DF.Code | None
 		sync_lead_to_in_progress_opportunity: DF.Check
 		sync_opportunity_date_from_old_lead_qualified_on: DF.Check
 		transfer_assign_to_lead_owner: DF.Check

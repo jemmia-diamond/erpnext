@@ -1116,3 +1116,142 @@ def auto_nurture_leads():
 	if target_leads:
 		frappe.db.set_value("Lead", target_leads, "status", "Nurturing", update_modified=False)
 
+@frappe.whitelist()
+def get_lead_by_conversation_id(conversation_id):
+	if not conversation_id:
+		frappe.response["leads"] = []
+		return
+
+	contacts = frappe.get_all("Contact", filters={"pancake_conversation_id": conversation_id}, pluck="name")
+	if not contacts:
+		frappe.response["leads"] = []
+		return
+
+	lead_names = frappe.get_all(
+		"Dynamic Link", 
+		filters={
+			"parent": ["in", contacts],
+			"parenttype": "Contact",
+			"link_doctype": "Lead"
+		}, 
+		pluck="link_name"
+	)
+	
+	if not lead_names:
+		frappe.response["leads"] = []
+		return
+
+	leads = frappe.get_all(
+		"Lead",
+		filters={"name": ["in", lead_names]},
+		fields=["name", "first_reach_at", "creation", "modified"]
+	)
+
+	frappe.response["leads"] = leads
+
+
+
+@frappe.whitelist()
+def fix_duplicate_conversation_leads(enqueue=False):
+	sql = """
+	WITH conv_leads AS (
+		SELECT
+			c.pancake_conversation_id,
+			l.name AS lead_name,
+			l.phone,
+			COALESCE(l.first_reach_at, l.creation) AS reach_time,
+			CASE WHEN l.phone IS NULL OR l.phone = '' THEN 0 ELSE 1 END AS has_phone
+		FROM `tabDynamic Link` dl
+		JOIN `tabContact` c ON c.name = dl.parent AND dl.parenttype = 'Contact'
+		JOIN `tabLead` l ON l.name = dl.link_name AND dl.link_doctype = 'Lead'
+		WHERE c.pancake_conversation_id IS NOT NULL AND c.pancake_conversation_id != ''
+	),
+	conv_stats AS (
+		SELECT pancake_conversation_id,
+			   COUNT(*) AS lead_count,
+			   COUNT(DISTINCT NULLIF(phone,'')) AS distinct_phones
+		FROM conv_leads
+		GROUP BY pancake_conversation_id
+		HAVING COUNT(*) > 1
+	),
+	ranked AS (
+		SELECT cl.*,
+			   ROW_NUMBER() OVER (
+				   PARTITION BY cl.pancake_conversation_id
+				   ORDER BY cl.reach_time ASC
+			   ) AS rn
+		FROM conv_leads cl
+		JOIN conv_stats cs ON cs.pancake_conversation_id = cl.pancake_conversation_id
+		WHERE cs.distinct_phones <= 1
+	)
+	SELECT
+		r1.lead_name AS master_lead,
+		r2.lead_name AS duplicate_lead,
+		r1.pancake_conversation_id
+	FROM ranked r1
+	JOIN ranked r2
+	  ON r1.pancake_conversation_id = r2.pancake_conversation_id
+	 AND r1.rn = 1 AND r2.rn > 1
+	ORDER BY r1.pancake_conversation_id;
+	"""
+	
+	pairs = frappe.db.sql(sql, as_dict=True)
+	
+	if str(enqueue).lower() in ["true", "1", "yes"]:
+		frappe.enqueue(
+			"erpnext.crm.doctype.lead.lead_methods.process_fix_duplicate_conversations",
+			pairs=pairs,
+			queue="long",
+			timeout=3600
+		)
+		return f"Enqueued fix for {len(pairs)} duplicate leads."
+	else:
+		process_fix_duplicate_conversations(pairs)
+		return f"Processed {len(pairs)} duplicate leads directly."
+
+def process_fix_duplicate_conversations(pairs):
+	processed_count = 0
+	for row in pairs:
+		master_lead = row.master_lead
+		duplicate_lead = row.duplicate_lead
+		
+		try:
+			# Skip if it was already deleted in a previous iteration
+			if not frappe.db.exists("Lead", master_lead) or not frappe.db.exists("Lead", duplicate_lead):
+				continue
+				
+			master_doc = frappe.get_doc("Lead", master_lead)
+			loser_doc = frappe.get_doc("Lead", duplicate_lead)
+			
+			if master_doc.name == loser_doc.name:
+				continue
+				
+			# Standard merge pipeline
+			_transfer_lead_fields(master_doc, loser_doc)
+			_transfer_child_tables(master_doc, loser_doc)
+			_merge_tags(master_doc, loser_doc)
+			_merge_system_fields(master_doc, loser_doc)
+			_merge_assign(master_doc, loser_doc)
+			_transfer_notes(loser_doc.name, master_doc)
+			
+			_relink_dynamic_links(loser_doc.name, master_doc.name)
+			_relink_downstream_docs(loser_doc.name, master_doc.name)
+			transfer_lead_todos(loser_doc.name, master_doc.name)
+			
+			master_doc.set_first_lead_source()
+			master_doc.save(ignore_permissions=True)
+			
+			frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True)
+			
+			frappe.db.commit()
+			print(f"[{processed_count + 1}/1000] Successfully merged {duplicate_lead} into {master_lead}")
+			
+			processed_count += 1
+			if processed_count >= 1000:
+				print("Reached 1000 successful merges. Stopping as requested.")
+				break
+				
+		except Exception as e:
+			frappe.db.rollback()
+			frappe.log_error(f"Bulk Conversation Merge: Failed to merge {duplicate_lead} into {master_lead}: {e}", "Lead Merge Error")
+			print(f"Error merging {duplicate_lead} into {master_lead}: {e}")

@@ -136,7 +136,7 @@ def sync_lead_fields_to_active_opportunities(doc, method=None):
 	opp_names = frappe.get_all(
 		"Opportunity",
 		filters=[
-			["opportunity_from", "=", "Lead"],
+			["opportunity_from", "in", ["Lead", "Customer"]],
 			["status", "not in", ["Won", "Lost"]],
 		],
 		or_filters=or_filters,
