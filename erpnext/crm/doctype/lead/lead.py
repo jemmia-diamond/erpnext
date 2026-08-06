@@ -105,7 +105,7 @@ class Lead(SellingController, CRMNote):
 		region: DF.Link | None
 		request_type: DF.Literal["Product Enquiry", "Request for Information", "Suggestions", "Other"]
 		salutation: DF.Link | None
-		source: DF.Link | None
+		source: DF.Link
 		state: DF.Data | None
 		status: DF.Literal["New", "Prospecting", "Nurturing", "Qualified", "Converted", "Do Not Contact", "Spam"]
 		store: DF.Link | None
@@ -204,6 +204,7 @@ class Lead(SellingController, CRMNote):
 		self.check_and_auto_create_opportunity_for_converted_lead()
 		self.check_and_auto_create_opportunity()
 		self.process_notes()
+
 
 	def check_and_auto_create_opportunity_for_converted_lead(self):
 		"""Auto create a new Opportunity when a Converted Lead interacts again and has no active Opportunity."""
@@ -334,14 +335,14 @@ class Lead(SellingController, CRMNote):
 						self.status = "Prospecting"
 
 				pancake_user_id = parsed_data.get("pancake_user_id", None)
-				if pancake_user_id and (not self.lead_owner or self.lead_owner == "tech@jemmia.vn"):
+				if pancake_user_id and self.has_value_changed("pancake_data") and (not self.lead_owner or self.lead_owner == "tech@jemmia.vn"):
 					self.update_lead_owner(pancake_user_id)
 		except Exception as _:
 			pass
 
 	def set_spam_status(self):
 		"""Set status to Spam if pancake_data or tags contain spam indicator."""
-		if self.pancake_data:
+		if self.pancake_data and self.has_value_changed("pancake_data"):
 			try:
 				parsed_data = frappe.parse_json(self.pancake_data)
 				tags = parsed_data.get("tags") or []
@@ -349,6 +350,9 @@ class Lead(SellingController, CRMNote):
 					self.status = "Spam"
 			except Exception:
 				pass
+				
+		if self.status == "Spam" and self.has_value_changed("status"):
+			self.qualification_status = "Unqualified"
 
 	def update_status_from_message_timestamps(self):
 		"""
@@ -602,13 +606,53 @@ class Lead(SellingController, CRMNote):
 		self.link_to_contact()
 
 	def on_update(self):
-		self.update_prospect()
+		# self.update_prospect()
 		self.update_assignment_status()
 		self.sync_active_opportunities()
 		self.sync_lead_owner_to_todos()
+		self.handle_spam_side_effects()
+
+	def handle_spam_side_effects(self):
+		if self.status == "Spam" and self.has_value_changed("status"):
+			active_opps = frappe.get_all("Opportunity", filters={
+				"party_name": self.name,
+				"status": ["not in", ["Won", "Lost"]]
+			}, pluck="name")
+			
+			if not active_opps:
+				return
+
+			lost_reason = "Marked as Spam"
+			messages_json = get_crm_settings().get("lost_reason_messages")
+			if messages_json:
+				try:
+					messages = frappe.parse_json(messages_json)
+					if messages and isinstance(messages, dict):
+						lost_reason = messages.get("spam_from_lead") or lost_reason
+				except Exception:
+					pass
+			
+			for opp in active_opps:
+				frappe.db.set_value("Opportunity", opp, {
+					"status": "Lost",
+					"order_lost_reason": lost_reason
+				})
 
 	def sync_lead_owner_to_todos(self):
-		if not self.has_value_changed("lead_owner") or not self.lead_owner:
+		if not self.has_value_changed("lead_owner"):
+			return
+
+		if not self.lead_owner:
+			# If user clears lead_owner, cancel any open assignments so it doesn't revert back
+			open_todos = frappe.get_all("ToDo", filters={
+				"reference_type": "Lead",
+				"reference_name": self.name,
+				"status": "Open"
+			}, pluck="name")
+
+			for todo_name in open_todos:
+				frappe.db.set_value("ToDo", todo_name, "status", "Cancelled")
+				frappe.clear_document_cache("ToDo", todo_name)
 			return
 
 		open_todos = frappe.get_all("ToDo", filters={
@@ -857,27 +901,17 @@ class Lead(SellingController, CRMNote):
 
 	def update_assignment_status(self):
 		"""
-		Update is_assigned field based on assignment status
-		Sets is_assigned = 1 when lead is assigned to someone
-		Sets is_assigned = 0 when all assignments are removed
-		Handle all possible states of _assign:
-		None, '', '[]' or '["user@example.com"]'
+		Update is_assigned field based on lead_owner status.
+		Sets is_assigned = 1 when lead_owner is set
+		Sets is_assigned = 0 when lead_owner is empty
 		"""
 		if self.modified_by == "tech@jemmia.vn":
 			return
 
-		_assign = frappe.db.get_value('Lead', self.name, '_assign')
-		assign_list = []
-
-		if _assign:
-			try:
-				assign_list = json.loads(_assign)
-			except (json.JSONDecodeError, TypeError):
-				assign_list = []
-
-		should_be_assigned = 1 if assign_list else 0
+		should_be_assigned = 1 if self.lead_owner else 0
 		if self.is_assigned != should_be_assigned:
 			frappe.db.set_value('Lead', self.name, 'is_assigned', should_be_assigned)
+			self.is_assigned = should_be_assigned
 
 	def remove_link_from_prospect(self):
 		prospects = self.get_linked_prospects()
@@ -904,10 +938,54 @@ class Lead(SellingController, CRMNote):
 		)
 
 	def has_customer(self):
-		return frappe.db.get_value("Customer", {"lead_name": self.name})
+		customer = frappe.db.get_value("Customer", {"lead_name": self.name})
+		if customer:
+			return customer
+			
+		if self.phone or self.mobile_no:
+			phones = set()
+			if self.phone:
+				try:
+					phones.add(normalize_to_standard_format(self.phone))
+				except Exception:
+					phones.add(self.phone)
+			if self.mobile_no:
+				try:
+					phones.add(normalize_to_standard_format(self.mobile_no))
+				except Exception:
+					phones.add(self.mobile_no)
+					
+			if phones:
+				for p in phones:
+					cust = frappe.db.get_value("Customer", {"phone": p}) or frappe.db.get_value("Customer", {"mobile_no": p})
+					if cust:
+						return cust
+		return None
 
 	def has_opportunity(self):
-		return frappe.db.get_value("Opportunity", {"party_name": self.name, "status": ["!=", "Lost"]})
+		opp = frappe.db.get_value("Opportunity", {"party_name": self.name, "status": ["not in", ["Won", "Lost"]]})
+		if opp:
+			return opp
+			
+		if self.phone or self.mobile_no:
+			phones = set()
+			if self.phone:
+				try:
+					phones.add(normalize_to_standard_format(self.phone))
+				except Exception:
+					phones.add(self.phone)
+			if self.mobile_no:
+				try:
+					phones.add(normalize_to_standard_format(self.mobile_no))
+				except Exception:
+					phones.add(self.mobile_no)
+			
+			if phones:
+				for p in phones:
+					found_opp = frappe.db.get_value("Opportunity", {"phone": p, "status": ["not in", ["Won", "Lost"]]})
+					if found_opp:
+						return found_opp
+		return None
 
 	def has_quotation(self):
 		return frappe.db.get_value(
