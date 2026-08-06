@@ -15,29 +15,32 @@
   "id",
   "participant_name",
   "from",
-  "type",
+  "agent",
+  "start_time",
   "call_received_by",
   "employee_user_id",
   "medium",
-  "start_time",
-  "agent_name",
   "agent_id",
   "recording_html",
   "column_break_4",
-  "to",
+  "type",
   "participant_type",
+  "to",
+  "agent_name",
+  "end_time",
   "participant",
   "agent_type",
-  "agent",
   "disposition",
   "status",
-  "end_time",
   "recording_url",
   "duration",
   "provider",
   "provider_recording_url",
   "section_break_11",
   "type_of_call",
+  "column_break_pbqv",
+  "updated_by",
+  "section_break_zdif",
   "summary",
   "section_break_19",
   "links"
@@ -75,6 +78,7 @@
    "description": "Call Duration in seconds",
    "fieldname": "duration",
    "fieldtype": "Duration",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Duration",
    "read_only": 1
@@ -210,6 +214,7 @@
   {
    "fieldname": "disposition",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Disposition",
    "read_only": 1
   },
@@ -279,12 +284,26 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Participant Name"
+  },
+  {
+   "fieldname": "updated_by",
+   "fieldtype": "Link",
+   "label": "Updated By",
+   "options": "User"
+  },
+  {
+   "fieldname": "column_break_pbqv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_zdif",
+   "fieldtype": "Section Break"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-07-24 10:47:35.523234",
+ "modified": "2026-08-05 06:50:32.444718",
  "modified_by": "Administrator",
  "module": "Telephony",
  "name": "Call Log",

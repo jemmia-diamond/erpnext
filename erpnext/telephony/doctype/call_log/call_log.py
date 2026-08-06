@@ -59,6 +59,7 @@ class CallLog(Document):
 		to: DF.Data | None
 		type: DF.Literal["Incoming", "Outgoing"]
 		type_of_call: DF.Link | None
+		updated_by: DF.Link | None
 	# end: auto-generated types
 
 	def validate(self):
