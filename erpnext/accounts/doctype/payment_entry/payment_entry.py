@@ -3990,6 +3990,7 @@ def get_customer_with_phone(doctype, txt, searchfield, start, page_len, filters)
 			OR customer_name LIKE %(txt)s
 			OR mobile_no LIKE %(txt)s
 			OR phone LIKE %(txt)s
+			OR normalized_phone like %(txt)s
 		)
 		ORDER BY
 			CASE
