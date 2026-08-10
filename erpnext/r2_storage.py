@@ -25,7 +25,7 @@ import frappe
 from frappe import _
 from frappe.utils import get_site_path
 from urllib.parse import quote, unquote
-
+import requests
 
 class R2FileManager:
 	"""Manager class for R2 operations"""
@@ -477,3 +477,64 @@ def get_r2_url_for_file(doc_or_name):
 
 	manager = get_r2_manager()
 	return manager.get_r2_url(s3_key, doc.file_name, doc.is_private)
+
+
+def compress_and_upload_to_r2(download_url, headers, file_name, attached_to_doctype, attached_to_name):
+	"""
+	Downloads a file, compresses it via Compressor, uploads directly to R2,
+	and creates the corresponding Frappe File record.
+	Returns the final R2 URL if successful, or None if the compressor is not configured/enabled.
+	"""
+	manager = get_r2_manager()
+
+	# Get compressor URL
+	compressor_url = frappe.conf.get("compressor_service_url")
+	if not compressor_url:
+		try:
+			from erpnext.config.config import config
+			compressor_url = getattr(config, "COMPRESSOR_SERVICE_URL", "")
+		except ImportError:
+			pass
+
+	if not (compressor_url and manager.settings.get("enabled") and hasattr(manager, "client")):
+		return None
+
+	object_key = manager.generate_key(file_name, attached_to_doctype)
+
+	presigned_put_url = manager.client.generate_presigned_url(
+		'put_object',
+		Params={
+			'Bucket': manager.bucket,
+			'Key': object_key,
+			'ContentType': 'audio/mpeg'
+		},
+		ExpiresIn=3600
+	)
+
+	payload = {
+		"input_url": download_url,
+		"download_headers": headers,
+		"output_upload_url": presigned_put_url
+	}
+
+	compress_url = f"{compressor_url.rstrip('/')}/compress"
+	response = requests.post(compress_url, json=payload, timeout=300)
+	response.raise_for_status()
+
+	final_r2_url = manager.get_file_url(object_key, file_name, is_private=True)
+
+	# Manually create the File DocType record so it shows up in the UI attachments
+	if not frappe.db.exists("File", {"attached_to_doctype": attached_to_doctype, "attached_to_name": attached_to_name, "file_url": final_r2_url}):
+		file_doc = frappe.get_doc({
+			"doctype": "File",
+			"file_name": file_name,
+			"file_url": final_r2_url,
+			"attached_to_doctype": attached_to_doctype,
+			"attached_to_name": attached_to_name,
+			"is_private": 1
+		})
+		file_doc.flags.ignore_permissions = True
+		file_doc.flags.ignore_file_validate = True
+		file_doc.insert()
+
+	return final_r2_url
