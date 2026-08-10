@@ -1672,13 +1672,26 @@ def _update_current_12_month_score(customer_name, auto_commit=True):
 		frappe.db.commit()
 
 @frappe.whitelist()
-def get_customer_buybacks(customer_name, phone_number):
+def get_customer_buybacks(customer_name=None, phone_number=None):
+	from erpnext.utilities.phone_utils import get_phone_variants
+	
+	or_filters = []
+	if customer_name:
+		or_filters.append(["customer_name", "=", customer_name])
+		
+	if phone_number:
+		variants = get_phone_variants(phone_number)
+		if variants:
+			or_filters.append(["phone_number", "in", list(variants)])
+		else:
+			or_filters.append(["phone_number", "=", phone_number])
+			
+	if not or_filters:
+		return []
+
 	buybacks = frappe.get_all(
 		"Buyback Exchange",
-		or_filters={
-			"customer_name": customer_name,
-			"phone_number": phone_number
-		},
+		or_filters=or_filters,
 		fields=[
 			"name",
 			"instance_type",

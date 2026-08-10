@@ -17,7 +17,7 @@ from frappe.model.mapper import get_mapped_doc
 from frappe.model.utils import get_fetch_values
 from frappe.query_builder.functions import Sum
 from frappe.utils import add_days, cint, cstr, flt, get_link_to_form, getdate, nowdate, parse_json, strip_html, add_to_date, get_datetime
-
+from erpnext.utilities.phone_utils import get_phone_variants
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import (
 	unlink_inter_company_doc,
 	update_linked_doc,
@@ -3529,8 +3529,13 @@ def get_available_buyback_items(phone=None):
 	"""
 	params = {}
 	if phone:
-		query += " AND p.phone_number LIKE %(phone)s"
-		params["phone"] = f"%{phone}%"
+		variants = get_phone_variants(phone)
+		if variants:
+			query += " AND p.phone_number IN %(phones)s"
+			params["phones"] = tuple(variants)
+		else:
+			query += " AND p.phone_number LIKE %(phone)s"
+			params["phone"] = f"%{phone}%"
 
 	query += " ORDER BY i.creation DESC LIMIT 100"
 
