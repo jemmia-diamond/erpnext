@@ -16,7 +16,7 @@ from frappe.utils.data import comma_and, fmt_money, get_link_to_form
 from frappe.integrations.doctype.webhook.webhook import enqueue_webhook
 from pypika import Case
 from pypika.functions import Coalesce, Sum
-
+import re
 import erpnext
 from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import get_dimensions
 from erpnext.accounts.doctype.bank_account.bank_account import (
@@ -56,7 +56,7 @@ from erpnext.controllers.accounts_controller import (
 	validate_taxes_and_charges,
 )
 from erpnext.setup.utils import get_exchange_rate
-
+from erpnext.utilities.phone_utils import normalize_to_standard_format, get_phone_variants
 
 class InvalidPaymentEntry(ValidationError):
 	pass
@@ -3980,34 +3980,44 @@ def add_regional_gl_entries(gl_entries, doc):
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_customer_with_phone(doctype, txt, searchfield, start, page_len, filters):
-	"""Custom query to search Customer by name or mobile_no"""
-	return frappe.db.sql(
-		"""
-		SELECT name, customer_name, mobile_no, phone
-		FROM `tabCustomer`
-		WHERE (
-			name LIKE %(txt)s
-			OR customer_name LIKE %(txt)s
-			OR mobile_no LIKE %(txt)s
-			OR phone LIKE %(txt)s
-			OR normalized_phone like %(txt)s
-		)
-		ORDER BY
-			CASE
-				WHEN name LIKE %(txt)s THEN 0
-				WHEN customer_name LIKE %(txt)s THEN 1
-				ELSE 2
-			END,
-			modified DESC
-		LIMIT %(page_len)s OFFSET %(start)s
-		""",
-		{
-			"txt": f"%{txt}%",
-			"start": start,
-			"page_len": page_len,
-		},
-	)
+	"""Custom query to search Customer by name or mobile_no"""	
+	raw_phone = txt
+	phone_variants = get_phone_variants(txt) if txt else [txt]
 
+	or_filters = [
+		["Customer", "name", "like", f"%{txt}%"],
+		["Customer", "customer_name", "like", f"%{txt}%"]
+	]
+
+	for variant in phone_variants:
+		or_filters.extend([
+			["Customer", "mobile_no", "like", f"%{variant}%"],
+			["Customer", "phone", "like", f"%{variant}%"]
+		])
+
+	digits = re.sub(r"\D", "", txt)
+	if digits:
+		extra_variant = None
+		if digits.startswith("84") and len(digits) > 2:
+			extra_variant = "0" + digits[2:]
+		elif digits.startswith("0") and len(digits) > 1:
+			extra_variant = "84" + digits[1:]
+
+		if extra_variant and extra_variant not in phone_variants:
+			or_filters.extend([
+				["Customer", "mobile_no", "like", f"%{extra_variant}%"],
+				["Customer", "phone", "like", f"%{extra_variant}%"]
+			])
+
+	return frappe.get_list(
+		"Customer",
+		fields=["name", "customer_name", "mobile_no", "phone"],
+		or_filters=or_filters,
+		order_by="modified desc",
+		limit_start=start,
+		limit_page_length=page_len,
+		as_list=True
+	)
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
