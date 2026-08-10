@@ -12,6 +12,7 @@ from pymysql.converters import conversions, escape_string
 from frappe import _
 from frappe.utils import get_datetime, validate_phone_number
 from frappe.www.contact import get_contacts_by_conversation_id
+from frappe.automation.doctype.assignment_rule.assignment_rule import apply
 
 from erpnext.config.config import config
 from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
@@ -1255,3 +1256,41 @@ def process_fix_duplicate_conversations(pairs):
 			frappe.db.rollback()
 			frappe.log_error(f"Bulk Conversation Merge: Failed to merge {duplicate_lead} into {master_lead}: {e}", "Lead Merge Error")
 			print(f"Error merging {duplicate_lead} into {master_lead}: {e}")
+
+@frappe.whitelist()
+def reassign_leads_in_bulk(lead_names, assignment_rule=None):	
+	if isinstance(lead_names, str):
+		lead_names = frappe.parse_json(lead_names)
+		
+	if not lead_names:
+		return {"status": "failed", "message": "No leads provided."}
+		
+	# 1. Nullify assignment fields directly in DB for speed
+	frappe.db.sql("""
+		UPDATE `tabLead`
+		SET 
+			is_assigned = 0,
+			primary_sale = NULL,
+			lead_owner = NULL,
+			`_assign` = NULL,
+			modified = NOW()
+		WHERE name IN %(names)s
+	""", {"names": lead_names})
+	
+	frappe.db.commit()
+	
+	rule_doc = frappe.get_doc("Assignment Rule", assignment_rule) if assignment_rule else None
+	for name in lead_names:
+		try:
+			if rule_doc:
+				doc = frappe.get_doc("Lead", name)
+				rule_doc.apply_assign(doc)
+			else:
+				apply(doctype="Lead", name=name)
+			frappe.db.commit()
+		except Exception as e:
+			frappe.db.rollback()
+			frappe.log_error(title=f"Failed to auto-assign Lead {name}", message=frappe.get_traceback())
+
+	return {"status": "success", "processed": len(lead_names)}
+
