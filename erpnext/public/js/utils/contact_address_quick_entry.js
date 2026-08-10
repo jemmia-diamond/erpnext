@@ -121,7 +121,7 @@ frappe.ui.form.ContactAddressQuickEntryForm = class ContactAddressQuickEntryForm
 
 	normalize_phone(phone) {
 		if (!phone) return null;		
-		let cleaned = phone.replace(/\D/g, '');
+		let cleaned = erpnext.utils.normalize_to_standard_format(phone);
 		if (!cleaned) return null;
 		if (cleaned.length < 7 || cleaned.length > 15) return null;
 		if (new Set(cleaned).size === 1) return null;
@@ -130,36 +130,7 @@ frappe.ui.form.ContactAddressQuickEntryForm = class ContactAddressQuickEntryForm
 	}
 
 	validate_mobile_number(mobile_no) {
-		return new Promise((resolve, reject) => {
-			frappe.call({
-				method: "frappe.client.get_list",
-				args: {
-					doctype: "Customer",
-					or_filters: [
-						["mobile_no", "=", mobile_no],
-						["phone", "=", mobile_no]
-					],
-					fields: ["name", "customer_name"]
-				},
-				callback: function(r) {
-					if (r.message && r.message.length > 0) {
-						const existing_customer = r.message[0];
-						frappe.msgprint({
-							title: __("Duplicate Mobile Number"),
-							message: __("Mobile number {0} already exists for customer: {1}", 
-								[mobile_no, existing_customer.customer_name || existing_customer.name]),
-							indicator: "orange"
-						});
-						reject();
-					} else {
-						resolve();
-					}
-				},
-				error: function() {
-					reject();
-				}
-			});
-		});
+		return erpnext.utils.check_duplicate_phone(mobile_no, "Customer");
 	}
 
 	get_variant_fields() {
