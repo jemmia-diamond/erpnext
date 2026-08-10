@@ -12,7 +12,7 @@ from erpnext.crm.doctype.lead.lead import get_lead_with_phone_number
 from erpnext.crm.doctype.utils import get_scheduled_employees_for_popup, strip_number
 from erpnext.config.config import config
 from erpnext.utilities.phone_utils import get_phone_variants
-
+from erpnext.r2_storage import compress_and_upload_to_r2
 import jwt
 import time
 import requests
@@ -366,17 +366,34 @@ def download_and_attach_recording(call_log_name):
 		if config.CC_API_KEY:
 			headers["X-API-Key"] = config.CC_API_KEY
 
-	try:
-		response = requests.get(download_url, headers=headers)
-		if response.status_code == 200:
-			file_doc = save_file(
-				fname=f"recording_{call_log.name}.mp3",
-				content=response.content,
-				dt="Call Log",
-				dn=call_log.name,
-				is_private=1
+	compressor_url = frappe.conf.get("compressor_service_url") or getattr(config, "COMPRESSOR_SERVICE_URL", "")
+	if not compressor_url:
+		try:
+			response = requests.get(download_url, headers=headers)
+			if response.status_code == 200:
+				file_doc = save_file(
+					fname=f"recording_{call_log.name}.mp3",
+					content=response.content,
+					dt="Call Log",
+					dn=call_log.name,
+					is_private=1
+				)
+				frappe.db.set_value("Call Log", call_log_name, "recording_url", file_doc.file_url)
+				frappe.db.commit()
+				return
+		except Exception as e:
+			frappe.log_error(f"Old direct download failed for Call Log {call_log_name}: {str(e)}", "Call Log Recording Error")
+	else:
+		try:
+			final_r2_url = compress_and_upload_to_r2(
+				download_url=download_url,
+				headers=headers,
+				file_name=f"recording_{call_log.name}.mp3",
+				attached_to_doctype="Call Log",
+				attached_to_name=call_log.name
 			)
-			frappe.db.set_value("Call Log", call_log_name, "recording_url", file_doc.file_url)
-			frappe.db.commit()
-	except Exception as e:
-		frappe.log_error(f"Failed to download recording for Call Log {call_log_name}: {str(e)}", "Call Log Recording Download")
+			if final_r2_url:
+				frappe.db.set_value("Call Log", call_log_name, "recording_url", final_r2_url)
+				frappe.db.commit()
+		except Exception as e:
+			frappe.log_error(f"Failed to compress recording for Call Log {call_log_name}: {str(e)}", "Call Log Recording Error")
