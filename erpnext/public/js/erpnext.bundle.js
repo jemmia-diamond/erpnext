@@ -1,5 +1,6 @@
 import "./conf";
 import "./utils";
+import "./utils/phone_utils";
 import "./utils/item_utils";
 import "./utils/sales_order_gallery";
 import "./stock_reservation";
