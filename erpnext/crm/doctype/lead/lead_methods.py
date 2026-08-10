@@ -1261,24 +1261,33 @@ def process_fix_duplicate_conversations(pairs):
 def reassign_leads_in_bulk(lead_names, assignment_rule=None):	
 	if isinstance(lead_names, str):
 		lead_names = frappe.parse_json(lead_names)
-		
+
 	if not lead_names:
 		return {"status": "failed", "message": "No leads provided."}
-		
-	# 1. Nullify assignment fields directly in DB for speed
-	frappe.db.sql("""
-		UPDATE `tabLead`
-		SET 
-			is_assigned = 0,
-			primary_sale = NULL,
-			lead_owner = NULL,
-			`_assign` = NULL,
-			modified = NOW()
-		WHERE name IN %(names)s
-	""", {"names": lead_names})
-	
+
+	frappe.db.set_value(
+		"Lead",
+		{"name": ("in", lead_names)},
+		{
+			"is_assigned": 0,
+			"primary_sale": None,
+			"lead_owner": None,
+			"_assign": None
+		}
+	)
+
+	frappe.db.set_value(
+		"ToDo",
+		{
+			"reference_type": "Lead",
+			"reference_name": ("in", lead_names),
+			"status": "Open"
+		},
+		"status",
+		"Cancelled"
+	)
 	frappe.db.commit()
-	
+
 	rule_doc = frappe.get_doc("Assignment Rule", assignment_rule) if assignment_rule else None
 	for name in lead_names:
 		try:
