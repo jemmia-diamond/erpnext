@@ -1550,61 +1550,26 @@ def update_primary_sale_from_todo(doc, method=None):
 	"""
 	try:
 		if doc.reference_type == "Lead" and doc.status == "Open" and doc.allocated_to:
-			# Transfer assigned user to lead_owner if enabled in CRM Settings
-			if get_crm_settings().get("transfer_assign_to_lead_owner"):
-				lead_info = frappe.db.get_value("Lead", doc.reference_name, ["lead_owner", "first_reach_at"], as_dict=True) or {}
-				current_owner = lead_info.get("lead_owner")
-				first_reach_at = lead_info.get("first_reach_at")
+			current_owner = frappe.db.get_value("Lead", doc.reference_name, "lead_owner")
 
-				# New Leads (>= 2026-07-31 14:00:00)
-				if first_reach_at and frappe.utils.get_datetime(first_reach_at) >= frappe.utils.get_datetime("2026-07-31 14:00:00"):
-					# Rule 1: if current lead_owner is tech@jemmia.vn (or empty), transfer
-					if not current_owner or current_owner == "tech@jemmia.vn":
-						frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
+			can_update = False
+			if not current_owner or current_owner == "tech@jemmia.vn":
+				can_update = True
+			else:
+				# Check if current_owner is offboarded (enabled = 0)
+				is_enabled = frappe.db.get_value("User", current_owner, "enabled")
+				if not is_enabled:
+					can_update = True
 
-					# Rule 2: if current lead_owner is not tech@jemmia.vn and allocated_to is tech@jemmia.vn, skip
-					elif current_owner != "tech@jemmia.vn" and doc.allocated_to == "tech@jemmia.vn":
-						pass
-
-					# Rule 3: if current lead_owner is not tech@jemmia.vn and allocated_to is not tech@jemmia.vn, transfer
-					elif current_owner != "tech@jemmia.vn" and doc.allocated_to != "tech@jemmia.vn":
-						if get_crm_settings().get("overwrite_existing_lead_owner"):
-							frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
-
-				# Legacy Leads (< 2026-07-31 14:00:00)
-				else:
-					# Rule 1: if current lead_owner is tech@jemmia.vn (or empty), transfer
-					if not current_owner or current_owner == "tech@jemmia.vn":
-						frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
-
-					# Rule 2: if current lead_owner is not tech@jemmia.vn and allocated_to is tech@jemmia.vn, skip
-					elif current_owner != "tech@jemmia.vn" and doc.allocated_to == "tech@jemmia.vn":
-						pass
-
-					# Rule 3: if current lead_owner is not tech@jemmia.vn and allocated_to is not tech@jemmia.vn, transfer
-					elif current_owner != "tech@jemmia.vn" and doc.allocated_to != "tech@jemmia.vn":
-						if get_crm_settings().get("overwrite_existing_lead_owner"):
-							frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
-
-			# 1. Tìm Sales Person theo Email
-			sales_person = frappe.db.get_value("Sales Person", {"employee_email": doc.allocated_to}, "name")
-
-			# 2. Nếu không thấy, tìm qua Employee.user_id
-			if not sales_person:
-				employee = frappe.db.get_value("Employee", {"user_id": doc.allocated_to}, "name")
-				if employee:
-					sales_person = frappe.db.get_value("Sales Person", {"employee": employee}, "name")
-
-			# 3. Tiến hành gán và xóa cache để cập nhật UI
-			if sales_person:
-				frappe.db.set_value("Lead", doc.reference_name, "primary_sale", sales_person)
-
-			frappe.clear_document_cache("Lead", doc.reference_name)
-			frappe.db.commit()
-			try:
-				manual_lead_owner_enqueue(doc.reference_name)
-			except Exception:
-				frappe.log_error(title="Manual Lead Webhook Call Failed", message=frappe.get_traceback())
+			if can_update:
+				frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
+				frappe.clear_document_cache("Lead", doc.reference_name)
+				frappe.db.commit()
+				if doc.allocated_to != "tech@jemmia.vn":
+					try:
+						manual_lead_owner_enqueue(doc.reference_name)
+					except Exception:
+						frappe.log_error(title="Manual Lead Webhook Call Failed", message=frappe.get_traceback())
 
 	except Exception as e:
 		frappe.log_error(title="DEBUG ASSIGN LEAD EXCEPTION", message=frappe.get_traceback())
