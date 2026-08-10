@@ -11,29 +11,39 @@ frappe.ui.form.on("Customer", {
 			"Payment Entry": "Payment Entry",
 		};
 		frm.make_methods = {
-			Quotation: () =>
-				frappe.model.open_mapped_doc({
-					method: "erpnext.selling.doctype.customer.customer.make_quotation",
-					frm: frm,
+			Appointment: () =>
+				frappe.new_doc("Appointment", {
+					appointment_with: "Customer",
+					party: frm.doc.name,
+					customer_name: frm.doc.customer_name,
+					customer_phone_number: frm.doc.phone || frm.doc.mobile_no,
+					gender: frm.doc.gender,
+					status: "Open",
+					order_status: "Khách hẹn đến cửa hàng"
 				}),
-			"Sales Order": () =>
-				frappe.model.with_doctype("Sales Order", function () {
-					var so = frappe.model.get_new_doc("Sales Order");
-					so.customer = frm.doc.name; // Set the current customer as the SO customer
-					frappe.set_route("Form", "Sales Order", so.name);
-				}),
-			Opportunity: () =>
-				frappe.model.open_mapped_doc({
-					method: "erpnext.selling.doctype.customer.customer.make_opportunity",
-					frm: frm,
-				}),
-			"Payment Entry": () =>
-				frappe.model.open_mapped_doc({
-					method: "erpnext.selling.doctype.customer.customer.make_payment_entry",
-					frm: frm,
-				}),
-			"Pricing Rule": () => frm.trigger("make_pricing_rule"),
-			"Bank Account": () => erpnext.utils.make_bank_account(frm.doc.doctype, frm.doc.name),
+			// Quotation: () =>
+			// 	frappe.model.open_mapped_doc({
+			// 		method: "erpnext.selling.doctype.customer.customer.make_quotation",
+			// 		frm: frm,
+			// 	}),
+			// "Sales Order": () =>
+			// 	frappe.model.with_doctype("Sales Order", function () {
+			// 		var so = frappe.model.get_new_doc("Sales Order");
+			// 		so.customer = frm.doc.name; // Set the current customer as the SO customer
+			// 		frappe.set_route("Form", "Sales Order", so.name);
+			// 	}),
+			// Opportunity: () =>
+			// 	frappe.model.open_mapped_doc({
+			// 		method: "erpnext.selling.doctype.customer.customer.make_opportunity",
+			// 		frm: frm,
+			// 	}),
+			// "Payment Entry": () =>
+			// 	frappe.model.open_mapped_doc({
+			// 		method: "erpnext.selling.doctype.customer.customer.make_payment_entry",
+			// 		frm: frm,
+			// 	}),
+			// "Pricing Rule": () => frm.trigger("make_pricing_rule"),
+			// "Bank Account": () => erpnext.utils.make_bank_account(frm.doc.doctype, frm.doc.name),
 		};
 
 		frm.add_fetch("default_sales_partner", "commission_rate", "default_commission_rate");

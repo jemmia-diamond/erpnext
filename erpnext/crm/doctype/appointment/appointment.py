@@ -11,7 +11,7 @@ from frappe.model.document import Document
 from frappe.share import add_docshare
 from frappe.utils import get_url, getdate, now
 from frappe.utils.verified_command import get_signed_params
-
+from erpnext.utilities.phone_utils import get_phone_variants
 
 class Appointment(Document):
 	# begin: auto-generated types
@@ -32,6 +32,7 @@ class Appointment(Document):
 		budget: DF.Currency
 		calendar_event: DF.Link | None
 		conversation_greeting: DF.LongText | None
+		created_at: DF.Datetime | None
 		customer_email: DF.Data | None
 		customer_name: DF.Data
 		customer_phone_number: DF.Data | None
@@ -98,17 +99,22 @@ class Appointment(Document):
 		if not self.party:
 			if not self.appointment_with:
 				if self.customer_phone_number:
-					lead = frappe.db.get_value("Lead", {"phone": self.customer_phone_number}, "name")
-					if lead:
-						self.appointment_with = "Lead"
-						self.party = lead
+					variants = get_phone_variants(self.customer_phone_number)
+					
+					customer = frappe.db.get_value("Customer", {"mobile_no": ("in", variants)}, "name")
+					if not customer:
+						customer = frappe.db.get_value("Customer", {"phone": ("in", variants)}, "name")
+						
+					if customer:
+						self.appointment_with = "Customer"
+						self.party = customer
 					else:
-						customer = frappe.db.get_value("Customer", {"mobile_no": self.customer_phone_number}, "name")
-						if not customer:
-							customer = frappe.db.get_value("Customer", {"phone": self.customer_phone_number}, "name")
-						if customer:
-							self.appointment_with = "Customer"
-							self.party = customer
+						lead = frappe.db.get_value("Lead", {"phone": ("in", variants)}, "name")
+						if not lead:
+							lead = frappe.db.get_value("Lead", {"mobile_no": ("in", variants)}, "name")
+						if lead:
+							self.appointment_with = "Lead"
+							self.party = lead
 			else:
 				lead = self.find_lead_by_email()
 				customer = self.find_customer_by_email()
