@@ -204,6 +204,7 @@ class Lead(SellingController, CRMNote):
 		self.check_and_auto_create_opportunity_for_converted_lead()
 		self.check_and_auto_create_opportunity()
 		self.process_notes()
+		self.update_assignment_status()
 
 
 	def check_and_auto_create_opportunity_for_converted_lead(self):
@@ -452,23 +453,20 @@ class Lead(SellingController, CRMNote):
 		update lead owner
 		"""
 		user = None
-
 		if pancake_user_id:
-			try:
-				user = frappe.get_doc('User', {"pancake_id": pancake_user_id})
-			except Exception:
-				user = None
+			user = frappe.db.get_value('User', {"pancake_id": pancake_user_id, "enabled": 1}, "name")
 
-		# pancake id not exist == user off board
-		# assign default mail config
-		if not user:
+		if not user and self.get("_assign"):
 			try:
-				user = frappe.get_doc('User', {"email": config.DEFAULT_MAIL_OWNER})
+				assignees = frappe.parse_json(self.get("_assign"))
+				if isinstance(assignees, list):
+					for assignee in assignees:
+						if assignee != "tech@jemmia.vn" and frappe.db.get_value("User", assignee, "enabled"):
+							user = assignee
+							break
 			except Exception:
-				user = None
-
-		if user:
-			self.lead_owner = user.name
+				pass
+		self.lead_owner = user
 
 	def fetch_region_from_province(self):
 		if self.province:
@@ -607,7 +605,6 @@ class Lead(SellingController, CRMNote):
 
 	def on_update(self):
 		# self.update_prospect()
-		self.update_assignment_status()
 		self.sync_active_opportunities()
 		self.sync_lead_owner_to_todos()
 		self.handle_spam_side_effects()
@@ -910,7 +907,6 @@ class Lead(SellingController, CRMNote):
 
 		should_be_assigned = 1 if self.lead_owner else 0
 		if self.is_assigned != should_be_assigned:
-			frappe.db.set_value('Lead', self.name, 'is_assigned', should_be_assigned)
 			self.is_assigned = should_be_assigned
 
 	def remove_link_from_prospect(self):
