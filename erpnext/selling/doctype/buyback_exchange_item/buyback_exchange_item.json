@@ -91,6 +91,12 @@
  "module": "Selling",
  "name": "Buyback Exchange Item",
  "owner": "Administrator",
+ "permissions": [
+  {
+   "read": 1,
+   "role": "All"
+  }
+ ],
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
