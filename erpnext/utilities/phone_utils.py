@@ -57,7 +57,7 @@ def is_valid_phone_number(phone: str, default_country: str = "VN") -> bool:
 
     return False
 
-def get_phone_variants(phone: str, default_country: str = "VN") -> list:
+def get_phone_variants(phone: str, default_country: str = "VN", for_search: bool = False) -> list:
     """Generate different formatting variants of a phone number for DB search."""
     if not phone:
         return []
@@ -66,6 +66,12 @@ def get_phone_variants(phone: str, default_country: str = "VN") -> list:
     digits = re.sub(r"\D", "", phone)
     if digits:
         variants.add(digits)
+
+    if for_search:
+        if digits.startswith("84"):
+            variants.add("0" + digits[2:])
+        elif digits.startswith("0"):
+            variants.add("84" + digits[1:])
 
     try:
         parsed = phonenumbers.parse(phone, default_country)
