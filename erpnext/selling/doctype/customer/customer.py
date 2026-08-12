@@ -24,6 +24,7 @@ from erpnext.accounts.party import (
 	validate_party_accounts,
 	validate_party_currency_before_merging,
 )
+from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
 from erpnext.controllers.website_list_for_contact import add_role_for_portal_user
 from erpnext.utilities.transaction_base import TransactionBase
 from erpnext.config.config import config
@@ -337,6 +338,14 @@ class Customer(TransactionBase):
 		if self.flags.is_new_doc:
 			self.link_address_and_contact()
 			self.copy_communication()
+
+			if not self.haravan_id and get_crm_settings().get("create_haravan_customer_automatically"):
+				frappe.enqueue(
+					"erpnext.selling.doctype.customer.customer_service.service.create_haravan_customer_job",
+					queue="default",
+					customer_name=self.name,
+					enqueue_after_commit=True
+				)
 
 		self.update_customer_groups()
 
