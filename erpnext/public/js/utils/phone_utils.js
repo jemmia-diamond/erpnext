@@ -55,13 +55,21 @@ erpnext.utils.is_valid_phone_number = function(phone, default_country = "VN") {
     return false;
 };
 
-erpnext.utils.get_phone_variants = function(phone, default_country = "VN") {
+erpnext.utils.get_phone_variants = function(phone, default_country = "VN", for_search = false) {
     if (!phone) return [];
 
     let variants = new Set([phone]);
     let digits = phone.replace(/\D/g, "");
     if (digits) {
         variants.add(digits);
+    }
+
+    if (for_search) {
+        if (digits.startsWith("84")) {
+            variants.add("0" + digits.substring(2));
+        } else if (digits.startsWith("0")) {
+            variants.add("84" + digits.substring(1));
+        }
     }
 
     try {
@@ -159,7 +167,7 @@ erpnext.utils.setup_phone_search_interceptor = function(listview, doctype, field
                     const useWildcards = operator.includes('like');
                     const isNegative = operator === '!=' || operator === 'not like';
                     
-                    const variants = erpnext.utils.get_phone_variants(phone);
+                    const variants = erpnext.utils.get_phone_variants(phone, "VN", true);
 
                     variants.forEach(variant => {
                         if (!variant) return;

@@ -1372,13 +1372,7 @@ class SalesOrder(SellingController):
 				self.docstatus = DocStatus.CANCELLED
 				self.flags.ignore_on_cancel = True
 
-	def validate_primary_sales_team(self):
-		if self.sales_team and self.primary_sales_person:
-			if len([t for t in self.sales_team if t.sales_person == self.primary_sales_person]) == 0:
-				frappe.throw(_("Primary Sales Person must be part of the Sales Team."))
-
 	def before_save(self):
-		self.validate_primary_sales_team()
 		self.process_debt_history()
 		self.handle_serial_numbers_changes()
 

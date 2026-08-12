@@ -437,7 +437,6 @@ scheduler_events = {
 		"0/15 * * * *": [
 			"erpnext.manufacturing.doctype.bom_update_log.bom_update_log.resume_bom_cost_update_jobs",
 			"erpnext.accounts.doctype.payment_entry.payment_entry.daily_run_success_batch",
-			"erpnext.crm.doctype.lead.lead_methods.sync_lead_is_assigned",
 			"erpnext.crm.doctype.lead.lead_methods.auto_nurture_leads"
 		],
 		"0/30 * * * *": [
