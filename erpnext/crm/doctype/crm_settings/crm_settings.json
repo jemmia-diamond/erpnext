@@ -222,6 +222,24 @@
    "fieldname": "update_timestamp_on_new_communication",
    "fieldtype": "Check",
    "label": "Update timestamp on new communication"
+  },
+  {
+   "fieldname": "haravan_integration_tab",
+   "fieldtype": "Tab Break",
+   "label": "Haravan Integration"
+  },
+  {
+   "default": "0",
+   "fieldname": "create_haravan_customer",
+   "fieldtype": "Check",
+   "label": "Enable Haravan Customer Integration"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.create_haravan_customer==1",
+   "fieldname": "create_haravan_customer_automatically",
+   "fieldtype": "Check",
+   "label": "Create Haravan Customer Automatically On Insert"
   }
  ],
  "grid_page_length": 50,
@@ -229,7 +247,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-08-05 15:43:40.082042",
+ "modified": "2026-08-11 23:28:00.000000",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "CRM Settings",
