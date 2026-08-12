@@ -6,6 +6,7 @@ frappe.ui.form.ContactAddressQuickEntryForm = class ContactAddressQuickEntryForm
 	constructor(doctype, after_insert, init_callback, doc, force) {
 		super(doctype, after_insert, init_callback, doc, force);
 		this.skip_redirect_on_error = true;
+		this.hide_full_form_button = true;
 	}
 
 	render_dialog() {
