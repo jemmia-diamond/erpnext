@@ -98,20 +98,4 @@ frappe.ui.form.AppointmentQuickEntryForm = class AppointmentQuickEntryForm exten
 			});
 		});
 	}
-
-	insert() {
-		return new Promise((resolve, reject) => {
-			let scheduled_time = this.dialog.get_value("scheduled_time");
-			if (scheduled_time && scheduled_time < frappe.datetime.now_datetime()) {
-				frappe.msgprint({
-					title: __("Validation Error"),
-					indicator: "red",
-					message: __("Scheduled Time cannot be in the past.")
-				});
-				this.dialog.working = false;
-				return reject("Validation failed");
-			}
-			super.insert().then(resolve).catch(reject);
-		});
-	}
 };

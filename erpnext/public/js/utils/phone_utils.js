@@ -139,3 +139,51 @@ erpnext.utils.check_duplicate_phone = function(mobile_no, doctype="Customer") {
         });
     });
 };
+
+erpnext.utils.setup_phone_search_interceptor = function(listview, doctype, fields = ['phone']) {
+    const CONVERTIBLE_OPERATORS = ['like', 'not like', '=', '!='];
+    const original_get_args = listview.get_args.bind(listview);
+    
+    listview.get_args = function() {
+        const args = original_get_args();
+        if (args.filters) {
+            const newFilters = [];
+            const phoneOrFilters = [];
+
+            args.filters.forEach(filter => {
+                if (Array.isArray(filter) && fields.includes(filter[1]) && CONVERTIBLE_OPERATORS.includes(filter[2]) && filter[3]) {
+                    let phone = filter[3].replace(/%/g, '').trim();
+                    phone = phone.replace(/[\s\-\(\)]/g, '');
+
+                    const operator = filter[2];
+                    const useWildcards = operator.includes('like');
+                    const isNegative = operator === '!=' || operator === 'not like';
+                    
+                    const variants = erpnext.utils.get_phone_variants(phone);
+
+                    variants.forEach(variant => {
+                        if (!variant) return;
+                        const search_value = useWildcards ? '%' + variant + '%' : variant;
+                        fields.forEach(field => {
+                            if (isNegative) {
+                                // Negative conditions must be AND'ed
+                                newFilters.push([doctype, field, operator, search_value]);
+                            } else {
+                                // Positive conditions must be OR'ed
+                                phoneOrFilters.push([doctype, field, operator, search_value]);
+                            }
+                        });
+                    });
+                } else {
+                    newFilters.push(filter);
+                }
+            });
+            
+            args.filters = newFilters;
+            if (phoneOrFilters.length > 0) {
+                args.or_filters = (args.or_filters || []).concat(phoneOrFilters);
+            }
+        }
+        return args;
+    };
+};

@@ -25,6 +25,7 @@ def _cast_settings(settings):
 	return casted
 
 
+@frappe.whitelist()
 def get_crm_settings():
 	"""Get cached CRM Settings document dictionary from Redis cache."""
 	settings = frappe.cache().get_value(CACHE_KEY)
