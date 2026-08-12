@@ -80,8 +80,14 @@ class Appointment(Document):
 		return None
 
 	def before_save(self):
+		if self.status in ["Closed", "Close"]:
+			self.status = "Done"
+
 		if frappe.session.user != "tech@jemmia.vn":
 			self.performed_by = frappe.session.user
+		elif self.performed_by and "@" not in self.performed_by:
+			email = frappe.db.get_value("Sales Person", {"name": self.performed_by}, "employee_email")
+			self.performed_by = email or "tech@jemmia.vn"
 
 		if self.offline_sales:
 			names = [d.sales_person_name for d in self.offline_sales if d.sales_person_name]
