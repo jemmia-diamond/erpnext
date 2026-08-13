@@ -949,12 +949,13 @@ def update_lead_from_summary(data):
 
 	budget_to = data.get("budget_to")
 	budget_from = None if budget_to else data.get("budget_from")
+	budget_name = data.get("budget_name")
 	purpose = data.get("purpose")
 	product_names = data.get("interested_products", [])
 	province = data.get("province")
 	expected_receiving_date = data.get("expected_receiving_date")
 
-	new_lead_budget = find_range_budget(budget_from, budget_to)
+	new_lead_budget = find_range_budget(budget_name, budget_from, budget_to)
 	new_lead_purpose = get_lead_purpose(purpose)
 	new_lead_province = get_lead_province(province)
 

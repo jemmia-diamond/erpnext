@@ -11,7 +11,7 @@ from frappe.model.document import Document
 from frappe.share import add_docshare
 from frappe.utils import get_url, getdate, now
 from frappe.utils.verified_command import get_signed_params
-from erpnext.utilities.phone_utils import get_phone_variants
+from erpnext.utilities.phone_utils import get_phone_variants, search_doc_by_phone
 
 class Appointment(Document):
 	# begin: auto-generated types
@@ -59,6 +59,8 @@ class Appointment(Document):
 		range_estimated_budget: DF.Link | None
 		record_id: DF.Data | None
 		scheduled_time: DF.Datetime
+		source: DF.Link | None
+		source_name: DF.Data | None
 		status: DF.Literal["Open", "Cancelled", "Done"]
 		store: DF.Literal["72 NCT", "63 KM", "C\u1ea7n Th\u01a1"]
 	# end: auto-generated types
@@ -79,6 +81,39 @@ class Appointment(Document):
 			return customer_list[0].name
 		return None
 
+	@frappe.whitelist()
+	def handle_missing_party_or_source(self):
+		if not self.party or not self.appointment_with:
+			if self.customer_phone_number:
+				doctype, docname = search_doc_by_phone(self.customer_phone_number, ["Customer", "Lead"])
+				if doctype and docname:
+					self.appointment_with = doctype
+					self.party = docname
+
+		if self.party and not self.source:
+			self.handle_missing_source()
+
+	def handle_missing_source(self):
+		if self.appointment_with == "Customer":
+			first_source, lead_name = frappe.db.get_value(
+				"Customer", self.party, ["first_source", "lead_name"]
+			) or (None, None)
+			
+			if first_source:
+				self.source = first_source
+			elif lead_name:
+				self.source = frappe.db.get_value("Lead", lead_name, "source")
+			else:
+				customer = frappe.get_doc("Customer", self.party)
+				phone_to_check = customer.normalized_phone or customer.phone or customer.mobile_no
+				if phone_to_check:
+					doctype, docname = search_doc_by_phone(phone_to_check, ["Lead"])
+					if docname:
+						self.source = frappe.db.get_value("Lead", docname, "source")
+						
+		elif self.appointment_with == "Lead":
+			self.source = frappe.db.get_value("Lead", self.party, "source")
+
 	def before_save(self):
 		if self.status in ["Closed", "Close"]:
 			self.status = "Done"
@@ -92,6 +127,9 @@ class Appointment(Document):
 		if self.offline_sales:
 			names = [d.sales_person_name for d in self.offline_sales if d.sales_person_name]
 			self.offline_sales_name = ", ".join(names)
+
+		if not self.party or not self.appointment_with or not self.source:
+			self.handle_missing_party_or_source()
 
 	def before_insert(self):
 		number_of_appointments_in_same_slot = frappe.db.count(
@@ -358,3 +396,4 @@ def _get_employee_from_user(user):
 	if employee_docname:
 		return frappe.get_doc("Employee", employee_docname)
 	return None
+

@@ -18,6 +18,7 @@ from frappe.query_builder import Field, functions
 from frappe.utils import cint, cstr, flt, get_formatted_email, today, getdate, add_months, nowdate
 from frappe.utils.deprecations import deprecated
 from frappe.utils.user import get_users_with_role
+from erpnext.utilities.phone_utils import normalize_to_standard_format, get_phone_variants
 
 from erpnext.accounts.party import (
 	get_dashboard_info,
@@ -237,11 +238,15 @@ class Customer(TransactionBase):
 	def before_save(self):
 		target_phone = self.phone if self.phone else self.mobile_no
 		if target_phone:
-			try:
-				from erpnext.utilities.phone_utils import normalize_to_standard_format
-				self.normalized_phone = normalize_to_standard_format(target_phone)
-			except Exception:
-				self.normalized_phone = target_phone
+			self.normalized_phone = normalize_to_standard_format(target_phone)
+
+			if not self.phone or self.phone != self.normalized_phone:
+				self.phone = self.normalized_phone
+
+			if not self.mobile_no or self.mobile_no != self.normalized_phone:
+				self.mobile_no = self.normalized_phone
+		else:
+			self.normalized_phone = None
 
 	def validate(self):
 		self.flags.is_new_doc = self.is_new()
@@ -388,7 +393,6 @@ class Customer(TransactionBase):
 		if not self.lead_name:
 			target_phone = self.phone or self.mobile_no
 			if target_phone:
-				from erpnext.utilities.phone_utils import get_phone_variants
 				variants = get_phone_variants(target_phone)
 				if variants:
 					leads = frappe.get_all(
@@ -1681,9 +1685,7 @@ def _update_current_12_month_score(customer_name, auto_commit=True):
 		frappe.db.commit()
 
 @frappe.whitelist()
-def get_customer_buybacks(customer_name=None, phone_number=None):
-	from erpnext.utilities.phone_utils import get_phone_variants
-	
+def get_customer_buybacks(customer_name=None, phone_number=None):	
 	or_filters = []
 	if customer_name:
 		or_filters.append(["customer_name", "=", customer_name])

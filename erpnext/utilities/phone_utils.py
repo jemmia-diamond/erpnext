@@ -1,3 +1,4 @@
+import frappe
 import re
 import phonenumbers
 from phonenumbers.phonenumberutil import NumberParseException
@@ -86,3 +87,33 @@ def get_phone_variants(phone: str, default_country: str = "VN", for_search: bool
         pass
 
     return list(variants)
+
+def search_doc_by_phone(phone: str, doctype_priority: list = None) -> tuple:
+    if not phone:
+        return None, None
+        
+    if doctype_priority is None:
+        doctype_priority = ["Customer", "Lead"]
+        
+    variants = get_phone_variants(phone, for_search=True)
+    if not variants:
+        return None, None
+        
+    for doctype in doctype_priority:
+        meta = frappe.get_meta(doctype)
+        or_filters = {}
+        if meta.has_field("normalized_phone"):
+            or_filters["normalized_phone"] = ["in", variants]
+        if meta.has_field("phone"):
+            or_filters["phone"] = ["in", variants]
+        if meta.has_field("mobile_no"):
+            or_filters["mobile_no"] = ["in", variants]
+            
+        if not or_filters:
+            continue
+            
+        docs = frappe.get_all(doctype, or_filters=or_filters, limit=1, ignore_permissions=True)
+        if docs:
+            return doctype, docs[0].name
+            
+    return None, None

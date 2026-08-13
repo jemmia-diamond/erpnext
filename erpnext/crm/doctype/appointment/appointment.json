@@ -42,6 +42,8 @@
   "column_break_zugf",
   "gender",
   "budget",
+  "source",
+  "source_name",
   "addition_information_section",
   "customer_response",
   "conversation_greeting",
@@ -420,10 +422,25 @@
    "fieldtype": "Datetime",
    "hidden": 1,
    "label": "Created At"
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Link",
+   "label": "Source",
+   "options": "Lead Source",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "source.source_name",
+   "fieldname": "source_name",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Source name"
   }
  ],
  "links": [],
- "modified": "2026-08-12 09:19:24.579977",
+ "modified": "2026-08-13 08:32:27.951758",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Appointment",
