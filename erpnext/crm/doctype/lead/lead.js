@@ -113,7 +113,8 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 			purchase_purpose: this.frm.doc.purpose_lead,
 			preferred_products: this.frm.doc.preferred_product_type,
 			status: "Open",
-			order_status: "Khách hẹn đến cửa hàng"
+			order_status: "Khách hẹn đến cửa hàng",
+			source: this.frm.doc.source
 		});
 	}
 
@@ -130,7 +131,8 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 			purchase_purpose: this.frm.doc.purpose_lead,
 			preferred_products: this.frm.doc.preferred_product_type,
 			status: "Open",
-			order_status: "Khách hẹn đến cửa hàng"
+			order_status: "Khách hẹn đến cửa hàng",
+			source: this.frm.doc.source
 		});
 	}
 
