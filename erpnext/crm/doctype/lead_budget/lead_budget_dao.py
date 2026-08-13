@@ -1,7 +1,9 @@
 import frappe
 
 
-def find_range_budget(budget_from: int | None, budget_to:int | None):
+def find_range_budget(budget_name: str | None, budget_from: int | None, budget_to: int | None):
+	if budget_name and frappe.db.exists("Lead Budget", budget_name):
+		return frappe._dict({"name": budget_name})
 
 	if budget_from is None and budget_to is None:
 		return None
