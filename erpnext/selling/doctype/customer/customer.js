@@ -19,7 +19,8 @@ frappe.ui.form.on("Customer", {
 					customer_phone_number: frm.doc.phone || frm.doc.mobile_no,
 					gender: frm.doc.gender,
 					status: "Open",
-					order_status: "Khách hẹn đến cửa hàng"
+					order_status: "Khách hẹn đến cửa hàng",
+					source: frm.doc.first_source
 				}),
 			// Quotation: () =>
 			// 	frappe.model.open_mapped_doc({
