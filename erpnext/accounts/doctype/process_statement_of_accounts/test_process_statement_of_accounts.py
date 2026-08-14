@@ -14,17 +14,15 @@ from erpnext.accounts.test.accounts_mixin import AccountsTestMixin
 from erpnext.tests.utils import ERPNextTestSuite
 
 
-class TestProcessStatementOfAccounts(AccountsTestMixin, ERPNextTestSuite):
+class TestProcessStatementOfAccounts(ERPNextTestSuite, AccountsTestMixin):
 	def setUp(self):
 		frappe.db.set_single_value("Selling Settings", "validate_selling_price", 0)
 		letterhead = frappe.get_doc("Letter Head", "Company Letterhead - Grey")
 		letterhead.is_default = 0
 		letterhead.save()
 
-		self.create_company()
-		self.create_customer()
+		self.company = "_Test Company"
 		self.create_customer(customer_name="Other Customer")
-		self.clear_old_entries()
 		self.si = create_sales_invoice()
 		create_sales_invoice(customer="Other Customer")
 

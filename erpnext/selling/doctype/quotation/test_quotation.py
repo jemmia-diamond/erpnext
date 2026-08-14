@@ -183,6 +183,61 @@ class TestQuotation(ERPNextTestSuite):
 
 		self.assertTrue(quotation.payment_schedule)
 
+	def test_terms_attachments_are_copied_to_quotation(self):
+		terms = make_terms_and_conditions(copy_attachments_to_transaction=True)
+		first_attachment = make_file_attachment(
+			"Terms and Conditions",
+			terms.name,
+			content="First terms attachment",
+		)
+
+		quotation = make_quotation(do_not_save=1)
+		quotation.tc_name = terms.name
+		quotation.insert()
+
+		self.assertEqual(get_attachment_urls("Quotation", quotation.name), {first_attachment.file_url})
+
+		second_attachment = make_file_attachment(
+			"Terms and Conditions",
+			terms.name,
+			content="Second terms attachment",
+		)
+		quotation.valid_till = add_days(getdate(quotation.valid_till), 1)
+		quotation.save()
+
+		quotation_attachments = get_attachment_urls("Quotation", quotation.name)
+		self.assertEqual(quotation_attachments, {first_attachment.file_url})
+		self.assertNotIn(second_attachment.file_url, quotation_attachments)
+
+		new_terms = make_terms_and_conditions(copy_attachments_to_transaction=True)
+		new_terms_attachment = make_file_attachment(
+			"Terms and Conditions",
+			new_terms.name,
+			content="Attachment from updated terms",
+		)
+		quotation.tc_name = new_terms.name
+		quotation.valid_till = add_days(getdate(quotation.valid_till), 1)
+		quotation.save()
+
+		self.assertEqual(
+			get_attachment_urls("Quotation", quotation.name),
+			{first_attachment.file_url, new_terms_attachment.file_url},
+		)
+
+	def test_terms_attachments_are_not_copied_when_disabled(self):
+		terms = make_terms_and_conditions(copy_attachments_to_transaction=False)
+		make_file_attachment(
+			"Terms and Conditions",
+			terms.name,
+			content="Terms attachment should stay on the template",
+		)
+
+		quotation = make_quotation(do_not_save=1)
+		quotation.tc_name = terms.name
+		quotation.insert()
+
+		self.assertFalse(get_attachment_urls("Quotation", quotation.name))
+
 	@ERPNextTestSuite.change_settings(
 		"Accounts Settings",
 		{"automatically_fetch_payment_terms": 1},
@@ -348,9 +403,9 @@ class TestQuotation(ERPNextTestSuite):
 		quotation.save()
 		quotation.submit()
 
-		self.assertEqual(quotation.payment_schedule[0].payment_amount, 8906.00)
+		self.assertEqual(quotation.payment_schedule[0].payment_amount, 500.00)
 		self.assertEqual(quotation.payment_schedule[0].due_date, quotation.transaction_date)
-		self.assertEqual(quotation.payment_schedule[1].payment_amount, 8906.00)
+		self.assertEqual(quotation.payment_schedule[1].payment_amount, 500.00)
 		self.assertEqual(quotation.payment_schedule[1].due_date, add_days(quotation.transaction_date, 30))
 
 		sales_order = make_sales_order(quotation.name)
@@ -370,11 +425,11 @@ class TestQuotation(ERPNextTestSuite):
 		sales_order.set("taxes", [])
 		sales_order.save()
 
-		self.assertEqual(sales_order.payment_schedule[0].payment_amount, 8906.00)
+		self.assertEqual(sales_order.payment_schedule[0].payment_amount, 500.00)
 		self.assertEqual(
 			getdate(sales_order.payment_schedule[0].due_date), getdate(quotation.transaction_date)
 		)
-		self.assertEqual(sales_order.payment_schedule[1].payment_amount, 8906.00)
+		self.assertEqual(sales_order.payment_schedule[1].payment_amount, 500.00)
 		self.assertEqual(
 			getdate(sales_order.payment_schedule[1].due_date),
 			getdate(add_days(quotation.transaction_date, 30)),
@@ -410,11 +465,13 @@ class TestQuotation(ERPNextTestSuite):
 
 		rate_with_margin = flt((1500 * 18.75) / 100 + 1500)
 
-		test_record = dict(self.globalTestRecords["Quotation"][0])
+		test_record = frappe.copy_doc(self.globalTestRecords["Quotation"][0])
 
-		test_record["items"][0]["price_list_rate"] = 1500
-		test_record["items"][0]["margin_type"] = "Percentage"
-		test_record["items"][0]["margin_rate_or_amount"] = 18.75
+		test_record.items[0].price_list_rate = 1500
+		test_record.items[0].margin_type = "Percentage"
+		test_record.items[0].margin_rate_or_amount = 18.75
+		# set rate to zero, so that it is recalculated on save
+		test_record.items[0].rate = 0
 
 		quotation = frappe.copy_doc(test_record)
 		quotation.transaction_date = nowdate()
@@ -1145,6 +1202,42 @@ def get_quotation_dict(party_name=None, item_code=None):
 		"doctype": "Quotation",
 		"party_name": party_name,
 		"items": [{"item_code": item_code, "qty": 1, "rate": 100}],
+	}
+
+
+def make_terms_and_conditions(copy_attachments_to_transaction=False):
+	return frappe.get_doc(
+		{
+			"doctype": "Terms and Conditions",
+			"title": f"_Test Terms and Conditions {frappe.generate_hash(length=8)}",
+			"selling": 1,
+			"terms": "Test terms",
+			"copy_attachments_to_transaction": 1 if copy_attachments_to_transaction else 0,
+		}
+	).insert()
+
+
+def make_file_attachment(doctype, docname, content):
+	return frappe.get_doc(
+		{
+			"doctype": "File",
+			"file_name": f"terms-attachment-{frappe.generate_hash(length=8)}.txt",
+			"attached_to_doctype": doctype,
+			"attached_to_name": docname,
+			"content": content,
+		}
+	).insert()
+
+
+def get_attachment_urls(doctype, docname):
+	return {
+		file.file_url
+		for file in frappe.get_all(
+			"File",
+			filters={"attached_to_doctype": doctype, "attached_to_name": docname},
+			fields=["file_url"],
+		)
+		if file.file_url
 	}
 
 

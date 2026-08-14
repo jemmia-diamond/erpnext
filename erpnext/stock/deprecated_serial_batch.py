@@ -48,9 +48,18 @@ class DeprecatedSerialNoValuation:
 		if not posting_datetime and self.sle.posting_date:
 			posting_datetime = get_combine_datetime(self.sle.posting_date, self.sle.posting_time)
 
+		do_not_fetch_rate = frappe.db.get_single_value(
+			"Stock Reposting Settings", "do_not_fetch_incoming_rate_from_serial_no"
+		)
+
 		for serial_no in serial_nos:
 			sn_details = frappe.db.get_value("Serial No", serial_no, ["purchase_rate", "company"], as_dict=1)
-			if sn_details and sn_details.purchase_rate and sn_details.company == self.sle.company:
+			if (
+				sn_details
+				and sn_details.purchase_rate
+				and sn_details.company == self.sle.company
+				and (not frappe.flags.through_repost_item_valuation or not do_not_fetch_rate)
+			):
 				self.serial_no_incoming_rate[serial_no] += flt(sn_details.purchase_rate)
 				incoming_values += self.serial_no_incoming_rate[serial_no]
 				continue
@@ -66,6 +75,7 @@ class DeprecatedSerialNoValuation:
 						| (table.serial_no.like("%\n" + serial_no))
 						| (table.serial_no.like("%\n" + serial_no + "\n%"))
 					)
+					& (table.item_code == self.sle.item_code)
 					& (table.company == self.sle.company)
 					& (table.warehouse == self.sle.warehouse)
 					& (table.serial_and_batch_bundle.isnull())
@@ -148,6 +158,9 @@ class DeprecatedBatchNoValuation:
 
 		if self.sle.name:
 			query = query.where(sle.name != self.sle.name)
+
+		if getattr(self, "stock_closing_from_datetime", None):
+			query = query.where(sle.posting_datetime >= self.stock_closing_from_datetime)
 
 		return query.run(as_dict=True)
 

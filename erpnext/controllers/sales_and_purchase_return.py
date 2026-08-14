@@ -144,7 +144,7 @@ def validate_returned_items(doc):
 					ref.rate
 					and flt(d.rate) > ref.rate
 					and doc.doctype in ("Delivery Note", "Sales Invoice")
-					and get_valuation_method(ref.item_code, doc.company) != "Moving Average"
+					and get_valuation_method(d.item_code, doc.company) != "Moving Average"
 				):
 					frappe.throw(
 						_("Row # {0}: Rate cannot be greater than the rate used in {1} {2}").format(
@@ -159,10 +159,28 @@ def validate_returned_items(doc):
 				):
 					frappe.throw(_("Warehouse is mandatory"))
 
-			items_returned = True
+			if doc.doctype in (
+				"Purchase Invoice",
+				"Purchase Receipt",
+				"Subcontracting Receipt",
+				"Sales Invoice",
+				"Delivery Note",
+				"POS Invoice",
+			):
+				if flt(d.qty) < 0 or flt(d.get("received_qty")) < 0:
+					items_returned = True
+			else:
+				items_returned = True
 
 		elif d.item_name:
-			items_returned = True
+			if doc.doctype in ("Purchase Invoice", "Purchase Receipt", "Subcontracting Receipt"):
+				# No item_code here means no linked Item, so there's no accepted/rejected
+				# split to speak of - received_qty isn't a meaningful independent signal.
+				# Only a negative qty (i.e. a real negative billing amount) counts.
+				if flt(d.qty) < 0:
+					items_returned = True
+			else:
+				items_returned = True
 
 	if not items_returned:
 		frappe.throw(_("At least one item should be entered with negative quantity in return document"))
@@ -445,6 +463,8 @@ def make_return_doc(doctype: str, source_name: str, target_doc=None, return_agai
 		doc.pricing_rules = []
 		doc.return_against = source.name
 		doc.set_warehouse = ""
+		if doctype == "Sales Invoice":
+			doc.is_debit_note = 0
 		if doctype == "Sales Invoice" or doctype == "POS Invoice":
 			doc.is_pos = source.is_pos
 
@@ -598,6 +618,7 @@ def make_return_doc(doctype: str, source_name: str, target_doc=None, return_agai
 			target_doc.so_detail = source_doc.so_detail
 			target_doc.expense_account = source_doc.expense_account
 			target_doc.dn_detail = source_doc.name
+			target_doc.cost_center = source_doc.cost_center
 			if default_warehouse_for_sales_return:
 				target_doc.warehouse = default_warehouse_for_sales_return
 		elif doctype == "Sales Invoice" or doctype == "POS Invoice":

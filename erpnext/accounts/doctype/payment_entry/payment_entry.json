@@ -113,6 +113,7 @@
   "remarks",
   "base_in_words",
   "is_opening",
+  "title",
   "column_break_16",
   "letter_head",
   "print_heading",
@@ -120,11 +121,11 @@
   "bank_account_no",
   "payment_order",
   "in_words",
-  "subscription_section",
-  "auto_repeat",
   "amended_from",
   "admin_editing",
   "title"
+  "auto_repeat_section",
+  "auto_repeat"
  ],
  "fields": [
   {
@@ -1005,6 +1006,11 @@
    "fieldtype": "Currency",
    "label": "Refund amount",
    "precision": "0"
+  },
+  {
+   "fieldname": "auto_repeat_section",
+   "fieldtype": "Section Break",
+   "label": "Auto Repeat"
   }
  ],
  "grid_page_length": 50,
@@ -1019,7 +1025,7 @@
    "table_fieldname": "payment_entries"
   }
  ],
- "modified": "2026-04-14 10:51:09.637174",
+ "modified": "2026-05-15 13:31:01.166010",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Payment Entry",

@@ -11,11 +11,12 @@ from erpnext import get_company_currency
 from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
 	get_accounting_dimensions,
 )
+from erpnext.accounts.doctype.bank_account.bank_account import get_party_bank_account
 from erpnext.accounts.doctype.payment_entry.payment_entry import (
 	get_payment_entry,
 )
 from erpnext.accounts.doctype.subscription_plan.subscription_plan import get_plan_rate
-from erpnext.accounts.party import get_party_account, get_party_bank_account
+from erpnext.accounts.party import get_party_account
 from erpnext.accounts.utils import get_account_currency, get_advance_payment_doctypes, get_currency_precision
 from erpnext.utilities import payment_app_import_guard
 
@@ -378,6 +379,7 @@ class PaymentRequest(Document):
 			bank_amount=bank_amount,
 			created_from_payment_request=True,
 		)
+		payment_entry.set_missing_ref_details(force=True)
 
 		payment_entry.update(
 			{
@@ -421,6 +423,18 @@ class PaymentRequest(Document):
 
 		return payment_entry
 
+	@frappe.whitelist(methods=["POST"])
+	def resend_payment_email(self):
+		if not (
+			self.docstatus == 1
+			and self.payment_request_type == "Inward"
+			and self.payment_channel != "Phone"
+			and self.status not in ["Initiated", "Paid"]
+		):
+			frappe.throw(_("Payment Link couldn't be sent."))
+
+		self.send_email()
+
 	def send_email(self):
 		"""send email with payment link"""
 		email_args = {
@@ -438,11 +452,14 @@ class PaymentRequest(Document):
 				)
 			],
 		}
+		job_id = f"send_payment_email::{self.name}"
 		enqueue(
 			method=frappe.sendmail,
 			queue="short",
 			timeout=300,
 			is_async=True,
+			job_id=job_id,
+			deduplicate=True,
 			enqueue_after_commit=True,
 			**email_args,
 		)
@@ -457,7 +474,7 @@ class PaymentRequest(Document):
 		}
 
 		if self.message:
-			return frappe.render_template(self.message, context)
+			return frappe.render_template(self.message, context, restrict_globals=True)
 
 	def set_failed(self):
 		pass
@@ -782,6 +799,7 @@ def set_payment_references(payment_schedules):
 				"description": row.get("description"),
 				"due_date": row.get("due_date"),
 				"amount": row.get("payment_amount"),
+				"currency": row.get("currency"),
 			}
 		)
 
@@ -949,13 +967,9 @@ def get_print_format_list(ref_doctype):
 
 
 @frappe.whitelist()
-def resend_payment_email(docname):
-	return frappe.get_doc("Payment Request", docname).send_email()
-
-
-@frappe.whitelist()
 def make_payment_entry(docname):
 	doc = frappe.get_doc("Payment Request", docname)
+	doc.check_permission("read")
 	return doc.create_payment_entry(submit=False).as_dict()
 
 

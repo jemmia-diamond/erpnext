@@ -100,6 +100,9 @@ class AssetCapitalization(StockController):
 		self.set_asset_values()
 		self.calculate_totals()
 		self.set_title()
+		# Asset Capitalization overrides validate() without calling super(), so the shared
+		# mandatory inventory dimension check must be invoked explicitly here.
+		self.validate_inventory_dimension_mandatory()
 
 	def on_update(self):
 		if self.stock_items:
@@ -665,11 +668,13 @@ def get_target_asset_details(asset: str | None = None, company: str | None = Non
 @frappe.whitelist()
 @erpnext.normalize_ctx_input(ItemDetailsCtx)
 def get_consumed_stock_item_details(ctx: ItemDetailsCtx):
+	frappe.has_permission("Stock Ledger Entry", throw=True)
 	out = frappe._dict()
 
 	item = frappe._dict()
 	if ctx.item_code:
 		item = frappe.get_cached_doc("Item", ctx.item_code)
+		item.check_permission()
 
 	out.item_name = item.item_name
 	out.batch_no = None
@@ -679,6 +684,8 @@ def get_consumed_stock_item_details(ctx: ItemDetailsCtx):
 	out.stock_uom = item.stock_uom
 
 	out.warehouse = get_item_warehouse_(ctx, item, overwrite_warehouse=True) if item else None
+	if out.warehouse:
+		frappe.has_permission("Warehouse", doc=out.warehouse, throw=True)
 
 	# Cost Center
 	item_defaults = get_item_defaults(item.name, ctx.company)
@@ -719,6 +726,9 @@ def get_warehouse_details(args):
 
 	out = {}
 	if args.warehouse and args.item_code:
+		frappe.has_permission("Item", doc=args.item_code, throw=True)
+		frappe.has_permission("Warehouse", doc=args.warehouse, throw=True)
+		frappe.has_permission("Stock Ledger Entry", throw=True)
 		out = {
 			"actual_qty": get_previous_sle(args).get("qty_after_transaction") or 0,
 			"valuation_rate": get_incoming_rate(args, raise_error_if_no_rate=False),

@@ -195,6 +195,30 @@ class TestPaymentEntry(ERPNextTestSuite):
 		outstanding_amount = flt(frappe.db.get_value("Sales Invoice", si.name, "outstanding_amount"))
 		self.assertEqual(outstanding_amount, 100)
 
+	def test_reference_outstanding_amount_on_advance_pull(self):
+		from erpnext.selling.doctype.sales_order.sales_order import make_sales_invoice
+
+		so = make_sales_order(qty=1, rate=1000)
+		pe = get_payment_entry("Sales Order", so.name, bank_account="_Test Cash - _TC")
+		pe.paid_amount = pe.received_amount = 500
+		pe.references[0].allocated_amount = 500
+		pe.insert()
+		pe.submit()
+
+		so.reload()
+		self.assertEqual(so.advance_paid, 500)
+
+		si = make_sales_invoice(so.name)
+		si.allocate_advances_automatically = 1
+		si.save()
+		self.assertEqual(si.get("advances")[0].allocated_amount, 500)
+		self.assertEqual(si.get("advances")[0].reference_name, pe.name)
+		si.submit()
+
+		pe.load_from_db()
+		self.assertEqual(pe.references[0].reference_name, si.name)
+		self.assertEqual(pe.references[0].outstanding_amount, si.outstanding_amount)
+
 	def test_payment_entry_against_pi(self):
 		pi = make_purchase_invoice(
 			supplier="_Test Supplier USD",
@@ -508,6 +532,8 @@ class TestPaymentEntry(ERPNextTestSuite):
 		si.submit()
 
 		pe = get_payment_entry("Sales Invoice", si.name, bank_account="_Test Bank - _TC", bank_amount=4700)
+		pe.source_exchange_rate = 50
+		pe.set_amounts()
 		pe.reference_no = si.name
 		pe.reference_date = nowdate()
 
@@ -583,6 +609,8 @@ class TestPaymentEntry(ERPNextTestSuite):
 		pe = get_payment_entry(
 			"Sales Invoice", si.name, party_amount=20, bank_account="_Test Bank - _TC", bank_amount=900
 		)
+		pe.source_exchange_rate = 50
+		pe.set_amounts()
 		pe.reference_no = "1"
 		pe.reference_date = "2016-01-01"
 
@@ -1009,14 +1037,17 @@ class TestPaymentEntry(ERPNextTestSuite):
 				gle.credit_in_account_currency,
 				gle.debit_in_transaction_currency,
 				gle.credit_in_transaction_currency,
+				gle.transaction_currency,
+				gle.transaction_exchange_rate,
 			)
 			.orderby(gle.account)
 			.where(gle.voucher_no == payment_entry.name)
 			.run()
 		)
+		# transaction currency/rate come from the paid-from USD account (company currency is INR)
 		expected_gl_entries = (
-			(paid_from, 0.0, 8440.0, 0.0, 100.0, 0.0, 100.0),
-			("_Test Payable USD - _TC", 8440.0, 0.0, 100.0, 0.0, 100.0, 0.0),
+			(paid_from, 0.0, 8440.0, 0.0, 100.0, 0.0, 100.0, "USD", 84.4),
+			("_Test Payable USD - _TC", 8440.0, 0.0, 100.0, 0.0, 100.0, 0.0, "USD", 84.4),
 		)
 		self.assertEqual(gl_entries, expected_gl_entries)
 
@@ -1081,6 +1112,27 @@ class TestPaymentEntry(ERPNextTestSuite):
 		)
 
 		self.assertEqual(gl_entries, expected_gl_entries)
+
+	def test_payment_entry_with_inclusive_tax(self):
+		# inclusive tax built server-side: base_tax_amount is None until apply_taxes()
+		payment_entry = create_payment_entry(paid_amount=1180)
+		payment_entry.append(
+			"taxes",
+			{
+				"account_head": "_Test Account Service Tax - _TC",
+				"charge_type": "On Paid Amount",
+				"rate": 18,
+				"included_in_paid_amount": 1,
+				"add_deduct_tax": "Add",
+				"description": "Service Tax",
+			},
+		)
+		payment_entry.save()
+		payment_entry.submit()
+
+		# 1180 incl 18% => 1000 base + 180 tax
+		self.assertEqual(flt(payment_entry.total_taxes_and_charges, 2), 180.0)
+		self.assertEqual(flt(payment_entry.unallocated_amount, 2), 1000.0)
 
 	def test_payment_entry_against_onhold_purchase_invoice(self):
 		pi = make_purchase_invoice()
@@ -2104,6 +2156,37 @@ class TestPaymentEntry(ERPNextTestSuite):
 		for ref in references:
 			self.assertEqual(ref.voucher_no, so.name)
 			self.assertIsNotNone(ref.payment_term)
+
+	def test_project_name_in_exchange_gain_loss_entry(self):
+		si = create_sales_invoice(
+			customer="_Test Customer USD",
+			debit_to="_Test Receivable USD - _TC",
+			currency="USD",
+			conversion_rate=50,
+			do_not_submit=True,
+		)
+		from erpnext.projects.doctype.project.test_project import make_project
+
+		si.project = make_project({"project_name": "_Test Project for Exchange Gain Loss Entry"}).name
+
+		si.submit()
+
+		pe = get_payment_entry("Sales Invoice", si.name)
+
+		pe.source_exchange_rate = 100
+
+		pe.insert()
+		pe.submit()
+
+		rows = frappe.get_all(
+			"Journal Entry Account",
+			or_filters=[{"reference_name": pe.name}, {"reference_name": si.name}],
+			fields=["project"],
+		)
+		self.assertEqual(len(rows), 2)
+
+		self.assertEqual(rows[0].project, si.project)
+		self.assertEqual(rows[1].project, si.project)
 
 
 def create_payment_entry(**args):

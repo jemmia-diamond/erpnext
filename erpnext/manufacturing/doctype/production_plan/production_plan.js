@@ -445,8 +445,6 @@ frappe.ui.form.on("Production Plan", {
 			frappe.throw(__("Select the Warehouse"));
 		}
 
-		frm.set_value("consider_minimum_order_qty", 0);
-
 		if (!frm.doc.ignore_existing_ordered_qty) {
 			frm.events.get_items_for_material_requests(frm);
 		} else {
@@ -693,6 +691,7 @@ frappe.ui.form.on("Production Plan Sub Assembly Item", {
 				callback: function (r) {
 					if (r.message && r.message.length) {
 						frappe.model.set_value(cdt, cdn, "actual_qty", r.message[0].actual_qty);
+						frappe.model.set_value(cdt, cdn, "projected_qty", r.message[0].projected_qty);
 					}
 				},
 			});

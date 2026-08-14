@@ -115,7 +115,12 @@ erpnext.accounts.PurchaseInvoice = class PurchaseInvoice extends erpnext.buying.
 			}
 		}
 
-		if (doc.docstatus == 1 && doc.outstanding_amount != 0 && !doc.on_hold) {
+		if (
+			doc.docstatus == 1 &&
+			doc.outstanding_amount != 0 &&
+			!doc.on_hold &&
+			frappe.model.can_create("Payment Entry")
+		) {
 			this.frm.add_custom_button(__("Payment"), () => this.make_payment_entry(), __("Create"));
 			this.frm.page.set_inner_btn_group_as_primary(__("Create"));
 		}
@@ -130,7 +135,13 @@ erpnext.accounts.PurchaseInvoice = class PurchaseInvoice extends erpnext.buying.
 			}
 		}
 
-		if (doc.docstatus == 1 && doc.outstanding_amount > 0 && !cint(doc.is_return) && !doc.on_hold) {
+		if (
+			doc.docstatus == 1 &&
+			doc.outstanding_amount > 0 &&
+			!cint(doc.is_return) &&
+			!doc.on_hold &&
+			frappe.boot.user.in_create.includes("Payment Request")
+		) {
 			this.frm.add_custom_button(
 				__("Payment Request"),
 				function () {
@@ -229,10 +240,8 @@ erpnext.accounts.PurchaseInvoice = class PurchaseInvoice extends erpnext.buying.
 
 	unblock_invoice() {
 		const me = this;
-		frappe.call({
-			method: "erpnext.accounts.doctype.purchase_invoice.purchase_invoice.unblock_invoice",
-			args: { name: me.frm.doc.name },
-			callback: (r) => me.frm.reload_doc(),
+		me.frm.call("unblock_invoice", null, () => {
+			me.frm.reload_doc();
 		});
 	}
 
@@ -283,15 +292,16 @@ erpnext.accounts.PurchaseInvoice = class PurchaseInvoice extends erpnext.buying.
 
 		this.dialog.set_primary_action(__("Save"), function () {
 			const dialog_data = me.dialog.get_values();
-			frappe.call({
-				method: "erpnext.accounts.doctype.purchase_invoice.purchase_invoice.block_invoice",
-				args: {
-					name: me.frm.doc.name,
+			me.frm.call(
+				"block_invoice",
+				{
 					hold_comment: dialog_data.hold_comment,
 					release_date: dialog_data.release_date,
 				},
-				callback: (r) => me.frm.reload_doc(),
-			});
+				() => {
+					me.frm.reload_doc();
+				}
+			);
 			me.dialog.hide();
 		});
 
@@ -330,10 +340,9 @@ erpnext.accounts.PurchaseInvoice = class PurchaseInvoice extends erpnext.buying.
 	}
 
 	set_release_date(data) {
-		return frappe.call({
-			method: "erpnext.accounts.doctype.purchase_invoice.purchase_invoice.change_release_date",
-			args: data,
-			callback: (r) => this.frm.reload_doc(),
+		const me = this;
+		return me.frm.call("change_release_date", { release_date: data.release_date }, () => {
+			me.frm.reload_doc();
 		});
 	}
 
@@ -443,13 +452,14 @@ erpnext.accounts.PurchaseInvoice = class PurchaseInvoice extends erpnext.buying.
 	}
 
 	items_add(doc, cdt, cdn) {
-		var row = frappe.get_doc(cdt, cdn);
-		this.frm.script_manager.copy_from_first_row("items", row, [
-			"expense_account",
-			"discount_account",
-			"cost_center",
-			"project",
-		]);
+		const row = frappe.get_doc(cdt, cdn);
+		const field_copy = ["expense_account", "discount_account", "cost_center"];
+		if (doc.project) {
+			frappe.model.set_value(cdt, cdn, "project", doc.project);
+		} else {
+			field_copy.push("project");
+		}
+		this.frm.script_manager.copy_from_first_row("items", row, field_copy);
 	}
 
 	on_submit() {
@@ -558,12 +568,6 @@ cur_frm.fields_dict["items"].grid.get_field("cost_center").get_query = function 
 	};
 };
 
-cur_frm.fields_dict["items"].grid.get_field("project").get_query = function (doc, cdt, cdn) {
-	return {
-		filters: [["Project", "status", "not in", "Completed, Cancelled"]],
-	};
-};
-
 frappe.ui.form.on("Purchase Invoice", {
 	setup: function (frm) {
 		frm.custom_make_buttons = {
@@ -581,6 +585,25 @@ frappe.ui.form.on("Purchase Invoice", {
 					company: frm.doc.company,
 					is_group: 0,
 					report_type: "Profit and Loss",
+				},
+			};
+		});
+
+		frm.set_query("write_off_account", function (doc) {
+			return {
+				filters: {
+					report_type: "Profit and Loss",
+					is_group: 0,
+					company: doc.company,
+				},
+			};
+		});
+
+		frm.set_query("write_off_cost_center", function (doc) {
+			return {
+				filters: {
+					is_group: 0,
+					company: doc.company,
 				},
 			};
 		});

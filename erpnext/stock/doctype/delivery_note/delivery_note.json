@@ -76,7 +76,6 @@
   "base_totals_section",
   "base_grand_total",
   "base_in_words",
-  "column_break_ydwe",
   "base_rounding_adjustment",
   "base_rounded_total",
   "section_break_49",
@@ -147,7 +146,7 @@
   "total_commission",
   "section_break1",
   "sales_team",
-  "subscription_section",
+  "auto_repeat_section",
   "auto_repeat",
   "printing_details",
   "letter_head",
@@ -168,6 +167,7 @@
   "inter_company_reference",
   "customer_group",
   "territory",
+  "title",
   "column_break5",
   "excise_page",
   "instructions",
@@ -1116,11 +1116,6 @@
    "oldfieldtype": "Text"
   },
   {
-   "fieldname": "subscription_section",
-   "fieldtype": "Section Break",
-   "label": "Subscription Section"
-  },
-  {
    "fieldname": "auto_repeat",
    "fieldtype": "Link",
    "label": "Auto Repeat",
@@ -1269,6 +1264,7 @@
    "fieldname": "amount_eligible_for_commission",
    "fieldtype": "Currency",
    "label": "Amount Eligible for Commission",
+   "options": "Company:company:default_currency",
    "read_only": 1
   },
   {
@@ -1446,13 +1442,26 @@
   {
    "fieldname": "column_break_neoj",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "auto_repeat_section",
+   "fieldtype": "Section Break",
+   "label": "Auto Repeat"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "no_copy": 1,
+   "print_hide": 1
   }
  ],
  "icon": "fa fa-truck",
  "idx": 146,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-03-09 17:15:27.932956",
+ "modified": "2026-05-28 11:44:37.286743",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Delivery Note",

@@ -19,6 +19,7 @@ from erpnext.accounts.doctype.repost_accounting_ledger.repost_accounting_ledger 
 	validate_docs_for_voucher_types,
 )
 from erpnext.accounts.doctype.tax_withholding_entry.tax_withholding_entry import JournalTaxWithholding
+from erpnext.accounts.general_ledger import validate_opening_entry_against_pcv
 from erpnext.accounts.party import get_party_account
 from erpnext.accounts.utils import (
 	cancel_exchange_gain_loss_journal,
@@ -61,6 +62,7 @@ class JournalEntry(AccountsController):
 		cheque_no: DF.Data | None
 		clearance_date: DF.Date | None
 		company: DF.Link
+		custom_remark: DF.Check
 		difference: DF.Currency
 		due_date: DF.Date | None
 		finance_book: DF.Link | None
@@ -130,6 +132,9 @@ class JournalEntry(AccountsController):
 		if not self.is_opening:
 			self.is_opening = "No"
 
+		if self.is_opening == "Yes":
+			validate_opening_entry_against_pcv(self.company)
+
 		self.clearance_date = None
 
 		self.validate_party()
@@ -157,7 +162,7 @@ class JournalEntry(AccountsController):
 
 		JournalTaxWithholding(self).on_validate()
 
-		if self.is_new() or not self.title:
+		if not self.title or (self.is_new() and self.amended_from):
 			self.title = self.get_title()
 
 	def validate_advance_accounts(self):
@@ -353,8 +358,11 @@ class JournalEntry(AccountsController):
 					frappe.throw(_("Account {0} should be of type Expense").format(d.account))
 
 	def validate_stock_accounts(self):
-		if self.voucher_type == "Periodic Accounting Entry":
-			# Skip validation for periodic accounting entry
+		if (
+			not erpnext.is_perpetual_inventory_enabled(self.company)
+			or self.voucher_type == "Periodic Accounting Entry"
+		):
+			# Skip validation for periodic accounting entry and Perpetual Inventory Disabled Company.
 			return
 
 		stock_accounts = get_stock_accounts(self.company, accounts=self.accounts)
@@ -409,11 +417,12 @@ class JournalEntry(AccountsController):
 
 	def update_journal_entry_link_on_depr_schedule(self, asset, je_row):
 		depr_schedule = get_depr_schedule(asset.name, "Active", self.finance_book)
+		precision = je_row.precision("debit")
 		for d in depr_schedule or []:
 			if (
 				d.schedule_date == self.posting_date
 				and not d.journal_entry
-				and d.depreciation_amount == flt(je_row.debit)
+				and flt(d.depreciation_amount, precision) == flt(je_row.debit, precision)
 			):
 				frappe.db.set_value("Depreciation Schedule", d.name, "journal_entry", self.name)
 
@@ -897,6 +906,16 @@ class JournalEntry(AccountsController):
 						)
 					)
 
+				if reference_type == "Purchase Invoice" and invoice.invoice_is_blocked():
+					msg = (
+						_("{0} {1} is blocked and on hold until {2}.").format(
+							invoice.doctype, invoice.name, invoice.release_date
+						)
+						if invoice.release_date
+						else _("{0} {1} is blocked.").format(invoice.doctype, invoice.name)
+					)
+					frappe.throw(msg)
+
 	def set_against_account(self):
 		accounts_debited, accounts_credited = [], []
 		if self.voucher_type in ("Deferred Revenue", "Deferred Expense"):
@@ -1023,8 +1042,8 @@ class JournalEntry(AccountsController):
 		if self.flags.skip_remarks_creation:
 			return
 
-		if self.user_remark:
-			r.append(_("Note: {0}").format(self.user_remark))
+		if self.get("custom_remark"):
+			return
 
 		if self.cheque_no:
 			if self.cheque_date:
@@ -1287,7 +1306,11 @@ class JournalEntry(AccountsController):
 		self.validate_total_debit_and_credit()
 
 	def get_values(self):
-		cond = f" and outstanding_amount <= {self.write_off_amount}" if flt(self.write_off_amount) > 0 else ""
+		cond = (
+			f" and outstanding_amount <= {flt(self.write_off_amount)}"
+			if flt(self.write_off_amount) > 0
+			else ""
+		)
 
 		if self.write_off_based_on == "Accounts Receivable":
 			return frappe.db.sql(
@@ -1538,30 +1561,30 @@ def get_against_jv(doctype, txt, searchfield, start, page_len, filters):
 	if not frappe.db.has_column("Journal Entry", searchfield):
 		return []
 
-	return frappe.db.sql(
-		f"""
-		SELECT jv.name, jv.posting_date, jv.user_remark
-		FROM `tabJournal Entry` jv, `tabJournal Entry Account` jv_detail
-		WHERE jv_detail.parent = jv.name
-			AND jv_detail.account = %(account)s
-			AND IFNULL(jv_detail.party, '') = %(party)s
-			AND (
-				jv_detail.reference_type IS NULL
-				OR jv_detail.reference_type = ''
-			)
-			AND jv.docstatus = 1
-			AND jv.`{searchfield}` LIKE %(txt)s
-		ORDER BY jv.name DESC
-		LIMIT %(limit)s offset %(offset)s
-		""",
-		dict(
-			account=filters.get("account"),
-			party=cstr(filters.get("party")),
-			txt=f"%{txt}%",
-			offset=start,
-			limit=page_len,
-		),
+	JournalEntry = frappe.qb.DocType("Journal Entry")
+	JournalEntryAccount = frappe.qb.DocType("Journal Entry Account")
+
+	query = (
+		frappe.qb.from_(JournalEntry)
+		.join(JournalEntryAccount)
+		.on(JournalEntryAccount.parent == JournalEntry.name)
+		.select(JournalEntry.name, JournalEntry.posting_date, JournalEntry.remark)
+		.where(JournalEntryAccount.account == filters.get("account"))
+		.where(JournalEntryAccount.reference_type.isnull() | (JournalEntryAccount.reference_type == ""))
+		.where(JournalEntry.docstatus == 1)
+		.where(JournalEntry[searchfield].like(f"%{txt}%"))
+		.orderby(JournalEntry.name, order=frappe.qb.desc)
+		.limit(page_len)
+		.offset(start)
 	)
+
+	party = filters.get("party")
+	if party:
+		query = query.where(JournalEntryAccount.party == party)
+	else:
+		query = query.where(JournalEntryAccount.party.isnull() | (JournalEntryAccount.party == ""))
+
+	return query.run()
 
 
 @frappe.whitelist()

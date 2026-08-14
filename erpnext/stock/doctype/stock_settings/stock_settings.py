@@ -26,14 +26,13 @@ class StockSettings(Document):
 		action_if_quality_inspection_is_not_submitted: DF.Literal["Stop", "Warn"]
 		action_if_quality_inspection_is_rejected: DF.Literal["Stop", "Warn"]
 		allow_existing_serial_no: DF.Check
-		allow_from_dn: DF.Check
-		allow_from_pr: DF.Check
 		allow_internal_transfer_at_arms_length_price: DF.Check
 		allow_negative_stock: DF.Check
 		allow_negative_stock_for_batch: DF.Check
 		allow_partial_reservation: DF.Check
 		allow_to_edit_stock_uom_qty_for_purchase: DF.Check
 		allow_to_edit_stock_uom_qty_for_sales: DF.Check
+		allow_to_edit_stock_uom_qty_for_stock_entry: DF.Check
 		allow_to_make_quality_inspection_after_purchase_or_delivery: DF.Check
 		allow_uom_with_conversion_rate_defined_in_item: DF.Check
 		auto_create_serial_and_batch_bundle_for_outward: DF.Check
@@ -106,6 +105,7 @@ class StockSettings(Document):
 			)
 
 		self.validate_warehouses()
+		self.validate_over_delivery_receipt_allowance()
 		self.validate_serial_and_batch_no_settings()
 		self.cant_change_valuation_method()
 		self.validate_clean_description_html()
@@ -114,7 +114,12 @@ class StockSettings(Document):
 		self.validate_auto_insert_price_list_rate_if_missing()
 		self.change_precision_for_for_sales()
 		self.change_precision_for_purchase()
+		self.change_precision_for_stock_entry()
 		self.validate_do_not_use_batchwise_valuation()
+
+	def validate_over_delivery_receipt_allowance(self):
+		if not self.over_delivery_receipt_allowance:
+			self.role_allowed_to_over_deliver_receive = None
 
 	def validate_do_not_use_batchwise_valuation(self):
 		doc_before_save = self.get_doc_before_save()
@@ -261,9 +266,6 @@ class StockSettings(Document):
 				)
 			)
 
-	def on_update(self):
-		self.toggle_warehouse_field_for_inter_warehouse_transfer()
-
 	def change_precision_for_for_sales(self):
 		doc_before_save = self.get_doc_before_save()
 		if doc_before_save and (
@@ -295,6 +297,18 @@ class StockSettings(Document):
 			]
 			self.make_property_setter_for_precision(doctypes)
 
+	def change_precision_for_stock_entry(self):
+		doc_before_save = self.get_doc_before_save()
+		if doc_before_save and (
+			doc_before_save.allow_to_edit_stock_uom_qty_for_stock_entry
+			== self.allow_to_edit_stock_uom_qty_for_stock_entry
+		):
+			return
+
+		if self.allow_to_edit_stock_uom_qty_for_stock_entry:
+			doctypes = ["Stock Entry Detail"]
+			self.make_property_setter_for_precision(doctypes)
+
 	@staticmethod
 	def make_property_setter_for_precision(doctypes):
 		for doctype in doctypes:
@@ -314,40 +328,6 @@ class StockSettings(Document):
 				validate_fields_for_doctype=False,
 			)
 
-	def toggle_warehouse_field_for_inter_warehouse_transfer(self):
-		make_property_setter(
-			"Sales Invoice Item",
-			"target_warehouse",
-			"hidden",
-			1 - cint(self.allow_from_dn),
-			"Check",
-			validate_fields_for_doctype=False,
-		)
-		make_property_setter(
-			"Delivery Note Item",
-			"target_warehouse",
-			"hidden",
-			1 - cint(self.allow_from_dn),
-			"Check",
-			validate_fields_for_doctype=False,
-		)
-		make_property_setter(
-			"Purchase Invoice Item",
-			"from_warehouse",
-			"hidden",
-			1 - cint(self.allow_from_pr),
-			"Check",
-			validate_fields_for_doctype=False,
-		)
-		make_property_setter(
-			"Purchase Receipt Item",
-			"from_warehouse",
-			"hidden",
-			1 - cint(self.allow_from_pr),
-			"Check",
-			validate_fields_for_doctype=False,
-		)
-
 
 def clean_all_descriptions():
 	for item in frappe.get_all("Item", ["name", "description"]):
@@ -359,9 +339,12 @@ def clean_all_descriptions():
 
 @frappe.whitelist()
 def get_enable_stock_uom_editing():
-	return frappe.get_cached_value(
+	return frappe.get_single_value(
 		"Stock Settings",
-		None,
-		["allow_to_edit_stock_uom_qty_for_sales", "allow_to_edit_stock_uom_qty_for_purchase"],
+		[
+			"allow_to_edit_stock_uom_qty_for_sales",
+			"allow_to_edit_stock_uom_qty_for_purchase",
+			"allow_to_edit_stock_uom_qty_for_stock_entry",
+		],
 		as_dict=1,
 	)

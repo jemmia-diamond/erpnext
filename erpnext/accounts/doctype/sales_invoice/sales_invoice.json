@@ -91,9 +91,9 @@
   "column_break_xjag",
   "base_rounding_adjustment",
   "base_rounded_total",
-  "section_break_vacb",
+  "section_break_pxwz",
   "total_advance",
-  "column_break_rdks",
+  "column_break_iaso",
   "outstanding_amount",
   "section_tax_withholding_entry",
   "tax_withholding_group",
@@ -199,6 +199,7 @@
   "unrealized_profit_loss_account",
   "against_income_account",
   "commission_section",
+  "column_break_rdiw",
   "sales_partner",
   "amount_eligible_for_commission",
   "column_break10",
@@ -214,12 +215,14 @@
   "language",
   "subscription_section",
   "subscription",
-  "from_date",
-  "auto_repeat",
   "column_break_140",
+  "from_date",
   "to_date",
+  "automation_section",
+  "auto_repeat",
   "update_auto_repeat_reference",
   "utm_analytics_section",
+  "column_break_rdke",
   "utm_source",
   "utm_medium",
   "column_break_ixxw",
@@ -229,6 +232,7 @@
   "status",
   "remarks",
   "customer_group",
+  "title",
   "column_break_imbx",
   "is_internal_customer",
   "represents_company",
@@ -713,6 +717,7 @@
   {
    "default": "0",
    "depends_on": "eval:doc.items.every((item) => !item.dn_detail)",
+   "description": "If checked, updates inventory; stock and accounting entries are created together. Leave unchecked if a Delivery Note is created separately.",
    "fieldname": "update_stock",
    "fieldtype": "Check",
    "hide_days": 1,
@@ -720,7 +725,8 @@
    "label": "Update Stock",
    "oldfieldname": "update_stock",
    "oldfieldtype": "Check",
-   "print_hide": 1
+   "print_hide": 1,
+   "show_description_on_click": 1
   },
   {
    "fieldname": "scan_barcode",
@@ -1147,6 +1153,7 @@
    "hide_seconds": 1,
    "label": "Rounding Adjustment",
    "no_copy": 1,
+   "options": "Company:company:default_currency",
    "print_hide": 1,
    "read_only": 1
   },
@@ -1159,6 +1166,7 @@
    "label": "Rounded Total",
    "oldfieldname": "rounded_total",
    "oldfieldtype": "Currency",
+   "options": "Company:company:default_currency",
    "print_hide": 1,
    "read_only": 1
   },
@@ -1914,7 +1922,7 @@
   {
    "default": "0",
    "depends_on": "eval: !doc.is_return",
-   "description": "Issue a debit note with 0 qty against an existing Sales Invoice",
+   "description": "Issue a debit note against an existing Sales Invoice to adjust the rate. The quantity will be retained from the original invoice.",
    "fieldname": "is_debit_note",
    "fieldtype": "Check",
    "label": "Is Rate Adjustment Entry (Debit Note)"
@@ -2305,14 +2313,6 @@
    "print_hide": 1
   },
   {
-   "fieldname": "section_break_vacb",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_rdks",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "column_break_ixxw",
    "fieldtype": "Column Break"
   },
@@ -2321,6 +2321,36 @@
    "fieldname": "utm_analytics_section",
    "fieldtype": "Section Break",
    "label": "UTM Analytics"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "automation_section",
+   "fieldtype": "Section Break",
+   "label": "Automation"
+  },
+  {
+   "fieldname": "section_break_pxwz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_rdke",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_rdiw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_iaso",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "no_copy": 1,
+   "print_hide": 1
   }
  ],
  "grid_page_length": 50,
@@ -2334,7 +2364,7 @@
    "link_fieldname": "consolidated_invoice"
   }
  ],
- "modified": "2026-03-09 17:15:30.931929",
+ "modified": "2026-05-28 12:15:12.486443",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Sales Invoice",

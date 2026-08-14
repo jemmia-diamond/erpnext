@@ -15,18 +15,20 @@ from erpnext.selling.doctype.sales_order.test_sales_order import make_sales_orde
 from erpnext.tests.utils import ERPNextTestSuite
 
 
-class TestAdvancePaymentLedgerEntry(AccountsTestMixin, ERPNextTestSuite):
+class TestAdvancePaymentLedgerEntry(ERPNextTestSuite, AccountsTestMixin):
 	"""
 	Integration tests for AdvancePaymentLedgerEntry.
 	Use this class for testing interactions between multiple components.
 	"""
 
 	def setUp(self):
-		self.create_company()
-		self.create_usd_receivable_account()
-		self.create_usd_payable_account()
-		self.create_item()
-		self.clear_old_entries()
+		self.company = "_Test Company"
+		self.customer = "_Test Customer"
+		self.supplier = "_Test Supplier"
+		self.item = "_Test Item"
+		self.cash = "Cash - _TC"
+		self.debtors_usd = "_Test Receivable USD - _TC"
+		self.creditors_usd = "_Test Payable USD - _TC"
 
 	def create_sales_order(self, qty=1, rate=100, currency="INR", do_not_submit=False):
 		"""

@@ -227,6 +227,7 @@ def get_data_when_grouped_by_invoice(columns, gross_profit_data, filters, group_
 				)
 				if total_base_amount
 				else 0,
+				"currency": filters.currency,
 			}
 		)
 	)
@@ -269,6 +270,7 @@ def get_data_when_not_grouped_by_invoice(gross_profit_data, filters, group_wise_
 		"buying_amount": total_buying_amount,
 		"gross_profit": total_gross_profit,
 		"gross_profit_percent": flt(gross_profit_percent, currency_precision),
+		"currency": filters.currency,
 	}
 
 	total_row = [total_row.get(col, None) for col in [*group_columns, "currency"]]
@@ -562,7 +564,12 @@ class GrossProfitGenerator:
 								row.base_amount = packed_item.base_amount
 
 			# get buying amount
-			if row.item_code in product_bundles:
+			if row.is_debit_note:
+				# Rate adjustment debit notes have no stock movement, so buying amount is zero
+				if not grouped_by_invoice:
+					row.qty = 0
+				row.buying_amount = 0
+			elif row.item_code in product_bundles:
 				row.buying_amount = flt(
 					self.get_buying_amount_from_product_bundle(row, product_bundles[row.item_code]),
 					self.currency_precision,
@@ -578,7 +585,11 @@ class GrossProfitGenerator:
 
 			# get buying rate
 			if flt(row.qty):
-				row.buying_rate = flt(row.buying_amount / flt(row.qty), self.float_precision)
+				row.buying_rate = (
+					flt(row.buying_amount / flt(row.qty), self.float_precision)
+					if not row.delivered_by_supplier
+					else None
+				)
 				row.base_rate = flt(row.base_amount / flt(row.qty), self.float_precision)
 			else:
 				if self.is_not_invoice_row(row):
@@ -630,7 +641,8 @@ class GrossProfitGenerator:
 						returned_item_row.qty += row.qty
 						returned_item_row.base_amount += row.base_amount
 
-			row.buying_amount = flt(flt(row.qty) * flt(row.buying_rate), self.currency_precision)
+			if not row.delivered_by_supplier:
+				row.buying_amount = flt(flt(row.qty) * flt(row.buying_rate), self.currency_precision)
 
 	def get_average_rate_based_on_group_by(self):
 		for key in list(self.grouped):
@@ -769,7 +781,28 @@ class GrossProfitGenerator:
 		# IMP NOTE
 		# stock_ledger_entries should already be filtered by item_code and warehouse and
 		# sorted by posting_date desc, posting_time desc
-		if item_code in self.non_stock_items and (row.project or row.cost_center):
+		if (
+			row.delivered_by_supplier
+			and row.so_detail
+			and (
+				po_details := frappe.get_all(
+					"Purchase Order Item",
+					filters={"sales_order_item": row.so_detail, "docstatus": 1},
+					pluck="name",
+				)
+			)
+		):
+			from frappe.query_builder.functions import Sum
+
+			table = frappe.qb.DocType("Purchase Invoice Item")
+			query = (
+				frappe.qb.from_(table)
+				.select(Sum(table.qty * table.base_net_rate))
+				.where((table.po_detail.isin(po_details)) & (table.docstatus == 1))
+			)
+			return flt(query.run()[0][0])
+
+		elif item_code in self.non_stock_items and (row.project or row.cost_center):
 			# Issue 6089-Get last purchasing rate for non-stock item
 			item_rate = self.get_last_purchase_rate(item_code, row)
 			return flt(row.qty) * item_rate
@@ -786,19 +819,11 @@ class GrossProfitGenerator:
 				return self.calculate_buying_amount_from_sle(
 					row, my_sle, parenttype, parent, row.item_row, item_code
 				)
-			elif self.delivery_notes.get((row.parent, row.item_code), None):
-				#  check if Invoice has delivery notes
-				dn = self.delivery_notes.get((row.parent, row.item_code))
-				parenttype, parent, item_row, dn_warehouse = (
-					"Delivery Note",
-					dn["delivery_note"],
-					dn["item_row"],
-					dn["warehouse"],
-				)
-				my_sle = self.get_stock_ledger_entries(item_code, dn_warehouse)
-				return self.calculate_buying_amount_from_sle(
-					row, my_sle, parenttype, parent, item_row, item_code
-				)
+			elif row.item_row and self.delivery_notes.get(row.item_row):
+				dn = self.delivery_notes[row.item_row]
+				if flt(dn.total_qty):
+					return flt(row.qty) * flt(dn.total_incoming_value) / flt(dn.total_qty)
+				return flt(row.qty) * self.get_average_buying_rate(row, item_code)
 			elif row.sales_order and row.so_detail:
 				incoming_amount = self.get_buying_amount_from_so_dn(row.sales_order, row.so_detail, item_code)
 				if incoming_amount:
@@ -933,6 +958,7 @@ class GrossProfitGenerator:
 			SalesInvoice.customer_group,
 			SalesInvoice.customer_name,
 			SalesInvoice.territory,
+			SalesInvoice.is_debit_note,
 			SalesInvoiceItem.item_code,
 			SalesInvoice.base_net_total.as_("invoice_base_net_total"),
 			SalesInvoiceItem.item_name,
@@ -951,6 +977,7 @@ class GrossProfitGenerator:
 			SalesInvoice.is_return,
 			SalesInvoiceItem.cost_center,
 			SalesInvoiceItem.serial_and_batch_bundle,
+			SalesInvoiceItem.delivered_by_supplier,
 		)
 
 		if self.filters.group_by == "Sales Person":
@@ -1049,25 +1076,29 @@ class GrossProfitGenerator:
 	def get_delivery_notes(self):
 		self.delivery_notes = frappe._dict({})
 		if self.si_list:
+			from frappe.query_builder.functions import Sum
+
 			invoices = [x.parent for x in self.si_list]
 			dni = qb.DocType("Delivery Note Item")
 			delivery_notes = (
 				qb.from_(dni)
 				.select(
-					dni.against_sales_invoice.as_("sales_invoice"),
-					dni.item_code,
-					dni.warehouse,
-					dni.parent.as_("delivery_note"),
-					dni.name.as_("item_row"),
+					dni.si_detail,
+					Sum(dni.stock_qty * dni.incoming_rate).as_("total_incoming_value"),
+					Sum(dni.stock_qty).as_("total_qty"),
 				)
-				.where((dni.docstatus == 1) & (dni.against_sales_invoice.isin(invoices)))
-				.groupby(dni.against_sales_invoice, dni.item_code)
-				.orderby(dni.creation, order=Order.desc)
+				.where(
+					(dni.docstatus == 1)
+					& (dni.against_sales_invoice.isin(invoices))
+					& (dni.si_detail.isnotnull())
+					& (dni.si_detail != "")
+				)
+				.groupby(dni.si_detail)
 				.run(as_dict=True)
 			)
 
 			for entry in delivery_notes:
-				self.delivery_notes[(entry.sales_invoice, entry.item_code)] = entry
+				self.delivery_notes[entry.si_detail] = entry
 
 	def group_items_by_invoice(self):
 		"""
@@ -1108,6 +1139,7 @@ class GrossProfitGenerator:
 				"posting_time": row.posting_time,
 				"project": row.project,
 				"update_stock": row.update_stock,
+				"is_debit_note": row.is_debit_note,
 				"customer": row.customer,
 				"customer_group": row.customer_group,
 				"customer_name": row.customer_name,
@@ -1146,6 +1178,7 @@ class GrossProfitGenerator:
 				"description": item.description,
 				"warehouse": item.warehouse or row.warehouse,
 				"update_stock": row.update_stock,
+				"is_debit_note": row.is_debit_note,
 				"item_group": "",
 				"brand": "",
 				"dn_detail": row.dn_detail,
