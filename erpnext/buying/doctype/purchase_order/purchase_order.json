@@ -54,9 +54,7 @@
   "net_total",
   "section_break_48",
   "pricing_rules",
-  "raw_material_details",
   "set_reserve_warehouse",
-  "supplied_items",
   "taxes_section",
   "tax_category",
   "taxes_and_charges",
@@ -147,13 +145,14 @@
   "column_break_86",
   "select_print_heading",
   "language",
-  "subscription_section",
+  "auto_repeat_section",
   "from_date",
   "to_date",
   "column_break_97",
   "auto_repeat",
   "update_auto_repeat_reference",
   "additional_info_section",
+  "title",
   "party_account_currency",
   "represents_company",
   "ref_sq",
@@ -1014,12 +1013,6 @@
    "print_hide": 1
   },
   {
-   "collapsible": 1,
-   "fieldname": "subscription_section",
-   "fieldtype": "Section Break",
-   "label": "Auto Repeat"
-  },
-  {
    "allow_on_submit": 1,
    "fieldname": "from_date",
    "fieldtype": "Date",
@@ -1309,6 +1302,20 @@
    "fieldtype": "Time",
    "label": "Time",
    "mandatory_depends_on": "is_internal_supplier"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "auto_repeat_section",
+   "fieldtype": "Section Break",
+   "label": "Auto Repeat"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "no_copy": 1,
+   "print_hide": 1
   }
  ],
  "grid_page_length": 50,
@@ -1316,7 +1323,7 @@
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-03-25 11:46:18.748951",
+ "modified": "2026-05-28 12:34:19.659621",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Purchase Order",

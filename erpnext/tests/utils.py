@@ -16,49 +16,6 @@ ReportFilters = dict[str, Any]
 ReportName = NewType("ReportName", str)
 
 
-def create_test_contact_and_address():
-	frappe.db.sql("delete from tabContact")
-	frappe.db.sql("delete from `tabContact Email`")
-	frappe.db.sql("delete from `tabContact Phone`")
-	frappe.db.sql("delete from tabAddress")
-	frappe.db.sql("delete from `tabDynamic Link`")
-
-	frappe.get_doc(
-		{
-			"doctype": "Address",
-			"address_title": "_Test Address for Customer",
-			"address_type": "Office",
-			"address_line1": "Station Road",
-			"city": "_Test City",
-			"state": "Test State",
-			"country": "India",
-			"links": [{"link_doctype": "Customer", "link_name": "_Test Customer"}],
-		}
-	).insert()
-
-	contact = frappe.get_doc(
-		{
-			"doctype": "Contact",
-			"first_name": "_Test Contact for _Test Customer",
-			"links": [{"link_doctype": "Customer", "link_name": "_Test Customer"}],
-		}
-	)
-	contact.add_email("test_contact_customer@example.com", is_primary=True)
-	contact.add_phone("+91 0000000000", is_primary_phone=True)
-	contact.insert()
-
-	contact_two = frappe.get_doc(
-		{
-			"doctype": "Contact",
-			"first_name": "_Test Contact 2 for _Test Customer",
-			"links": [{"link_doctype": "Customer", "link_name": "_Test Customer"}],
-		}
-	)
-	contact_two.add_email("test_contact_two_customer@example.com", is_primary=True)
-	contact_two.add_phone("+92 0000000000", is_primary_phone=True)
-	contact_two.insert()
-
-
 def execute_script_report(
 	report_name: ReportName,
 	module: str,
@@ -194,6 +151,7 @@ class BootStrapTestData:
 		frappe.db.commit()  # nosemgrep
 
 	def make_master_data(self):
+		self.update_system_settings()
 		self.make_fiscal_year()
 		self.make_holiday_list()
 		self.make_company()
@@ -239,12 +197,13 @@ class BootStrapTestData:
 		self.make_finance_book()
 		self.make_leads()
 		self.make_sales_person()
+		self.make_sales_partner()
 		self.make_activity_type()
 		self.make_address()
+		self.make_contact()
 		self.update_support_settings()
 		self.update_selling_settings()
 		self.update_stock_settings()
-		self.update_system_settings()
 
 		frappe.db.commit()  # nosemgrep
 
@@ -503,6 +462,7 @@ class BootStrapTestData:
 				"new_password": "Eastern_43A1W",
 				"roles": [
 					{"doctype": "Has Role", "parentfield": "roles", "role": "_Test Role"},
+					{"doctype": "Has Role", "parentfield": "roles", "role": "Accounts User"},
 					{"doctype": "Has Role", "parentfield": "roles", "role": "System Manager"},
 				],
 			},
@@ -656,6 +616,29 @@ class BootStrapTestData:
 			},
 		]
 		self.make_records(["sales_person_name"], records)
+
+	def make_sales_partner(self):
+		records = [
+			{
+				"doctype": "Sales Partner",
+				"partner_name": "_Test Sales Partner India - 1",
+				"commission_rate": 7,
+				"territory": "_Test Territory India",
+			},
+			{
+				"doctype": "Sales Partner",
+				"partner_name": "_Test Sales Partner India - 2",
+				"commission_rate": 5,
+				"territory": "_Test Territory India",
+			},
+			{
+				"doctype": "Sales Partner",
+				"partner_name": "_Test Sales Partner Global - 1",
+				"commission_rate": 8,
+				"territory": "_Test Territory Rest Of The World",
+			},
+		]
+		self.make_records(["partner_name"], records)
 
 	def make_leads(self):
 		records = [
@@ -920,6 +903,13 @@ class BootStrapTestData:
 			},
 			{
 				"doctype": "Supplier",
+				"supplier_name": "_Test Another Supplier USD",
+				"supplier_group": "_Test Supplier Group",
+				"default_currency": "USD",
+				"accounts": [{"company": "_Test Company", "account": "_Test Payable USD - _TC"}],
+			},
+			{
+				"doctype": "Supplier",
 				"supplier_name": "_Test Supplier With Tax Category",
 				"supplier_group": "_Test Supplier Group",
 				"tax_category": "_Test Tax Category 1",
@@ -965,6 +955,13 @@ class BootStrapTestData:
 			{
 				"company": "_Test Company",
 				"cost_center_name": "_Test Write Off Cost Center",
+				"doctype": "Cost Center",
+				"is_group": 0,
+				"parent_cost_center": "_Test Company - _TC",
+			},
+			{
+				"company": "_Test Company",
+				"cost_center_name": "Sub",
 				"doctype": "Cost Center",
 				"is_group": 0,
 				"parent_cost_center": "_Test Company - _TC",
@@ -1980,6 +1977,14 @@ class BootStrapTestData:
 			["_Test Payable", "Current Liabilities", 0, "Payable", None],
 			["_Test Receivable USD", "Current Assets", 0, "Receivable", "USD"],
 			["_Test Payable USD", "Current Liabilities", 0, "Payable", "USD"],
+			# Deferred Account
+			["Deferred Revenue", "Current Liabilities", 0, None, None],
+			["Deferred Expense", "Current Assets", 0, None, None],
+			# Bank
+			["HDFC", "Bank Accounts", 0, "Bank", None],
+			# Advance Account
+			["Advance Received", "Current Liabilities", 0, "Receivable", None],
+			["Advance Paid", "Current Assets", 0, "Payable", None],
 			# Loyalty Account
 			["Loyalty", "Direct Expenses", 0, "Expense Account", None],
 		]
@@ -2851,8 +2856,37 @@ class BootStrapTestData:
 					{"link_doctype": "Customer", "link_name": "_Test Customer 1", "doctype": "Dynamic Link"}
 				],
 			},
+			{
+				"doctype": "Address",
+				"address_title": "_Test Address for Customer",
+				"address_type": "Office",
+				"address_line1": "Station Road",
+				"city": "_Test City",
+				"state": "Test State",
+				"country": "India",
+				"links": [{"link_doctype": "Customer", "link_name": "_Test Customer"}],
+			},
 		]
 		self.make_records(["address_title", "address_type"], records)
+
+	def make_contact(self):
+		records = [
+			{
+				"doctype": "Contact",
+				"first_name": "_Test Contact for _Test Customer",
+				"email_ids": [{"email_id": "test_contact_customer@example.com", "is_primary": True}],
+				"phone_nos": [{"phone": "+91 0000000000", "is_primary_phone": True}],
+				"links": [{"link_doctype": "Customer", "link_name": "_Test Customer"}],
+			},
+			{
+				"doctype": "Contact",
+				"first_name": "_Test Contact 2 for _Test Customer",
+				"email_ids": [{"email_id": "test_contact_two_customer@example.com", "is_primary": True}],
+				"phone_nos": [{"phone": "+92 0000000000", "is_primary_phone": True}],
+				"links": [{"link_doctype": "Customer", "link_name": "_Test Customer"}],
+			},
+		]
+		self.make_records(["first_name"], records)
 
 	def make_dimensions(self):
 		records = [
@@ -2970,6 +3004,9 @@ class ERPNextTestSuite(unittest.TestCase):
 
 	def tearDown(self):
 		frappe.db.rollback()
+		frappe.local.request_cache.clear()
+		if hasattr(frappe.local, "future_sle"):
+			frappe.local.future_sle.clear()
 
 	def load_test_records(self, doctype):
 		if doctype not in self.globalTestRecords:

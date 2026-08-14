@@ -119,12 +119,12 @@ class TestSupplier(ERPNextTestSuite):
 		self.assertEqual(supplier.country, "Greece")
 
 	def test_party_details_tax_category(self):
-		from erpnext.accounts.party import get_party_details
+		from erpnext.accounts.party import _get_party_details
 
 		frappe.delete_doc_if_exists("Address", "_Test Address With Tax Category-Billing")
 
 		# Tax Category without Address
-		details = get_party_details("_Test Supplier With Tax Category", party_type="Supplier")
+		details = _get_party_details("_Test Supplier With Tax Category", party_type="Supplier")
 		self.assertEqual(details.tax_category, "_Test Tax Category 1")
 
 		address = frappe.get_doc(
@@ -139,7 +139,7 @@ class TestSupplier(ERPNextTestSuite):
 		).insert()
 
 		# Tax Category with Address
-		details = get_party_details("_Test Supplier With Tax Category", party_type="Supplier")
+		details = _get_party_details("_Test Supplier With Tax Category", party_type="Supplier")
 		self.assertEqual(details.tax_category, "_Test Tax Category 2")
 
 		# Rollback
@@ -166,6 +166,15 @@ def create_supplier(**args):
 	)
 	if not args.without_supplier_group:
 		doc.supplier_group = args.supplier_group or "Services"
+
+	if args.get("party_account"):
+		doc.append(
+			"accounts",
+			{
+				"company": frappe.db.get_value("Account", args.get("party_account"), "company"),
+				"account": args.get("party_account"),
+			},
+		)
 
 	doc.insert()
 
@@ -194,3 +203,24 @@ class TestSupplierPortal(ERPNextTestSuite):
 			_, suppliers = get_customers_suppliers("Purchase Order", user)
 
 			self.assertIn(supplier.name, suppliers)
+
+	def test_portal_user_contact_link(self):
+		user_email = frappe.generate_hash() + "@example.com"
+		user = frappe.new_doc("User")
+		user.email = user_email
+		user.first_name = "Test Portal Contact User"
+		user.send_welcome_email = False
+		user.insert(ignore_permissions=True)
+
+		contact = frappe.new_doc("Contact")
+		contact.first_name = "Test Portal Contact User"
+		contact.add_email(user_email, is_primary=1)
+		contact.links = []
+		contact.insert(ignore_permissions=True)
+
+		supplier = create_supplier()
+		supplier.append("portal_users", {"user": user.name})
+		supplier.save()
+
+		contact.reload()
+		self.assertTrue(contact.has_link("Supplier", supplier.name))

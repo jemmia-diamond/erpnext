@@ -9,13 +9,14 @@ from frappe import _
 from frappe.contacts.doctype.address.address import get_company_address
 from frappe.contacts.doctype.contact.contact import get_default_contact
 from frappe.desk.notifications import clear_doctype_notifications
+from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.model.utils import get_fetch_values
 from frappe.query_builder import DocType
 from frappe.query_builder.functions import Abs, Sum
 from frappe.utils import cint, flt
 
-from erpnext.accounts.party import get_due_date
+from erpnext.accounts.party import CROSS_PARTY_FIELD_NO_MAP, get_due_date
 from erpnext.controllers.accounts_controller import get_taxes_and_charges, merge_taxes
 from erpnext.controllers.selling_controller import SellingController
 
@@ -145,6 +146,7 @@ class DeliveryNote(SellingController):
 		tc_name: DF.Link | None
 		terms: DF.TextEditor | None
 		territory: DF.Link | None
+		title: DF.Data | None
 		total: DF.Currency
 		total_commission: DF.Currency
 		total_net_weight: DF.Float
@@ -355,37 +357,6 @@ class DeliveryNote(SellingController):
 				]
 			)
 
-	def set_serial_and_batch_bundle_from_pick_list(self):
-		from erpnext.stock.serial_batch_bundle import SerialBatchCreation
-
-		for item in self.items:
-			if item.use_serial_batch_fields or not item.against_pick_list:
-				continue
-
-			if item.pick_list_item and not item.serial_and_batch_bundle:
-				filters = {
-					"item_code": item.item_code,
-					"voucher_type": "Pick List",
-					"voucher_no": item.against_pick_list,
-					"voucher_detail_no": item.pick_list_item,
-				}
-
-				bundle_id = frappe.db.get_value("Serial and Batch Bundle", filters, "name")
-
-				if bundle_id:
-					cls_obj = SerialBatchCreation(
-						{
-							"type_of_transaction": "Outward",
-							"serial_and_batch_bundle": bundle_id,
-							"item_code": item.get("item_code"),
-							"warehouse": item.get("warehouse"),
-						}
-					)
-
-					cls_obj.duplicate_package()
-
-					item.serial_and_batch_bundle = cls_obj.serial_and_batch_bundle
-
 	def validate_references(self):
 		self.validate_sales_order_references()
 		self.validate_sales_invoice_references()
@@ -444,22 +415,34 @@ class DeliveryNote(SellingController):
 				frappe.throw(_("Warehouse required for stock Item {0}").format(d["item_code"]))
 
 	def update_current_stock(self):
-		if self.get("_action") and self._action != "update_after_submit":
-			for d in self.get("items"):
-				d.actual_qty = frappe.db.get_value(
-					"Bin", {"item_code": d.item_code, "warehouse": d.warehouse}, "actual_qty"
-				)
+		if not (self.get("_action") and self._action != "update_after_submit"):
+			return
 
-			for d in self.get("packed_items"):
-				bin_qty = frappe.db.get_value(
-					"Bin",
-					{"item_code": d.item_code, "warehouse": d.warehouse},
-					["actual_qty", "projected_qty"],
-					as_dict=True,
-				)
-				if bin_qty:
-					d.actual_qty = flt(bin_qty.actual_qty)
-					d.projected_qty = flt(bin_qty.projected_qty)
+		warehouse_item_codes = {}
+		for d in self.get("items") + self.get("packed_items"):
+			warehouse_item_codes.setdefault(d.warehouse, set()).add(d.item_code)
+
+		if not warehouse_item_codes:
+			return
+
+		bin_map = {}
+		for warehouse, item_codes in warehouse_item_codes.items():
+			for b in frappe.get_all(
+				"Bin",
+				filters={"item_code": ["in", item_codes], "warehouse": warehouse},
+				fields=["item_code", "actual_qty", "projected_qty"],
+			):
+				bin_map[(b.item_code, warehouse)] = b
+
+		for d in self.get("items"):
+			bin_data = bin_map.get((d.item_code, d.warehouse))
+			d.actual_qty = bin_data.actual_qty if bin_data else None
+
+		for d in self.get("packed_items"):
+			bin_data = bin_map.get((d.item_code, d.warehouse))
+			if bin_data:
+				d.actual_qty = flt(bin_data.actual_qty)
+				d.projected_qty = flt(bin_data.projected_qty)
 
 	def on_submit(self):
 		self.validate_packed_qty()
@@ -615,13 +598,6 @@ class DeliveryNote(SellingController):
 							item.idx, frappe.bold(item.doctype)
 						)
 					)
-
-	def update_pick_list_status(self):
-		from erpnext.stock.doctype.pick_list.pick_list import update_pick_list_status
-
-		pick_lists = {row.against_pick_list for row in self.items if row.against_pick_list}
-		for pick_list in pick_lists:
-			update_pick_list_status(pick_list)
 
 	def check_next_docstatus(self):
 		submit_rv = frappe.db.sql(
@@ -850,7 +826,9 @@ def get_returned_qty_map(delivery_note):
 
 
 @frappe.whitelist()
-def make_sales_invoice(source_name, target_doc=None, args=None):
+def make_sales_invoice(
+	source_name: str, target_doc: Document | str | None = None, args: dict | str | None = None
+):
 	if args is None:
 		args = {}
 	if isinstance(args, str):
@@ -956,7 +934,12 @@ def make_sales_invoice(source_name, target_doc=None, args=None):
 		frappe.get_single_value("Accounts Settings", "automatically_fetch_payment_terms")
 	)
 
-	if not doc.is_return:
+	if doc.is_return:
+		# A credit note made from a return Delivery Note should roll back the billed
+		# amount on the linked Sales Order too, so that per_billed stays consistent with
+		# per_delivered (which the return already reset).
+		doc.update_billed_amount_in_sales_order = True
+	else:
 		so, doctype, fieldname = doc.get_order_details()
 		if (
 			doc.linked_order_has_payment_terms(so, fieldname, doctype)
@@ -1343,8 +1326,7 @@ def make_inter_company_transaction(doctype, source_name, target_doc=None):
 			doctype: {
 				"doctype": target_doctype,
 				"postprocess": update_details,
-				"field_no_map": ["taxes_and_charges", "set_warehouse"],
-				"field_map": {"shipping_address_name": "shipping_address"},
+				"field_no_map": [*CROSS_PARTY_FIELD_NO_MAP, "set_warehouse"],
 			},
 			doctype + " Item": {
 				"doctype": target_doctype + " Item",

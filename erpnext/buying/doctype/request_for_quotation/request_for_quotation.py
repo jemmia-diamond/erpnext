@@ -6,6 +6,7 @@ import json
 
 import frappe
 from frappe import _
+from frappe.contacts.doctype.contact.contact import get_full_name
 from frappe.core.doctype.communication.email import make
 from frappe.desk.form.load import get_attachments
 from frappe.model.mapper import get_mapped_doc
@@ -14,7 +15,7 @@ from frappe.utils import get_url
 from frappe.utils.print_format import download_pdf
 from frappe.utils.user import get_user_fullname
 
-from erpnext.accounts.party import get_party_account_currency, get_party_details
+from erpnext.accounts.party import _get_party_details, get_party_account_currency
 from erpnext.buying.utils import validate_for_items
 from erpnext.controllers.buying_controller import BuyingController
 from erpnext.stock.doctype.material_request.material_request import set_missing_values
@@ -63,6 +64,7 @@ class RequestforQuotation(BuyingController):
 		suppliers: DF.Table[RequestforQuotationSupplier]
 		tc_name: DF.Link | None
 		terms: DF.TextEditor | None
+		title: DF.Data | None
 		transaction_date: DF.Date
 		use_html: DF.Check
 		vendor: DF.Link | None
@@ -274,18 +276,26 @@ class RequestforQuotation(BuyingController):
 			supplier_doc.save()
 
 	def create_user(self, rfq_supplier, link):
+		contact_name = None
+		if rfq_supplier.contact:
+			name_fields = frappe.get_value(
+				"Contact", rfq_supplier.contact, ["first_name", "middle_name", "last_name"]
+			)
+			if name_fields:
+				contact_name = get_full_name(*name_fields)
+
 		user = frappe.get_doc(
 			{
 				"doctype": "User",
 				"send_welcome_email": 0,
 				"email": rfq_supplier.email_id,
-				"first_name": rfq_supplier.supplier_name or rfq_supplier.supplier,
+				"first_name": contact_name or rfq_supplier.supplier_name or rfq_supplier.supplier,
 				"user_type": "Website User",
 				"redirect_url": link,
 			}
 		)
 		user.save(ignore_permissions=True)
-		update_password_link = user.reset_password()
+		update_password_link = user._reset_password()
 
 		return user, update_password_link
 
@@ -318,14 +328,14 @@ class RequestforQuotation(BuyingController):
 
 		message_template = self.mfs_html if self.use_html else self.message_for_supplier
 		# nosemgrep: frappe-semgrep-rules.rules.security.frappe-ssti
-		rendered_message = frappe.render_template(message_template, doc_args)
+		rendered_message = frappe.render_template(message_template, doc_args, restrict_globals=True)
 
 		subject_source = (
 			self.subject
 			or frappe.get_value("Email Template", self.email_template, "subject")
 			or _("Request for Quotation")
 		)
-		rendered_subject = frappe.render_template(subject_source, doc_args)
+		rendered_subject = frappe.render_template(subject_source, doc_args, restrict_globals=True)
 		if preview:
 			return {
 				"message": rendered_message,
@@ -437,7 +447,7 @@ def make_supplier_quotation_from_rfq(source_name, target_doc=None, for_supplier=
 	def postprocess(source, target_doc):
 		if for_supplier:
 			target_doc.supplier = for_supplier
-			args = get_party_details(for_supplier, party_type="Supplier", ignore_permissions=True)
+			args = _get_party_details(for_supplier, party_type="Supplier", ignore_permissions=True)
 			target_doc.currency = args.currency or get_party_account_currency(
 				"Supplier", for_supplier, source.company
 			)
@@ -476,6 +486,11 @@ def make_supplier_quotation_from_rfq(source_name, target_doc=None, for_supplier=
 def create_supplier_quotation(doc):
 	if isinstance(doc, str):
 		doc = json.loads(doc)
+
+	if frappe.session.user not in frappe.get_all(
+		"Portal User", {"parent": doc.get("supplier")}, pluck="user"
+	):
+		frappe.throw(_("Not Permitted"), frappe.PermissionError)
 
 	try:
 		sq_doc = frappe.get_doc(

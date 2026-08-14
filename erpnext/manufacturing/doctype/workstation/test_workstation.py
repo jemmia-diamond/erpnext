@@ -9,11 +9,23 @@ from erpnext.manufacturing.doctype.workstation.workstation import (
 	NotInWorkingHoursError,
 	WorkstationHolidayError,
 	check_if_within_operating_hours,
+	update_job_card,
 )
 from erpnext.tests.utils import ERPNextTestSuite
 
 
 class TestWorkstation(ERPNextTestSuite):
+	def test_update_job_card_rejects_disallowed_method(self):
+		# The whitelisted update_job_card endpoint must only run an allowlisted set of Job Card
+		# methods. An arbitrary method name must be rejected (PermissionError) before the document
+		# is even loaded, so this needs no Job Card to exist.
+		self.assertRaises(
+			frappe.PermissionError,
+			update_job_card,
+			"NON-EXISTENT-JOB-CARD",
+			"delete",
+		)
+
 	def test_validate_timings(self):
 		check_if_within_operating_hours(
 			"_Test Workstation 1", "Operation 1", "2013-02-02 11:00:00", "2013-02-02 19:00:00"
@@ -68,7 +80,7 @@ class TestWorkstation(ERPNextTestSuite):
 
 		test_routing_operations = [
 			{"operation": "Test Operation A", "workstation": "_Test Workstation A", "time_in_mins": 60},
-			{"operation": "Test Operation B", "workstation": "_Test Workstation A", "time_in_mins": 60},
+			{"operation": "Test Operation B", "workstation": "_Test Workstation A", "time_in_mins": 30},
 		]
 		routing_doc = create_routing(routing_name="Routing Test", operations=test_routing_operations)
 		bom_doc = setup_bom(item_code="_Testing Item", routing=routing_doc.name, currency="INR")
@@ -97,6 +109,17 @@ class TestWorkstation(ERPNextTestSuite):
 		self.assertEqual(w1.hour_rate, 250)
 		self.assertEqual(bom_doc.operations[0].hour_rate, 250)
 		self.assertEqual(bom_doc.operations[1].hour_rate, 250)
+
+		# hour_rate propagation must also refresh operating_cost (hour_rate * time_in_mins / 60)
+		# on the Routing's BOM Operation rows; the 30-min op exercises the arithmetic.
+		for operation, expected_operating_cost in (("Test Operation A", 250), ("Test Operation B", 125)):
+			hour_rate, operating_cost = frappe.db.get_value(
+				"BOM Operation",
+				{"parent": routing_doc.name, "parenttype": "Routing", "operation": operation},
+				["hour_rate", "operating_cost"],
+			)
+			self.assertEqual(hour_rate, 250)
+			self.assertEqual(operating_cost, expected_operating_cost)
 
 
 def make_workstation(*args, **kwargs):

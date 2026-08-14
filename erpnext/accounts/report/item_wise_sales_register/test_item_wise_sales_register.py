@@ -7,11 +7,13 @@ from erpnext.accounts.test.accounts_mixin import AccountsTestMixin
 from erpnext.tests.utils import ERPNextTestSuite
 
 
-class TestItemWiseSalesRegister(AccountsTestMixin, ERPNextTestSuite):
+class TestItemWiseSalesRegister(ERPNextTestSuite, AccountsTestMixin):
 	def setUp(self):
-		self.create_company()
-		self.create_customer()
-		self.create_item()
+		self.company = "_Test Company"
+		self.customer = "_Test Customer"
+		self.item = "_Test Item"
+		self.debit_to = "Debtors - _TC"
+		self.cost_center = "Main - _TC"
 
 	def create_sales_invoice(self, item=None, taxes=None, do_not_submit=False):
 		si = create_sales_invoice(

@@ -48,7 +48,7 @@ frappe.ui.form.on("Customer", {
 		};
 
 		frm.add_fetch("default_sales_partner", "commission_rate", "default_commission_rate");
-		frm.set_query("default_price_list", { selling: 1 });
+		frm.set_query("default_price_list", () => ({ filters: { selling: 1 } }));
 		frm.set_query("account", "accounts", function (doc, cdt, cdn) {
 			let d = locals[cdt][cdn];
 			let filters = {
@@ -265,13 +265,15 @@ frappe.ui.form.on("Customer", {
 				frm.add_custom_button(__(doctype), frm.make_methods[doctype], __("Create"));
 			}
 
-			frm.add_custom_button(
-				__("Get Customer Group Details"),
-				function () {
-					frm.trigger("get_customer_group_details");
-				},
-				__("Actions")
-			);
+			if (frm.doc.customer_group) {
+				frm.add_custom_button(
+					__("Get Customer Group Details"),
+					function () {
+						frm.trigger("get_customer_group_details");
+					},
+					__("Actions")
+				);
+			}
 
 			frm.add_custom_button(
 				__("Evaluate Customer Rank"),

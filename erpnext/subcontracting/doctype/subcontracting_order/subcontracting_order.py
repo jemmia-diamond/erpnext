@@ -3,6 +3,7 @@
 
 import frappe
 from frappe import _
+from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import flt
 
@@ -439,6 +440,13 @@ def get_mapped_subcontracting_receipt(source_name, target_doc=None, items=None):
 		target.purchase_order = source_parent.purchase_order
 		target.purchase_order_item = source.purchase_order_item
 		target.qty = items.get(source.name) or (flt(source.qty) - flt(source.received_qty))
+		target.received_qty = target.qty
+		if process_loss_per := frappe.get_value("BOM", source.bom, "process_loss_percentage"):
+			target.process_loss_qty = flt(
+				target.qty * (process_loss_per / 100), target.precision("process_loss_qty")
+			)
+			target.qty -= target.process_loss_qty
+
 		target.amount = (flt(source.qty) - flt(source.received_qty)) * flt(source.rate)
 
 	items = {item["name"]: item["qty"] for item in items} if items else {}
@@ -475,9 +483,18 @@ def get_mapped_subcontracting_receipt(source_name, target_doc=None, items=None):
 	return target_doc
 
 
-@frappe.whitelist()
-def update_subcontracting_order_status(sco, status=None):
+def set_subcontracting_order_status(sco: str | Document, status: str | None = None):
 	if isinstance(sco, str):
 		sco = frappe.get_doc("Subcontracting Order", sco)
 
 	sco.update_status(status)
+
+
+@frappe.whitelist()
+def update_subcontracting_order_status(sco: str | Document, status: str | None = None):
+	"""Whitelisted boundary for direct API/UI calls — enforces write permission, then delegates."""
+	if isinstance(sco, str):
+		sco = frappe.get_doc("Subcontracting Order", sco)
+
+	sco.check_permission("write")
+	set_subcontracting_order_status(sco, status)

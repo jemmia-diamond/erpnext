@@ -7,13 +7,12 @@ from erpnext.accounts.test.accounts_mixin import AccountsTestMixin
 from erpnext.tests.utils import ERPNextTestSuite
 
 
-class TestAccountsPayable(AccountsTestMixin, ERPNextTestSuite):
+class TestAccountsPayable(ERPNextTestSuite, AccountsTestMixin):
 	def setUp(self):
-		self.create_company()
-		self.create_customer()
-		self.create_item()
-		self.create_supplier(currency="USD", supplier_name="Test Supplier2")
-		self.create_usd_payable_account()
+		self.company = "_Test Company"
+		self.item = "_Test Item"
+		self.supplier = "_Test Supplier 2"
+		self.creditors_usd = "_Test Payable USD - _TC"
 
 	def test_accounts_payable_for_foreign_currency_supplier(self):
 		pi = self.create_purchase_invoice(do_not_submit=True)
@@ -117,3 +116,79 @@ class TestAccountsPayable(AccountsTestMixin, ERPNextTestSuite):
 
 		self.assertEqual(len(report[1]), 2)
 		self.assertEqual([pi.name, payment_term1.payment_term_name], [row.voucher_no, row.payment_term])
+
+	def test_supplier_group_filter(self):
+		pi = self.create_purchase_invoice()
+		supplier_group = frappe.db.get_value("Supplier", self.supplier, "supplier_group")
+		other_group = frappe.get_doc(
+			doctype="Supplier Group",
+			supplier_group_name="_Test Supplier Group AP",
+			parent_supplier_group="All Supplier Groups",
+		).insert()
+
+		filters = {
+			"company": self.company,
+			"party_type": "Supplier",
+			"report_date": today(),
+			"range": "30, 60, 90, 120",
+			"supplier_group": supplier_group,
+		}
+		self.assertIn(pi.name, [row.voucher_no for row in execute(filters)[1]])
+
+		filters.update({"supplier_group": [other_group.name]})
+		self.assertEqual(len(execute(filters)[1]), 0)
+
+		filters.update({"supplier_group": [supplier_group, other_group.name]})
+		self.assertIn(pi.name, [row.voucher_no for row in execute(filters)[1]])
+
+		filters.update({"supplier_group": ["All Supplier Groups"]})
+		self.assertIn(pi.name, [row.voucher_no for row in execute(filters)[1]])
+
+		filters.update({"supplier_group": ["_Test Supplier Group Mars"]})
+		self.assertRaises(frappe.ValidationError, execute, filters)
+
+	def test_project_filter(self):
+		project = frappe.get_doc(
+			{"doctype": "Project", "project_name": "_Test AP Project", "company": self.company}
+		).insert()
+
+		pi = self.create_purchase_invoice(do_not_submit=True)
+		pi.project = project.name
+		pi.save().submit()
+
+		filters = {
+			"company": self.company,
+			"report_date": today(),
+			"range": "30, 60, 90, 120",
+			"project": [project.name],
+		}
+
+		report = execute(filters)[1]
+		self.assertEqual(len(report), 1)
+		row = report[0]
+		self.assertEqual(row.project, project.name)
+		self.assertEqual(row.invoiced, 300.0)
+
+	def test_project_on_report_output(self):
+		"""
+		Report row must carry the invoice's project.
+		"""
+		filters = {
+			"company": self.company,
+			"report_date": today(),
+			"range": "30, 60, 90, 120",
+		}
+
+		project = frappe.get_doc(
+			{"doctype": "Project", "project_name": "_Test AP Project Output", "company": self.company}
+		).insert()
+
+		pi = self.create_purchase_invoice(do_not_submit=True)
+		pi.project = project.name
+		pi.save().submit()
+
+		report = execute(filters)
+
+		self.assertEqual(len(report[1]), 1)
+		row = report[1][0]
+		self.assertEqual([pi.name, project.name, 300], [row.voucher_no, row.project, row.outstanding])

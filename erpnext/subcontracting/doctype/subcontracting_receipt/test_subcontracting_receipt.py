@@ -597,6 +597,7 @@ class TestSubcontractingReceipt(ERPNextTestSuite):
 
 		scr.items[0].qty = 6  # Accepted Qty
 		scr.items[0].rejected_qty = 4
+		scr.set_missing_values()
 		scr.save()
 
 		# consumed_qty should be (accepted_qty * qty_consumed_per_unit) = (6 * 1) = 6
@@ -1154,7 +1155,7 @@ class TestSubcontractingReceipt(ERPNextTestSuite):
 		# ValidationError should not be raised as `Inspection Required before Purchase` is disabled
 		scr2.submit()
 
-	def test_scrap_items_for_subcontracting_receipt(self):
+	def test_secondary_items_for_subcontracting_receipt(self):
 		set_backflush_based_on("BOM")
 
 		fg_item = "Subcontracted Item SA1"
@@ -1166,9 +1167,9 @@ class TestSubcontractingReceipt(ERPNextTestSuite):
 		]
 
 		# Create Scrap Items
-		scrap_item_1 = make_item(properties={"is_stock_item": 1, "valuation_rate": 10}).name
-		scrap_item_2 = make_item(properties={"is_stock_item": 1, "valuation_rate": 20}).name
-		scrap_items = [scrap_item_1, scrap_item_2]
+		secondary_item_1 = make_item(properties={"is_stock_item": 1, "valuation_rate": 10}).name
+		secondary_item_2 = make_item(properties={"is_stock_item": 1, "valuation_rate": 20}).name
+		secondary_items = [secondary_item_1, secondary_item_2]
 
 		service_items = [
 			{
@@ -1187,13 +1188,14 @@ class TestSubcontractingReceipt(ERPNextTestSuite):
 		)
 		for idx, item in enumerate(bom.items):
 			item.qty = 1 * (idx + 1)
-		for idx, item in enumerate(scrap_items):
+		for idx, item in enumerate(secondary_items):
 			bom.append(
-				"scrap_items",
+				"secondary_items",
 				{
 					"item_code": item,
 					"stock_qty": 1 * (idx + 1),
 					"rate": 10 * (idx + 1),
+					"is_legacy": 1,
 				},
 			)
 		bom.save()
@@ -1216,12 +1218,13 @@ class TestSubcontractingReceipt(ERPNextTestSuite):
 		# Create Subcontracting Receipt
 		scr = make_subcontracting_receipt(sco.name)
 		scr.save()
-		scr.get_scrap_items()
+		scr.get_secondary_items()
 
-		# Test - 1: Scrap Items should be fetched from BOM in items table with `is_scrap_item` = 1
-		scr_scrap_items = set([item.item_code for item in scr.items if item.is_scrap_item])
+		scr_secondary_items = set(
+			[item.item_code for item in scr.items if item.type or item.is_legacy_scrap_item]
+		)
 		self.assertEqual(len(scr.items), 3)  # 1 FG Item + 2 Scrap Items
-		self.assertEqual(scr_scrap_items, set(scrap_items))
+		self.assertEqual(scr_secondary_items, set(secondary_items))
 
 		scr.submit()
 
@@ -2032,6 +2035,41 @@ class TestSubcontractingReceipt(ERPNextTestSuite):
 		self.assertEqual(scr.items[0].qty, 2)
 		scr.submit()
 		frappe.flags["args"].pop("items", None)
+
+	def test_inventory_dimensions(self):
+		"""
+		The subcontracting controller resets the supplied items table on each save causing the inventory dimensions to be lost.
+		This test ensures that the inventory dimensions are retained on each save.
+		"""
+		from erpnext.stock.doctype.inventory_dimension.test_inventory_dimension import (
+			create_inventory_dimension,
+		)
+
+		create_inventory_dimension(
+			apply_to_all_doctypes=1,
+			dimension_name="Inv Site",
+			reference_document="Inv Site",
+			document_type="Inv Site",
+		)
+
+		set_backflush_based_on("BOM")
+
+		sco = get_subcontracting_order()
+		rm_items = get_rm_items(sco.supplied_items)
+		itemwise_details = make_stock_in_entry(rm_items=rm_items)
+		make_stock_transfer_entry(
+			sco_no=sco.name,
+			rm_items=rm_items,
+			itemwise_details=copy.deepcopy(itemwise_details),
+		)
+		scr = make_subcontracting_receipt(sco.name)
+		scr.items[0].inv_site = "Site 1"
+		scr.save()
+
+		scr.supplied_items[0].inv_site = "Site 1"
+		scr.save()
+
+		self.assertEqual(scr.supplied_items[0].inv_site, "Site 1")
 
 
 def make_return_subcontracting_receipt(**args):

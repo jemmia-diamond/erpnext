@@ -2,7 +2,7 @@
 # License: GNU General Public License v3. See license.txt
 
 import frappe
-from frappe.utils import flt, nowdate
+from frappe.utils import add_days, flt, nowdate
 
 from erpnext.accounts.doctype.account.test_account import get_inventory_account
 from erpnext.accounts.doctype.journal_entry.journal_entry import StockAccountInvalidTransaction
@@ -413,9 +413,9 @@ class TestJournalEntry(ERPNextTestSuite):
 		from erpnext.accounts.doctype.cost_center.test_cost_center import create_cost_center
 
 		# Configure Repost Accounting Ledger for JVs
-		settings = frappe.get_doc("Repost Accounting Ledger Settings")
-		if not [x for x in settings.allowed_types if x.document_type == "Journal Entry"]:
-			settings.append("allowed_types", {"document_type": "Journal Entry", "allowed": True})
+		settings = frappe.get_doc("Accounts Settings")
+		if "Journal Entry" not in [x.document_type for x in settings.repost_allowed_types]:
+			settings.append("repost_allowed_types", {"document_type": "Journal Entry"})
 		settings.save()
 
 		# Create JV with defaut cost center - _Test Cost Center
@@ -523,7 +523,7 @@ class TestJournalEntry(ERPNextTestSuite):
 		jv = frappe.new_doc("Journal Entry")
 		jv.posting_date = nowdate()
 		jv.company = "_Test Company"
-		jv.user_remark = "test"
+		jv.remark = "test"
 		jv.extend(
 			"accounts",
 			[
@@ -592,6 +592,14 @@ class TestJournalEntry(ERPNextTestSuite):
 
 		self.assertEqual(jv.pay_to_recd_from, "_Test Receiver 2")
 
+	def test_custom_remark(self):
+		# When custom_remark is enabled, remark should not be auto-overwritten on save
+		jv = make_journal_entry("_Test Cash - _TC", "_Test Bank - _TC", 100, save=False)
+		jv.custom_remark = 1
+		jv.remark = "My custom remark text"
+		jv.insert()
+		self.assertEqual(jv.remark, "My custom remark text")
+
 	def test_credit_limit_for_customer(self):
 		customer = make_customer("_Test New Customer")
 		set_credit_limit("_Test New Customer", "_Test Company", 50)
@@ -600,6 +608,69 @@ class TestJournalEntry(ERPNextTestSuite):
 		jv.accounts[0].party = customer
 		jv.save()
 		self.assertRaises(frappe.ValidationError, jv.submit)
+
+	def make_jv_against_purchase_invoice(self, invoice, amount=100):
+		jv = make_journal_entry("Creditors - _TC", "_Test Cash - _TC", amount, save=False)
+		jv.accounts[0].party_type = "Supplier"
+		jv.accounts[0].party = invoice.supplier
+		jv.accounts[0].reference_type = "Purchase Invoice"
+		jv.accounts[0].reference_name = invoice.name
+		return jv
+
+	def test_jv_against_purchase_invoice_respects_hold_state(self):
+		"""Payment can be booked against a Purchase Invoice only while it is not on hold."""
+		from erpnext.accounts.doctype.purchase_invoice.test_purchase_invoice import make_purchase_invoice
+
+		release_date = add_days(nowdate(), 10)
+
+		def never_held():
+			return make_purchase_invoice()
+
+		def held_until_a_future_date():
+			invoice = make_purchase_invoice()
+			invoice.block_invoice(hold_comment="Waiting for the goods", release_date=release_date)
+			return invoice
+
+		def held_without_a_release_date():
+			invoice = make_purchase_invoice()
+			invoice.block_invoice(hold_comment="Under dispute")
+			return invoice
+
+		def held_until_a_date_that_has_passed():
+			invoice = held_until_a_future_date()
+			frappe.db.set_value("Purchase Invoice", invoice.name, "release_date", add_days(nowdate(), -1))
+			return invoice
+
+		def unblocked_again():
+			invoice = held_until_a_future_date()
+			invoice.unblock_invoice()
+			return invoice
+
+		for build_invoice in (held_until_a_future_date, held_without_a_release_date):
+			with self.subTest(build_invoice.__name__):
+				jv = self.make_jv_against_purchase_invoice(build_invoice())
+				self.assertRaisesRegex(frappe.ValidationError, "is blocked", jv.insert)
+
+		for build_invoice in (never_held, held_until_a_date_that_has_passed, unblocked_again):
+			with self.subTest(build_invoice.__name__):
+				invoice = build_invoice()
+				jv = self.make_jv_against_purchase_invoice(invoice)
+				jv.insert()
+				self.assertEqual(jv.reference_types[invoice.name], "Purchase Invoice")
+
+	def test_jv_against_blocked_sales_invoice_reference_is_not_checked(self):
+		"""A Sales Invoice has no hold state, so the check must skip it rather than fail."""
+		from erpnext.accounts.doctype.sales_invoice.test_sales_invoice import create_sales_invoice
+
+		invoice = create_sales_invoice(rate=500)
+		jv = make_journal_entry("_Test Cash - _TC", "Debtors - _TC", 100, save=False)
+		jv.accounts[1].party_type = "Customer"
+		jv.accounts[1].party = "_Test Customer"
+		jv.accounts[1].reference_type = "Sales Invoice"
+		jv.accounts[1].reference_name = invoice.name
+		jv.insert()
+
+		self.assertEqual(jv.reference_types[invoice.name], "Sales Invoice")
 
 
 def make_journal_entry(
@@ -620,7 +691,7 @@ def make_journal_entry(
 	jv = frappe.new_doc("Journal Entry")
 	jv.posting_date = posting_date or nowdate()
 	jv.company = company or "_Test Company"
-	jv.user_remark = "test"
+	jv.remark = "test"
 	jv.multi_currency = 1
 	jv.set(
 		"accounts",

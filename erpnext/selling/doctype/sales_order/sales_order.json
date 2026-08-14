@@ -201,7 +201,7 @@
   "loyalty_points",
   "column_break_116",
   "loyalty_amount",
-  "subscription_section",
+  "auto_repeat_section",
   "from_date",
   "to_date",
   "column_break_108",
@@ -222,6 +222,7 @@
   "additional_info_section",
   "is_internal_customer",
   "represents_company",
+  "title",
   "column_break_yvzv",
   "inter_company_order_reference",
   "party_account_currency",
@@ -942,6 +943,7 @@
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Loyalty Amount",
+   "options": "Company:company:default_currency",
    "print_hide": 1,
    "read_only": 1
   },
@@ -1000,6 +1002,7 @@
   },
   {
    "default": "0",
+   "description": "Applying a Discount Amount? When this Sales Order is partially fulfilled through multiple Delivery Notes and Sales Invoices, the Discount Amount is allocated on a FIFO basis. The earlier transactions receive a larger share of the discount. To spread the discount proportionally across item prices, use Additional Discount Percentage instead.",
    "fieldname": "discount_amount",
    "fieldtype": "Currency",
    "hide_days": 1,
@@ -1031,7 +1034,8 @@
    "label": "Totals",
    "oldfieldtype": "Section Break",
    "options": "fa fa-money",
-   "print_hide": 1
+   "print_hide": 1,
+   "show_description_on_click": 1
   },
   {
    "fieldname": "base_grand_total",
@@ -1641,6 +1645,7 @@
    "fieldname": "amount_eligible_for_commission",
    "fieldtype": "Currency",
    "label": "Amount Eligible for Commission",
+   "options": "Company:company:default_currency",
    "read_only": 1
   },
   {
@@ -2364,6 +2369,26 @@
    "label": "Total Group Balance",
    "options": "currency",
    "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "collapsible": 1,
+   "fieldname": "auto_repeat_section",
+   "fieldtype": "Section Break",
+   "hide_days": 1,
+   "hide_seconds": 1,
+   "label": "Auto Repeat",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "no_copy": 1,
+   "print_hide": 1
   }
  ],
  "grid_page_length": 50,
@@ -2371,7 +2396,7 @@
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-04 10:03:34.006083",
+ "modified": "2026-06-24 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",

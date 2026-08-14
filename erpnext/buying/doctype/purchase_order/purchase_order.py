@@ -16,7 +16,7 @@ from erpnext.accounts.doctype.sales_invoice.sales_invoice import (
 	validate_inter_company_party,
 )
 from erpnext.accounts.party import get_party_account, get_party_account_currency
-from erpnext.buying.utils import check_on_hold_or_closed_status, validate_for_items
+from erpnext.buying.utils import validate_for_items
 from erpnext.controllers.buying_controller import BuyingController
 from erpnext.manufacturing.doctype.blanket_order.blanket_order import (
 	validate_against_blanket_order,
@@ -159,6 +159,7 @@ class PurchaseOrder(BuyingController):
 		taxes_and_charges_deducted: DF.Currency
 		tc_name: DF.Link | None
 		terms: DF.TextEditor | None
+		title: DF.Data | None
 		to_date: DF.Date | None
 		total: DF.Currency
 		total_net_weight: DF.Float
@@ -181,6 +182,9 @@ class PurchaseOrder(BuyingController):
 				"target_ref_field": "stock_qty",
 				"source_field": "stock_qty",
 				"percent_join_field": "material_request",
+				"global_allowance_field": "over_order_allowance",
+				"global_allowance_doctype": "Buying Settings",
+				"item_allowance_field": "over_order_allowance",
 			}
 		]
 
@@ -202,7 +206,7 @@ class PurchaseOrder(BuyingController):
 		self.validate_supplier()
 		self.validate_schedule_date()
 		validate_for_items(self)
-		self.check_on_hold_or_closed_status()
+		self.check_for_on_hold_or_closed_status("Material Request", "material_request")
 
 		self.validate_uom_is_integer("uom", "qty")
 		self.validate_uom_is_integer("stock_uom", "stock_qty")
@@ -214,10 +218,9 @@ class PurchaseOrder(BuyingController):
 
 		if self.is_old_subcontracting_flow:
 			self.validate_bom_for_subcontracting_items()
-			self.create_raw_materials_supplied()
+			self.create_raw_materials_supplied_or_received()
 
 		self.validate_fg_item_for_subcontracting()
-		self.set_received_qty_for_drop_ship_items()
 
 		if not self.advance_payment_status:
 			self.advance_payment_status = "Not Initiated"
@@ -267,6 +270,7 @@ class PurchaseOrder(BuyingController):
 					"ref_dn_field": "material_request_item",
 					"compare_fields": mri_compare_fields,
 					"is_child_table": True,
+					"allow_duplicate_prev_row_id": True,
 				},
 			}
 		)
@@ -398,18 +402,6 @@ class PurchaseOrder(BuyingController):
 							d.base_rate
 						) = d.price_list_rate = d.rate = d.last_purchase_rate = item_last_purchase_rate
 
-	# Check for Closed status
-	def check_on_hold_or_closed_status(self):
-		check_list = []
-		for d in self.get("items"):
-			if (
-				d.meta.get_field("material_request")
-				and d.material_request
-				and d.material_request not in check_list
-			):
-				check_list.append(d.material_request)
-				check_on_hold_or_closed_status("Material Request", d.material_request)
-
 	def update_ordered_qty(self, po_item_rows=None):
 		"""update requested qty (before ordered_qty is updated)"""
 		item_wh_list = []
@@ -491,10 +483,11 @@ class PurchaseOrder(BuyingController):
 			self.update_status_updater_if_from_pp()
 
 		if self.has_drop_ship_item():
-			self.update_delivered_qty_in_sales_order()
+			self.set_received_qty_to_zero_for_drop_ship_items()
+			self.update_receiving_percentage()
 
 		self.update_reserved_qty_for_subcontract()
-		self.check_on_hold_or_closed_status()
+		self.check_for_on_hold_or_closed_status("Material Request", "material_request")
 
 		self.db_set("status", "Cancelled")
 
@@ -565,19 +558,79 @@ class PurchaseOrder(BuyingController):
 			so.set_status(update=True)
 			so.notify_update()
 
+	def set_received_qty_to_zero_for_drop_ship_items(self):
+		for item in self.items:
+			if item.delivered_by_supplier:
+				item.db_set("received_qty", 0)
+
 	def has_drop_ship_item(self):
 		return any(d.delivered_by_supplier for d in self.items)
+
+	@frappe.whitelist()
+	def update_dropship_received_qty(self, data: list[dict]):
+		if not data:
+			frappe.throw(_("Please select at least one item to update delivered quantity."))
+
+		for d in data:
+			item = next((item for item in self.items if item.name == d.get("name")), None)
+
+			if not item:
+				frappe.throw(
+					_("Item with name {0} not found in the Purchase Order").format(frappe.bold(d.get("name")))
+				)
+
+			if not item.delivered_by_supplier:
+				frappe.throw(
+					_(
+						"Item {0} is not a drop ship item. Only drop ship items can have Delivered Qty updated."
+					).format(frappe.bold(item.item_code))
+				)
+
+			if not item.has_permlevel_access_to("received_qty", permission_type="write"):
+				frappe.throw(
+					_("You don't have permission to update Received Qty DocField for item {0}").format(
+						frappe.bold(item.item_code)
+					)
+				)
+
+			if not d.get("qty_change"):
+				frappe.throw(
+					_(
+						"Item {0} has no changes in delivered quantity. Please unselect the row if you do not wish to update its quantity."
+					).format(frappe.bold(item.item_code))
+				)
+
+			if d.get("qty_change") < 0 and abs(d.get("qty_change")) > item.received_qty:
+				frappe.throw(
+					_("Delivered Qty cannot be reduced by more than {0} for item {1}").format(
+						item.received_qty, frappe.bold(item.item_code)
+					)
+				)
+
+			if d.get("qty_change") > 0 and item.received_qty + d.get("qty_change") > item.qty:
+				frappe.throw(
+					_("Delivered Qty cannot be increased by more than {0} for item {1}").format(
+						item.qty - item.received_qty, frappe.bold(item.item_code)
+					)
+				)
+
+			qty_change = item.received_qty + d.get("qty_change")
+			item.db_set("received_qty", qty_change, update_modified=True)
+			self.add_comment(
+				"Label",
+				_("updated delivered quantity for item {0} to {1}").format(
+					frappe.bold(item.item_code), frappe.bold(qty_change)
+				),
+			)
+		self.update_receiving_percentage()
+		self.set_status(update=True)
+		self.update_delivered_qty_in_sales_order()
 
 	def is_against_so(self):
 		return any(d.sales_order for d in self.items if d.sales_order)
 
 	def is_against_pp(self):
 		return any(d.production_plan for d in self.items if d.production_plan)
-
-	def set_received_qty_for_drop_ship_items(self):
-		for item in self.items:
-			if item.delivered_by_supplier == 1:
-				item.received_qty = item.qty
 
 	def update_reserved_qty_for_subcontract(self):
 		if self.is_old_subcontracting_flow:
@@ -591,7 +644,7 @@ class PurchaseOrder(BuyingController):
 		for item in self.items:
 			received_qty += min(item.received_qty, item.qty)
 			total_qty += item.qty
-		if total_qty:
+		if total_qty and received_qty:
 			self.db_set("per_received", flt(received_qty / total_qty) * 100, update_modified=False)
 		else:
 			self.db_set("per_received", 0, update_modified=False)
@@ -648,7 +701,7 @@ class PurchaseOrder(BuyingController):
 
 	def update_subcontracting_order_status(self):
 		from erpnext.subcontracting.doctype.subcontracting_order.subcontracting_order import (
-			update_subcontracting_order_status as update_sco_status,
+			set_subcontracting_order_status as update_sco_status,
 		)
 
 		if self.is_subcontracted and not self.is_old_subcontracting_flow:
