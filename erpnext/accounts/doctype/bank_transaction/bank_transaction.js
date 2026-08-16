@@ -40,10 +40,12 @@ frappe.ui.form.on("Bank Transaction", {
 			let can_cancel = true;
 
 			if (frm.doc.payment_entries && frm.doc.payment_entries.length > 0) {
-				if (!frappe.user.has_role("Administrator")
-					&& !frappe.user.has_role("Developer")
-					&& !frappe.user.has_role("Accounts User")
-					&& !frappe.user.has_role("Accounts Manager")) {
+				if (
+					!frappe.user.has_role("Administrator") &&
+					!frappe.user.has_role("Developer") &&
+					!frappe.user.has_role("Accounts User") &&
+					!frappe.user.has_role("Accounts Manager")
+				) {
 					can_cancel = false;
 				}
 			}
@@ -60,11 +62,11 @@ frappe.ui.form.on("Bank Transaction", {
 									if (!r.exc) {
 										frappe.show_alert({
 											message: __("Huỷ Giao dịch ngân hàng thành công"),
-											indicator: "green"
+											indicator: "green",
 										});
 										frm.reload_doc();
 									}
-								}
+								},
 							});
 						}
 					);

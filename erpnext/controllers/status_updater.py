@@ -645,9 +645,9 @@ class StatusUpdater(Document):
 			args["update_modified"] = ""
 			return
 
-		args["update_modified"] = ", modified = {}, modified_by = {}".format(
-			frappe.db.escape(now()), frappe.db.escape(frappe.session.user)
-		)
+		args[
+			"update_modified"
+		] = f", modified = {frappe.db.escape(now())}, modified_by = {frappe.db.escape(frappe.session.user)}"
 
 	def update_billing_status_for_zero_amount_refdoc(self, ref_dt):
 		ref_fieldname = frappe.scrub(ref_dt)

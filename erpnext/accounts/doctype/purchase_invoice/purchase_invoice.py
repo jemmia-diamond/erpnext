@@ -1435,7 +1435,7 @@ class PurchaseInvoice(BuyingController):
 						)
 					)
 				valuation_tax.setdefault(tax.name, 0)
-				valuation_tax[tax.name] += (tax.add_deduct_tax == "Add" and 1 or -1) * flt(base_amount)
+				valuation_tax[tax.name] += ((tax.add_deduct_tax == "Add" and 1) or -1) * flt(base_amount)
 
 		if self.is_opening == "No" and self.negative_expense_to_be_booked and valuation_tax:
 			# credit valuation tax amount in "Expenses Included In Valuation"
@@ -1738,7 +1738,7 @@ class PurchaseInvoice(BuyingController):
 		pj = frappe.qb.DocType("Project")
 		for proj, value in projects.items():
 			res = frappe.qb.from_(pj).select(pj.total_purchase_cost).where(pj.name == proj).for_update().run()
-			current_purchase_cost = res and res[0][0] or 0
+			current_purchase_cost = (res and res[0][0]) or 0
 			# frappe.db.set_value("Project", proj, "total_purchase_cost", current_purchase_cost + value)
 			project_doc = frappe.get_lazy_doc("Project", proj)
 			project_doc.total_purchase_cost = current_purchase_cost + value

@@ -100,7 +100,7 @@ class EmailDigest(Document):
 		else:
 			recipient_list = []
 		for p in user_list:
-			p["checked"] = p["name"] in recipient_list and 1 or 0
+			p["checked"] = (p["name"] in recipient_list and 1) or 0
 
 		frappe.response["user_list"] = user_list
 
@@ -711,11 +711,11 @@ class EmailDigest(Document):
 
 	def get_summary_of_pending(self, doc_type, fieldname, getfield):
 		value, count, billed_value, delivered_value = frappe.db.sql(
-			"""select ifnull(sum(grand_total),0), count(*),
-			ifnull(sum(grand_total*per_billed/100),0), ifnull(sum(grand_total*{}/100),0)  from `tab{}`
+			f"""select ifnull(sum(grand_total),0), count(*),
+			ifnull(sum(grand_total*per_billed/100),0), ifnull(sum(grand_total*{getfield}/100),0)  from `tab{doc_type}`
 			where (transaction_date <= %(to_date)s)
 			and status not in ('Closed','Cancelled', 'Completed')
-			and company = %(company)s """.format(getfield, doc_type),
+			and company = %(company)s """,
 			{"to_date": self.future_to_date, "company": self.company},
 		)[0]
 

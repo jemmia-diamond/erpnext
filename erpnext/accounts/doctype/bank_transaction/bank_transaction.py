@@ -5,7 +5,7 @@ import frappe
 from frappe import _
 from frappe.model.docstatus import DocStatus
 from frappe.model.document import Document
-from frappe.utils import flt, getdate, get_datetime
+from frappe.utils import flt, get_datetime, getdate
 
 
 class BankTransaction(Document):
@@ -15,8 +15,11 @@ class BankTransaction(Document):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from erpnext.accounts.doctype.bank_transaction_payments.bank_transaction_payments import BankTransactionPayments
 		from frappe.types import DF
+
+		from erpnext.accounts.doctype.bank_transaction_payments.bank_transaction_payments import (
+			BankTransactionPayments,
+		)
 
 		allocated_amount: DF.Currency
 		amended_from: DF.Link | None
@@ -159,31 +162,31 @@ class BankTransaction(Document):
 					if payment_entry.bank_account_no != self.sepay_account_number:
 						continue
 
-					existing = any(
-						bt.bank_transaction == self.name
-						for bt in payment_entry.bank_transactions
-					)
+					existing = any(bt.bank_transaction == self.name for bt in payment_entry.bank_transactions)
 
 					if not existing:
 						payment_entry.flags.updating_from_bank_transaction = True
-						payment_entry.append("bank_transactions", {
-							"bank_transaction": self.name,
-							"allocated_amount": pe_row.allocated_amount,
-							"date": self.date,
-							"sepay_transaction_content": self.sepay_transaction_content,
-							"sepay_order_number": self.sepay_order_number,
-							"sepay_order_description": self.sepay_order_description,
-							"sepay_reference_number": self.sepay_reference_number,
-							"sepay_id": self.sepay_id,
-							"auto_updated": 1
-						})
+						payment_entry.append(
+							"bank_transactions",
+							{
+								"bank_transaction": self.name,
+								"allocated_amount": pe_row.allocated_amount,
+								"date": self.date,
+								"sepay_transaction_content": self.sepay_transaction_content,
+								"sepay_order_number": self.sepay_order_number,
+								"sepay_order_description": self.sepay_order_description,
+								"sepay_reference_number": self.sepay_reference_number,
+								"sepay_id": self.sepay_id,
+								"auto_updated": 1,
+							},
+						)
 						if self.sepay_transaction_date:
 							payment_entry.payment_date = get_datetime(self.sepay_transaction_date)
 
 						payment_entry.modified_by = payment_entry.owner
 						payment_entry.save(ignore_permissions=True)
 				except Exception as e:
-					frappe.log_error(f"Error syncing Bank Transaction to Payment Entry: {str(e)}")
+					frappe.log_error(f"Error syncing Bank Transaction to Payment Entry: {e!s}")
 
 	def before_submit(self):
 		self.allocate_payment_entries()
@@ -411,7 +414,6 @@ class BankTransaction(Document):
 		self.included_fee = flt(self.included_fee) + excluded_fee
 		self.excluded_fee = 0
 
-
 	@frappe.whitelist()
 	def cancel_transaction(self):
 		if self.docstatus == 2:
@@ -419,7 +421,11 @@ class BankTransaction(Document):
 
 		if self.payment_entries:
 			if not (frappe.session.user == "Administrator" or "Developer" in frappe.get_roles()):
-				frappe.throw(_("Không được phép huỷ! Giao dịch ngân hàng này đang chứa các khoản thanh toán được phân bổ. Xin hãy gỡ phân bổ trước khi huỷ."))
+				frappe.throw(
+					_(
+						"Không được phép huỷ! Giao dịch ngân hàng này đang chứa các khoản thanh toán được phân bổ. Xin hãy gỡ phân bổ trước khi huỷ."
+					)
+				)
 
 		if self.docstatus == 1:
 			self.cancel()
@@ -428,6 +434,7 @@ class BankTransaction(Document):
 			self.db_set("status", "Cancelled")
 
 		return {"message": _("Huỷ Giao dịch ngân hàng thành công")}
+
 
 @frappe.whitelist()
 def get_doctypes_for_bank_reconciliation():

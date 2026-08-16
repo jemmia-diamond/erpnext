@@ -279,23 +279,23 @@ def get_already_booked_amount(doc, item):
 		deferred_account = "deferred_expense_account"
 
 	gl_entries_details = frappe.db.sql(
-		"""
-		select sum({}) as total_credit, sum({}) as total_credit_in_account_currency, voucher_detail_no
+		f"""
+		select sum({total_credit_debit}) as total_credit, sum({total_credit_debit_currency}) as total_credit_in_account_currency, voucher_detail_no
 		from `tabGL Entry` where company=%s and account=%s and voucher_type=%s and voucher_no=%s and voucher_detail_no=%s
 		and is_cancelled = 0
 		group by voucher_detail_no
-	""".format(total_credit_debit, total_credit_debit_currency),
+	""",
 		(doc.company, item.get(deferred_account), doc.doctype, doc.name, item.name),
 		as_dict=True,
 	)
 
 	journal_entry_details = frappe.db.sql(
-		"""
-		SELECT sum(c.{}) as total_credit, sum(c.{}) as total_credit_in_account_currency, reference_detail_no
+		f"""
+		SELECT sum(c.{total_credit_debit}) as total_credit, sum(c.{total_credit_debit_currency}) as total_credit_in_account_currency, reference_detail_no
 		FROM `tabJournal Entry` p , `tabJournal Entry Account` c WHERE p.name = c.parent and
 		p.company = %s and c.account=%s and c.reference_type=%s and c.reference_name=%s and c.reference_detail_no=%s
 		and p.docstatus < 2 group by reference_detail_no
-	""".format(total_credit_debit, total_credit_debit_currency),
+	""",
 		(doc.company, item.get(deferred_account), doc.doctype, doc.name, item.name),
 		as_dict=True,
 	)

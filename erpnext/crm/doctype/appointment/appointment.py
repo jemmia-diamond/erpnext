@@ -11,7 +11,9 @@ from frappe.model.document import Document
 from frappe.share import add_docshare
 from frappe.utils import get_url, getdate, now
 from frappe.utils.verified_command import get_signed_params
+
 from erpnext.utilities.phone_utils import get_phone_variants, search_doc_by_phone
+
 
 class Appointment(Document):
 	# begin: auto-generated types
@@ -20,14 +22,23 @@ class Appointment(Document):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from erpnext.crm.doctype.appointment_policy.appointment_policy import AppointmentPolicy
-		from erpnext.crm.doctype.appointment_sales_person.appointment_sales_person import AppointmentSalesPerson
-		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from frappe.types import DF
 
-		appointment_reason: DF.Literal["Warranty Service", "Trade-in", "Purchase", "Consultation", "Cleaning", "Other"]
+		from erpnext.crm.doctype.appointment_policy.appointment_policy import AppointmentPolicy
+		from erpnext.crm.doctype.appointment_sales_person.appointment_sales_person import (
+			AppointmentSalesPerson,
+		)
+		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
+
+		appointment_reason: DF.Literal[
+			"Warranty Service", "Trade-in", "Purchase", "Consultation", "Cleaning", "Other"
+		]
 		appointment_with: DF.Link | None
-		at_store: DF.Literal["72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh", "63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i", "209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1"]
+		at_store: DF.Literal[
+			"72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh",
+			"63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i",
+			"209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1",
+		]
 		auto_close: DF.Check
 		budget: DF.Currency
 		calendar_event: DF.Link | None
@@ -47,7 +58,14 @@ class Appointment(Document):
 		offline_response: DF.LongText | None
 		offline_sales: DF.TableMultiSelect[AppointmentSalesPerson]
 		offline_sales_name: DF.Data | None
-		order_status: DF.Literal["Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng", "Kh\u00e1ch h\u1eb9n \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch ch\u01b0a mua h\u00e0ng", "Kh\u00e1ch kh\u00f4ng \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch ho\u00e3n l\u1ea1i ng\u00e0y \u0111\u1ebfn c\u1eeda h\u00e0ng", "Kh\u00e1ch \u0111\u00e3 \u0111\u1ebfn c\u1eeda h\u00e0ng"]
+		order_status: DF.Literal[
+			"Kh\u00e1ch \u0111\u00e3 mua h\u00e0ng",
+			"Kh\u00e1ch h\u1eb9n \u0111\u1ebfn c\u1eeda h\u00e0ng",
+			"Kh\u00e1ch ch\u01b0a mua h\u00e0ng",
+			"Kh\u00e1ch kh\u00f4ng \u0111\u1ebfn c\u1eeda h\u00e0ng",
+			"Kh\u00e1ch ho\u00e3n l\u1ea1i ng\u00e0y \u0111\u1ebfn c\u1eeda h\u00e0ng",
+			"Kh\u00e1ch \u0111\u00e3 \u0111\u1ebfn c\u1eeda h\u00e0ng",
+		]
 		party: DF.DynamicLink | None
 		performed_by: DF.Data | None
 		policies: DF.TableMultiSelect[AppointmentPolicy]
@@ -98,7 +116,7 @@ class Appointment(Document):
 			first_source, lead_name = frappe.db.get_value(
 				"Customer", self.party, ["first_source", "lead_name"]
 			) or (None, None)
-			
+
 			if first_source:
 				self.source = first_source
 			elif lead_name:
@@ -110,7 +128,7 @@ class Appointment(Document):
 					doctype, docname = search_doc_by_phone(phone_to_check, ["Lead"])
 					if docname:
 						self.source = frappe.db.get_value("Lead", docname, "source")
-						
+
 		elif self.appointment_with == "Lead":
 			self.source = frappe.db.get_value("Lead", self.party, "source")
 
@@ -144,11 +162,11 @@ class Appointment(Document):
 			if not self.appointment_with:
 				if self.customer_phone_number:
 					variants = get_phone_variants(self.customer_phone_number)
-					
+
 					customer = frappe.db.get_value("Customer", {"mobile_no": ("in", variants)}, "name")
 					if not customer:
 						customer = frappe.db.get_value("Customer", {"phone": ("in", variants)}, "name")
-						
+
 					if customer:
 						self.appointment_with = "Customer"
 						self.party = customer
@@ -238,7 +256,7 @@ class Appointment(Document):
 		# cal_event.save(ignore_permissions=True)
 		# Sync Calendar disabled
 		pass
-	
+
 	def set_verified(self, email):
 		if email != self.customer_email:
 			frappe.throw(_("Email verification failed."))
@@ -396,4 +414,3 @@ def _get_employee_from_user(user):
 	if employee_docname:
 		return frappe.get_doc("Employee", employee_docname)
 	return None
-

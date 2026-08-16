@@ -103,7 +103,7 @@ def round_down_to_nearest_frequency(date: str, frequency: str) -> datetime.datet
 
 	def _get_first_day_of_fiscal_year(date):
 		fiscal_year = get_fiscal_year(date)
-		return fiscal_year and fiscal_year[1] or date
+		return (fiscal_year and fiscal_year[1]) or date
 
 	round_down_function = {
 		"Monthly": get_first_day_of_month,

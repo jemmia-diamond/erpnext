@@ -726,8 +726,8 @@ class StockReconciliation(StockController):
 			else:
 				items_html = ""
 				for d in data:
-					items_html += "<li>{} units of Item {} in Warehouse {}</li>".format(
-						bold(d[2]), bold(d[0]), bold(d[1])
+					items_html += (
+						f"<li>{bold(d[2])} units of Item {bold(d[0])} in Warehouse {bold(d[1])}</li>"
 					)
 
 				msg = _(

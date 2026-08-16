@@ -150,9 +150,9 @@ class MaintenanceVisit(TransactionBase):
 
 						if nm:
 							status = "Work In Progress"
-							mntc_date = nm and nm[0][1] or ""
-							service_person = nm and nm[0][2] or ""
-							work_done = nm and nm[0][3] or ""
+							mntc_date = (nm and nm[0][1]) or ""
+							service_person = (nm and nm[0][2]) or ""
+							work_done = (nm and nm[0][3]) or ""
 						else:
 							status = "Open"
 							mntc_date = None

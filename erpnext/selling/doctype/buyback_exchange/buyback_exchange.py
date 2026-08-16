@@ -48,7 +48,11 @@ class BuybackExchange(Document):
 		try:
 			products = json.loads(self.products_info)
 			if not isinstance(products, list):
-				frappe.throw(frappe._("Invalid products_info in BuybackExchange {0}: Expected a list of products.").format(self.name))
+				frappe.throw(
+					frappe._(
+						"Invalid products_info in BuybackExchange {0}: Expected a list of products."
+					).format(self.name)
+				)
 
 			if not self.is_new():
 				if frappe.db.exists("Buyback Exchange Item", {"parent": self.name}):
@@ -73,26 +77,36 @@ class BuybackExchange(Document):
 					self.order_code = row.order_code
 
 		except Exception as e:
-			frappe.log_error(f"Invalid products_info in BuybackExchange {self.name}: {e!s}", self.products_info)
-			frappe.throw(frappe._("Invalid products_info JSON in BuybackExchange {0}. Please check data from Lark.").format(self.name))
+			frappe.log_error(
+				f"Invalid products_info in BuybackExchange {self.name}: {e!s}", self.products_info
+			)
+			frappe.throw(
+				frappe._(
+					"Invalid products_info JSON in BuybackExchange {0}. Please check data from Lark."
+				).format(self.name)
+			)
 
 	def resolve_item_reference(self, row):
 		from erpnext.selling.doctype.sales_order.item_utils import is_diamond_item_code
-		
+
 		if self.phone_number and row.item_code:
 			is_gia = is_diamond_item_code(row.item_code)
 			lookup_field = "sku" if is_gia else "barcode"
 			operator = "LIKE" if is_gia else "="
 			lookup_value = f"%{row.item_code}%" if is_gia else row.item_code
 
-			candidates = frappe.db.sql(f"""
+			candidates = frappe.db.sql(
+				f"""
 				SELECT soi.name as item_name, so.name as sales_order, so.order_number
 				FROM `tabSales Order Item` soi
 				JOIN `tabSales Order` so ON soi.parent = so.name
 				WHERE (so.contact_mobile = %s OR so.contact_phone = %s)
 				AND soi.{lookup_field} {operator} %s
 				ORDER BY so.transaction_date DESC
-			""", (self.phone_number, self.phone_number, lookup_value), as_dict=True)
+			""",
+				(self.phone_number, self.phone_number, lookup_value),
+				as_dict=True,
+			)
 
 			if candidates:
 				selected = None
@@ -106,16 +120,16 @@ class BuybackExchange(Document):
 						)
 					)
 					if row.order_code:
-						normalized_input = re.search(r'(\d+)', str(row.order_code))
+						normalized_input = re.search(r"(\d+)", str(row.order_code))
 						if normalized_input:
 							num_val = int(normalized_input.group(1))
 							for cand in candidates:
-								cand_num_match = re.search(r'(\d+)', str(cand.order_number or ""))
+								cand_num_match = re.search(r"(\d+)", str(cand.order_number or ""))
 								if cand_num_match and int(cand_num_match.group(1)) == num_val:
 									selected = cand
 									break
 
-								so_num_match = re.search(r'(\d+)$', str(cand.sales_order))
+								so_num_match = re.search(r"(\d+)$", str(cand.sales_order))
 								if so_num_match and int(so_num_match.group(1)) == num_val:
 									selected = cand
 									break
@@ -132,17 +146,22 @@ class BuybackExchange(Document):
 			if sales_order:
 				row.prev_sales_order = sales_order
 				if row.item_code:
-					item_name = frappe.db.get_value("Sales Order Item",
-						{"parent": sales_order, "item_code": row.item_code}, "name")
+					item_name = frappe.db.get_value(
+						"Sales Order Item", {"parent": sales_order, "item_code": row.item_code}, "name"
+					)
 
 					if not item_name:
 						is_gia = is_diamond_item_code(row.item_code) if row.item_code else False
 						if is_gia:
-							item_name = frappe.db.get_value("Sales Order Item",
-								{"parent": sales_order, "sku": ["like", f"%{row.item_code}%"]}, "name")
+							item_name = frappe.db.get_value(
+								"Sales Order Item",
+								{"parent": sales_order, "sku": ["like", f"%{row.item_code}%"]},
+								"name",
+							)
 						else:
-							item_name = frappe.db.get_value("Sales Order Item",
-								{"parent": sales_order, "barcode": row.item_code}, "name")
+							item_name = frappe.db.get_value(
+								"Sales Order Item", {"parent": sales_order, "barcode": row.item_code}, "name"
+							)
 
 					if item_name:
 						row.prev_sales_order_item = item_name
@@ -162,7 +181,7 @@ class BuybackExchange(Document):
 
 	def extract_order_number(self, raw_code):
 		"""Extracts the first numeric sequence from the order string."""
-		match = re.search(r'(\d+)', str(raw_code))
+		match = re.search(r"(\d+)", str(raw_code))
 		if match:
 			return match.group(1)
 		return None

@@ -1174,7 +1174,7 @@ class StockEntry(StockController, SubcontractingInwardController):
 				"warehouse": item.s_warehouse or item.t_warehouse,
 				"posting_date": self.posting_date,
 				"posting_time": self.posting_time,
-				"qty": item.s_warehouse and -1 * flt(item.transfer_qty) or flt(item.transfer_qty),
+				"qty": (item.s_warehouse and -1 * flt(item.transfer_qty)) or flt(item.transfer_qty),
 				"voucher_type": self.doctype,
 				"voucher_no": self.name,
 				"company": self.company,
@@ -3373,12 +3373,8 @@ class StockEntry(StockController, SubcontractingInwardController):
 
 			cond = ""
 			for data, transferred_qty in stock_entries.items():
-				cond += """ WHEN (parent = {} and name = {}) THEN {}
-					""".format(
-					frappe.db.escape(data[0]),
-					frappe.db.escape(data[1]),
-					transferred_qty,
-				)
+				cond += f""" WHEN (parent = {frappe.db.escape(data[0])} and name = {frappe.db.escape(data[1])}) THEN {transferred_qty}
+					"""
 
 			if stock_entries_child_list:
 				frappe.db.sql(

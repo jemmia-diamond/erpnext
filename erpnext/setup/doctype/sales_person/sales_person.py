@@ -23,8 +23,9 @@ class SalesPerson(NestedSet):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from erpnext.setup.doctype.target_detail.target_detail import TargetDetail
 		from frappe.types import DF
+
+		from erpnext.setup.doctype.target_detail.target_detail import TargetDetail
 
 		assigned_lead: DF.Check
 		bizfly_id: DF.Data | None

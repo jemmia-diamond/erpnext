@@ -1,10 +1,11 @@
 import frappe
 import requests
 from frappe import _
-from frappe.utils import flt
 from frappe.model.document import Document
+from frappe.utils import flt, get_datetime
+
 from erpnext.config.config import config
-from frappe.utils import get_datetime
+
 
 class Coupon(Document):
 	# begin: auto-generated types
@@ -28,6 +29,7 @@ class Coupon(Document):
 		user: DF.Link | None
 	# end: auto-generated types
 	from typing import TYPE_CHECKING
+
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
@@ -40,6 +42,7 @@ class Coupon(Document):
 		total_price: DF.Currency
 		user: DF.Data | None
 
+
 def update_all_customers_coupon_code():
 	try:
 		priority_bearer_token: str = config.PRIORITY_BEARER_TOKEN
@@ -48,7 +51,7 @@ def update_all_customers_coupon_code():
 		response = requests.get(
 			f"{priority_base_url}/sync-crm/coupon-ref?updatedInCrm=false",
 			json={},
-			headers={"Authorization": f"Bearer {priority_bearer_token}"}
+			headers={"Authorization": f"Bearer {priority_bearer_token}"},
 		)
 
 		if response.status_code != 200:
@@ -75,14 +78,15 @@ def update_all_customers_coupon_code():
 		frappe.log_error(frappe.get_traceback(), "Error updating coupon codes")
 		frappe.throw(_("An error occurred while updating coupon codes: {0}").format(str(e)))
 
+
 @frappe.whitelist()
 def update_customers_coupons(customer_name, customer_haravan_id):
 	"""
 	Update coupons for a specific customer by fetching from Priority API.
 
 	Args:
-		customer_name: ERPNext Customer name
-		customer_haravan_id: Haravan ID of the customer
+	        customer_name: ERPNext Customer name
+	        customer_haravan_id: Haravan ID of the customer
 	"""
 	try:
 		priority_bearer_token: str = config.PRIORITY_BEARER_TOKEN
@@ -90,7 +94,7 @@ def update_customers_coupons(customer_name, customer_haravan_id):
 		response = requests.get(
 			f"{priority_base_url}/sync-crm/coupon-ref?haravanId={customer_haravan_id}",
 			json={},
-			headers={"Authorization": f"Bearer {priority_bearer_token}"}
+			headers={"Authorization": f"Bearer {priority_bearer_token}"},
 		)
 
 		if response.status_code != 200:
@@ -116,9 +120,10 @@ def update_customers_coupons(customer_name, customer_haravan_id):
 		customer_doc.save(ignore_permissions=True)
 		frappe.db.commit()
 
-	except Exception as e:
+	except Exception:
 		frappe.log_error(frappe.get_traceback(), f"Error updating coupons for customer {customer_name}")
 		return
+
 
 def _populate_coupon_row(coupon_row, result, customer_name):
 	"""Populate API response directly into the Coupon child table row"""

@@ -78,7 +78,7 @@ class Task(NestedSet):
 	def get_customer_details(self):
 		cust = frappe.db.sql("select customer_name from `tabCustomer` where name=%s", self.customer)
 		if cust:
-			ret = {"customer_name": cust and cust[0][0] or ""}
+			ret = {"customer_name": (cust and cust[0][0]) or ""}
 			return ret
 
 	def validate(self):

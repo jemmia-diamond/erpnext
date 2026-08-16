@@ -170,7 +170,9 @@ class calculate_taxes_and_totals:
 				if item.discount_percentage == 100:
 					item.rate = 0.0
 				elif item.price_list_rate:
-					if (not item.rate and not item.discount_amount) or (item.pricing_rules and item.discount_percentage > 0):
+					if (not item.rate and not item.discount_amount) or (
+						item.pricing_rules and item.discount_percentage > 0
+					):
 						item.rate = flt(
 							item.price_list_rate * (1.0 - (item.discount_percentage / 100.0)),
 							item.precision("rate"),
@@ -964,8 +966,7 @@ class calculate_taxes_and_totals:
 			and self.doc.return_against
 			and not self.doc.update_outstanding_for_self
 			and not self.doc.get("is_pos")
-			or self.is_internal_invoice()
-		):
+		) or self.is_internal_invoice():
 			# Do not calculate the outstanding amount for a return invoice if 'update_outstanding_for_self' is not enabled.
 			self.doc.outstanding_amount = 0
 			return

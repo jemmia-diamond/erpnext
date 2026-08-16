@@ -26,6 +26,7 @@ erpnext.utils.CRMActivities = class CRMActivities {
 		// open activities
 		// BinDK: As of now, we do not using Frappe's New Task and New Event features
 		return;
+		// eslint-disable-next-line no-unreachable
 		frappe.call({
 			method: "erpnext.crm.utils.get_open_activities",
 			args: {
@@ -162,10 +163,10 @@ erpnext.utils.CRMNotes = class CRMNotes {
 							{ label: __("Customer Persona"), value: "Customer Persona" },
 							{ label: __("Products of Interest"), value: "Products of Interest" },
 							{ label: __("Store Visit"), value: "Store Visit" },
-							{ label: __("Other"), value: "Other" }
+							{ label: __("Other"), value: "Other" },
 						],
 						default: "Status Update",
-					}
+					},
 				],
 				primary_action: function () {
 					var data = d.get_values();
@@ -197,7 +198,7 @@ erpnext.utils.CRMNotes = class CRMNotes {
 		var me = this;
 		let row = $(edit_btn).closest(".comment-content");
 		let row_id = row.attr("name");
-		let note_doc = me.frm.doc.notes.find(n => String(n.name) === String(row_id));
+		let note_doc = me.frm.doc.notes.find((n) => String(n.name) === String(row_id));
 		let row_content = note_doc ? note_doc.note : $(row).find(".content").html();
 		let row_type = note_doc ? note_doc.type : "Status Update";
 		if (row_content) {
@@ -221,10 +222,10 @@ erpnext.utils.CRMNotes = class CRMNotes {
 							{ label: __("Customer Persona"), value: "Customer Persona" },
 							{ label: __("Products of Interest"), value: "Products of Interest" },
 							{ label: __("Store Visit"), value: "Store Visit" },
-							{ label: __("Other"), value: "Other" }
+							{ label: __("Other"), value: "Other" },
 						],
 						default: row_type,
-					}
+					},
 				],
 				primary_action: function () {
 					var data = d.get_values();

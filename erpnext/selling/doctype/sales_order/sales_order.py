@@ -16,8 +16,20 @@ from frappe.model.docstatus import DocStatus
 from frappe.model.mapper import get_mapped_doc
 from frappe.model.utils import get_fetch_values
 from frappe.query_builder.functions import Sum
-from frappe.utils import add_days, cint, cstr, flt, get_link_to_form, getdate, nowdate, parse_json, strip_html, add_to_date, get_datetime
-from erpnext.utilities.phone_utils import get_phone_variants
+from frappe.utils import (
+	add_days,
+	add_to_date,
+	cint,
+	cstr,
+	flt,
+	get_datetime,
+	get_link_to_form,
+	getdate,
+	nowdate,
+	parse_json,
+	strip_html,
+)
+
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import (
 	unlink_inter_company_doc,
 	update_linked_doc,
@@ -46,12 +58,15 @@ from erpnext.stock.get_item_details import (
 	get_price_list_rate,
 )
 from erpnext.stock.stock_balance import get_reserved_qty, update_bin_qty
+from erpnext.utilities.phone_utils import get_phone_variants
 
 form_grid_templates = {"items": "templates/form_grid/item_grid.html"}
 
 
 class WarehouseRequired(frappe.ValidationError):
 	pass
+
+
 class WarehouseRequired(frappe.ValidationError):
 	pass
 
@@ -66,7 +81,9 @@ class SalesOrder(SellingController):
 		from frappe.types import DF
 
 		from erpnext.accounts.doctype.item_wise_tax_detail.item_wise_tax_detail import ItemWiseTaxDetail
-		from erpnext.accounts.doctype.payment_entry_reference.payment_entry_reference import PaymentEntryReference
+		from erpnext.accounts.doctype.payment_entry_reference.payment_entry_reference import (
+			PaymentEntryReference,
+		)
 		from erpnext.accounts.doctype.payment_schedule.payment_schedule import PaymentSchedule
 		from erpnext.accounts.doctype.pricing_rule_detail.pricing_rule_detail import PricingRuleDetail
 		from erpnext.accounts.doctype.sales_taxes_and_charges.sales_taxes_and_charges import (
@@ -107,7 +124,12 @@ class SalesOrder(SellingController):
 		base_rounding_adjustment: DF.Currency
 		base_total: DF.Currency
 		base_total_taxes_and_charges: DF.Currency
-		billing_address: DF.Literal["", "72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh", "63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i", "209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1"]
+		billing_address: DF.Literal[
+			"",
+			"72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh",
+			"63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i",
+			"209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1",
+		]
 		billing_status: DF.Literal["Not Billed", "Fully Billed", "Partly Billed", "Closed"]
 		birth_date: DF.Date | None
 		cancelled_status: DF.Literal["", "Uncancelled", "Cancelled"]
@@ -138,8 +160,16 @@ class SalesOrder(SellingController):
 		date_of_issuance: DF.Date | None
 		debt_history: DF.Table[OrderandDebtTracking]
 		delivery_date: DF.Date | None
-		delivery_location: DF.Literal["", "209, \u0110 30 th\u00e1ng 4, Xu\u00e2n Kh\u00e1nh, Ninh Ki\u1ec1u, C\u1ea7n Th\u01a1", "63 Kim M\u00e3, Qu\u1eadn Ba \u0110\u00ecnh, H\u00e0 N\u1ed9i", "72 Nguy\u1ec5n C\u01b0 Trinh, Qu\u1eadn 1, Th\u00e0nh Ph\u1ed1 H\u1ed3 Ch\u00ed Minh", "Giao v\u1ec1 \u0111\u1ecba ch\u1ec9 kh\u00e1ch"]
-		delivery_status: DF.Literal["Not Delivered", "Fully Delivered", "Partially Delivered", "Closed", "Not Applicable"]
+		delivery_location: DF.Literal[
+			"",
+			"209, \u0110 30 th\u00e1ng 4, Xu\u00e2n Kh\u00e1nh, Ninh Ki\u1ec1u, C\u1ea7n Th\u01a1",
+			"63 Kim M\u00e3, Qu\u1eadn Ba \u0110\u00ecnh, H\u00e0 N\u1ed9i",
+			"72 Nguy\u1ec5n C\u01b0 Trinh, Qu\u1eadn 1, Th\u00e0nh Ph\u1ed1 H\u1ed3 Ch\u00ed Minh",
+			"Giao v\u1ec1 \u0111\u1ecba ch\u1ec9 kh\u00e1ch",
+		]
+		delivery_status: DF.Literal[
+			"Not Delivered", "Fully Delivered", "Partially Delivered", "Closed", "Not Applicable"
+		]
 		deposit_amount: DF.Currency
 		deposit_in_words: DF.SmallText | None
 		deposit_location: DF.Link | None
@@ -150,7 +180,9 @@ class SalesOrder(SellingController):
 		dispatch_address_name: DF.Link | None
 		expected_delivery_date: DF.Date | None
 		expected_payment_date: DF.Date | None
-		financial_status: DF.Literal["", "Paid", "Partially Paid", "Partially Refunded", "Refunded", "Pending"]
+		financial_status: DF.Literal[
+			"", "Paid", "Partially Paid", "Partially Refunded", "Refunded", "Pending"
+		]
 		from_date: DF.Date | None
 		fulfillment_completion_date: DF.Datetime | None
 		fulfillment_status: DF.Literal["", "Fulfilled", "Not Fulfilled"]
@@ -229,7 +261,18 @@ class SalesOrder(SellingController):
 		split_order_group: DF.Data | None
 		split_order_group_name: DF.Data | None
 		split_reason: DF.Literal["", "Gold Regulation", "Customer Request", "Other"]
-		status: DF.Literal["", "Draft", "On Hold", "To Pay", "To Deliver and Bill", "To Bill", "To Deliver", "Completed", "Cancelled", "Closed"]
+		status: DF.Literal[
+			"",
+			"Draft",
+			"On Hold",
+			"To Pay",
+			"To Deliver and Bill",
+			"To Bill",
+			"To Deliver",
+			"Completed",
+			"Cancelled",
+			"Closed",
+		]
 		tax_category: DF.Link | None
 		tax_id: DF.Data | None
 		taxes: DF.Table[SalesTaxesandCharges]
@@ -308,7 +351,8 @@ class SalesOrder(SellingController):
 			if ref.sales_order:
 				ref_sales_order_names.append(ref.sales_order)
 
-		payment_references = frappe.db.sql("""
+		payment_references = frappe.db.sql(
+			"""
 			SELECT
 				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name,
 				pr.total_amount, pr.outstanding_amount, pr.unallocated_amount, pr.order_number, pr.split_order_group_name,
@@ -323,7 +367,10 @@ class SalesOrder(SellingController):
 			WHERE pr.reference_doctype = 'Sales Order' AND pr.reference_name IN %s
 			AND pe.docstatus < 2
 			AND pe.payment_order_status = 'Success'
-		""", (tuple(ref_sales_order_names),), as_dict=True)
+		""",
+			(tuple(ref_sales_order_names),),
+			as_dict=True,
+		)
 
 		if not payment_references:
 			return 0.0
@@ -332,9 +379,13 @@ class SalesOrder(SellingController):
 		if self.is_split_order and self.split_order_group:
 			first_order_name = frappe.db.get_value(
 				"Sales Order",
-				{"split_order_group": self.split_order_group, "is_split_order": 1, "cancelled_status": "Uncancelled"},
+				{
+					"split_order_group": self.split_order_group,
+					"is_split_order": 1,
+					"cancelled_status": "Uncancelled",
+				},
 				"name",
-				order_by="creation asc"
+				order_by="creation asc",
 			)
 			if first_order_name == self.name:
 				is_first_split_order = True
@@ -349,7 +400,8 @@ class SalesOrder(SellingController):
 
 			total_allocated += flt(pe_ref.allocated_amount)
 			row = self.append("payment_entries", {})
-			row.update({
+			row.update(
+				{
 					"owner": "Administrator",
 					"modified_by": "Administrator",
 					"docstatus": 0,
@@ -373,7 +425,8 @@ class SalesOrder(SellingController):
 					"ref_order_number": pe_ref.ref_order_number,
 					"ref_order_date": pe_ref.ref_order_date,
 					"doctype": "Payment Entry Reference",
-			})
+				}
+			)
 
 		return total_allocated
 
@@ -389,7 +442,8 @@ class SalesOrder(SellingController):
 
 		self.set("group_payment_entries", [])
 
-		group_payment_references = frappe.db.sql("""
+		group_payment_references = frappe.db.sql(
+			"""
 			SELECT
 				pr.name, pr.parenttype, pr.parent, pr.reference_doctype, pr.reference_name,
 				pr.total_amount, pr.outstanding_amount, pr.unallocated_amount, pr.order_number, pr.split_order_group_name,
@@ -407,12 +461,16 @@ class SalesOrder(SellingController):
 			AND pe.docstatus < 2
 			AND pe.payment_order_status = 'Success'
 			ORDER BY pe.payment_date DESC
-		""", (tuple(orders_to_update),), as_dict=True)
+		""",
+			(tuple(orders_to_update),),
+			as_dict=True,
+		)
 
 		if group_payment_references:
 			for pe_ref in group_payment_references:
 				row = self.append("group_payment_entries", {})
-				row.update({
+				row.update(
+					{
 						"owner": "Administrator",
 						"modified_by": "Administrator",
 						"docstatus": 0,
@@ -436,10 +494,21 @@ class SalesOrder(SellingController):
 						"ref_order_number": pe_ref.ref_order_number,
 						"ref_order_date": pe_ref.ref_order_date,
 						"doctype": "Payment Entry Reference",
-				})
+					}
+				)
 
-		group_grand_total = frappe.db.sql("SELECT SUM(grand_total - return_amount) FROM `tabSales Order` WHERE name IN %s AND cancelled_status = 'Uncancelled'", (tuple(orders_to_update),))[0][0] or 0.0
-		group_payment_total = sum(flt(r.allocated_amount) for r in group_payment_references) if group_payment_references else 0.0
+		group_grand_total = (
+			frappe.db.sql(
+				"SELECT SUM(grand_total - return_amount) FROM `tabSales Order` WHERE name IN %s AND cancelled_status = 'Uncancelled'",
+				(tuple(orders_to_update),),
+			)[0][0]
+			or 0.0
+		)
+		group_payment_total = (
+			sum(flt(r.allocated_amount) for r in group_payment_references)
+			if group_payment_references
+			else 0.0
+		)
 
 		return group_payment_total, group_grand_total, orders_to_update
 
@@ -455,13 +524,14 @@ class SalesOrder(SellingController):
 
 		# 1. Fetch by Split Order Group
 		if self.is_split_order and self.split_order_group:
-			group_orders = frappe.db.get_all("Sales Order",
+			group_orders = frappe.db.get_all(
+				"Sales Order",
 				filters={
 					"split_order_group": self.split_order_group,
 					"is_split_order": 1,
-					"cancelled_status": "Uncancelled"
+					"cancelled_status": "Uncancelled",
 				},
-				fields=["name"]
+				fields=["name"],
 			)
 			for o in group_orders:
 				related_orders.add(o.name)
@@ -480,9 +550,8 @@ class SalesOrder(SellingController):
 				continue
 
 			# A. Find orders referenced BY current_so
-			refs_down = frappe.db.get_all("Sales Order Reference",
-				filters={"parent": current_so},
-				fields=["sales_order"]
+			refs_down = frappe.db.get_all(
+				"Sales Order Reference", filters={"parent": current_so}, fields=["sales_order"]
 			)
 
 			for ref in refs_down:
@@ -492,9 +561,8 @@ class SalesOrder(SellingController):
 					related_orders.add(ref.sales_order)
 
 			# B. Find orders referencing current_so
-			refs_up = frappe.db.get_all("Sales Order Reference",
-				filters={"sales_order": current_so},
-				fields=["parent"]
+			refs_up = frappe.db.get_all(
+				"Sales Order Reference", filters={"sales_order": current_so}, fields=["parent"]
 			)
 
 			for ref in refs_up:
@@ -504,9 +572,10 @@ class SalesOrder(SellingController):
 					related_orders.add(ref.parent)
 
 		if related_orders:
-			valid_orders = frappe.db.get_all("Sales Order",
+			valid_orders = frappe.db.get_all(
+				"Sales Order",
 				filters={"name": ["in", list(related_orders)], "cancelled_status": "Uncancelled"},
-				fields=["name"]
+				fields=["name"],
 			)
 			related_orders = {o.name for o in valid_orders}
 
@@ -948,9 +1017,9 @@ class SalesOrder(SellingController):
 			filters={
 				"split_order_group": self.split_order_group,
 				"name": ["!=", self.name],
-				"docstatus": ["<", 2]
+				"docstatus": ["<", 2],
 			},
-			fields=["name"]
+			fields=["name"],
 		)
 
 		if not sibling_orders:
@@ -971,14 +1040,18 @@ class SalesOrder(SellingController):
 		if not self.has_value_changed("tracking_number"):
 			return
 
-		payment_entries = frappe.db.sql("""
+		payment_entries = frappe.db.sql(
+			"""
 			SELECT parent
 			FROM `tabPayment Entry Reference`
 			WHERE reference_doctype = 'Sales Order'
 			AND reference_name = %s
 			AND parenttype = 'Payment Entry'
 			AND parentfield = 'references'
-		""", (self.name,), as_dict=True)
+		""",
+			(self.name,),
+			as_dict=True,
+		)
 
 		if not payment_entries:
 			return
@@ -1025,11 +1098,10 @@ class SalesOrder(SellingController):
 			has_image = frappe.db.get_value("Customer", self.customer, "customer_identity_image")
 			if not has_image:
 				frappe.throw(
-					_("Đơn hàng sử dụng mã giới thiệu Partner {0} yêu cầu nhân viên phải upload hình ảnh xác minh vào hồ sơ khách hàng {1} trước khi cho phép lưu đơn hàng.").format(
-						frappe.bold(", ".join(partner_coupons)),
-						frappe.bold(self.customer)
-					),
-					title=_("Thiếu thông tin khách hàng")
+					_(
+						"Đơn hàng sử dụng mã giới thiệu Partner {0} yêu cầu nhân viên phải upload hình ảnh xác minh vào hồ sơ khách hàng {1} trước khi cho phép lưu đơn hàng."
+					).format(frappe.bold(", ".join(partner_coupons)), frappe.bold(self.customer)),
+					title=_("Thiếu thông tin khách hàng"),
 				)
 
 	def set_order_policies_summary(self):
@@ -1059,7 +1131,10 @@ class SalesOrder(SellingController):
 		if self.has_value_changed("financial_status") and self.financial_status in ["Paid", "Partially Paid"]:
 			should_reevaluate = True
 
-		if self.has_value_changed("cancelled_status") and self.cancelled_status in ["Cancelled", "Uncancelled"]:
+		if self.has_value_changed("cancelled_status") and self.cancelled_status in [
+			"Cancelled",
+			"Uncancelled",
+		]:
 			should_reevaluate = True
 
 		if should_reevaluate:
@@ -1067,7 +1142,7 @@ class SalesOrder(SellingController):
 				"erpnext.selling.doctype.customer.customer.reevaluate_customer_rank",
 				customer_name=self.customer,
 				queue="default",
-				timeout=10
+				timeout=10,
 			)
 
 	def validate_supplier_after_submit(self):
@@ -1276,6 +1351,7 @@ class SalesOrder(SellingController):
 		cancel_stock_reservation_entries(
 			voucher_type=self.doctype, voucher_no=self.name, sre_list=sre_list, notify=notify
 		)
+
 	def set_missing_values(self, for_validate=False):
 		super().set_missing_values(for_validate)
 
@@ -1404,7 +1480,7 @@ class SalesOrder(SellingController):
 					self.total_group_balance = balance_group_payment - fetched_return_amount
 				else:
 					self.total_group_balance = None
-			
+
 			# Allow 1000 VND tolerance for total_group_balance
 			if self.total_group_balance is not None and 0 < self.total_group_balance <= 1000:
 				self.total_group_balance = 0.0
@@ -1417,7 +1493,9 @@ class SalesOrder(SellingController):
 	def process_debt_history(self):
 		for row in self.get("debt_history"):
 			# Only process newly added child rows
-			is_new_row = (getattr(row, "is_new", None) and row.is_new()) or row.get("__islocal") or not row.name
+			is_new_row = (
+				(getattr(row, "is_new", None) and row.is_new()) or row.get("__islocal") or not row.name
+			)
 			if not is_new_row:
 				continue
 			if hasattr(row, "update_added_by"):
@@ -1439,10 +1517,11 @@ class SalesOrder(SellingController):
 		cumulative = self.calculate_customer_cumulative_revenue()
 		true_cumulative = self.calculate_customer_true_cumulative_revenue()
 
-		frappe.db.set_value("Customer", self.customer, {
-			"cumulative_revenue": cumulative,
-			"true_cumulative_revenue": true_cumulative
-		})
+		frappe.db.set_value(
+			"Customer",
+			self.customer,
+			{"cumulative_revenue": cumulative, "true_cumulative_revenue": true_cumulative},
+		)
 
 	def update_ref_order_payment_entry_current_order_number(self):
 		"""
@@ -1452,8 +1531,9 @@ class SalesOrder(SellingController):
 			if not self.haravan_ref_order_id:
 				return
 
-			ref_order_name = frappe.db.get_value("Sales Order",
-				{"haravan_order_id": self.haravan_ref_order_id}, "name")
+			ref_order_name = frappe.db.get_value(
+				"Sales Order", {"haravan_order_id": self.haravan_ref_order_id}, "name"
+			)
 
 			if not ref_order_name:
 				return
@@ -1461,7 +1541,8 @@ class SalesOrder(SellingController):
 			current_order_number = self.order_number
 			current_transaction_date = self.transaction_date
 
-			frappe.db.sql("""
+			frappe.db.sql(
+				"""
 				UPDATE `tabPayment Entry Reference`
 				SET
 					ref_order_number = %s,
@@ -1470,7 +1551,9 @@ class SalesOrder(SellingController):
 					parenttype = 'Sales Order'
 					AND parentfield = 'payment_entries'
 					AND parent = %s
-			""", (current_order_number, current_transaction_date, ref_order_name))
+			""",
+				(current_order_number, current_transaction_date, ref_order_name),
+			)
 
 		except Exception as e:
 			frappe.log_error(f"Error updating payment entry reference order number: {e!s}")
@@ -1480,8 +1563,9 @@ class SalesOrder(SellingController):
 			if not self.haravan_ref_order_id:
 				return
 
-			ref_order_name = frappe.db.get_value("Sales Order",
-				{"haravan_order_id": self.haravan_ref_order_id}, "name")
+			ref_order_name = frappe.db.get_value(
+				"Sales Order", {"haravan_order_id": self.haravan_ref_order_id}, "name"
+			)
 
 			if not ref_order_name:
 				return
@@ -1491,9 +1575,9 @@ class SalesOrder(SellingController):
 				filters={
 					"parenttype": "Sales Order",
 					"parentfield": "payment_entries",
-					"parent": ref_order_name
+					"parent": ref_order_name,
 				},
-				fields=["*"]
+				fields=["*"],
 			)
 
 			if not ref_rows:
@@ -1502,8 +1586,17 @@ class SalesOrder(SellingController):
 			def _build_row(parent_name):
 				new_row = frappe.new_doc("Payment Entry Reference")
 				for field, value in row_dict.items():
-					if field not in ("name", "creation", "modified", "modified_by", "owner",
-									"parent", "parentfield", "parenttype", "idx"):
+					if field not in (
+						"name",
+						"creation",
+						"modified",
+						"modified_by",
+						"owner",
+						"parent",
+						"parentfield",
+						"parenttype",
+						"idx",
+					):
 						setattr(new_row, field, value)
 				new_row.parent = parent_name
 				new_row.parentfield = "sales_order_payment_entries"
@@ -1524,8 +1617,9 @@ class SalesOrder(SellingController):
 			if not self.haravan_ref_order_id:
 				return
 
-			ref_data = frappe.db.get_value("Sales Order",
-				{"haravan_order_id": self.haravan_ref_order_id}, ["name", "grand_total"])
+			ref_data = frappe.db.get_value(
+				"Sales Order", {"haravan_order_id": self.haravan_ref_order_id}, ["name", "grand_total"]
+			)
 
 			if not ref_data:
 				return
@@ -1535,13 +1629,14 @@ class SalesOrder(SellingController):
 			if frappe.utils.flt(old_so_grand_total) != frappe.utils.flt(self.grand_total):
 				return
 
-			pes = frappe.db.get_all("Payment Entry Reference",
+			pes = frappe.db.get_all(
+				"Payment Entry Reference",
 				filters={
 					"reference_doctype": "Sales Order",
 					"reference_name": ref_order,
-					"parenttype": "Payment Entry"
+					"parenttype": "Payment Entry",
 				},
-				fields=["parent"]
+				fields=["parent"],
 			)
 
 			for pe_data in pes:
@@ -1560,22 +1655,30 @@ class SalesOrder(SellingController):
 			frappe.log_error(f"Error transferring payment entry references to current order: {e!s}")
 
 	def calculate_customer_cumulative_revenue(self):
-		result = frappe.db.sql("""
+		result = frappe.db.sql(
+			"""
 			SELECT SUM(grand_total)
 			FROM `tabSales Order`
 			WHERE customer = %s AND cancelled_status = 'Uncancelled'
-		""", (self.customer,), as_list=True)
+		""",
+			(self.customer,),
+			as_list=True,
+		)
 		return result[0][0] if result and result[0][0] else 0
 
 	def calculate_customer_true_cumulative_revenue(self):
-		result = frappe.db.sql("""
+		result = frappe.db.sql(
+			"""
 			SELECT SUM(grand_total)
 			FROM `tabSales Order`
 			WHERE customer = %s
 			AND cancelled_status = 'Uncancelled'
 			AND financial_status = 'Paid'
 			AND fulfillment_status = 'Fulfilled'
-		""", (self.customer,), as_list=True)
+		""",
+			(self.customer,),
+			as_list=True,
+		)
 		return result[0][0] if result and result[0][0] else 0
 
 	def copy_from_reference_order(self):
@@ -1584,20 +1687,29 @@ class SalesOrder(SellingController):
 			return
 		try:
 			# Get the reference order
-			ref_order_name = frappe.db.get_value("Sales Order",
-				{"haravan_order_id": self.haravan_ref_order_id}, "name")
+			ref_order_name = frappe.db.get_value(
+				"Sales Order", {"haravan_order_id": self.haravan_ref_order_id}, "name"
+			)
 			if not ref_order_name:
 				return
 			# Define simple fields to copy (data types)
 			simple_fields = [
-				'consultation_date', 'primary_sales_person',
-				'deposit_location', 'delivery_location', 'expected_delivery_date',
-				'customer_type', 'expected_payment_date',
-				'deposit_amount', 'deposit_method',
-				'order_currency', 'billing_address',
-				'deposit_in_words', 'is_split_order',
-				'split_order_group', 'split_order_group_name',
-				'split_reason',
+				"consultation_date",
+				"primary_sales_person",
+				"deposit_location",
+				"delivery_location",
+				"expected_delivery_date",
+				"customer_type",
+				"expected_payment_date",
+				"deposit_amount",
+				"deposit_method",
+				"order_currency",
+				"billing_address",
+				"deposit_in_words",
+				"is_split_order",
+				"split_order_group",
+				"split_order_group_name",
+				"split_reason",
 			]
 
 			# Copy simple fields
@@ -1622,7 +1734,7 @@ class SalesOrder(SellingController):
 				"policies": "policy",
 				"promotions": "promotion",
 				"product_categories": "product_category",
-				"sales_order_purposes": "purchase_purpose"
+				"sales_order_purposes": "purchase_purpose",
 			}
 
 			for parentfield, link_field in multiselect_fields.items():
@@ -1643,7 +1755,18 @@ class SalesOrder(SellingController):
 					for ref_row in ref_rows:
 						row = copy.deepcopy(ref_row.as_dict())
 						# remove system fields
-						for k in ("name", "parent", "parenttype", "parentfield", "creation", "modified", "modified_by", "owner", "docstatus", "idx"):
+						for k in (
+							"name",
+							"parent",
+							"parenttype",
+							"parentfield",
+							"creation",
+							"modified",
+							"modified_by",
+							"owner",
+							"docstatus",
+							"idx",
+						):
 							row.pop(k, None)
 						child = self.append(parentfield, row)
 						child.db_insert()
@@ -1674,9 +1797,7 @@ class SalesOrder(SellingController):
 		if not items_missing_promos:
 			return
 
-		promotion_fields = [
-			'new_promotions'
-		]
+		promotion_fields = ["new_promotions"]
 
 		candidate_ref_orders = self.get_candidate_reference_orders()
 
@@ -1690,24 +1811,18 @@ class SalesOrder(SellingController):
 
 			candidate_doc = frappe.get_doc("Sales Order", candidate_name)
 			self.copy_sales_order_items_from_reference(
-				candidate_doc,
-				include_fields=promotion_fields,
-				target_items=items_missing_promos
+				candidate_doc, include_fields=promotion_fields, target_items=items_missing_promos
 			)
 
 	def copy_buyback_items_from_reference(self, ref_order_name):
 		"""Duplicate Buyback Exchange Items from reference order to current order"""
 		try:
-			already_copied = frappe.db.exists(
-				"Buyback Exchange Item", {"current_sales_order": self.name}
-			)
+			already_copied = frappe.db.exists("Buyback Exchange Item", {"current_sales_order": self.name})
 			if already_copied:
 				return
 
 			buyback_items = frappe.get_all(
-				"Buyback Exchange Item",
-				filters={"current_sales_order": ref_order_name},
-				fields=["name"]
+				"Buyback Exchange Item", filters={"current_sales_order": ref_order_name}, fields=["name"]
 			)
 
 			if not buyback_items:
@@ -1724,11 +1839,14 @@ class SalesOrder(SellingController):
 				new_doc.insert(ignore_permissions=True)
 
 			if original_doc and original_doc.parent:
-				frappe.db.sql("""
+				frappe.db.sql(
+					"""
 					UPDATE `tabBuyback Exchange`
 					SET modified = %s
 					WHERE name = %s
-				""", (frappe.utils.now(), original_doc.parent))
+				""",
+					(frappe.utils.now(), original_doc.parent),
+				)
 
 			_update_sales_order_return_amount(self.name)
 
@@ -1741,11 +1859,8 @@ class SalesOrder(SellingController):
 			# Get all attachments from reference order
 			attachments = frappe.get_all(
 				"File",
-				filters={
-					"attached_to_doctype": "Sales Order",
-					"attached_to_name": ref_order_name
-				},
-				fields=["name"]
+				filters={"attached_to_doctype": "Sales Order", "attached_to_name": ref_order_name},
+				fields=["name"],
 			)
 
 			if not attachments:
@@ -1753,9 +1868,7 @@ class SalesOrder(SellingController):
 
 			# Update each attachment to point to the new order
 			for attachment in attachments:
-				frappe.db.set_value("File", attachment.name, {
-					"attached_to_name": self.name
-				})
+				frappe.db.set_value("File", attachment.name, {"attached_to_name": self.name})
 
 			frappe.db.commit()
 
@@ -1794,11 +1907,15 @@ class SalesOrder(SellingController):
 		"""Get previous serial_numbers from database for comparison"""
 		try:
 			# Get current serial_numbers from database
-			serial_data = frappe.db.sql("""
+			serial_data = frappe.db.sql(
+				"""
 				SELECT name, serial_numbers
 				FROM `tabSales Order Item`
 				WHERE parent = %s
-			""", (self.name,), as_dict=True)
+			""",
+				(self.name,),
+				as_dict=True,
+			)
 			return {item.name: item.serial_numbers for item in serial_data}
 		except Exception as e:
 			frappe.log_error(f"Error getting previous serial_numbers: {e!s}")
@@ -1859,10 +1976,14 @@ class SalesOrder(SellingController):
 
 	def _map_current_and_ref_items(self, current_items, ref_items):
 		"""Return (current_item, ref_item) pairs."""
+
 		def norm(v):
 			return str(v).strip() if v is not None else None
 
-		from erpnext.selling.doctype.sales_order.item_utils import get_gia_from_item, is_serial_match_jewelry_item
+		from erpnext.selling.doctype.sales_order.item_utils import (
+			get_gia_from_item,
+			is_serial_match_jewelry_item,
+		)
 
 		def is_jewelry(item):
 			return is_serial_match_jewelry_item(item)
@@ -1926,20 +2047,19 @@ class SalesOrder(SellingController):
 	def _get_item_fields_to_copy(self):
 		"""Central place to define manual fields to copy between items."""
 		return [
-			'product_details',
-			'diamond_details',
-			'product_availability_status',
-			'serial_numbers',
-			'new_promotions',
-			'uom',
-			'weight_per_unit',
-			'weight_uom',
-			'image',
-			'discount_rate',
-			'item_policy',
-			'is_policy_locked'
+			"product_details",
+			"diamond_details",
+			"product_availability_status",
+			"serial_numbers",
+			"new_promotions",
+			"uom",
+			"weight_per_unit",
+			"weight_uom",
+			"image",
+			"discount_rate",
+			"item_policy",
+			"is_policy_locked",
 		]
-
 
 	def get_candidate_reference_orders(self):
 		"""
@@ -1953,10 +2073,8 @@ class SalesOrder(SellingController):
 		if self.is_split_order and self.split_order_group:
 			sibling_orders = frappe.db.get_all(
 				"Sales Order",
-				filters={
-					"split_order_group": self.split_order_group
-				},
-				fields=["haravan_ref_order_id"]
+				filters={"split_order_group": self.split_order_group},
+				fields=["haravan_ref_order_id"],
 			)
 			for order in sibling_orders:
 				if order.haravan_ref_order_id:
@@ -1966,11 +2084,7 @@ class SalesOrder(SellingController):
 			return []
 
 		original_sales_orders = frappe.db.get_all(
-			"Sales Order",
-			filters={
-				"haravan_order_id": ["in", list(reference_ids)]
-			},
-			fields=["name"]
+			"Sales Order", filters={"haravan_order_id": ["in", list(reference_ids)]}, fields=["name"]
 		)
 
 		return [order.name for order in original_sales_orders]
@@ -1993,7 +2107,10 @@ class SalesOrder(SellingController):
 			items_updated = False
 			for current_item, ref_item in pairs:
 				# Copy fields using common method
-				items_updated = self._copy_item_fields_with_db_update(ref_item, current_item, include_fields) or items_updated
+				items_updated = (
+					self._copy_item_fields_with_db_update(ref_item, current_item, include_fields)
+					or items_updated
+				)
 
 			if items_updated:
 				frappe.db.commit()
@@ -2016,7 +2133,7 @@ class SalesOrder(SellingController):
 			current_value = getattr(current_item, field, None)
 
 			# Special handling for uom field - always copy if reference has value
-			if field == 'uom' and ref_value:
+			if field == "uom" and ref_value:
 				current_item.db_set(field, ref_value)
 				items_updated = True
 			# For other fields, only copy if reference has value and current item doesn't have value
@@ -2044,7 +2161,8 @@ class SalesOrder(SellingController):
 
 		# Find orders from same customer created within 30 minutes before
 		# Only look for new orders (not reorders) to avoid grouping unrelated orders
-		previous_orders = frappe.db.sql("""
+		previous_orders = frappe.db.sql(
+			"""
 			SELECT
 				name,
 				haravan_order_id,
@@ -2060,17 +2178,23 @@ class SalesOrder(SellingController):
 				AND name != %s
 				AND cancelled_status = 'Uncancelled'
 			LIMIT 10
-		""", (self.customer, time_window_start, order_time, self.name), as_dict=True)
+		""",
+			(self.customer, time_window_start, order_time, self.name),
+			as_dict=True,
+		)
 
 		if not previous_orders:
-			frappe.db.sql("""
+			frappe.db.sql(
+				"""
 				UPDATE `tabSales Order`
 				SET split_order_group = %s,
 					split_order_group_name = %s,
 					is_split_order = 0
 				WHERE name = %s
 				ORDER BY haravan_created_at ASC
-			""", (self.haravan_order_id, self.order_number, self.name))
+			""",
+				(self.haravan_order_id, self.order_number, self.name),
+			)
 
 			# Sync with self object
 			self.split_order_group = self.haravan_order_id
@@ -2088,32 +2212,38 @@ class SalesOrder(SellingController):
 		split_group_name = first_previous_order.split_order_group_name or first_previous_order.order_number
 
 		# Set this order as split order
-		frappe.db.sql("""
+		frappe.db.sql(
+			"""
 			UPDATE `tabSales Order`
 			SET split_order_group = %s,
 				split_order_group_name = %s,
 				is_split_order = 1,
 				split_reason = 'Gold Regulation'
 			WHERE name = %s
-		""", (split_group_id, split_group_name, self.name))
+		""",
+			(split_group_id, split_group_name, self.name),
+		)
 
 		# Sync with self object
 		self.split_order_group = split_group_id
 		self.split_order_group_name = split_group_name
 		self.is_split_order = 1
-		self.split_reason = 'Gold Regulation'
+		self.split_reason = "Gold Regulation"
 
 		# Update all previous orders to mark as split orders
 		for prev_order in previous_orders:
 			# Always update to ensure is_split_order = 1
-			frappe.db.sql("""
+			frappe.db.sql(
+				"""
 				UPDATE `tabSales Order`
 				SET split_order_group = %s,
 					split_order_group_name = %s,
 					is_split_order = 1,
 					split_reason = 'Gold Regulation'
 				WHERE name = %s
-			""", (split_group_id, split_group_name, prev_order.name))
+			""",
+				(split_group_id, split_group_name, prev_order.name),
+			)
 
 		frappe.db.commit()
 
@@ -2129,7 +2259,11 @@ class SalesOrder(SellingController):
 				continue
 			if r.gateway == SalesOrder.PAYMENT_GATEWAY_ERP:
 				continue
-			if r.gateway == SalesOrder.PAYMENT_GATEWAY_QR_MB and r.date and getdate(r.date) > getdate(SalesOrder.PAYMENT_BEFORE_RELEASE_DATE):
+			if (
+				r.gateway == SalesOrder.PAYMENT_GATEWAY_QR_MB
+				and r.date
+				and getdate(r.date) > getdate(SalesOrder.PAYMENT_BEFORE_RELEASE_DATE)
+			):
 				continue
 			total += flt(r.amount)
 		return total
@@ -2144,19 +2278,34 @@ class SalesOrder(SellingController):
 
 		group_payment_total, group_grand_total, orders_to_update = self.set_group_payment_entries()
 
-		group_records_total = sum(
-			self._get_payment_records_total(self if so_name == self.name else frappe.get_doc("Sales Order", so_name))
-			for so_name in orders_to_update
-		) if orders_to_update else 0.0
+		group_records_total = (
+			sum(
+				self._get_payment_records_total(
+					self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
+				)
+				for so_name in orders_to_update
+			)
+			if orders_to_update
+			else 0.0
+		)
 
 		real_group_grand_total = 0.0
 		if orders_to_update:
-			real_group_grand_total = frappe.db.sql("SELECT SUM(grand_total - return_amount) FROM `tabSales Order` WHERE name IN %s AND cancelled_status = 'Uncancelled'", (tuple(orders_to_update),))[0][0] or 0.0
+			real_group_grand_total = (
+				frappe.db.sql(
+					"SELECT SUM(grand_total - return_amount) FROM `tabSales Order` WHERE name IN %s AND cancelled_status = 'Uncancelled'",
+					(tuple(orders_to_update),),
+				)[0][0]
+				or 0.0
+			)
 
-		if real_group_grand_total > 0 and flt(real_group_grand_total - (group_payment_total + group_records_total), 2) <= 1000:
+		if (
+			real_group_grand_total > 0
+			and flt(real_group_grand_total - (group_payment_total + group_records_total), 2) <= 1000
+		):
 			for so_name in orders_to_update:
 				so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
-				if so.docstatus == 2 or so.cancelled_status == 'Cancelled':
+				if so.docstatus == 2 or so.cancelled_status == "Cancelled":
 					continue
 
 				so.paid_amount = flt(so.grand_total) - flt(so.return_amount)
@@ -2180,49 +2329,51 @@ class SalesOrder(SellingController):
 			self.paid_amount = total_allocated + payment_records_total
 
 		self.balance = sales_order_grand_total - flt(self.paid_amount)
-		
+
 		# Allow 1000 VND tolerance
 		if 0 < flt(self.balance, 2) <= 1000:
 			self.paid_amount = sales_order_grand_total
 			self.balance = 0.0
-			
+
 		if self.balance <= 0 and self.grand_total > 0:
 			self.financial_status = "Paid"
 
 		for so_name in orders_to_update:
 			so = self if so_name == self.name else frappe.get_doc("Sales Order", so_name)
-			if so.docstatus == 2 or so.cancelled_status == 'Cancelled':
+			if so.docstatus == 2 or so.cancelled_status == "Cancelled":
 				continue
 
 			if so_name != self.name:
 				so.set("group_payment_entries", [])
 				for pe_row in self.get("group_payment_entries"):
 					row = so.append("group_payment_entries", {})
-					row.update({
-						"owner": pe_row.owner,
-						"modified_by": pe_row.modified_by,
-						"docstatus": pe_row.docstatus,
-						"reference_doctype": pe_row.reference_doctype,
-						"reference_name": pe_row.reference_name,
-						"total_amount": pe_row.total_amount,
-						"outstanding_amount": pe_row.outstanding_amount,
-						"unallocated_amount": pe_row.unallocated_amount,
-						"allocated_amount": pe_row.allocated_amount,
-						"mode_of_payment": pe_row.mode_of_payment,
-						"gateway": pe_row.gateway,
-						"paid_amount": pe_row.paid_amount,
-						"payment_date": pe_row.payment_date,
-						"payment_order_status": pe_row.payment_order_status,
-						"order_number": pe_row.order_number,
-						"split_order_group_name": pe_row.split_order_group_name,
-						"bank_account": pe_row.bank_account,
-						"bank": pe_row.bank,
-						"bank_account_no": pe_row.bank_account_no,
-						"bank_account_branch": pe_row.bank_account_branch,
-						"ref_order_number": pe_row.ref_order_number,
-						"ref_order_date": pe_row.ref_order_date,
-						"doctype": "Payment Entry Reference",
-					})
+					row.update(
+						{
+							"owner": pe_row.owner,
+							"modified_by": pe_row.modified_by,
+							"docstatus": pe_row.docstatus,
+							"reference_doctype": pe_row.reference_doctype,
+							"reference_name": pe_row.reference_name,
+							"total_amount": pe_row.total_amount,
+							"outstanding_amount": pe_row.outstanding_amount,
+							"unallocated_amount": pe_row.unallocated_amount,
+							"allocated_amount": pe_row.allocated_amount,
+							"mode_of_payment": pe_row.mode_of_payment,
+							"gateway": pe_row.gateway,
+							"paid_amount": pe_row.paid_amount,
+							"payment_date": pe_row.payment_date,
+							"payment_order_status": pe_row.payment_order_status,
+							"order_number": pe_row.order_number,
+							"split_order_group_name": pe_row.split_order_group_name,
+							"bank_account": pe_row.bank_account,
+							"bank": pe_row.bank,
+							"bank_account_no": pe_row.bank_account_no,
+							"bank_account_branch": pe_row.bank_account_branch,
+							"ref_order_number": pe_row.ref_order_number,
+							"ref_order_date": pe_row.ref_order_date,
+							"doctype": "Payment Entry Reference",
+						}
+					)
 
 			so.total_allocated_group_payment = group_payment_total + group_records_total
 			so.balance_group_payment = flt(real_group_grand_total) - flt(so.total_allocated_group_payment)
@@ -3325,36 +3476,38 @@ def get_work_order_items(sales_order, for_raw_material_request=0):
 def get_stock_reservation_status():
 	return frappe.db.get_single_value("Stock Settings", "enable_stock_reservation")
 
+
 @frappe.whitelist()
 def larksuite_notification(sales_order_doc):
-    sales_order = json.loads(sales_order_doc)
+	sales_order = json.loads(sales_order_doc)
 
-    # Validate sensitive coupons before sending to Lark
-    doc = frappe.get_doc("Sales Order", sales_order.get("name"))
-    doc.validate_sensitive_coupons()
+	# Validate sensitive coupons before sending to Lark
+	doc = frappe.get_doc("Sales Order", sales_order.get("name"))
+	doc.validate_sensitive_coupons()
 
-    url = f"{config.FN_BASE_URL}/api/erp/sales_orders/{sales_order.get('name')}/notifications"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {config.FN_BEARER_TOKEN}",
-    }
+	url = f"{config.FN_BASE_URL}/api/erp/sales_orders/{sales_order.get('name')}/notifications"
+	headers = {
+		"Content-Type": "application/json",
+		"Authorization": f"Bearer {config.FN_BEARER_TOKEN}",
+	}
 
-    try:
-        response = requests.post(url=url, headers=headers, data=sales_order_doc)
+	try:
+		response = requests.post(url=url, headers=headers, data=sales_order_doc)
 
-        response.raise_for_status()
+		response.raise_for_status()
 
-        try:
-            return response.json().get("message", "Success")
-        except json.JSONDecodeError:
-            return response.text
+		try:
+			return response.json().get("message", "Success")
+		except json.JSONDecodeError:
+			return response.text
 
-    except requests.exceptions.HTTPError:
-        error_message = f"Error ({response.status_code}): {response.text}"
-        return error_message
+	except requests.exceptions.HTTPError:
+		error_message = f"Error ({response.status_code}): {response.text}"
+		return error_message
 
-    except Exception as e:
-        return str(e)
+	except Exception as e:
+		return str(e)
+
 
 @frappe.whitelist()
 def get_split_orders_in_group(split_order_group, include_cancelled=False):
@@ -3362,37 +3515,44 @@ def get_split_orders_in_group(split_order_group, include_cancelled=False):
 	Get all orders in a split order group
 
 	Args:
-		split_order_group: The split order group ID
-		include_cancelled: Whether to include cancelled orders
+	        split_order_group: The split order group ID
+	        include_cancelled: Whether to include cancelled orders
 
 	Returns:
-		List of orders in the group with details
+	        List of orders in the group with details
 	"""
 	if not split_order_group:
 		return []
 
-	filters = {
-		"split_order_group": split_order_group,
-		"is_split_order": 1
-	}
+	filters = {"split_order_group": split_order_group, "is_split_order": 1}
 
 	if not include_cancelled:
 		filters["cancelled_status"] = "Uncancelled"
 
-	orders = frappe.get_all("Sales Order",
+	orders = frappe.get_all(
+		"Sales Order",
 		filters=filters,
 		fields=[
-			"name", "order_number", "customer", "customer_name",
-			"grand_total", "currency", "haravan_order_id",
-			"cancelled_status", "financial_status", "fulfillment_status",
-			"transaction_date", "modified"
+			"name",
+			"order_number",
+			"customer",
+			"customer_name",
+			"grand_total",
+			"currency",
+			"haravan_order_id",
+			"cancelled_status",
+			"financial_status",
+			"fulfillment_status",
+			"transaction_date",
+			"modified",
 		],
-		order_by="transaction_date asc"
+		order_by="transaction_date asc",
 	)
 	for order in orders:
-		order["is_original_order"] = (order.get("haravan_order_id") == split_order_group)
+		order["is_original_order"] = order.get("haravan_order_id") == split_order_group
 
 	return orders
+
 
 @frappe.whitelist()
 def make_subcontracting_inward_order(source_name, target_doc=None):
@@ -3461,6 +3621,7 @@ def get_mapped_subcontracting_inward_order(source_name, target_doc=None):
 
 	return target_doc
 
+
 def _tokenize_serials(s):
 	return {t.strip() for t in str(s).replace("\n", ",").split(",") if t.strip()}
 
@@ -3504,11 +3665,24 @@ def _update_sales_order_return_amount(sales_order):
 
 @frappe.whitelist()
 def get_buyback_items(sales_order):
-	return frappe.get_list("Buyback Exchange Item",
+	return frappe.get_list(
+		"Buyback Exchange Item",
 		filters={"current_sales_order": sales_order},
-		fields=["product_name", "item_code", "buyback_price", "parent", "order_code", "prev_sales_order", "name", "buyback_percentage", "calculated_buyback_price", "sale_price"],
-		ignore_permissions=True
+		fields=[
+			"product_name",
+			"item_code",
+			"buyback_price",
+			"parent",
+			"order_code",
+			"prev_sales_order",
+			"name",
+			"buyback_percentage",
+			"calculated_buyback_price",
+			"sale_price",
+		],
+		ignore_permissions=True,
 	)
+
 
 @frappe.whitelist()
 def get_available_buyback_items(phone=None):
@@ -3535,6 +3709,7 @@ def get_available_buyback_items(phone=None):
 
 	return frappe.db.sql(query, params, as_dict=True)
 
+
 @frappe.whitelist()
 def link_buyback_items(sales_order, item_names):
 	"""Link selected buyback items to the current sales order."""
@@ -3555,11 +3730,7 @@ def link_buyback_items(sales_order, item_names):
 			frappe.log_error(f"Failed to link buyback item {item_name}: {e!s}")
 
 	if not updated_count:
-		return {
-			"success": False,
-			"message": _("No buyback items were updated"),
-			"count": 0
-		}
+		return {"success": False, "message": _("No buyback items were updated"), "count": 0}
 
 	# Update total return amount on the Sales Order
 	new_total = _update_sales_order_return_amount(sales_order)
@@ -3568,8 +3739,9 @@ def link_buyback_items(sales_order, item_names):
 		"success": True,
 		"message": f"Successfully linked {updated_count} buyback item(s)",
 		"count": updated_count,
-		"return_amount": new_total
+		"return_amount": new_total,
 	}
+
 
 @frappe.whitelist()
 def unlink_buyback_item(item_name):
@@ -3582,11 +3754,7 @@ def unlink_buyback_item(item_name):
 	if current_so:
 		new_total = _update_sales_order_return_amount(current_so)
 
-	return {
-		"success": True,
-		"message": "Buyback item unlinked successfully",
-		"return_amount": new_total
-	}
+	return {"success": True, "message": "Buyback item unlinked successfully", "return_amount": new_total}
 
 
 def _has_promotions(item):
@@ -3610,7 +3778,7 @@ def get_item_promotions_by_serial(source_order, target_serial):
 		"Sales Order Item",
 		{"parent": ["in", ref_names], "serial_numbers": ["like", f"%{target_serial}%"]},
 		["new_promotions"],
-		as_dict=True
+		as_dict=True,
 	)
 
 	return item or {}
@@ -3629,7 +3797,8 @@ def validate_serial_number(serial_number, sales_order_name=None):
 		so = frappe.get_doc("Sales Order", sales_order_name)
 		related_orders = set(so.get_all_related_sales_orders() or [])
 
-	duplicate_items = frappe.db.sql("""
+	duplicate_items = frappe.db.sql(
+		"""
 		SELECT
 			so_item.parent as order_name,
 			so_item.serial_numbers
@@ -3642,16 +3811,16 @@ def validate_serial_number(serial_number, sales_order_name=None):
 			AND so.docstatus < 2
 			AND so.cancelled_status = 'Uncancelled'
 			AND so.name != %s
-	""", (f"%{serial_number}%", sales_order_name or ""), as_dict=True)
+	""",
+		(f"%{serial_number}%", sales_order_name or ""),
+		as_dict=True,
+	)
 
 	for d in duplicate_items:
 		d_serials = [s.strip() for s in (d.serial_numbers or "").split("\n") if s.strip()]
 		if serial_number in d_serials:
 			if d.order_name not in related_orders:
-				return {
-					"allowed": False,
-					"duplicate_order": d.order_name
-				}
+				return {"allowed": False, "duplicate_order": d.order_name}
 
 	return {"allowed": True}
 
@@ -3683,10 +3852,12 @@ def fetch_promotions_from_split_group(sales_order_name):
 		pairs = so._map_current_and_ref_items(items_missing_promos, ref_items)
 		for current_item, ref_item in pairs:
 			if _has_promotions(ref_item):
-				updated_items.append({
-					"name": current_item.name,
-					"new_promotions": ref_item.new_promotions,
-				})
+				updated_items.append(
+					{
+						"name": current_item.name,
+						"new_promotions": ref_item.new_promotions,
+					}
+				)
 				current_item.new_promotions = ref_item.new_promotions
 
 		items_missing_promos = [item for item in items_missing_promos if not _has_promotions(item)]

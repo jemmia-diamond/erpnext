@@ -159,7 +159,7 @@ def get_items(start, page_length, price_list, item_group, pos_profile, search_te
 		bin_join_condition = "AND (item.is_stock_item = 0 OR (item.is_stock_item = 1 AND bin.warehouse = %(warehouse)s AND bin.actual_qty > 0))"
 
 	items_data = frappe.db.sql(
-		"""
+		f"""
 		SELECT
 			item.name AS item_code,
 			item.item_name,
@@ -175,21 +175,13 @@ def get_items(start, page_length, price_list, item_group, pos_profile, search_te
 			AND item.has_variants = 0
 			AND item.is_sales_item = 1
 			AND item.is_fixed_asset = 0
-			AND item.item_group in (SELECT name FROM `tabItem Group` WHERE lft >= {lft} AND rgt <= {rgt})
+			AND item.item_group in (SELECT name FROM `tabItem Group` WHERE lft >= {cint(lft)} AND rgt <= {cint(rgt)})
 			AND {condition}
 			{bin_join_condition}
 		ORDER BY
 			item.name asc
 		LIMIT
-			{page_length} offset {start}""".format(
-			start=cint(start),
-			page_length=cint(page_length),
-			lft=cint(lft),
-			rgt=cint(rgt),
-			condition=condition,
-			bin_join_selection=bin_join_selection,
-			bin_join_condition=bin_join_condition,
-		),
+			{cint(page_length)} offset {cint(start)}""",
 		{"warehouse": warehouse},
 		as_dict=1,
 	)

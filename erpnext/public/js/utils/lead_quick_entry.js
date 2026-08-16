@@ -15,7 +15,7 @@ frappe.ui.form.LeadQuickEntryForm = class LeadQuickEntryForm extends frappe.ui.f
 			},
 			...this.docfields,
 		];
-		this.docfields.forEach(df => {
+		this.docfields.forEach((df) => {
 			if (df.fieldname === "source") {
 				df.reqd = 1;
 			}
@@ -34,7 +34,9 @@ frappe.ui.form.LeadQuickEntryForm = class LeadQuickEntryForm extends frappe.ui.f
 		$results.css("position", "relative");
 
 		$input.on("input", function () {
-			let val = $(this).val().replace(/[^0-9]/g, "");
+			let val = $(this)
+				.val()
+				.replace(/[^0-9]/g, "");
 			$(this).val(val);
 			clearTimeout(timer);
 			if (val.length < 2) {
@@ -80,13 +82,15 @@ frappe.ui.form.LeadQuickEntryForm = class LeadQuickEntryForm extends frappe.ui.f
 									<div style="min-width:0;flex:1;">
 										<div style="font-weight:600;font-size:var(--text-md);color:var(--text-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
 											${frappe.utils.escape_html(display_name)}
-											<span style="font-weight:400;color:var(--text-muted);margin-left:6px;">${frappe.utils.escape_html(phone_display)}</span>
+											<span style="font-weight:400;color:var(--text-muted);margin-left:6px;">${frappe.utils.escape_html(
+												phone_display
+											)}</span>
 										</div>
 										<div style="font-size:var(--text-sm);color:var(--text-light);margin-top:2px;">
 											${frappe.utils.escape_html(lead.name)}
 										</div>
 									</div>
-									
+
 								</div>
 							`);
 
@@ -97,7 +101,10 @@ frappe.ui.form.LeadQuickEntryForm = class LeadQuickEntryForm extends frappe.ui.f
 							});
 
 							$li.on("click", function () {
-								window.open(`/app/lead/${encodeURIComponent($(this).data("name"))}`, "_blank");
+								window.open(
+									`/app/lead/${encodeURIComponent($(this).data("name"))}`,
+									"_blank"
+								);
 							});
 
 							$list.append($li);

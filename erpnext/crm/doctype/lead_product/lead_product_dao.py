@@ -1,25 +1,22 @@
-import frappe 
+import frappe
+
 from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
 
-def get_products_in_names(product_names):
 
+def get_products_in_names(product_names):
 	products = frappe.get_all(
-		"Lead Product", 
-		filters={"product_type": ["in", product_names]},
-		fields = ["name", "product_type"]
+		"Lead Product", filters={"product_type": ["in", product_names]}, fields=["name", "product_type"]
 	)
-	
+
 	return products
 
+
 def get_lead_product(product_type):
-    try:
-        return frappe.get_doc(
-			"Lead Product", {
-				"product_type": product_type
-			}
-		)
-    except Exception as e:
-        return None
+	try:
+		return frappe.get_doc("Lead Product", {"product_type": product_type})
+	except Exception:
+		return None
+
 
 def create_lead_product(product_type):
 	try:
@@ -45,9 +42,7 @@ def create_lead_product(product_type):
 				return None
 
 		new_lead_product = frappe.new_doc("Lead Product")
-		new_lead_product.update({
-			"product_type": product_type
-		})
+		new_lead_product.update({"product_type": product_type})
 		return new_lead_product.save()
-	except Exception as e:
+	except Exception:
 		return None

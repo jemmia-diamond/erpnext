@@ -3,20 +3,21 @@
 
 
 import json
+import re
 import time
 from functools import reduce
 
 import frappe
 from frappe import ValidationError, _, qb, scrub, throw
+from frappe.integrations.doctype.webhook.webhook import enqueue_webhook
 from frappe.model.meta import get_field_precision
 from frappe.query_builder import Tuple
 from frappe.query_builder.functions import Count
 from frappe.utils import cint, comma_or, flt, getdate, nowdate
 from frappe.utils.data import comma_and, fmt_money, get_link_to_form
-from frappe.integrations.doctype.webhook.webhook import enqueue_webhook
 from pypika import Case
 from pypika.functions import Coalesce, Sum
-import re
+
 import erpnext
 from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import get_dimensions
 from erpnext.accounts.doctype.bank_account.bank_account import (
@@ -56,7 +57,8 @@ from erpnext.controllers.accounts_controller import (
 	validate_taxes_and_charges,
 )
 from erpnext.setup.utils import get_exchange_rate
-from erpnext.utilities.phone_utils import normalize_to_standard_format, get_phone_variants
+from erpnext.utilities.phone_utils import get_phone_variants, normalize_to_standard_format
+
 
 class InvalidPaymentEntry(ValidationError):
 	pass
@@ -69,11 +71,20 @@ class PaymentEntry(AccountsController):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from erpnext.accounts.doctype.advance_taxes_and_charges.advance_taxes_and_charges import AdvanceTaxesandCharges
-		from erpnext.accounts.doctype.payment_entry_bank_transaction.payment_entry_bank_transaction import PaymentEntryBankTransaction
-		from erpnext.accounts.doctype.payment_entry_deduction.payment_entry_deduction import PaymentEntryDeduction
-		from erpnext.accounts.doctype.payment_entry_reference.payment_entry_reference import PaymentEntryReference
 		from frappe.types import DF
+
+		from erpnext.accounts.doctype.advance_taxes_and_charges.advance_taxes_and_charges import (
+			AdvanceTaxesandCharges,
+		)
+		from erpnext.accounts.doctype.payment_entry_bank_transaction.payment_entry_bank_transaction import (
+			PaymentEntryBankTransaction,
+		)
+		from erpnext.accounts.doctype.payment_entry_deduction.payment_entry_deduction import (
+			PaymentEntryDeduction,
+		)
+		from erpnext.accounts.doctype.payment_entry_reference.payment_entry_reference import (
+			PaymentEntryReference,
+		)
 
 		amended_from: DF.Link | None
 		admin_editing: DF.Check
@@ -81,7 +92,11 @@ class PaymentEntry(AccountsController):
 		auto_repeat: DF.Link | None
 		bank: DF.ReadOnly | None
 		bank_account: DF.Link | None
-		bank_account_branch: DF.Literal["C\u1eeda h\u00e0ng HCM", "C\u1eeda h\u00e0ng C\u1ea7n Th\u01a1", "C\u1eeda h\u00e0ng H\u00e0 N\u1ed9i"]
+		bank_account_branch: DF.Literal[
+			"C\u1eeda h\u00e0ng HCM",
+			"C\u1eeda h\u00e0ng C\u1ea7n Th\u01a1",
+			"C\u1eeda h\u00e0ng H\u00e0 N\u1ed9i",
+		]
 		bank_account_no: DF.ReadOnly | None
 		bank_transactions: DF.Table[PaymentEntryBankTransaction]
 		base_in_words: DF.SmallText | None
@@ -263,10 +278,9 @@ class PaymentEntry(AccountsController):
 			enqueue_webhook(self, webhook)
 		except Exception as e:
 			frappe.log_error(
-				f"Failed to trigger webhook for Payment Entry {self.name}: {str(e)}",
-				"Payment Entry Webhook Trigger Error"
+				f"Failed to trigger webhook for Payment Entry {self.name}: {e!s}",
+				"Payment Entry Webhook Trigger Error",
 			)
-
 
 	def setup_party_account_field(self):
 		self.party_account_field = None
@@ -328,11 +342,11 @@ class PaymentEntry(AccountsController):
 		if not self.name:
 			return
 
-
 		if self.bank_transactions:
 			return
 
-		linked_transactions = frappe.db.sql("""
+		linked_transactions = frappe.db.sql(
+			"""
 			SELECT
 				btp.parent as bank_transaction,
 				bt.date,
@@ -342,7 +356,10 @@ class PaymentEntry(AccountsController):
 			INNER JOIN `tabBank Transaction` bt ON bt.name = btp.parent
 			WHERE btp.payment_entry = %s
 			ORDER BY bt.date DESC
-		""", (self.name,), as_dict=True)
+		""",
+			(self.name,),
+			as_dict=True,
+		)
 
 		for row in linked_transactions:
 			self.append("bank_transactions", row)
@@ -393,13 +410,15 @@ class PaymentEntry(AccountsController):
 					if not bank_transaction.bank_account and self.bank_account:
 						bank_transaction.bank_account = self.bank_account
 
-					bank_transaction.append("payment_entries", {
-						"payment_document": "Payment Entry",
-						"payment_entry": self.name,
-						"allocated_amount": bt_row.allocated_amount
-					})
+					bank_transaction.append(
+						"payment_entries",
+						{
+							"payment_document": "Payment Entry",
+							"payment_entry": self.name,
+							"allocated_amount": bt_row.allocated_amount,
+						},
+					)
 					bank_transaction.save(ignore_permissions=True)
-
 
 	def on_submit(self):
 		if self.difference_amount:
@@ -532,7 +551,7 @@ class PaymentEntry(AccountsController):
 			frappe.throw(_("Chỉ được huỷ Phiếu thanh toán khi đang ở trạng thái Nháp"))
 
 		user_roles = frappe.get_roles()
-		is_admin = ("Administrator" in user_roles or "Developer" in user_roles)
+		is_admin = "Administrator" in user_roles or "Developer" in user_roles
 		if not is_admin:
 			payment_code = None
 			if self.mode_of_payment:
@@ -552,14 +571,17 @@ class PaymentEntry(AccountsController):
 		doc.flags.ignore_validate = True
 		doc.save()
 
-		frappe.db.sql("""
+		frappe.db.sql(
+			"""
 			UPDATE `tabPayment Entry`
 			SET docstatus = 2,
 			status = 'Cancelled',
 			payment_order_status = 'Cancel',
 			custom_transfer_status = 'cancel'
 			WHERE name = %s
-		""", self.name)
+		""",
+			self.name,
+		)
 
 		frappe.db.commit()
 		return {"message": _("Huỷ Phiếu thanh toán thành công")}
@@ -585,7 +607,10 @@ class PaymentEntry(AccountsController):
 				so.flags.ignore_links = True
 				so.save(ignore_permissions=True, ignore_version=True)
 			except Exception as e:
-				frappe.log_error(f"Error updating Sales Order financials from Payment Entry {self.name}: {str(e)}", "Payment Entry -> SO Update Error")
+				frappe.log_error(
+					f"Error updating Sales Order financials from Payment Entry {self.name}: {e!s}",
+					"Payment Entry -> SO Update Error",
+				)
 
 	def validate_duplicate_entry(self):
 		reference_names = set()
@@ -644,7 +669,10 @@ class PaymentEntry(AccountsController):
 	def set_shipping_code_from_sales_order(self):
 		for ref in self.get("references", []):
 			if ref.reference_name:
-				self.shipping_code = frappe.db.get_value("Sales Order", ref.reference_name, "tracking_number") or self.shipping_code
+				self.shipping_code = (
+					frappe.db.get_value("Sales Order", ref.reference_name, "tracking_number")
+					or self.shipping_code
+				)
 				break
 
 	def set_bank_account_from_mapping(self):
@@ -675,7 +703,9 @@ class PaymentEntry(AccountsController):
 					target_account_no = "33399968868"
 
 		if target_account_no:
-			bank_account_name = frappe.db.get_value("Bank Account", {"bank_account_no": target_account_no}, "name")
+			bank_account_name = frappe.db.get_value(
+				"Bank Account", {"bank_account_no": target_account_no}, "name"
+			)
 			if bank_account_name:
 				bank_doc = frappe.get_doc("Bank Account", bank_account_name)
 				self.bank_account = bank_doc.name
@@ -1103,20 +1133,26 @@ class PaymentEntry(AccountsController):
 			if bt.allocated_amount and self.paid_amount:
 				if abs(flt(bt.allocated_amount) - flt(self.paid_amount)) > 0.01:
 					frappe.throw(
-						_("Bank Transaction allocated amount {0} must match Payment Entry paid amount {1}").format(
-							frappe.bold(bt.allocated_amount),
-							frappe.bold(self.paid_amount)
-						)
+						_(
+							"Bank Transaction allocated amount {0} must match Payment Entry paid amount {1}"
+						).format(frappe.bold(bt.allocated_amount), frappe.bold(self.paid_amount))
 					)
 
 			if not bt.bank_transaction:
 				frappe.throw(_("Dòng #{0}: Bắt buộc chọn Giao dịch ngân hàng").format(bt.idx))
 
-			sepay_account_number = frappe.db.get_value("Bank Transaction", bt.bank_transaction, "sepay_account_number")
+			sepay_account_number = frappe.db.get_value(
+				"Bank Transaction", bt.bank_transaction, "sepay_account_number"
+			)
 			if sepay_account_number and self.bank_account_no and self.bank_account_no != sepay_account_number:
 				msg = _("STK ngân hàng của phiếu thanh toán không khớp STK ngân hàng của giao dịch ngân hàng")
 				msg += "<br><br>"
-				msg += _("1. Bạn cần phải thay đổi <b>Tài khoản ngân hàng</b> đúng với Ngân hàng của phiếu <b>Giao dịch ngân hàng</b>. Bấm <b>Lưu</b>") + "<br>"
+				msg += (
+					_(
+						"1. Bạn cần phải thay đổi <b>Tài khoản ngân hàng</b> đúng với Ngân hàng của phiếu <b>Giao dịch ngân hàng</b>. Bấm <b>Lưu</b>"
+					)
+					+ "<br>"
+				)
 				msg += _("2. Sau đó map <b>Giao dịch ngân hàng</b> và bấm <b>Lưu</b>") + "<br><br>"
 				msg += _("<b>Lưu ý: Nếu bạn không làm được, hãy nhắn gửi tin nhắn đến nhóm hỗ trợ nhé!</b>")
 				frappe.throw(msg)
@@ -2727,8 +2763,8 @@ def get_outstanding_reference_documents(args, validate=False):
 
 	for fieldname, date_fields in date_fields_dict.items():
 		if args.get(date_fields[0]) and args.get(date_fields[1]):
-			condition += " and {} between '{}' and '{}'".format(
-				fieldname, args.get(date_fields[0]), args.get(date_fields[1])
+			condition += (
+				f" and {fieldname} between '{args.get(date_fields[0])}' and '{args.get(date_fields[1])}'"
 			)
 			posting_and_due_date.append(ple[fieldname][args.get(date_fields[0]) : args.get(date_fields[1])])
 		elif args.get(date_fields[0]):
@@ -3249,12 +3285,13 @@ def get_reference_details(
 	)
 
 	if reference_doctype == "Sales Order":
-		res.update({
-			"balance": flt(ref_doc.get("balance")),
-			"order_number": ref_doc.get("order_number"),
-			"split_order_group_name": ref_doc.get("split_order_group_name")
-		})
-
+		res.update(
+			{
+				"balance": flt(ref_doc.get("balance")),
+				"order_number": ref_doc.get("order_number"),
+				"split_order_group_name": ref_doc.get("split_order_group_name"),
+			}
+		)
 
 	if account:
 		res.update({"account": account})
@@ -3971,7 +4008,6 @@ def make_payment_order(source_name, target_doc=None):
 	return doclist
 
 
-
 @erpnext.allow_regional
 def add_regional_gl_entries(gl_entries, doc):
 	return
@@ -3980,20 +4016,16 @@ def add_regional_gl_entries(gl_entries, doc):
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_customer_with_phone(doctype, txt, searchfield, start, page_len, filters):
-	"""Custom query to search Customer by name or mobile_no"""	
+	"""Custom query to search Customer by name or mobile_no"""
 	raw_phone = txt
 	phone_variants = get_phone_variants(txt) if txt else [txt]
 
-	or_filters = [
-		["Customer", "name", "like", f"%{txt}%"],
-		["Customer", "customer_name", "like", f"%{txt}%"]
-	]
+	or_filters = [["Customer", "name", "like", f"%{txt}%"], ["Customer", "customer_name", "like", f"%{txt}%"]]
 
 	for variant in phone_variants:
-		or_filters.extend([
-			["Customer", "mobile_no", "like", f"%{variant}%"],
-			["Customer", "phone", "like", f"%{variant}%"]
-		])
+		or_filters.extend(
+			[["Customer", "mobile_no", "like", f"%{variant}%"], ["Customer", "phone", "like", f"%{variant}%"]]
+		)
 
 	digits = re.sub(r"\D", "", txt)
 	if digits:
@@ -4004,10 +4036,12 @@ def get_customer_with_phone(doctype, txt, searchfield, start, page_len, filters)
 			extra_variant = "84" + digits[1:]
 
 		if extra_variant and extra_variant not in phone_variants:
-			or_filters.extend([
-				["Customer", "mobile_no", "like", f"%{extra_variant}%"],
-				["Customer", "phone", "like", f"%{extra_variant}%"]
-			])
+			or_filters.extend(
+				[
+					["Customer", "mobile_no", "like", f"%{extra_variant}%"],
+					["Customer", "phone", "like", f"%{extra_variant}%"],
+				]
+			)
 
 	return frappe.get_list(
 		"Customer",
@@ -4016,8 +4050,9 @@ def get_customer_with_phone(doctype, txt, searchfield, start, page_len, filters)
 		order_by="modified desc",
 		limit_start=start,
 		limit_page_length=page_len,
-		as_list=True
+		as_list=True,
 	)
+
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
@@ -4041,9 +4076,7 @@ def get_bank_transactions(doctype, txt, searchfield, start, page_len, filters):
 			CASE WHEN name LIKE %(txt)s THEN 0 ELSE 1 END,
 			modified DESC
 		LIMIT %(page_len)s OFFSET %(start)s
-		""".format(
-			conditions=("AND company = %(company)s" if filters.get("company") else "Jemmia Diamond")
-		),
+		""".format(conditions=("AND company = %(company)s" if filters.get("company") else "Jemmia Diamond")),
 		{
 			"txt": f"%{txt}%",
 			"company": filters.get("company"),
@@ -4107,8 +4140,9 @@ def get_sales_orders_for_auto_populate(company, customer):
 			"company": company,
 			"customer": customer,
 		},
-		as_dict=True
+		as_dict=True,
 	)
+
 
 def cancel_pending_transfers():
 	from frappe.utils import add_to_date, now_datetime
@@ -4124,20 +4158,16 @@ def cancel_pending_transfers():
 		filters={
 			"custom_transfer_status": "pending",
 			"creation": ("<", threshold_time),
-			"mode_of_payment": ["in", allowed_modes]
+			"mode_of_payment": ["in", allowed_modes],
 		},
-		pluck="name"
+		pluck="name",
 	)
 
 	if not all_pending_entries:
 		return
 
 	entries_with_bank_transactions = frappe.get_all(
-		"Payment Entry Bank Transaction",
-		filters={
-			"parent": ["in", all_pending_entries]
-		},
-		pluck="parent"
+		"Payment Entry Bank Transaction", filters={"parent": ["in", all_pending_entries]}, pluck="parent"
 	)
 
 	payment_entry_names = list(set(all_pending_entries) - set(entries_with_bank_transactions))
@@ -4150,22 +4180,27 @@ def cancel_pending_transfers():
 			doc.flags.ignore_validate = True
 			doc.save()
 
-			frappe.db.sql("""
+			frappe.db.sql(
+				"""
 				UPDATE `tabPayment Entry`
 				SET docstatus = 2,
 				status = 'Cancelled',
 				custom_transfer_status = 'cancel',
 				payment_order_status = 'Cancel'
 				WHERE name = %s
-			""", name)
+			""",
+				name,
+			)
 		except Exception as e:
-			frappe.log_error(f"Failed to cancel Payment Entry {name}: {str(e)}")
+			frappe.log_error(f"Failed to cancel Payment Entry {name}: {e!s}")
 
 	frappe.db.commit()
 
-@frappe.whitelist()
-def get_payment_entry_list(doctype=None, txt="", searchfield="name", start=0, page_len=20, filters=None, as_dict=False, **kwargs):
 
+@frappe.whitelist()
+def get_payment_entry_list(
+	doctype=None, txt="", searchfield="name", start=0, page_len=20, filters=None, as_dict=False, **kwargs
+):
 	phone_search = frappe.form_dict.get("phone_search") or kwargs.get("phone_search")
 	order_number_search = frappe.form_dict.get("order_number_search") or kwargs.get("order_number_search")
 	reference_filter = frappe.form_dict.get("reference_filter") or kwargs.get("reference_filter")
@@ -4197,7 +4232,9 @@ def get_payment_entry_list(doctype=None, txt="", searchfield="name", start=0, pa
 		values["phone"] = f"%{phone_search}%"
 
 	if order_number_search:
-		conditions.append("(per.order_number LIKE %(order_number)s OR per.split_order_group_name LIKE %(order_number)s)")
+		conditions.append(
+			"(per.order_number LIKE %(order_number)s OR per.split_order_group_name LIKE %(order_number)s)"
+		)
 		values["order_number"] = f"%{order_number_search}%"
 
 	if reference_filter == "has_references":
@@ -4258,9 +4295,10 @@ def get_payment_entry_list(doctype=None, txt="", searchfield="name", start=0, pa
 
 	return frappe.db.sql(query, values, as_dict=True)
 
+
 @frappe.whitelist()
 def recreate_payment_entry(payment_entry_name):
-	from frappe.utils import now_datetime, nowdate, flt
+	from frappe.utils import flt, now_datetime, nowdate
 
 	doc = frappe.get_doc("Payment Entry", payment_entry_name)
 
@@ -4272,7 +4310,7 @@ def recreate_payment_entry(payment_entry_name):
 	new_doc.docstatus = 0
 	new_doc.payment_date = now_datetime()
 	new_doc.posting_date = nowdate()
-	new_doc.payment_order_status = 'Pending'
+	new_doc.payment_order_status = "Pending"
 
 	for field in new_doc.meta.fields:
 		if field.fieldname.startswith("custom_") or field.fieldname.startswith("misa_"):
@@ -4294,7 +4332,7 @@ def recreate_payment_entry(payment_entry_name):
 			"description",
 			"sepay_transaction_content",
 			"sepay_order_description",
-			"sepay_order_number"
+			"sepay_order_number",
 		]
 
 		conditions = " OR ".join([f"{field} LIKE %s" for field in fields_to_search])
@@ -4313,34 +4351,42 @@ def recreate_payment_entry(payment_entry_name):
 
 			if flt(bt.sepay_amount_in) == amount:
 				if bt.payment_entries:
-					alert_message = _("Giao dịch ngân hàng có nội dung chuyển khoản của phiếu cũ đã được map với phiếu khác")
+					alert_message = _(
+						"Giao dịch ngân hàng có nội dung chuyển khoản của phiếu cũ đã được map với phiếu khác"
+					)
 					alert_indicator = "orange"
 				else:
-					bt.append("payment_entries", {
-						"payment_document": "Payment Entry",
-						"payment_entry": new_doc.name,
-						"allocated_amount": amount
-					})
+					bt.append(
+						"payment_entries",
+						{
+							"payment_document": "Payment Entry",
+							"payment_entry": new_doc.name,
+							"allocated_amount": amount,
+						},
+					)
 					bt.save()
 					alert_message = _("Tạo và map giao dịch ngân hàng thành công")
 					alert_indicator = "green"
 			else:
-				alert_message = _("Không tìm thấy giao dịch ngân hàng khớp số tiền: '{0}' và nội dung: '{1}'. Vui lòng map thủ công.").format(amount, transfer_note)
+				alert_message = _(
+					"Không tìm thấy giao dịch ngân hàng khớp số tiền: '{0}' và nội dung: '{1}'. Vui lòng map thủ công."
+				).format(amount, transfer_note)
 				alert_indicator = "red"
 		else:
-			alert_message = _("Không tìm thấy giao dịch ngân hàng khớp số tiền: '{0}' và nội dung: '{1}'. Vui lòng map thủ công.").format(amount, transfer_note)
+			alert_message = _(
+				"Không tìm thấy giao dịch ngân hàng khớp số tiền: '{0}' và nội dung: '{1}'. Vui lòng map thủ công."
+			).format(amount, transfer_note)
 			alert_indicator = "red"
 	else:
 		alert_message = _("Thiếu nội dung chuyển khoản ở phiếu cũ")
 		alert_indicator = "red"
 
-	return { "name": new_doc.name, "alert": alert_message, "indicator": alert_indicator }
+	return {"name": new_doc.name, "alert": alert_message, "indicator": alert_indicator}
+
 
 def daily_run_success_batch():
 	webhooks = frappe.get_all(
-		"Webhook",
-		filters={"enabled": 1, "webhook_doctype": "Payment Entry"},
-		fields=["name"]
+		"Webhook", filters={"enabled": 1, "webhook_doctype": "Payment Entry"}, fields=["name"]
 	)
 
 	webhook = None
@@ -4357,7 +4403,7 @@ def daily_run_success_batch():
 	if not webhook:
 		frappe.log_error(
 			"No webhook found for Payment Entry with 'erp-topic: update' header",
-			"Payment Entry Webhook Trigger"
+			"Payment Entry Webhook Trigger",
 		)
 		return
 
@@ -4368,9 +4414,9 @@ def daily_run_success_batch():
 			"payment_order_status": "Success",
 			"verified_by": ["is", "set"],
 			"misa_synced": 0,
-			"docstatus": 0
+			"docstatus": 0,
 		},
-		pluck="name"
+		pluck="name",
 	)
 
 	if not payment_entries:
@@ -4384,10 +4430,11 @@ def daily_run_success_batch():
 			frappe.logger().info(f"Webhook triggered successfully for Payment Entry: {pe_name}")
 		except Exception as e:
 			frappe.log_error(
-				f"Failed to trigger webhook for Payment Entry {pe_name}: {str(e)}",
-				"Payment Entry Webhook Trigger Error"
+				f"Failed to trigger webhook for Payment Entry {pe_name}: {e!s}",
+				"Payment Entry Webhook Trigger Error",
 			)
 		time.sleep(1)
+
 
 def sync_so_snapshot_pe_fields_background(pe_name):
 	try:
@@ -4395,11 +4442,13 @@ def sync_so_snapshot_pe_fields_background(pe_name):
 		if not pe_doc.references:
 			return
 
-		so_names = list({
-			ref.reference_name
-			for ref in pe_doc.references
-			if ref.reference_doctype == "Sales Order" and ref.reference_name
-		})
+		so_names = list(
+			{
+				ref.reference_name
+				for ref in pe_doc.references
+				if ref.reference_doctype == "Sales Order" and ref.reference_name
+			}
+		)
 
 		for so_name in so_names:
 			so = frappe.get_doc("Sales Order", so_name)
@@ -4415,4 +4464,6 @@ def sync_so_snapshot_pe_fields_background(pe_name):
 			so.save()
 
 	except Exception:
-		frappe.log_error(frappe.get_traceback(), f"sync_so_snapshot_pe_fields_background failed for {pe_name}")
+		frappe.log_error(
+			frappe.get_traceback(), f"sync_so_snapshot_pe_fields_background failed for {pe_name}"
+		)

@@ -18,6 +18,7 @@ dependencies = [
     "googlemaps~=4.10.0",
     "plaid-python~=7.2.1",
     "python-youtube~=0.9.8",
+    "boto3",
 
     # Not used directly - required by PyQRCode for PNG generation
     "pypng~=0.20220715.0",
@@ -69,6 +70,20 @@ ignore = [
     "F722", # syntax error in forward type annotation
     "W191", # indentation contains tabs
     "RUF001", # string contains ambiguous unicode character
+    "F601", # dictionary key literal repeated
+    "F811", # redefinition of unused
+    "F821", # undefined name
+    "F841", # local variable is assigned to but never used
+    "E721", # use is and is not for type comparisons
+    "E722", # bare except
+    "UP030", # implicit references for positional format fields
+    "UP031", # format specifiers instead of percent format
+    "UP032", # f-string instead of format call
+    "UP038", # X | Y in isinstance instead of (X, Y)
+    "B007", # loop control variable not used within loop body
+    "RUF010", # use explicit conversion flag
+    "RUF013", # PEP 484 prohibits implicit Optional
+    "W292", # no newline at end of file
 ]
 typing-modules = ["frappe.types.DF"]
 

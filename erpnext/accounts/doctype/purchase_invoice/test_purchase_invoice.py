@@ -624,7 +624,7 @@ class TestPurchaseInvoice(ERPNextTestSuite, StockTestMixin):
 			where project = '{project.name}'
 			and docstatus=1"""
 		)
-		existing_purchase_cost = existing_purchase_cost and existing_purchase_cost[0][0] or 0
+		existing_purchase_cost = (existing_purchase_cost and existing_purchase_cost[0][0]) or 0
 
 		pi = make_purchase_invoice(currency="USD", conversion_rate=60, project=project.name)
 		self.assertEqual(

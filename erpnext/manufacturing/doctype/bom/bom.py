@@ -32,11 +32,11 @@ class BOMTree:
 
 	# specifying the attributes to save resources
 	# ref: https://docs.python.org/3/reference/datamodel.html#slots
-	__slots__ = ["name", "child_items", "is_bom", "item_code", "qty", "exploded_qty", "bom_qty"]
+	__slots__ = ["bom_qty", "child_items", "exploded_qty", "is_bom", "item_code", "name", "qty"]
 
 	def __init__(self, name: str, is_bom: bool = True, exploded_qty: float = 1.0, qty: float = 1) -> None:
 		self.name = name  # name of node, BOM number if is_bom else item_code
-		self.child_items: list["BOMTree"] = []  # list of child items
+		self.child_items: list[BOMTree] = []  # list of child items
 		self.is_bom = is_bom  # true if the node is a BOM and not a leaf item
 		self.item_code: str = None  # item_code associated with node
 		self.qty = qty  # required unit quantity to make one unit of parent item.
@@ -495,22 +495,21 @@ class BOM(WebsiteGenerator):
 
 		item = self.get_item_det(args["item_code"])
 
-		args["bom_no"] = args["bom_no"] or item and cstr(item["default_bom"]) or ""
+		args["bom_no"] = args["bom_no"] or (item and cstr(item["default_bom"])) or ""
 		args["transfer_for_manufacture"] = (
 			cstr(args.get("include_item_in_manufacturing", ""))
-			or item
-			and item.include_item_in_manufacturing
+			or (item and item.include_item_in_manufacturing)
 			or 0
 		)
 		args.update(item)
 
 		rate = self.get_rm_rate(args)
 		ret_item = {
-			"item_name": item and args["item_name"] or "",
-			"description": item and args["description"] or "",
-			"image": item and args["image"] or "",
-			"stock_uom": item and args["stock_uom"] or "",
-			"uom": args["uom"] if args.get("uom") else item and args["stock_uom"] or "",
+			"item_name": (item and args["item_name"]) or "",
+			"description": (item and args["description"]) or "",
+			"image": (item and args["image"]) or "",
+			"stock_uom": (item and args["stock_uom"]) or "",
+			"uom": args["uom"] if args.get("uom") else (item and args["stock_uom"]) or "",
 			"conversion_factor": args["conversion_factor"] if args.get("conversion_factor") else 1,
 			"bom_no": args["bom_no"],
 			"is_phantom_item": frappe.get_value("BOM", args["bom_no"], "is_phantom_bom")
@@ -626,7 +625,7 @@ class BOM(WebsiteGenerator):
 			bom_no,
 			as_dict=1,
 		)
-		return bom and bom[0]["unit_cost"] or 0
+		return (bom and bom[0]["unit_cost"]) or 0
 
 	def manage_default_bom(self):
 		"""Uncheck others if current one is selected as default or
@@ -1465,7 +1464,7 @@ def get_bom_items_as_dict(
 def get_bom_items(bom, company, qty=1, fetch_exploded=1):
 	items = get_bom_items_as_dict(bom, company, qty, fetch_exploded, include_non_stock_items=True).values()
 	items = list(items)
-	items.sort(key=functools.cmp_to_key(lambda a, b: a.item_code > b.item_code and 1 or -1))
+	items.sort(key=functools.cmp_to_key(lambda a, b: (a.item_code > b.item_code and 1) or -1))
 	return items
 
 

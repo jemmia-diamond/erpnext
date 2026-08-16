@@ -6,6 +6,5 @@ frappe.ui.form.on("Appointment", {
 		// Move to Client Script
 	},
 
-	onload: function (frm) {
-	},
+	onload: function (frm) {},
 });

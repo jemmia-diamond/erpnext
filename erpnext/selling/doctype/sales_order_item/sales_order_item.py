@@ -167,7 +167,7 @@ def trigger_manual_webhook(item_name):
 				doc_name=doc.name,
 				webhook=webhook,
 				queue=webhook.get("background_jobs_queue") or "default",
-				now=frappe.flags.in_test
+				now=frappe.flags.in_test,
 			)
 
 	if not triggered:

@@ -2033,7 +2033,7 @@ class SalesInvoice(SellingController):
 					where dn_detail=%s and docstatus=1""",
 					d.dn_detail,
 				)
-				billed_amt = billed_amt and billed_amt[0][0] or 0
+				billed_amt = (billed_amt and billed_amt[0][0]) or 0
 				frappe.db.set_value(
 					"Delivery Note Item",
 					d.dn_detail,

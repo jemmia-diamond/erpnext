@@ -617,32 +617,19 @@ class StockReservationEntry(Document):
 
 		if qty_to_be_reserved > allowed_qty:
 			actual_qty = get_stock_balance(self.item_code, self.warehouse)
-			msg = """
-				Cannot reserve more than Allowed Qty {} {} for Item {} against {} {}.<br /><br />
+			msg = f"""
+				Cannot reserve more than Allowed Qty {frappe.bold(allowed_qty)} {self.stock_uom} for Item {frappe.bold(self.item_code)} against {self.voucher_type} {frappe.bold(self.voucher_no)}.<br /><br />
 				The <b>Allowed Qty</b> is calculated as follows:<br />
 				<ul>
-					<li>Actual Qty [Available Qty at Warehouse] = {}</li>
-					<li>Reserved Stock [Ignore current SRE] = {}</li>
-					<li>Available Qty To Reserve [Actual Qty - Reserved Stock] = {}</li>
-					<li>Voucher Qty [Voucher Item Qty] = {}</li>
-					<li>Delivered Qty [Qty delivered against the Voucher Item] = {}</li>
-					<li>Total Reserved Qty [Qty reserved against the Voucher Item] = {}</li>
-					<li>Allowed Qty [Minimum of (Available Qty To Reserve, (Voucher Qty - Delivered Qty - Total Reserved Qty))] = {}</li>
+					<li>Actual Qty [Available Qty at Warehouse] = {actual_qty}</li>
+					<li>Reserved Stock [Ignore current SRE] = {actual_qty - self.available_qty}</li>
+					<li>Available Qty To Reserve [Actual Qty - Reserved Stock] = {self.available_qty}</li>
+					<li>Voucher Qty [Voucher Item Qty] = {self.voucher_qty}</li>
+					<li>Delivered Qty [Qty delivered against the Voucher Item] = {voucher_delivered_qty}</li>
+					<li>Total Reserved Qty [Qty reserved against the Voucher Item] = {total_reserved_qty}</li>
+					<li>Allowed Qty [Minimum of (Available Qty To Reserve, (Voucher Qty - Delivered Qty - Total Reserved Qty))] = {allowed_qty}</li>
 				</ul>
-			""".format(
-				frappe.bold(allowed_qty),
-				self.stock_uom,
-				frappe.bold(self.item_code),
-				self.voucher_type,
-				frappe.bold(self.voucher_no),
-				actual_qty,
-				actual_qty - self.available_qty,
-				self.available_qty,
-				self.voucher_qty,
-				voucher_delivered_qty,
-				total_reserved_qty,
-				allowed_qty,
-			)
+			"""
 			frappe.throw(msg)
 
 		if qty_to_be_reserved <= self.delivered_qty:

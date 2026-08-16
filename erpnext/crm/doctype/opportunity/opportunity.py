@@ -11,8 +11,9 @@ from frappe.email.inbox import link_communication_to_document
 from frappe.model.mapper import get_mapped_doc
 from frappe.query_builder import DocType, Interval
 from frappe.query_builder.functions import Now
-from frappe.utils import flt, get_fullname
-from frappe.utils import  date_diff, getdate, nowdate
+from frappe.utils import date_diff, flt, get_fullname, getdate, nowdate
+
+from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
 from erpnext.crm.utils import (
 	CRMNote,
 	copy_comments,
@@ -20,9 +21,8 @@ from erpnext.crm.utils import (
 	link_open_events,
 	link_open_tasks,
 )
-from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
-from erpnext.utilities.phone_utils import normalize_to_standard_format
 from erpnext.setup.utils import get_exchange_rate
+from erpnext.utilities.phone_utils import normalize_to_standard_format
 from erpnext.utilities.transaction_base import TransactionBase
 
 
@@ -33,17 +33,22 @@ class Opportunity(TransactionBase, CRMNote):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
+		from frappe.types import DF
+
 		from erpnext.crm.doctype.competitor_detail.competitor_detail import CompetitorDetail
 		from erpnext.crm.doctype.crm_note.crm_note import CRMNote
 		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from erpnext.crm.doctype.opportunity_item.opportunity_item import OpportunityItem
-		from erpnext.crm.doctype.opportunity_lost_reason_detail.opportunity_lost_reason_detail import OpportunityLostReasonDetail
+		from erpnext.crm.doctype.opportunity_lost_reason_detail.opportunity_lost_reason_detail import (
+			OpportunityLostReasonDetail,
+		)
 		from erpnext.crm.doctype.sales_person_child.sales_person_child import SalesPersonChild
 		from erpnext.selling.doctype.sales_team.sales_team import SalesTeam
-		from frappe.types import DF
 
 		address_display: DF.TextEditor | None
-		age_rage: DF.Literal["", "Under 18", "18 to 24", "25 to 34", "35 to 44", "45 to 54", "55 to 64", "65+", "Unidentified"]
+		age_rage: DF.Literal[
+			"", "Under 18", "18 to 24", "25 to 34", "35 to 44", "45 to 54", "55 to 64", "65+", "Unidentified"
+		]
 		amended_from: DF.Link | None
 		annual_revenue: DF.Currency
 		base_opportunity_amount: DF.Currency
@@ -88,7 +93,9 @@ class Opportunity(TransactionBase, CRMNote):
 		phone_ext: DF.Data | None
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
 		probability: DF.Percent
-		probability_text: DF.Literal["Low Probability", "Considering", "Promising", "High Probability", "Committed to Buy"]
+		probability_text: DF.Literal[
+			"Low Probability", "Considering", "Promising", "High Probability", "Committed to Buy"
+		]
 		province: DF.Link | None
 		purpose_lead: DF.Link | None
 		region: DF.Link | None
@@ -422,6 +429,7 @@ class Opportunity(TransactionBase, CRMNote):
 				if not d.get(key):
 					d.set(key, item.get(key))
 
+
 @frappe.whitelist()
 def get_item_details(item_code):
 	item = frappe.db.sql(
@@ -431,12 +439,12 @@ def get_item_details(item_code):
 		as_dict=1,
 	)
 	return {
-		"item_name": item and item[0]["item_name"] or "",
-		"uom": item and item[0]["stock_uom"] or "",
-		"description": item and item[0]["description"] or "",
-		"image": item and item[0]["image"] or "",
-		"item_group": item and item[0]["item_group"] or "",
-		"brand": item and item[0]["brand"] or "",
+		"item_name": (item and item[0]["item_name"]) or "",
+		"uom": (item and item[0]["stock_uom"]) or "",
+		"description": (item and item[0]["description"]) or "",
+		"image": (item and item[0]["image"]) or "",
+		"item_group": (item and item[0]["item_group"]) or "",
+		"brand": (item and item[0]["brand"]) or "",
 	}
 
 
@@ -568,6 +576,7 @@ def auto_close_opportunity():
 	from erpnext.crm.doctype.opportunity.custom.opportunity_custom import (
 		auto_close_opportunity as custom_auto_close,
 	)
+
 	return custom_auto_close()
 
 	auto_close_after_days = get_crm_settings().get("close_opportunity_after_days") or 15

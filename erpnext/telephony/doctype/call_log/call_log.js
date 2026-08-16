@@ -2,6 +2,5 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Call Log", {
-	refresh: function (frm) {
-	},
+	refresh: function (frm) {},
 });

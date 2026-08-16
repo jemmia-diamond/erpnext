@@ -319,8 +319,8 @@ def set_stock_balance_as_per_serial_no(
 			"voucher_detail_no": "",
 			"actual_qty": flt(serial_nos[0][0]) - flt(d[2]),
 			"stock_uom": d[3],
-			"incoming_rate": sle and flt(serial_nos[0][0]) > flt(d[2]) and flt(sle[0][0]) or 0,
-			"company": sle and cstr(sle[0][1]) or 0,
+			"incoming_rate": (sle and flt(serial_nos[0][0]) > flt(d[2]) and flt(sle[0][0])) or 0,
+			"company": (sle and cstr(sle[0][1])) or 0,
 			"batch_no": "",
 			"serial_no": "",
 		}

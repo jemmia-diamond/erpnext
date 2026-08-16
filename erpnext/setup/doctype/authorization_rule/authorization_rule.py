@@ -66,7 +66,7 @@ class AuthorizationRule(Document):
 				self.name,
 			),
 		)
-		auth_exists = exists and exists[0][0] or ""
+		auth_exists = (exists and exists[0][0]) or ""
 		if auth_exists:
 			frappe.throw(_("Duplicate Entry. Please check Authorization Rule {0}").format(auth_exists))
 

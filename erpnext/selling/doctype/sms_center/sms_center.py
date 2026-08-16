@@ -84,9 +84,9 @@ class SMSCenter(Document):
 
 		elif self.send_to == "All Employee (Active)":
 			where_clause = (
-				self.department and " and department = '%s'" % self.department.replace("'", "'") or ""
-			)
-			where_clause += self.branch and " and branch = '%s'" % self.branch.replace("'", "'") or ""
+				self.department and " and department = '%s'" % self.department.replace("'", "'")
+			) or ""
+			where_clause += (self.branch and " and branch = '%s'" % self.branch.replace("'", "'")) or ""
 
 			rec = frappe.db.sql(
 				"""select employee_name, cell_number from

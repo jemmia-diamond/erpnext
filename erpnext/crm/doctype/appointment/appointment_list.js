@@ -1,3 +1,3 @@
 frappe.listview_settings["Appointment"] = {
-	hide_name_column: true
+	hide_name_column: true,
 };

@@ -186,9 +186,7 @@ class SupplierQuotation(BuyingController):
 				frappe.throw(
 					_("Supplier {0} not found in {1}").format(
 						self.supplier,
-						"<a href='desk/app/Form/Request for Quotation/{0}'> Request for Quotation {0} </a>".format(
-							doc.name
-						),
+						f"<a href='desk/app/Form/Request for Quotation/{doc.name}'> Request for Quotation {doc.name} </a>",
 					)
 				)
 

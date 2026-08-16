@@ -31,14 +31,12 @@ def get_lead_name_by_conversation_id(conversation_id: str):
 	)
 	return link_name
 
+
 def get_lead_by_name(lead_name: str):
+	lead = None
+	try:
+		lead = frappe.get_doc("Lead", {"name": lead_name})
+	except Exception:
+		return None
 
-    lead= None
-    try:
-        lead = frappe.get_doc("Lead", {
-            "name" : lead_name
-        })
-    except Exception:
-        return None
-
-    return lead
+	return lead

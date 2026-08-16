@@ -2,10 +2,11 @@
 # License: GNU General Public License v3. See license.txt
 
 
+from fractions import Fraction
+
 import frappe
 from frappe import _, bold, throw
 from frappe.utils import cint, flt, get_link_to_form, nowtime
-from fractions import Fraction
 
 from erpnext.accounts.party import render_address
 from erpnext.controllers.accounts_controller import get_taxes_and_charges
@@ -250,13 +251,17 @@ class SellingController(StockController):
 				raw_amount = amt * frac
 				p = self.precision("allocated_amount", sales_person)
 				sales_person.allocated_amount = flt(float(raw_amount), p)
-				allocated_percentage = flt(float(frac) * 100.0,
-										self.precision("allocated_percentage", sales_person))
+				allocated_percentage = flt(
+					float(frac) * 100.0, self.precision("allocated_percentage", sales_person)
+				)
 			else:
-				allocated_percentage = flt(sales_person.allocated_percentage,
-										self.precision("allocated_percentage", sales_person))
-				sales_person.allocated_amount = flt(float(amt * allocated_percentage / 100.0),
-												self.precision("allocated_amount", sales_person))
+				allocated_percentage = flt(
+					sales_person.allocated_percentage, self.precision("allocated_percentage", sales_person)
+				)
+				sales_person.allocated_amount = flt(
+					float(amt * allocated_percentage / 100.0),
+					self.precision("allocated_amount", sales_person),
+				)
 
 			if sales_person.commission_rate:
 				sales_person.incentives = flt(
@@ -478,8 +483,8 @@ class SellingController(StockController):
 			so_detail,
 			as_dict=1,
 		)
-		so_qty = so_item and flt(so_item[0]["qty"]) or 0.0
-		so_warehouse = so_item and so_item[0]["warehouse"] or ""
+		so_qty = (so_item and flt(so_item[0]["qty"])) or 0.0
+		so_warehouse = (so_item and so_item[0]["warehouse"]) or ""
 		return so_qty, so_warehouse
 
 	def check_sales_order_on_hold_or_close(self, ref_fieldname):

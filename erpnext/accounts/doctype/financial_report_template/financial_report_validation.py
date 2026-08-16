@@ -371,7 +371,7 @@ class CalculationFormulaValidator(Validator):
 
 			result = frappe.safe_eval(formula, eval_globals=None, eval_locals=context)
 
-			if not isinstance(result, (int, float)):  # noqa: UP038
+			if not isinstance(result, (int, float)):
 				return f"Formula must return a numeric value, got {type(result).__name__}"
 
 			return None

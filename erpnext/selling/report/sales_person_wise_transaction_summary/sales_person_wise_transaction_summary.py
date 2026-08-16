@@ -146,7 +146,7 @@ def get_columns(filters):
 
 
 def get_entries(filters):
-	date_field = filters["doc_type"] == "Sales Order" and "transaction_date" or "posting_date"
+	date_field = (filters["doc_type"] == "Sales Order" and "transaction_date") or "posting_date"
 	if filters["doc_type"] == "Sales Order":
 		qty_field = "delivered_qty"
 	else:

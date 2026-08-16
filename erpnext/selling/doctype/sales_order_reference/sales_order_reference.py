@@ -18,8 +18,8 @@ class SalesOrderReference(Document):
 		parentfield: DF.Data
 		parenttype: DF.Data
 		sales_order: DF.Link | None
+
 	# end: auto-generated types
 	def validate(self):
 		if self.sales_order and not self.order_number:
 			self.order_number = frappe.db.get_value("Sales Order", self.sales_order, "order_number")
-

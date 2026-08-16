@@ -234,30 +234,30 @@ frappe.ui.form.on("Payment Entry", {
 			"Payment Entry Reference"
 		);
 
-		frm.set_query("bank_transaction", "bank_transactions", function() {
+		frm.set_query("bank_transaction", "bank_transactions", function () {
 			return {
 				query: "erpnext.accounts.doctype.payment_entry.payment_entry.get_bank_transactions",
 				filters: {
-					company: frm.doc.company
-				}
+					company: frm.doc.company,
+				},
 			};
 		});
 
-		frm.set_query("reference_name", "references", function(doc, cdt, cdn) {
+		frm.set_query("reference_name", "references", function (doc, cdt, cdn) {
 			let row = locals[cdt][cdn];
 			if (row.reference_doctype === "Sales Order") {
 				return {
 					query: "erpnext.accounts.doctype.payment_entry.payment_entry.get_sales_orders_for_payment",
 					filters: {
 						company: frm.doc.company,
-						customer: frm.doc.party
-					}
+						customer: frm.doc.party,
+					},
 				};
 			}
 		});
 	},
 
-	get_payment_code: function(frm, callback) {
+	get_payment_code: function (frm, callback) {
 		if (!frm.doc.mode_of_payment) {
 			callback(null);
 			return;
@@ -268,7 +268,7 @@ frappe.ui.form.on("Payment Entry", {
 		});
 	},
 
-	update_gateway_options: function(frm) {
+	update_gateway_options: function (frm) {
 		frm.events.get_payment_code(frm, (payment_code) => {
 			if (payment_code === "pos") {
 				frm.set_df_property("gateway", "options", ["Payoo", "Vietcombank", "ACB"]);
@@ -322,7 +322,7 @@ frappe.ui.form.on("Payment Entry", {
 		});
 	},
 
-	update_field_visibility: function(frm) {
+	update_field_visibility: function (frm) {
 		if (!frm.doc.mode_of_payment) {
 			frm.toggle_display("gateway", false);
 			frm.toggle_display("bank_account", false);
@@ -333,9 +333,13 @@ frappe.ui.form.on("Payment Entry", {
 		}
 
 		frm.events.get_payment_code(frm, (payment_code) => {
-			frm.toggle_display("gateway", ["payment_link", "pos", "cash", "cash_on_delivery"].includes(payment_code));
+			frm.toggle_display(
+				"gateway",
+				["payment_link", "pos", "cash", "cash_on_delivery"].includes(payment_code)
+			);
 
-			const show_bank_account = payment_code && !["cash", "pos", "payment_link", "cash_on_delivery"].includes(payment_code);
+			const show_bank_account =
+				payment_code && !["cash", "pos", "payment_link", "cash_on_delivery"].includes(payment_code);
 			frm.toggle_display("bank_account", show_bank_account);
 
 			const is_new_or_has_bank = frm.is_new() || frm.doc.bank_account;
@@ -348,7 +352,7 @@ frappe.ui.form.on("Payment Entry", {
 		});
 	},
 
-	update_button_visibility: function(frm) {
+	update_button_visibility: function (frm) {
 		if (frm.doc.docstatus === 0) {
 			if (frm.page.btn_primary) {
 				frm.page.btn_primary.hide();
@@ -424,11 +428,11 @@ frappe.ui.form.on("Payment Entry", {
 										if (!r.exc) {
 											frappe.show_alert({
 												message: __("Huỷ Phiếu thanh toán thành công"),
-												indicator: "green"
+												indicator: "green",
 											});
 											frm.reload_doc();
 										}
-									}
+									},
 								});
 							}
 						);
@@ -437,35 +441,46 @@ frappe.ui.form.on("Payment Entry", {
 			});
 		}
 
-
 		if (frm.doc.qr_url) {
 			const qr_group = __("Mã QR");
-			frm.add_custom_button(__("Copy URL"), () => {
-				frappe.utils.copy_to_clipboard(frm.doc.qr_url);
-			}, qr_group);
+			frm.add_custom_button(
+				__("Copy URL"),
+				() => {
+					frappe.utils.copy_to_clipboard(frm.doc.qr_url);
+				},
+				qr_group
+			);
 
-			frm.add_custom_button(__("Tải mã xuống"), () => {
-				window.open(`${frm.doc.qr_url}&download=true`);
-			}, qr_group);
+			frm.add_custom_button(
+				__("Tải mã xuống"),
+				() => {
+					window.open(`${frm.doc.qr_url}&download=true`);
+				},
+				qr_group
+			);
 
-			frm.add_custom_button(__("Mở mã QR"), () => {
-				window.open(frm.doc.qr_url);
-			}, qr_group);
+			frm.add_custom_button(
+				__("Mở mã QR"),
+				() => {
+					window.open(frm.doc.qr_url);
+				},
+				qr_group
+			);
 		}
 
 		// Quick Re-create button for Cancelled Banking PEs
 		if (frm.doc.docstatus === 2) {
 			frm.events.get_payment_code(frm, (payment_code) => {
 				if (payment_code === "banking") {
-					frm.add_custom_button(__("Tạo lại phiếu nhanh"), function() {
+					frm.add_custom_button(__("Tạo lại phiếu nhanh"), function () {
 						frappe.call({
 							method: "erpnext.accounts.doctype.payment_entry.payment_entry.recreate_payment_entry",
 							args: {
-								payment_entry_name: frm.doc.name
+								payment_entry_name: frm.doc.name,
 							},
 							freeze: true,
 							freeze_message: __("Đang tạo phiếu mới và map giao dịch ngân hàng"),
-							callback: function(r) {
+							callback: function (r) {
 								if (r.message) {
 									if (r.message.name) {
 										frappe.set_route("Form", "Payment Entry", r.message.name);
@@ -473,11 +488,11 @@ frappe.ui.form.on("Payment Entry", {
 									if (r.message.alert) {
 										frappe.show_alert({
 											message: r.message.alert,
-											indicator: r.message.indicator || 'orange'
+											indicator: r.message.indicator || "orange",
 										});
 									}
 								}
-							}
+							},
 						});
 					}).addClass("btn-primary");
 				}
@@ -488,28 +503,42 @@ frappe.ui.form.on("Payment Entry", {
 		if (
 			!frm.is_new() &&
 			!frm.doc.verified_by &&
-			(frm.doc.payment_order_status === "Draft" || frm.doc.payment_order_status === "Pending" || frm.doc.payment_order_status === "Success") &&
+			(frm.doc.payment_order_status === "Draft" ||
+				frm.doc.payment_order_status === "Pending" ||
+				frm.doc.payment_order_status === "Success") &&
 			(frappe.user.has_role("Accounts User") || frappe.user.has_role("Accounts Manager"))
 		) {
-			let has_sales_order = frm.doc.references && frm.doc.references.some(ref => ref.reference_doctype === "Sales Order");
+			let has_sales_order =
+				frm.doc.references &&
+				frm.doc.references.some((ref) => ref.reference_doctype === "Sales Order");
 
 			let btn = frm.add_custom_button(__("Xác nhận giao dịch"), () => {
 				frm.events.get_payment_code(frm, (payment_code) => {
 					let requires_bank_transaction = payment_code === "banking";
-					if (requires_bank_transaction && (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0)) {
+					if (
+						requires_bank_transaction &&
+						(!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0)
+					) {
 						frappe.msgprint({
 							title: __("Không thể xác minh"),
 							indicator: "red",
-							message: __("- Thanh toán chuyển khoản phải có ít nhất <b>một giao dịch</b> ngân hàng để xác minh.<br><br><b>Yêu cầu: Bổ sung giao dịch ngân hàng.</b>")
+							message: __(
+								"- Thanh toán chuyển khoản phải có ít nhất <b>một giao dịch</b> ngân hàng để xác minh.<br><br><b>Yêu cầu: Bổ sung giao dịch ngân hàng.</b>"
+							),
 						});
 						return;
 					}
 
-					if (!frm.doc.references || !frm.doc.references.some(r => r.reference_doctype === "Sales Order")) {
+					if (
+						!frm.doc.references ||
+						!frm.doc.references.some((r) => r.reference_doctype === "Sales Order")
+					) {
 						frappe.msgprint({
 							title: __("Không thể xác minh"),
 							indicator: "red",
-							message: __("- Phiếu thanh toán phải có ít nhất <b>một đơn hàng</b> tham chiếu để xác minh.<br><br><b>Yêu cầu: Bổ sung đơn hàng.</b>")
+							message: __(
+								"- Phiếu thanh toán phải có ít nhất <b>một đơn hàng</b> tham chiếu để xác minh.<br><br><b>Yêu cầu: Bổ sung đơn hàng.</b>"
+							),
 						});
 						return;
 					}
@@ -517,17 +546,17 @@ frappe.ui.form.on("Payment Entry", {
 					frappe.call({
 						method: "verify_payment",
 						doc: frm.doc,
-						callback: function(r) {
+						callback: function (r) {
 							if (!r.exc) {
 								frm.reload_doc();
 							}
-						}
+						},
 					});
 				});
 			});
 
 			if (!has_sales_order) {
-				btn.addClass('disabled').prop('disabled', true);
+				btn.addClass("disabled").prop("disabled", true);
 			}
 		}
 	},
@@ -539,11 +568,11 @@ frappe.ui.form.on("Payment Entry", {
 		frm.events.checking_refund_amount(frm);
 	},
 
-	before_save: function(frm) {
+	before_save: function (frm) {
 		frm.events.validate_bank_transactions(frm);
 	},
 
-	validate_bank_transactions: function(frm) {
+	validate_bank_transactions: function (frm) {
 		if (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0) {
 			return;
 		}
@@ -555,8 +584,12 @@ frappe.ui.form.on("Payment Entry", {
 		for (let bt of frm.doc.bank_transactions) {
 			if (bt.allocated_amount && frm.doc.paid_amount) {
 				if (Math.abs(flt(bt.allocated_amount) - flt(frm.doc.paid_amount)) > 0.01) {
-					frappe.throw(__("Số tiền phân bổ của giao dịch ngân hàng ({0}) phải khớp với số tiền thanh toán của phiếu ({1}).",
-						[bt.allocated_amount, frm.doc.paid_amount]));
+					frappe.throw(
+						__(
+							"Số tiền phân bổ của giao dịch ngân hàng ({0}) phải khớp với số tiền thanh toán của phiếu ({1}).",
+							[bt.allocated_amount, frm.doc.paid_amount]
+						)
+					);
 				}
 			}
 
@@ -771,11 +804,16 @@ frappe.ui.form.on("Payment Entry", {
 
 		const update_references = (payment_code) => {
 			if (frm.doc.references && frm.doc.references.length > 0) {
-				frm.doc.references.forEach(function(row) {
+				frm.doc.references.forEach(function (row) {
 					if (row.reference_doctype === "Sales Order") {
-						frappe.model.set_value(row.doctype, row.name, "mode_of_payment", frm.doc.mode_of_payment);
+						frappe.model.set_value(
+							row.doctype,
+							row.name,
+							"mode_of_payment",
+							frm.doc.mode_of_payment
+						);
 
-						if (payment_code !== 'banking') {
+						if (payment_code !== "banking") {
 							frappe.model.set_value(row.doctype, row.name, "bank_account", "");
 							frappe.model.set_value(row.doctype, row.name, "bank", "");
 							frappe.model.set_value(row.doctype, row.name, "bank_account_no", "");
@@ -807,10 +845,9 @@ frappe.ui.form.on("Payment Entry", {
 		});
 	},
 
-
-	gateway: function(frm) {
+	gateway: function (frm) {
 		if (frm.doc.references && frm.doc.references.length > 0) {
-			frm.doc.references.forEach(function(row) {
+			frm.doc.references.forEach(function (row) {
 				if (row.reference_doctype === "Sales Order") {
 					frappe.model.set_value(row.doctype, row.name, "gateway", frm.doc.gateway);
 				}
@@ -819,11 +856,16 @@ frappe.ui.form.on("Payment Entry", {
 		}
 	},
 
-	bank_account_branch: function(frm) {
+	bank_account_branch: function (frm) {
 		if (frm.doc.references && frm.doc.references.length > 0) {
-			frm.doc.references.forEach(function(row) {
+			frm.doc.references.forEach(function (row) {
 				if (row.reference_doctype === "Sales Order") {
-					frappe.model.set_value(row.doctype, row.name, "bank_account_branch", frm.doc.bank_account_branch);
+					frappe.model.set_value(
+						row.doctype,
+						row.name,
+						"bank_account_branch",
+						frm.doc.bank_account_branch
+					);
 				}
 			});
 			frm.refresh_field("references");
@@ -966,7 +1008,7 @@ frappe.ui.form.on("Payment Entry", {
 		frm.clear_table("tax_withholding_entries");
 	},
 
-	auto_populate_sales_orders: function(frm) {
+	auto_populate_sales_orders: function (frm) {
 		if (!frm.doc.party || !frm.doc.paid_amount) {
 			return;
 		}
@@ -976,16 +1018,16 @@ frappe.ui.form.on("Payment Entry", {
 			method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_sales_orders_for_auto_populate",
 			args: {
 				company: frm.doc.company,
-				customer: frm.doc.party
+				customer: frm.doc.party,
 			},
-			callback: function(r) {
+			callback: function (r) {
 				if (r.message && r.message.length > 0) {
-					let sales_orders = r.message.filter(so => !(so.financial_status === "Paid"));
+					let sales_orders = r.message.filter((so) => !(so.financial_status === "Paid"));
 					if (sales_orders.length === 0) return;
 
 					let single_order = sales_orders.length === 1;
 
-					sales_orders.forEach(function(so) {
+					sales_orders.forEach(function (so) {
 						let row = frm.add_child("references");
 						row.reference_doctype = "Sales Order";
 						row.reference_name = so.name;
@@ -1001,50 +1043,97 @@ frappe.ui.form.on("Payment Entry", {
 							args: {
 								reference_doctype: "Sales Order",
 								reference_name: so.name,
-								party_account_currency: frm.doc.payment_type == "Receive"
-									? frm.doc.paid_from_account_currency
-									: frm.doc.paid_to_account_currency,
+								party_account_currency:
+									frm.doc.payment_type == "Receive"
+										? frm.doc.paid_from_account_currency
+										: frm.doc.paid_to_account_currency,
 								party_type: frm.doc.party_type,
 								party: frm.doc.party,
 							},
-							callback: function(ref_r) {
+							callback: function (ref_r) {
 								if (ref_r.message) {
-									$.each(ref_r.message, function(field, value) {
+									$.each(ref_r.message, function (field, value) {
 										frappe.model.set_value(row.doctype, row.name, field, value);
 									});
 
-									frappe.model.set_value(row.doctype, row.name, "mode_of_payment", frm.doc.mode_of_payment);
+									frappe.model.set_value(
+										row.doctype,
+										row.name,
+										"mode_of_payment",
+										frm.doc.mode_of_payment
+									);
 									frappe.model.set_value(row.doctype, row.name, "gateway", frm.doc.gateway);
-									frappe.model.set_value(row.doctype, row.name, "paid_amount", frm.doc.paid_amount);
-									frappe.model.set_value(row.doctype, row.name, "payment_date", frm.doc.payment_date);
-									frappe.model.set_value(row.doctype, row.name, "payment_order_status", frm.doc.payment_order_status);
-									frappe.model.set_value(row.doctype, row.name, "bank_account", frm.doc.bank_account);
+									frappe.model.set_value(
+										row.doctype,
+										row.name,
+										"paid_amount",
+										frm.doc.paid_amount
+									);
+									frappe.model.set_value(
+										row.doctype,
+										row.name,
+										"payment_date",
+										frm.doc.payment_date
+									);
+									frappe.model.set_value(
+										row.doctype,
+										row.name,
+										"payment_order_status",
+										frm.doc.payment_order_status
+									);
+									frappe.model.set_value(
+										row.doctype,
+										row.name,
+										"bank_account",
+										frm.doc.bank_account
+									);
 									frappe.model.set_value(row.doctype, row.name, "bank", frm.doc.bank);
-									frappe.model.set_value(row.doctype, row.name, "bank_account_no", frm.doc.bank_account_no);
-									frappe.model.set_value(row.doctype, row.name, "bank_account_branch", frm.doc.bank_account_branch);
+									frappe.model.set_value(
+										row.doctype,
+										row.name,
+										"bank_account_no",
+										frm.doc.bank_account_no
+									);
+									frappe.model.set_value(
+										row.doctype,
+										row.name,
+										"bank_account_branch",
+										frm.doc.bank_account_branch
+									);
 
-									frappe.db.get_value("Sales Order", so.name, [
-										"order_number",
-										"split_order_group_name",
-										"tracking_number"
-									], (so_data) => {
-										if (so_data) {
-											frappe.model.set_value(row.doctype, row.name, "order_number", so_data.order_number);
-											frappe.model.set_value(row.doctype, row.name, "split_order_group_name", so_data.split_order_group_name);
-											if (so_data.tracking_number) {
-												frm.set_value("shipping_code", so_data.tracking_number);
+									frappe.db.get_value(
+										"Sales Order",
+										so.name,
+										["order_number", "split_order_group_name", "tracking_number"],
+										(so_data) => {
+											if (so_data) {
+												frappe.model.set_value(
+													row.doctype,
+													row.name,
+													"order_number",
+													so_data.order_number
+												);
+												frappe.model.set_value(
+													row.doctype,
+													row.name,
+													"split_order_group_name",
+													so_data.split_order_group_name
+												);
+												if (so_data.tracking_number) {
+													frm.set_value("shipping_code", so_data.tracking_number);
+												}
 											}
 										}
-									});
+									);
 								}
-							}
+							},
 						});
 					});
 
 					frm.refresh_field("references");
 					frm.events.set_total_allocated_amount(frm);
 				}
-			}
+			},
 		});
 	},
 
@@ -1221,7 +1310,7 @@ frappe.ui.form.on("Payment Entry", {
 
 	payment_date: function (frm) {
 		if (frm.doc.references && frm.doc.references.length > 0) {
-			frm.doc.references.forEach(function(row) {
+			frm.doc.references.forEach(function (row) {
 				if (row.reference_doctype === "Sales Order") {
 					frappe.model.set_value(row.doctype, row.name, "payment_date", frm.doc.payment_date);
 				}
@@ -1632,7 +1721,6 @@ frappe.ui.form.on("Payment Entry", {
 			return;
 		}
 
-
 		let total_allocated = 0;
 
 		$.each(frm.doc.references || [], function (i, row) {
@@ -1640,7 +1728,10 @@ frappe.ui.form.on("Payment Entry", {
 				frappe.throw({
 					title: __("Phân bổ không hợp lệ"),
 					indicator: "red",
-					message: __("- Dòng #{0}: Số tiền phân bổ bằng 0. <br><br><b>Yêu cầu: Nhập số tiền phân bổ hoặc xóa dòng.</b>", [row.idx])
+					message: __(
+						"- Dòng #{0}: Số tiền phân bổ bằng 0. <br><br><b>Yêu cầu: Nhập số tiền phân bổ hoặc xóa dòng.</b>",
+						[row.idx]
+					),
 				});
 			}
 
@@ -1657,9 +1748,9 @@ frappe.ui.form.on("Payment Entry", {
 								row.idx,
 								format_currency(row.allocated_amount, frm.doc.paid_from_account_currency, 0),
 								format_currency(max_amount, frm.doc.paid_from_account_currency, 0),
-								row.order_number
+								row.order_number,
 							]
-						)
+						),
 					});
 				}
 			}
@@ -1677,21 +1768,21 @@ frappe.ui.form.on("Payment Entry", {
 					[
 						format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
 						format_currency(total_allocated, frm.doc.paid_from_account_currency, 0),
-						format_currency(difference, frm.doc.paid_from_account_currency, 0)
-					]
-				)
-			});
-		} else if (difference > 0 && difference <= tolerance) {
-			frappe.show_alert({
-				message: __(
-					"Chênh lệch {0} nằm trong mức cho phép {1}.",
-					[
 						format_currency(difference, frm.doc.paid_from_account_currency, 0),
-						format_currency(tolerance, frm.doc.paid_from_account_currency, 0)
 					]
 				),
-				indicator: "blue"
-			}, 10);
+			});
+		} else if (difference > 0 && difference <= tolerance) {
+			frappe.show_alert(
+				{
+					message: __("Chênh lệch {0} nằm trong mức cho phép {1}.", [
+						format_currency(difference, frm.doc.paid_from_account_currency, 0),
+						format_currency(tolerance, frm.doc.paid_from_account_currency, 0),
+					]),
+					indicator: "blue",
+				},
+				10
+			);
 		}
 	},
 
@@ -1732,31 +1823,35 @@ frappe.ui.form.on("Payment Entry", {
 	show_refund_confirmation_dialog: function (frm, refund_amount, total_allocated) {
 		const message = __(
 			"<b>Cảnh báo: Số tiền phân bổ nhỏ hơn số tiền thanh toán</b><br><br>" +
-			"- <b>Số tiền thanh toán:</b> {0}<br>" +
-			"- <b>Đã phân bổ:</b> {1}<br>" +
-			"- <b>Tiền hoàn (dự kiến): {2}</b><br><br>",
+				"- <b>Số tiền thanh toán:</b> {0}<br>" +
+				"- <b>Đã phân bổ:</b> {1}<br>" +
+				"- <b>Tiền hoàn (dự kiến): {2}</b><br><br>",
 			[
 				format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
 				format_currency(total_allocated, frm.doc.paid_from_account_currency, 0),
-				format_currency(refund_amount, frm.doc.paid_from_account_currency, 0)
+				format_currency(refund_amount, frm.doc.paid_from_account_currency, 0),
 			]
 		);
 
 		frappe.confirm(
 			message,
-			function() {
+			function () {
 				frm.set_value("refund_amount", refund_amount).then(() => {
-					frappe.show_alert({
-						message: __(
-							"Đã xác nhận hoàn tiền: {0}",
-							[format_currency(refund_amount, frm.doc.paid_from_account_currency, 0)]
-						),
-						indicator: "green"
-					}, 10);
+					frappe.show_alert(
+						{
+							message: __("Đã xác nhận hoàn tiền: {0}", [
+								format_currency(refund_amount, frm.doc.paid_from_account_currency, 0),
+							]),
+							indicator: "green",
+						},
+						10
+					);
 					frm.save();
 				});
 			},
-			function() { frm.set_value("refund_amount", 0); },
+			function () {
+				frm.set_value("refund_amount", 0);
+			},
 			{ dialog_title: "Thông báo", confirm_title: "Xác nhận", reject_title: "Phân bổ lại" }
 		);
 	},
@@ -1999,11 +2094,21 @@ frappe.ui.form.on("Payment Entry", {
 						frm.set_value("bank_account_no", r.message.bank_account_no);
 						frm.events.update_bank_branch_logic(frm);
 						if (frm.doc.references && frm.doc.references.length > 0) {
-							$.each(frm.doc.references, function(i, d) {
+							$.each(frm.doc.references, function (i, d) {
 								if (d.reference_doctype === "Sales Order") {
-									frappe.model.set_value(d.doctype, d.name, "bank_account", frm.doc.bank_account);
+									frappe.model.set_value(
+										d.doctype,
+										d.name,
+										"bank_account",
+										frm.doc.bank_account
+									);
 									frappe.model.set_value(d.doctype, d.name, "bank", r.message.bank);
-									frappe.model.set_value(d.doctype, d.name, "bank_account_no", r.message.bank_account_no);
+									frappe.model.set_value(
+										d.doctype,
+										d.name,
+										"bank_account_no",
+										r.message.bank_account_no
+									);
 								}
 							});
 							frm.refresh_field("references");
@@ -2366,7 +2471,7 @@ frappe.ui.form.on("Payment Entry", {
 });
 
 frappe.ui.form.on("Payment Entry Reference", {
-	references_add: function(frm, cdt, cdn) {
+	references_add: function (frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
 		if (!row.reference_doctype) {
 			frappe.model.set_value(cdt, cdn, "reference_doctype", "Sales Order");
@@ -2414,33 +2519,61 @@ frappe.ui.form.on("Payment Entry Reference", {
 
 						// Calculate cumulative unallocated for all rows after setting allocated_amount
 						let cumulative_allocated = 0;
-						$.each(frm.doc.references || [], function(i, ref) {
+						$.each(frm.doc.references || [], function (i, ref) {
 							cumulative_allocated += flt(ref.allocated_amount);
 							let remaining = flt(frm.doc.paid_amount) - cumulative_allocated;
-							frappe.model.set_value('Payment Entry Reference', ref.name, 'unallocated_amount', remaining > 0 ? remaining : 0, null, true);
+							frappe.model.set_value(
+								"Payment Entry Reference",
+								ref.name,
+								"unallocated_amount",
+								remaining > 0 ? remaining : 0,
+								null,
+								true
+							);
 						});
-
 
 						if (row.reference_doctype === "Sales Order") {
 							frappe.model.set_value(cdt, cdn, "mode_of_payment", frm.doc.mode_of_payment);
 							frappe.model.set_value(cdt, cdn, "gateway", frm.doc.gateway);
 							frappe.model.set_value(cdt, cdn, "paid_amount", frm.doc.paid_amount);
 							frappe.model.set_value(cdt, cdn, "payment_date", frm.doc.payment_date);
-							frappe.model.set_value(cdt, cdn, "payment_order_status", frm.doc.payment_order_status);
+							frappe.model.set_value(
+								cdt,
+								cdn,
+								"payment_order_status",
+								frm.doc.payment_order_status
+							);
 							frappe.model.set_value(cdt, cdn, "bank_account", frm.doc.bank_account);
 							frappe.model.set_value(cdt, cdn, "bank", frm.doc.bank);
 							frappe.model.set_value(cdt, cdn, "bank_account_no", frm.doc.bank_account_no);
-							frappe.model.set_value(cdt, cdn, "bank_account_branch", frm.doc.bank_account_branch);
+							frappe.model.set_value(
+								cdt,
+								cdn,
+								"bank_account_branch",
+								frm.doc.bank_account_branch
+							);
 
-							frappe.db.get_value("Sales Order", row.reference_name, [
-								"order_number",
-								"split_order_group_name"
-							], (so_data) => {
-								if (so_data) {
-									frappe.model.set_value(cdt, cdn, "order_number", so_data.order_number);
-									frappe.model.set_value(cdt, cdn, "split_order_group_name", so_data.split_order_group_name);
+							frappe.db.get_value(
+								"Sales Order",
+								row.reference_name,
+								["order_number", "split_order_group_name"],
+								(so_data) => {
+									if (so_data) {
+										frappe.model.set_value(
+											cdt,
+											cdn,
+											"order_number",
+											so_data.order_number
+										);
+										frappe.model.set_value(
+											cdt,
+											cdn,
+											"split_order_group_name",
+											so_data.split_order_group_name
+										);
+									}
 								}
-							});
+							);
 						}
 
 						frm.refresh_fields();
@@ -2453,10 +2586,17 @@ frappe.ui.form.on("Payment Entry Reference", {
 	allocated_amount: function (frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
 		let cumulative_allocated = 0;
-		$.each(frm.doc.references || [], function(i, ref) {
+		$.each(frm.doc.references || [], function (i, ref) {
 			cumulative_allocated += flt(ref.allocated_amount);
 			let remaining = flt(frm.doc.paid_amount) - cumulative_allocated;
-			frappe.model.set_value('Payment Entry Reference', ref.name, 'unallocated_amount', remaining > 0 ? remaining : 0, null, true);
+			frappe.model.set_value(
+				"Payment Entry Reference",
+				ref.name,
+				"unallocated_amount",
+				remaining > 0 ? remaining : 0,
+				null,
+				true
+			);
 		});
 
 		frm.events.set_total_allocated_amount(frm);
@@ -2578,53 +2718,74 @@ function get_deduction_amount_precision() {
 }
 
 frappe.ui.form.on("Payment Entry Bank Transaction", {
-	bank_transaction: function(frm, cdt, cdn) {
+	bank_transaction: function (frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
 		if (row.bank_transaction) {
-			frappe.db.get_value("Bank Transaction", row.bank_transaction, [
-				"date",
-				"deposit",
-				"withdrawal",
-				"sepay_transaction_content",
-				"sepay_transaction_date",
-				"sepay_order_number",
-				"sepay_order_description",
-				"sepay_reference_number",
-				"sepay_id",
-			], (r) => {
-				if (r) {
-					frappe.model.set_value(cdt, cdn, "date", r.date);
-					let amount = r.deposit || r.withdrawal || 0;
-					frappe.model.set_value(cdt, cdn, "allocated_amount", amount);
-					frappe.model.set_value(cdt, cdn, "sepay_transaction_content", r.sepay_transaction_content);
-					frappe.model.set_value(cdt, cdn, "sepay_order_number", r.sepay_order_number);
-					frappe.model.set_value(cdt, cdn, "sepay_order_description", r.sepay_order_description);
-					frappe.model.set_value(cdt, cdn, "sepay_reference_number", r.sepay_reference_number);
-					frappe.model.set_value(cdt, cdn, "sepay_id", r.sepay_id);
-					if (r.sepay_transaction_date) {
-						let datetime_str = moment(r.sepay_transaction_date, "YYYY-MM-DD HH:mm:ss").format("YYYY-MM-DD HH:mm:ss");
-						frm.set_value("payment_date", datetime_str);
+			frappe.db.get_value(
+				"Bank Transaction",
+				row.bank_transaction,
+				[
+					"date",
+					"deposit",
+					"withdrawal",
+					"sepay_transaction_content",
+					"sepay_transaction_date",
+					"sepay_order_number",
+					"sepay_order_description",
+					"sepay_reference_number",
+					"sepay_id",
+				],
+				(r) => {
+					if (r) {
+						frappe.model.set_value(cdt, cdn, "date", r.date);
+						let amount = r.deposit || r.withdrawal || 0;
+						frappe.model.set_value(cdt, cdn, "allocated_amount", amount);
+						frappe.model.set_value(
+							cdt,
+							cdn,
+							"sepay_transaction_content",
+							r.sepay_transaction_content
+						);
+						frappe.model.set_value(cdt, cdn, "sepay_order_number", r.sepay_order_number);
+						frappe.model.set_value(
+							cdt,
+							cdn,
+							"sepay_order_description",
+							r.sepay_order_description
+						);
+						frappe.model.set_value(cdt, cdn, "sepay_reference_number", r.sepay_reference_number);
+						frappe.model.set_value(cdt, cdn, "sepay_id", r.sepay_id);
+						if (r.sepay_transaction_date) {
+							let datetime_str = moment(r.sepay_transaction_date, "YYYY-MM-DD HH:mm:ss").format(
+								"YYYY-MM-DD HH:mm:ss"
+							);
+							frm.set_value("payment_date", datetime_str);
+						}
 					}
 				}
-			});
+			);
 		}
 	},
 
-	allocated_amount: function(frm, cdt, cdn) {
+	allocated_amount: function (frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
 		if (row.allocated_amount && frm.doc.paid_amount) {
 			if (Math.abs(flt(row.allocated_amount) - flt(frm.doc.paid_amount)) > 0.01) {
 				frappe.msgprint({
 					title: __("Sai số tiền"),
-					indicator: 'red',
+					indicator: "red",
 					message: __(
 						"- Số tiền thanh toán: {0}<br>- Giao dịch ngân hàng: {1}<br>- Chênh lệch: {2}<br><br><b>Yêu cầu: Kiểm tra lại và nhập đúng số tiền trước khi tiếp tục.</b>",
 						[
 							format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
 							format_currency(row.allocated_amount, frm.doc.paid_from_account_currency, 0),
-							format_currency(Math.abs(flt(row.allocated_amount) - flt(frm.doc.paid_amount)), frm.doc.paid_from_account_currency, 0)
+							format_currency(
+								Math.abs(flt(row.allocated_amount) - flt(frm.doc.paid_amount)),
+								frm.doc.paid_from_account_currency,
+								0
+							),
 						]
-					)
+					),
 				});
 
 				frappe.model.clear_doc(cdt, cdn);
@@ -2633,16 +2794,18 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 		}
 	},
 
-	bank_transactions_add: function(frm, cdt, cdn) {
-		if (frm.doc.payment_code !== 'banking') {
+	bank_transactions_add: function (frm, cdt, cdn) {
+		if (frm.doc.payment_code !== "banking") {
 			frappe.msgprint({
 				title: __("Sai hình thức thanh toán"),
 				indicator: "red",
-				message: __("Chỉ áp dụng cho hình thức <b>Chuyển khoản</b>.<br><br>Hệ thống đã <b>tự động xoá dòng</b> vừa thêm.")
+				message: __(
+					"Chỉ áp dụng cho hình thức <b>Chuyển khoản</b>.<br><br>Hệ thống đã <b>tự động xoá dòng</b> vừa thêm."
+				),
 			});
 
 			setTimeout(() => {
-				frm.get_field("bank_transactions").grid.grid_rows.forEach(r => {
+				frm.get_field("bank_transactions").grid.grid_rows.forEach((r) => {
 					if (r.doc.name === cdn) {
 						r.remove();
 					}
@@ -2652,12 +2815,13 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 			return;
 		}
 
-
 		if (frm.doc.bank_transactions && frm.doc.bank_transactions.length > 1) {
 			frappe.msgprint({
 				title: __("Sai số lượng giao dịch"),
 				indicator: "red",
-				message: __("Mỗi phiếu thanh toán chỉ được phép gắn <b>một giao dịch duy nhất</b>.<br><br>Hệ thống đã <b>tự động xoá dòng</b> vừa thêm.")
+				message: __(
+					"Mỗi phiếu thanh toán chỉ được phép gắn <b>một giao dịch duy nhất</b>.<br><br>Hệ thống đã <b>tự động xoá dòng</b> vừa thêm."
+				),
 			});
 
 			setTimeout(() => {
@@ -2671,5 +2835,5 @@ frappe.ui.form.on("Payment Entry Bank Transaction", {
 		if (frm.doc.paid_amount) {
 			frappe.model.set_value(cdt, cdn, "allocated_amount", frm.doc.paid_amount);
 		}
-	}
+	},
 });

@@ -405,9 +405,8 @@ def calculate_values(accounts_by_name, gl_entries_by_account, companies, filters
 				debit, credit = 0, 0
 				for company in companies:
 					# check if posting date is within the period
-					if (
-						entry.company == company
-						or (filters.get("accumulated_in_group_company"))
+					if entry.company == company or (
+						(filters.get("accumulated_in_group_company"))
 						and entry.company in companies.get(company)
 					):
 						parent_company_currency = erpnext.get_company_currency(d.company)

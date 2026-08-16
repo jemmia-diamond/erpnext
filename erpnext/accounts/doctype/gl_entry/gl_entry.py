@@ -349,8 +349,8 @@ def update_outstanding_amt(
 	account, party_type, party, against_voucher_type, against_voucher, on_cancel=False
 ):
 	if party_type and party:
-		party_condition = " and party_type={} and party={}".format(
-			frappe.db.escape(party_type), frappe.db.escape(party)
+		party_condition = (
+			f" and party_type={frappe.db.escape(party_type)} and party={frappe.db.escape(party)}"
 		)
 	else:
 		party_condition = ""

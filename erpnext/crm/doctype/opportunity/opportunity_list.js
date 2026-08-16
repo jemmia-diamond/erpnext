@@ -3,12 +3,12 @@ frappe.listview_settings["Opportunity"] = {
 	hide_liked_by: true,
 	get_indicator: function (doc) {
 		const colors = {
-			"Proposal": "blue",
-			"Negotiation": "orange",
-			"Nurturing": "purple",
-			"Delayed": "cyan",
-			"Won": "green",
-			"Lost": "red"
+			Proposal: "blue",
+			Negotiation: "orange",
+			Nurturing: "purple",
+			Delayed: "cyan",
+			Won: "green",
+			Lost: "red",
 		};
 		const color = colors[doc.status] || "gray";
 		return [__(doc.status), color, "status,=," + doc.status];

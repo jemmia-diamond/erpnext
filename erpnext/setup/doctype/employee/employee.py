@@ -29,10 +29,15 @@ class Employee(NestedSet):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from erpnext.setup.doctype.employee_education.employee_education import EmployeeEducation
-		from erpnext.setup.doctype.employee_external_work_history.employee_external_work_history import EmployeeExternalWorkHistory
-		from erpnext.setup.doctype.employee_internal_work_history.employee_internal_work_history import EmployeeInternalWorkHistory
 		from frappe.types import DF
+
+		from erpnext.setup.doctype.employee_education.employee_education import EmployeeEducation
+		from erpnext.setup.doctype.employee_external_work_history.employee_external_work_history import (
+			EmployeeExternalWorkHistory,
+		)
+		from erpnext.setup.doctype.employee_internal_work_history.employee_internal_work_history import (
+			EmployeeInternalWorkHistory,
+		)
 
 		attendance_device_id: DF.Data | None
 		bank_ac_no: DF.Data | None
@@ -297,7 +302,7 @@ class Employee(NestedSet):
 		if enabled is None:
 			frappe.throw(_("User {0} does not exist").format(self.user_id))
 
-		if self.status != "Active" and enabled or self.status == "Active" and enabled == 0:
+		if (self.status != "Active" and enabled) or (self.status == "Active" and enabled == 0):
 			frappe.set_value("User", self.user_id, "enabled", not enabled)
 
 	def validate_duplicate_user_id(self):

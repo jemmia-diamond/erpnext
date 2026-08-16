@@ -2,8 +2,9 @@ import frappe
 
 
 def execute():
-    try:
-        frappe.db.sql("""
+	try:
+		frappe.db.sql(
+			"""
             ALTER TABLE `tabSales Order Item`
             DROP COLUMN g0,
             DROP COLUMN g1,
@@ -13,9 +14,10 @@ def execute():
             DROP COLUMN g5,
             DROP COLUMN g6,
             DROP COLUMN g7;
-        """)
-        frappe.db.commit()
-    except Exception:
-        frappe.db.rollback()
-        print("Failed to drop obsolete promotion columns")
-        return
+        """
+		)
+		frappe.db.commit()
+	except Exception:
+		frappe.db.rollback()
+		print("Failed to drop obsolete promotion columns")
+		return

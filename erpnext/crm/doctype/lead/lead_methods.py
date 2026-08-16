@@ -1,4 +1,3 @@
-
 import json
 import re
 import time
@@ -6,13 +5,12 @@ from typing import TYPE_CHECKING
 
 import frappe
 import pymysql
-from pymysql.constants import ER, FIELD_TYPE
-from pymysql.converters import conversions, escape_string
-
 from frappe import _
+from frappe.automation.doctype.assignment_rule.assignment_rule import apply
 from frappe.utils import get_datetime, validate_phone_number
 from frappe.www.contact import get_contacts_by_conversation_id
-from frappe.automation.doctype.assignment_rule.assignment_rule import apply
+from pymysql.constants import ER, FIELD_TYPE
+from pymysql.converters import conversions, escape_string
 
 from erpnext.config.config import config
 from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
@@ -21,18 +19,25 @@ from erpnext.crm.doctype.lead.lead_dao import get_lead_by_name, get_lead_name_by
 from erpnext.crm.doctype.lead_budget.lead_budget_dao import find_range_budget
 from erpnext.crm.doctype.lead_demand.lead_demand_dao import get_lead_purpose
 from erpnext.crm.doctype.lead_product.lead_product_dao import create_lead_product, get_lead_product
-from erpnext.utilities.phone_utils import is_valid_phone_number, normalize_to_standard_format, get_phone_variants
+from erpnext.utilities.phone_utils import (
+	get_phone_variants,
+	is_valid_phone_number,
+	normalize_to_standard_format,
+)
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
 
+
 def is_non_empty(value: str | None) -> bool:
 	return bool(value and value.strip())
+
 
 def truncate_string(value: str | None, max_length: int = 140) -> str | None:
 	if value and isinstance(value, str) and len(value) > max_length:
 		return value[:max_length]
 	return value
+
 
 def is_valid_lead_name(name_val: str | None) -> bool:
 	name_str = str(name_val or "").strip()
@@ -41,30 +46,32 @@ def is_valid_lead_name(name_val: str | None) -> bool:
 		return False
 
 	# If string ONLY contains digits, spaces, and phone symbols -> invalid name
-	if not re.search(r'[^\d\s\+\-\(\)]', name_str):
+	if not re.search(r"[^\d\s\+\-\(\)]", name_str):
 		return False
 
 	return True
 
+
 def normalize_phone_number(phone: str | None) -> str | None:
 	"""Normalize phone number to standard format (country code + number, no prefix).
 	Examples:
-		+84 955 555 555 -> 84955555555
-		0955555555 -> 84955555555
-		84955555555 -> 84955555555
-		840932344355 -> 84932344355 (edge case: removes extra 0)
-		+1 (555)-000-4321 -> 15550004321
-		+86 138 0013 8000 -> 8613800138000
+	        +84 955 555 555 -> 84955555555
+	        0955555555 -> 84955555555
+	        84955555555 -> 84955555555
+	        840932344355 -> 84932344355 (edge case: removes extra 0)
+	        +1 (555)-000-4321 -> 15550004321
+	        +86 138 0013 8000 -> 8613800138000
 	"""
 	res = normalize_to_standard_format(phone)
 	return res if res else None
+
 
 @frappe.whitelist(methods=["POST", "PUT"])
 def insert_lead_by_batch(docs=None):
 	"""Insert multiple lead
 
 	:param docs: JSON or list of dict objects to be inserted in one request"""
-	
+
 	crm_settings = get_crm_settings()
 	if not crm_settings.get("enable_auto_lead_insert", 1):
 		frappe.throw("currently backfilling")
@@ -82,34 +89,20 @@ def insert_lead_by_batch(docs=None):
 		conversation_id = pancake_data.get("conversation_id")
 
 		if not is_non_empty(conversation_id):
-			frappe.logger().warning(
-				"insert_lead_by_batch: missing conversation_id",
-				exc_info=False
-			)
-			result.append({
-				"name": None,
-				"conversation_id": conversation_id
-			})
+			frappe.logger().warning("insert_lead_by_batch: missing conversation_id", exc_info=False)
+			result.append({"name": None, "conversation_id": conversation_id})
 			continue
 
 		try:
 			inserted_doc = insert_lead(doc)
 			if inserted_doc:
-				result.append({
-					"name": inserted_doc.name,
-					"conversation_id": conversation_id
-				})
+				result.append({"name": inserted_doc.name, "conversation_id": conversation_id})
 			else:
-				result.append({
-					"name": None,
-					"conversation_id": conversation_id
-				})
+				result.append({"name": None, "conversation_id": conversation_id})
 		except Exception:
-			result.append({
-				"name": None,
-				"conversation_id": conversation_id
-			})
+			result.append({"name": None, "conversation_id": conversation_id})
 	return result
+
 
 def insert_lead(doc) -> "Document":
 	"""Inserts document and returns parent document object with appended child document
@@ -155,9 +148,7 @@ def insert_lead(doc) -> "Document":
 		existing_lead_name = get_lead_name_by_conversation_id(conversation_id)
 		if existing_lead_name:
 			existing_doc: Lead = frappe.get_doc("Lead", existing_lead_name)
-			existing_doc.link_to_contacts(
-				pancake_data=pancake_data
-			)
+			existing_doc.link_to_contacts(pancake_data=pancake_data)
 			return existing_doc
 
 	# Check if lead exists by phone
@@ -166,9 +157,7 @@ def insert_lead(doc) -> "Document":
 		if existing_lead_name:
 			existing_doc = frappe.get_doc("Lead", existing_lead_name)
 			if conversation_id and page_id:
-				existing_doc.link_to_contacts(
-					pancake_data=pancake_data
-				)
+				existing_doc.link_to_contacts(pancake_data=pancake_data)
 			return existing_doc
 
 	frappe_doc = frappe.get_doc(doc)
@@ -186,8 +175,9 @@ def insert_lead(doc) -> "Document":
 
 		# only exist when migrate from pancake
 		# lead reach at before 2025/06/15 21:00:00
-		if frappe_doc.first_reach_at  and  \
-			get_datetime(frappe_doc.first_reach_at) < get_datetime(config.DATE_ASSIGN_LEAD_OWNER):
+		if frappe_doc.first_reach_at and get_datetime(frappe_doc.first_reach_at) < get_datetime(
+			config.DATE_ASSIGN_LEAD_OWNER
+		):
 			try:
 				create_lead_todo(frappe_doc.name, frappe_doc.lead_owner)
 			except Exception as e:
@@ -203,64 +193,71 @@ def insert_lead(doc) -> "Document":
 		except Exception:
 			return None
 
+
 @frappe.whitelist(methods=["PUT", "PATCH"])
 def backfill_lead_info(docs):
-    """Bulk update leads"""
-    if isinstance(docs, str):
-        docs = json.loads(docs)
+	"""Bulk update leads"""
+	if isinstance(docs, str):
+		docs = json.loads(docs)
 
-    failed_docs = []
-    try:
-        # Prepare parts for the dynamic SQL query
-        name_case_when_clauses = []
-        phone_case_when_clauses = []
-        ids_to_update = []
-        sql_params_name = []  # Separate list for first_name parameters
-        sql_params_phone = []  # Separate list for phone parameters
+	failed_docs = []
+	try:
+		# Prepare parts for the dynamic SQL query
+		name_case_when_clauses = []
+		phone_case_when_clauses = []
+		ids_to_update = []
+		sql_params_name = []  # Separate list for first_name parameters
+		sql_params_phone = []  # Separate list for phone parameters
 
-        for doc in docs:
-            lead_id = doc.get("docname")
-            new_name = truncate_string(doc.get("new_name"))
-            new_phone = doc.get("new_phone")
+		for doc in docs:
+			lead_id = doc.get("docname")
+			new_name = truncate_string(doc.get("new_name"))
+			new_phone = doc.get("new_phone")
 
-            if not lead_id:
-                failed_docs.append({"doc": doc, "exc": "Missing 'docname' (lead ID). Skipping this document."})
-                continue # Skip this document if docname is missing
+			if not lead_id:
+				failed_docs.append(
+					{"doc": doc, "exc": "Missing 'docname' (lead ID). Skipping this document."}
+				)
+				continue  # Skip this document if docname is missing
 
-            ids_to_update.append(lead_id)
+			ids_to_update.append(lead_id)
 
-            # Build CASE WHEN clauses for first_name with nested conditions
-            if is_non_empty(new_name):  # Only add clause if new_name is not empty
-                name_case_when_clauses.append("""
+			# Build CASE WHEN clauses for first_name with nested conditions
+			if is_non_empty(new_name):  # Only add clause if new_name is not empty
+				name_case_when_clauses.append(
+					"""
                     WHEN name = %s THEN
                         CASE
                             WHEN first_name IS NULL OR first_name = '' OR first_name = 'Chưa rõ' THEN %s
                             ELSE first_name
                         END
-                """)
-                # Parameters for this clause: lead_id (for outer WHEN) and new_name (for inner THEN)
-                sql_params_name.extend([lead_id, new_name])
+                """
+				)
+				# Parameters for this clause: lead_id (for outer WHEN) and new_name (for inner THEN)
+				sql_params_name.extend([lead_id, new_name])
 
-            # Build CASE WHEN clauses for phone with nested conditions
-            if is_non_empty(new_phone):  # Only add clause if new_phone is not empty
-                phone_case_when_clauses.append("""
+			# Build CASE WHEN clauses for phone with nested conditions
+			if is_non_empty(new_phone):  # Only add clause if new_phone is not empty
+				phone_case_when_clauses.append(
+					"""
                     WHEN name = %s THEN
                         CASE
                             WHEN phone IS NULL OR phone = '' THEN %s
                             ELSE phone
                         END
-                """)
-                # Parameters for this clause: lead_id (for outer WHEN) and new_phone (for inner THEN)
-                sql_params_phone.extend([lead_id, new_phone])
+                """
+				)
+				# Parameters for this clause: lead_id (for outer WHEN) and new_phone (for inner THEN)
+				sql_params_phone.extend([lead_id, new_phone])
 
-        # If no valid documents were processed to build clauses, return
-        if not ids_to_update:
-            return {"failed_docs": failed_docs}
-        # Add all lead IDs for the WHERE IN clause at the very end of the parameters list
-        ids_clause_placeholders = ", ".join(["%s"] * len(ids_to_update))
+		# If no valid documents were processed to build clauses, return
+		if not ids_to_update:
+			return {"failed_docs": failed_docs}
+		# Add all lead IDs for the WHERE IN clause at the very end of the parameters list
+		ids_clause_placeholders = ", ".join(["%s"] * len(ids_to_update))
 
-        # Construct SQL query dynamically
-        sql_query = f"""
+		# Construct SQL query dynamically
+		sql_query = f"""
             UPDATE `tabLead`
             SET
                 first_name = CASE
@@ -273,22 +270,23 @@ def backfill_lead_info(docs):
                 END
             WHERE name IN ({ids_clause_placeholders})
         """
-        sql_params = sql_params_name + sql_params_phone + ids_to_update
+		sql_params = sql_params_name + sql_params_phone + ids_to_update
 
-        frappe.db.sql(sql_query, tuple(sql_params))
+		frappe.db.sql(sql_query, tuple(sql_params))
 
-    except Exception:
-        for doc in docs:
-            failed_docs.append({"doc": doc, "exc": frappe.utils.get_traceback()})
+	except Exception:
+		for doc in docs:
+			failed_docs.append({"doc": doc, "exc": frappe.utils.get_traceback()})
 
-    return {"failed_docs": failed_docs}
+	return {"failed_docs": failed_docs}
+
 
 @frappe.whitelist(methods=["POST", "PUT"])
 def update_lead_by_batch(docs):
 	"""Bulk update leads
 
 	:param docs: JSON list of documents to be updated remotely. Each document must have `docname` property"""
-	
+
 	crm_settings = get_crm_settings()
 	if not crm_settings.get("enable_auto_lead_insert", 1):
 		frappe.throw("currently backfilling")
@@ -322,7 +320,11 @@ def update_lead_by_batch(docs):
 				existing_doc = frappe.get_doc(doc["doctype"], doc["docname"])
 			except (frappe.DoesNotExistError, Exception):
 				conversation_id = pancake_data.get("conversation_id")
-				lead_name = get_lead_name_by_conversation_id(conversation_id) if is_non_empty(conversation_id) else None
+				lead_name = (
+					get_lead_name_by_conversation_id(conversation_id)
+					if is_non_empty(conversation_id)
+					else None
+				)
 
 				if lead_name:
 					existing_doc = frappe.get_doc(doc["doctype"], lead_name)
@@ -337,10 +339,7 @@ def update_lead_by_batch(docs):
 			# Check if the new phone number already exists in another lead
 			new_phone = doc.get("phone")
 			if is_non_empty(new_phone):
-				existing_doc = handle_duplicate_and_merge(
-					existing_doc,
-					new_phone
-				)
+				existing_doc = handle_duplicate_and_merge(existing_doc, new_phone)
 
 			if is_valid_lead_name(existing_doc.lead_name):
 				doc["first_name"] = existing_doc.lead_name
@@ -364,16 +363,12 @@ def update_lead_by_batch(docs):
 			except Exception:
 				pass
 
-			results.append({
-				"conversation_id": pancake_data.get("conversation_id"),
-				"name": existing_doc.name
-			})
+			results.append(
+				{"conversation_id": pancake_data.get("conversation_id"), "name": existing_doc.name}
+			)
 
 		except Exception:
-			results.append({
-				"conversation_id": pancake_data.get("conversation_id"),
-				"name": None
-			})
+			results.append({"conversation_id": pancake_data.get("conversation_id"), "name": None})
 			failed_docs.append({"doc": doc, "exc": frappe.utils.get_traceback()})
 
 	return {"results": results, "failed_docs": failed_docs}
@@ -409,7 +404,7 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 	if existing_doc.first_reach_at and conflicting_doc.first_reach_at:
 		if get_datetime(existing_doc.first_reach_at) < get_datetime(conflicting_doc.first_reach_at):
 			is_existing_older = True
-	elif existing_doc.first_reach_at: # conflicting has no date
+	elif existing_doc.first_reach_at:  # conflicting has no date
 		is_existing_older = True
 
 	if is_existing_older:
@@ -421,7 +416,7 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 
 	try:
 		frappe.db.savepoint("lead_merge")
-	  # Re-link loser's contacts and addresses to master
+		# Re-link loser's contacts and addresses to master
 		_relink_dynamic_links(loser_doc.name, master_doc.name)
 
 		# Re-link downstream docs to master
@@ -444,12 +439,12 @@ def handle_duplicate_and_merge(existing_doc, new_phone):
 	except Exception as e:
 		frappe.db.rollback(save_point="lead_merge")
 		frappe.log_error(
-			f"Failed to merge lead {loser_doc.name} into {master_doc.name}: {e!s}.",
-			"Lead Merge Error"
+			f"Failed to merge lead {loser_doc.name} into {master_doc.name}: {e!s}.", "Lead Merge Error"
 		)
 		raise
 
 	return master_doc
+
 
 @frappe.whitelist(methods=["POST"])
 def merge_leads_by_phone(phone, first_reach_at=None, current_lead_name=None):
@@ -458,7 +453,7 @@ def merge_leads_by_phone(phone, first_reach_at=None, current_lead_name=None):
 	Input: phone, first_reach_at (optional), current_lead_name (optional)
 	Returns the Master Lead name.
 	"""
-	
+
 	crm_settings = get_crm_settings()
 	if not crm_settings.get("enable_lead_phone_update_or_merge", 1):
 		frappe.local.response["http_status_code"] = 400
@@ -478,16 +473,14 @@ def merge_leads_by_phone(phone, first_reach_at=None, current_lead_name=None):
 	leads_data = frappe.get_all(
 		"Lead",
 		or_filters={"phone": ["in", variants], "mobile_no": ["in", variants]},
-		fields=["name", "first_reach_at", "creation"]
+		fields=["name", "first_reach_at", "creation"],
 	)
 
 	# Ensure current_lead_name is in the list to be considered
 	if current_lead_name and frappe.db.exists("Lead", current_lead_name):
 		if not any(l.name == current_lead_name for l in leads_data):
 			current_lead_data = frappe.get_all(
-				"Lead",
-				filters={"name": current_lead_name},
-				fields=["name", "first_reach_at", "creation"]
+				"Lead", filters={"name": current_lead_name}, fields=["name", "first_reach_at", "creation"]
 			)
 			if current_lead_data:
 				leads_data.append(current_lead_data[0])
@@ -512,12 +505,12 @@ def merge_leads_by_phone(phone, first_reach_at=None, current_lead_name=None):
 		if doc.phone != normalized:
 			doc.phone = normalized
 			changed = True
-				
+
 		if changed:
 			doc.flags.ignore_permissions = True
 			doc.save()
 			frappe.db.commit()
-			
+
 		return master_name
 
 	# Multiple leads found
@@ -558,24 +551,28 @@ def bulk_merge_duplicate_leads(enqueue=True):
 	"""
 	frappe.only_for("System Manager")
 
-	duplicate_phones = frappe.db.sql("""
+	duplicate_phones = frappe.db.sql(
+		"""
 		SELECT RIGHT(phone, 8) as phone_suffix
 		FROM `tabLead`
 		WHERE phone IS NOT NULL AND phone != ''
 		GROUP BY RIGHT(phone, 8)
 		HAVING COUNT(*) > 1
-	""", as_dict=True)
+	""",
+		as_dict=True,
+	)
 
 	if str(enqueue).lower() in ["true", "1", "yes"]:
 		frappe.enqueue(
 			"erpnext.crm.doctype.lead.lead_methods.process_bulk_merge",
 			duplicate_phones=duplicate_phones,
-			queue="long"
+			queue="long",
 		)
 		return f"Enqueued bulk merge for {len(duplicate_phones)} duplicate groups."
 	else:
 		process_bulk_merge(duplicate_phones)
 		return f"Processed {len(duplicate_phones)} duplicate groups directly."
+
 
 def process_bulk_merge(duplicate_phones):
 	"""
@@ -586,12 +583,16 @@ def process_bulk_merge(duplicate_phones):
 	total = len(duplicate_phones)
 	for idx, row in enumerate(duplicate_phones):
 		suffix = row.phone_suffix
-		leads = frappe.db.sql("""
+		leads = frappe.db.sql(
+			"""
 			SELECT name
 			FROM `tabLead`
 			WHERE RIGHT(phone, 8) = %s
 			ORDER BY IFNULL(first_reach_at, '2999-01-01') ASC, creation ASC
-		""", (suffix,), as_dict=True)
+		""",
+			(suffix,),
+			as_dict=True,
+		)
 
 		if len(leads) <= 1:
 			continue
@@ -615,8 +616,7 @@ def process_bulk_merge(duplicate_phones):
 			except Exception as e:
 				frappe.db.rollback(save_point="lead_merge")
 				frappe.log_error(
-					f"Bulk Merge: Failed {loser_name} into {master_lead}: {e!s}",
-					"Lead Merge Error"
+					f"Bulk Merge: Failed {loser_name} into {master_lead}: {e!s}", "Lead Merge Error"
 				)
 
 		try:
@@ -626,56 +626,65 @@ def process_bulk_merge(duplicate_phones):
 		except Exception as e:
 			frappe.log_error(f"Bulk Merge: Failed save master {master_lead}: {e!s}", "Lead Merge Error")
 
+
 @frappe.whitelist()
 def fix_unnormalized_leads(enqueue=False):
-	leads = frappe.db.sql("""
-		SELECT name, phone 
-		FROM `tabLead` 
+	leads = frappe.db.sql(
+		"""
+		SELECT name, phone
+		FROM `tabLead`
 		WHERE phone LIKE '+%%' or phone like '0%%'
-	""", as_dict=True)
-	
+	""",
+		as_dict=True,
+	)
+
 	if str(enqueue).lower() in ["true", "1", "yes"]:
 		frappe.enqueue(
 			"erpnext.crm.doctype.lead.lead_methods.process_fix_unnormalized",
 			leads=leads,
 			queue="long",
-			timeout=3600
+			timeout=3600,
 		)
 		return f"Enqueued fix for {len(leads)} leads."
 	else:
 		process_fix_unnormalized(leads)
 		return f"Processed {len(leads)} leads directly."
 
+
 def process_fix_unnormalized(leads):
 	for row in leads:
 		lead_name = row.name
 		old_phone = row.phone
-		
+
 		normalized = normalize_to_standard_format(old_phone)
 		if not normalized or normalized == old_phone:
 			continue
-			
+
 		try:
 			doc = frappe.get_doc("Lead", lead_name)
 			doc.phone = normalized
 			doc.save(ignore_permissions=True)
 			frappe.db.commit()
-			
+
 		except Exception as e:
 			frappe.db.rollback()
 			err_str = str(e)
-			
-			if isinstance(e, (frappe.UniqueValidationError, pymysql.err.IntegrityError)) or "must be unique" in err_str or "already used in" in err_str:
+
+			if (
+				isinstance(e, (frappe.UniqueValidationError, pymysql.err.IntegrityError))
+				or "must be unique" in err_str
+				or "already used in" in err_str
+			):
 				# Catch unique error -> Find conflicting lead
 				conflicting_lead = frappe.db.get_value("Lead", {"phone": normalized}, "name")
 				if not conflicting_lead or conflicting_lead == lead_name:
 					frappe.log_error(f"Fix failed for {lead_name}, not duplicate: {e!s}", "Lead Fix Error")
 					continue
-					
+
 				# Conflict exist -> Merge
 				master_doc = frappe.get_doc("Lead", conflicting_lead)
 				loser_doc = frappe.get_doc("Lead", lead_name)
-				
+
 				# Pick Master by first_reach_at
 				master_older = False
 				if master_doc.first_reach_at and loser_doc.first_reach_at:
@@ -687,7 +696,7 @@ def process_fix_unnormalized(leads):
 					# Both no reach date -> Use creation
 					if master_doc.creation < loser_doc.creation:
 						master_older = True
-						
+
 				if not master_older:
 					# Swap roles
 					master_doc, loser_doc = loser_doc, master_doc
@@ -699,15 +708,18 @@ def process_fix_unnormalized(leads):
 					_merge_system_fields(master_doc, loser_doc)
 					_transfer_child_tables(master_doc, loser_doc)
 					transfer_lead_todos(loser_doc.name, master_doc.name)
-					
+
 					frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True, force=1)
-					
+
 					master_doc.set_first_lead_source()
 					master_doc.save(ignore_permissions=True)
 					frappe.db.commit()
 				except Exception as merge_e:
 					frappe.db.rollback(save_point="fix_merge")
-					frappe.log_error(f"Fix Merge fail {loser_doc.name} into {master_doc.name}: {merge_e!s}", "Lead Merge Error")
+					frappe.log_error(
+						f"Fix Merge fail {loser_doc.name} into {master_doc.name}: {merge_e!s}",
+						"Lead Merge Error",
+					)
 			else:
 				frappe.log_error(f"Fix fail {lead_name}: {e!s}", "Lead Fix Error")
 
@@ -715,92 +727,161 @@ def process_fix_unnormalized(leads):
 def _relink_dynamic_links(from_lead: str, to_lead: str):
 	"""Re-link Contact and Address Dynamic Link records from one lead to another."""
 	for doctype in ("Contact", "Address"):
-		linked_docs = frappe.get_all(doctype, filters=[
-			["Dynamic Link", "link_doctype", "=", "Lead"],
-			["Dynamic Link", "link_name", "=", from_lead]
-		], fields=["name"])
+		linked_docs = frappe.get_all(
+			doctype,
+			filters=[
+				["Dynamic Link", "link_doctype", "=", "Lead"],
+				["Dynamic Link", "link_name", "=", from_lead],
+			],
+			fields=["name"],
+		)
 
 		for doc in linked_docs:
-			frappe.db.sql("""
+			frappe.db.sql(
+				"""
 				UPDATE `tabDynamic Link`
 				SET link_name = %s
 				WHERE link_doctype = 'Lead' AND link_name = %s AND parent = %s
-			""", (to_lead, from_lead, doc.name))
+			""",
+				(to_lead, from_lead, doc.name),
+			)
+
 
 def _relink_downstream_docs(from_lead: str, to_lead: str):
 	"""Re-link all downstream documents, logs, and audits from one lead to another."""
 	# Customers linked via lead_name
-	frappe.db.sql("""
+	frappe.db.sql(
+		"""
 		UPDATE `tabCustomer`
 		SET lead_name = %s
 		WHERE lead_name = %s
-	""", (to_lead, from_lead))
+	""",
+		(to_lead, from_lead),
+	)
 
 	# Appointments linked via lead
-	frappe.db.sql("""
+	frappe.db.sql(
+		"""
 		UPDATE `tabAppointment`
 		SET `lead` = %s
 		WHERE `lead` = %s
-	""", (to_lead, from_lead))
+	""",
+		(to_lead, from_lead),
+	)
 
 	# Communications referencing this lead
-	frappe.db.sql("""
+	frappe.db.sql(
+		"""
 		UPDATE `tabCommunication`
 		SET reference_name = %s
 		WHERE reference_doctype = 'Lead' AND reference_name = %s
-	""", (to_lead, from_lead))
+	""",
+		(to_lead, from_lead),
+	)
 
 	# File attachments
-	frappe.db.sql("""
+	frappe.db.sql(
+		"""
 		UPDATE `tabFile`
 		SET attached_to_name = %s
 		WHERE attached_to_doctype = 'Lead' AND attached_to_name = %s
-	""", (to_lead, from_lead))
+	""",
+		(to_lead, from_lead),
+	)
 
 	# Version Audit Trail
-	frappe.db.sql("""
+	frappe.db.sql(
+		"""
 		UPDATE `tabVersion`
 		SET docname = %s
 		WHERE ref_doctype = 'Lead' AND docname = %s
-	""", (to_lead, from_lead))
+	""",
+		(to_lead, from_lead),
+	)
 
 	# Comments timeline
-	frappe.db.sql("""
+	frappe.db.sql(
+		"""
 		UPDATE `tabComment`
 		SET reference_name = %s
 		WHERE reference_doctype = 'Lead' AND reference_name = %s
-	""", (to_lead, from_lead))
+	""",
+		(to_lead, from_lead),
+	)
 
 
 def _transfer_lead_fields(master_doc, loser_doc):
 	"""Transfer enrichment and profile fields from loser to master where master lacks them."""
 	fill_if_empty_fields = [
-		"region", "province", "budget_lead", "purpose_lead",
-		"expected_delivery_date", "email_id", "gender", "birth_date",
-		"whatsapp_no", "image", "first_reach_at", "mobile_no", "source",
-		"first_channel", "customer", "personal_id", "company_name", "company",
-		"salutation", "utm_campaign", "utm_source", "utm_medium", "utm_content",
-		"job_title", "territory", "stringee_data", "qualified_lead_date",
-		"first_name", "middle_name", "last_name", "fax", "type",
-		"market_segment", "industry", "request_type", "website",
-		"unsubscribed", "blog_subscriber", "language", "no_of_employees",
-		"phone_ext", "annual_revenue", "city", "state", "country", "address",
-		"place_of_issuance", "date_of_issuance", "bank_name", "bank_branch",
-		"account_number", "bank_province", "bank_district", "bank_ward",
-		"tax_number", "ceo_name", "personal_tax_id", "proposed_budget",
-		"website_from_data", "qualified_by", "qualified_on"
+		"region",
+		"province",
+		"budget_lead",
+		"purpose_lead",
+		"expected_delivery_date",
+		"email_id",
+		"gender",
+		"birth_date",
+		"whatsapp_no",
+		"image",
+		"first_reach_at",
+		"mobile_no",
+		"source",
+		"first_channel",
+		"customer",
+		"personal_id",
+		"company_name",
+		"company",
+		"salutation",
+		"utm_campaign",
+		"utm_source",
+		"utm_medium",
+		"utm_content",
+		"job_title",
+		"territory",
+		"stringee_data",
+		"qualified_lead_date",
+		"first_name",
+		"middle_name",
+		"last_name",
+		"fax",
+		"type",
+		"market_segment",
+		"industry",
+		"request_type",
+		"website",
+		"unsubscribed",
+		"blog_subscriber",
+		"language",
+		"no_of_employees",
+		"phone_ext",
+		"annual_revenue",
+		"city",
+		"state",
+		"country",
+		"address",
+		"place_of_issuance",
+		"date_of_issuance",
+		"bank_name",
+		"bank_branch",
+		"account_number",
+		"bank_province",
+		"bank_district",
+		"bank_ward",
+		"tax_number",
+		"ceo_name",
+		"personal_tax_id",
+		"proposed_budget",
+		"website_from_data",
+		"qualified_by",
+		"qualified_on",
 	]
 	for field in fill_if_empty_fields:
 		if not master_doc.get(field) and loser_doc.get(field):
 			master_doc.set(field, loser_doc.get(field))
 
 	# Transfer lead_owner. The default mail owner is considered unassigned.
-	master_has_real_owner = (
-		master_doc.lead_owner and master_doc.lead_owner != config.DEFAULT_MAIL_OWNER
-	)
-	loser_has_real_owner = (
-		loser_doc.lead_owner and loser_doc.lead_owner != config.DEFAULT_MAIL_OWNER
-	)
+	master_has_real_owner = master_doc.lead_owner and master_doc.lead_owner != config.DEFAULT_MAIL_OWNER
+	loser_has_real_owner = loser_doc.lead_owner and loser_doc.lead_owner != config.DEFAULT_MAIL_OWNER
 	if not master_has_real_owner and loser_has_real_owner:
 		master_doc.lead_owner = loser_doc.lead_owner
 
@@ -818,10 +899,7 @@ def _transfer_lead_fields(master_doc, loser_doc):
 		master_doc.lead_stage = loser_doc.lead_stage
 
 	# Prioritize 'Qualified' status if present in either record.
-	if (
-		loser_doc.qualification_status == "Qualified"
-		and master_doc.qualification_status != "Qualified"
-	):
+	if loser_doc.qualification_status == "Qualified" and master_doc.qualification_status != "Qualified":
 		master_doc.qualification_status = "Qualified"
 		if loser_doc.qualified_by:
 			master_doc.qualified_by = loser_doc.qualified_by
@@ -889,40 +967,48 @@ def _transfer_child_tables(master_doc, loser_doc):
 def _transfer_notes(from_lead: str, master_doc):
 	"""Transfer notes from loser lead to master lead (in memory) and append an audit trail note."""
 	# Append system audit trail note
-	master_doc.append("notes", {
-		"note": f"System: Lead {from_lead} was identified as a duplicate and merged into this record.",
-		"type": "System",
-		"added_by": getattr(frappe.session, "user", "Administrator"),
-		"added_on": frappe.utils.now_datetime()
-	})
+	master_doc.append(
+		"notes",
+		{
+			"note": f"System: Lead {from_lead} was identified as a duplicate and merged into this record.",
+			"type": "System",
+			"added_by": getattr(frappe.session, "user", "Administrator"),
+			"added_on": frappe.utils.now_datetime(),
+		},
+	)
 
-	loser_notes = frappe.get_all("CRM Note",
+	loser_notes = frappe.get_all(
+		"CRM Note",
 		filters={"parent": from_lead, "parenttype": "Lead"},
-		fields=["note", "added_by", "added_on", "notify_to", "type"])
+		fields=["note", "added_by", "added_on", "notify_to", "type"],
+	)
 
 	for n in loser_notes:
-		master_doc.append("notes", {
-			"note": f"[Merged from {from_lead}] {n.note}",
-			"type": n.type or "Other",
-			"added_by": n.added_by,
-			"added_on": n.added_on,
-			"notify_to": n.notify_to
-		})
+		master_doc.append(
+			"notes",
+			{
+				"note": f"[Merged from {from_lead}] {n.note}",
+				"type": n.type or "Other",
+				"added_by": n.added_by,
+				"added_on": n.added_on,
+				"notify_to": n.notify_to,
+			},
+		)
 
 
 def transform_price_label(label: str) -> str:
-    return label.replace('<', 'dưới ').replace('>', 'trên ').strip()
+	return label.replace("<", "dưới ").replace(">", "trên ").strip()
 
-def get_lead_province(province : str):
+
+def get_lead_province(province: str):
 	lead_province = None
 
 	try:
-		lead_province = frappe.get_doc("Province", {
-			"province_name" : province
-		})
+		lead_province = frappe.get_doc("Province", {"province_name": province})
 	except Exception:
 		return None
 	return lead_province
+
 
 @frappe.whitelist(methods=["POST"])
 def update_lead_from_summary(data):
@@ -931,10 +1017,7 @@ def update_lead_from_summary(data):
 
 	conversation_id = data.get("conversation_id")
 	if not is_non_empty(conversation_id):
-		frappe.logger().warning(
-			"update_lead_from_summary: missing conversation_id",
-			exc_info=False
-		)
+		frappe.logger().warning("update_lead_from_summary: missing conversation_id", exc_info=False)
 		return
 
 	lead_name = get_lead_name_by_conversation_id(conversation_id)
@@ -1003,6 +1086,7 @@ def update_lead_from_summary(data):
 	update_contact_summary_timestamp(conversation_id)
 	return True
 
+
 def update_contact_summary_timestamp(conversation_id):
 	"""Updates Contact timestamp without loading full documents"""
 	contacts = get_contacts_by_conversation_id(conversation_id)
@@ -1020,6 +1104,7 @@ def update_contact_summary_timestamp(conversation_id):
 				frappe.log_error(f"Error updating last_summarize_time for Contact {contact.name}")
 		frappe.db.commit()
 
+
 def create_lead_todo(lead_name: str, allocated_to: str):
 	"""Create a ToDo assignment for a Lead."""
 	if not allocated_to:
@@ -1032,12 +1117,12 @@ def create_lead_todo(lead_name: str, allocated_to: str):
 	todo_doc.allocated_to = allocated_to
 	todo_doc.insert()
 
+
 def transfer_lead_todos(from_lead_name: str, to_lead_name: str):
 	"""Transfer all ToDo assignments (open and closed) from one lead to another."""
-	loser_todos = frappe.get_all("ToDo", filters={
-		"reference_type": "Lead",
-		"reference_name": from_lead_name
-	}, fields=["name"])
+	loser_todos = frappe.get_all(
+		"ToDo", filters={"reference_type": "Lead", "reference_name": from_lead_name}, fields=["name"]
+	)
 	for todo in loser_todos:
 		todo_doc = frappe.get_doc("ToDo", todo.name)
 		todo_doc.reference_name = to_lead_name
@@ -1045,8 +1130,10 @@ def transfer_lead_todos(from_lead_name: str, to_lead_name: str):
 			todo_doc.description = f"Assignment Rule for Lead {to_lead_name}"
 		todo_doc.save(ignore_permissions=True)
 
+
 def sync_lead_is_assigned():
-	frappe.db.sql("""
+	frappe.db.sql(
+		"""
 		UPDATE `tabLead`
 		SET is_assigned = 1
 		WHERE
@@ -1055,9 +1142,11 @@ def sync_lead_is_assigned():
 			AND _assign != '[]'
 			AND is_assigned = 0
 			AND modified >= NOW() - INTERVAL 30 MINUTE
-	""")
+	"""
+	)
 
-	frappe.db.sql("""
+	frappe.db.sql(
+		"""
 		UPDATE `tabLead`
 		SET is_assigned = 0
 		WHERE (
@@ -1067,7 +1156,8 @@ def sync_lead_is_assigned():
 		)
 		AND is_assigned = 1
         AND modified >= NOW() - INTERVAL 30 MINUTE
-	""")
+	"""
+	)
 
 	frappe.db.commit()
 
@@ -1118,6 +1208,7 @@ def auto_nurture_leads():
 	if target_leads:
 		frappe.db.set_value("Lead", target_leads, "status", "Nurturing", update_modified=False)
 
+
 @frappe.whitelist()
 def get_lead_by_conversation_id(conversation_id):
 	if not conversation_id:
@@ -1130,15 +1221,11 @@ def get_lead_by_conversation_id(conversation_id):
 		return
 
 	lead_names = frappe.get_all(
-		"Dynamic Link", 
-		filters={
-			"parent": ["in", contacts],
-			"parenttype": "Contact",
-			"link_doctype": "Lead"
-		}, 
-		pluck="link_name"
+		"Dynamic Link",
+		filters={"parent": ["in", contacts], "parenttype": "Contact", "link_doctype": "Lead"},
+		pluck="link_name",
 	)
-	
+
 	if not lead_names:
 		frappe.response["leads"] = []
 		return
@@ -1146,11 +1233,10 @@ def get_lead_by_conversation_id(conversation_id):
 	leads = frappe.get_all(
 		"Lead",
 		filters={"name": ["in", lead_names]},
-		fields=["name", "first_reach_at", "creation", "modified"]
+		fields=["name", "first_reach_at", "creation", "modified"],
 	)
 
 	frappe.response["leads"] = leads
-
 
 
 @frappe.whitelist()
@@ -1196,38 +1282,39 @@ def fix_duplicate_conversation_leads(enqueue=False):
 	 AND r1.rn = 1 AND r2.rn > 1
 	ORDER BY r1.pancake_conversation_id;
 	"""
-	
+
 	pairs = frappe.db.sql(sql, as_dict=True)
-	
+
 	if str(enqueue).lower() in ["true", "1", "yes"]:
 		frappe.enqueue(
 			"erpnext.crm.doctype.lead.lead_methods.process_fix_duplicate_conversations",
 			pairs=pairs,
 			queue="long",
-			timeout=3600
+			timeout=3600,
 		)
 		return f"Enqueued fix for {len(pairs)} duplicate leads."
 	else:
 		process_fix_duplicate_conversations(pairs)
 		return f"Processed {len(pairs)} duplicate leads directly."
 
+
 def process_fix_duplicate_conversations(pairs):
 	processed_count = 0
 	for row in pairs:
 		master_lead = row.master_lead
 		duplicate_lead = row.duplicate_lead
-		
+
 		try:
 			# Skip if it was already deleted in a previous iteration
 			if not frappe.db.exists("Lead", master_lead) or not frappe.db.exists("Lead", duplicate_lead):
 				continue
-				
+
 			master_doc = frappe.get_doc("Lead", master_lead)
 			loser_doc = frappe.get_doc("Lead", duplicate_lead)
-			
+
 			if master_doc.name == loser_doc.name:
 				continue
-				
+
 			# Standard merge pipeline
 			_transfer_lead_fields(master_doc, loser_doc)
 			_transfer_child_tables(master_doc, loser_doc)
@@ -1235,31 +1322,35 @@ def process_fix_duplicate_conversations(pairs):
 			_merge_system_fields(master_doc, loser_doc)
 			_merge_assign(master_doc, loser_doc)
 			_transfer_notes(loser_doc.name, master_doc)
-			
+
 			_relink_dynamic_links(loser_doc.name, master_doc.name)
 			_relink_downstream_docs(loser_doc.name, master_doc.name)
 			transfer_lead_todos(loser_doc.name, master_doc.name)
-			
+
 			master_doc.set_first_lead_source()
 			master_doc.save(ignore_permissions=True)
-			
+
 			frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True)
-			
+
 			frappe.db.commit()
 			print(f"[{processed_count + 1}/1000] Successfully merged {duplicate_lead} into {master_lead}")
-			
+
 			processed_count += 1
 			if processed_count >= 1000:
 				print("Reached 1000 successful merges. Stopping as requested.")
 				break
-				
+
 		except Exception as e:
 			frappe.db.rollback()
-			frappe.log_error(f"Bulk Conversation Merge: Failed to merge {duplicate_lead} into {master_lead}: {e}", "Lead Merge Error")
+			frappe.log_error(
+				f"Bulk Conversation Merge: Failed to merge {duplicate_lead} into {master_lead}: {e}",
+				"Lead Merge Error",
+			)
 			print(f"Error merging {duplicate_lead} into {master_lead}: {e}")
 
+
 @frappe.whitelist()
-def reassign_leads_in_bulk(lead_names, assignment_rule=None):	
+def reassign_leads_in_bulk(lead_names, assignment_rule=None):
 	if isinstance(lead_names, str):
 		lead_names = frappe.parse_json(lead_names)
 
@@ -1269,23 +1360,14 @@ def reassign_leads_in_bulk(lead_names, assignment_rule=None):
 	frappe.db.set_value(
 		"Lead",
 		{"name": ("in", lead_names)},
-		{
-			"is_assigned": 0,
-			"primary_sale": None,
-			"lead_owner": None,
-			"_assign": None
-		}
+		{"is_assigned": 0, "primary_sale": None, "lead_owner": None, "_assign": None},
 	)
 
 	frappe.db.set_value(
 		"ToDo",
-		{
-			"reference_type": "Lead",
-			"reference_name": ("in", lead_names),
-			"status": "Open"
-		},
+		{"reference_type": "Lead", "reference_name": ("in", lead_names), "status": "Open"},
 		"status",
-		"Cancelled"
+		"Cancelled",
 	)
 	frappe.db.commit()
 
@@ -1298,9 +1380,8 @@ def reassign_leads_in_bulk(lead_names, assignment_rule=None):
 			else:
 				apply(doctype="Lead", name=name)
 			frappe.db.commit()
-		except Exception as e:
+		except Exception:
 			frappe.db.rollback()
 			frappe.log_error(title=f"Failed to auto-assign Lead {name}", message=frappe.get_traceback())
 
 	return {"status": "success", "processed": len(lead_names)}
-

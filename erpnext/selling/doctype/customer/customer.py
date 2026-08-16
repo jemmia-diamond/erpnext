@@ -6,6 +6,7 @@ import json
 
 import frappe
 import frappe.defaults
+import requests
 from frappe import _, msgprint, qb
 from frappe.contacts.address_and_contact import (
 	delete_contact_and_address,
@@ -15,28 +16,29 @@ from frappe.model.mapper import get_mapped_doc
 from frappe.model.naming import set_name_by_naming_series, set_name_from_naming_options
 from frappe.model.utils.rename_doc import update_linked_doctypes
 from frappe.query_builder import Field, functions
-from frappe.utils import cint, cstr, flt, get_formatted_email, today, getdate, add_months, nowdate
+from frappe.utils import add_months, cint, cstr, flt, get_formatted_email, getdate, nowdate, today
 from frappe.utils.deprecations import deprecated
 from frappe.utils.user import get_users_with_role
-from erpnext.utilities.phone_utils import normalize_to_standard_format, get_phone_variants
 
 from erpnext.accounts.party import (
 	get_dashboard_info,
 	validate_party_accounts,
 	validate_party_currency_before_merging,
 )
-from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
-from erpnext.controllers.website_list_for_contact import add_role_for_portal_user
-from erpnext.utilities.transaction_base import TransactionBase
 from erpnext.config.config import config
+from erpnext.controllers.website_list_for_contact import add_role_for_portal_user
+from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
 from erpnext.selling.doctype.coupon.coupon import update_customers_coupons
-import requests
+from erpnext.utilities.phone_utils import get_phone_variants, normalize_to_standard_format
+from erpnext.utilities.transaction_base import TransactionBase
+
 
 class CustomerRank:
 	NO_RANK = "No Rank"
 	SILVER = "Silver"
 	GOLD = "Gold"
 	PLATINUM = "Platinum"
+
 
 class RankThreshold:
 	# All revenue are in VND
@@ -47,12 +49,9 @@ class RankThreshold:
 	PLATINUM_WITH_REFERRAL = 2_000_000_000
 	GOLD_WITH_REFERRAL = 500_000_000
 
-RANK_ORDER = {
-	CustomerRank.NO_RANK: 0,
-	CustomerRank.SILVER: 1,
-	CustomerRank.GOLD: 2,
-	CustomerRank.PLATINUM: 3
-}
+
+RANK_ORDER = {CustomerRank.NO_RANK: 0, CustomerRank.SILVER: 1, CustomerRank.GOLD: 2, CustomerRank.PLATINUM: 3}
+
 
 class Customer(TransactionBase):
 	# begin: auto-generated types
@@ -61,15 +60,22 @@ class Customer(TransactionBase):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from erpnext.accounts.doctype.allowed_to_transact_with.allowed_to_transact_with import AllowedToTransactWith
+		from frappe.types import DF
+
+		from erpnext.accounts.doctype.allowed_to_transact_with.allowed_to_transact_with import (
+			AllowedToTransactWith,
+		)
 		from erpnext.accounts.doctype.party_account.party_account import PartyAccount
 		from erpnext.selling.doctype.coupon.coupon import Coupon
-		from erpnext.selling.doctype.customer_buyback_record.customer_buyback_record import CustomerBuybackRecord
+		from erpnext.selling.doctype.customer_buyback_record.customer_buyback_record import (
+			CustomerBuybackRecord,
+		)
 		from erpnext.selling.doctype.customer_credit_limit.customer_credit_limit import CustomerCreditLimit
 		from erpnext.selling.doctype.sales_team.sales_team import SalesTeam
-		from erpnext.selling.doctype.supplier_number_at_customer.supplier_number_at_customer import SupplierNumberAtCustomer
+		from erpnext.selling.doctype.supplier_number_at_customer.supplier_number_at_customer import (
+			SupplierNumberAtCustomer,
+		)
 		from erpnext.utilities.doctype.portal_user.portal_user import PortalUser
-		from frappe.types import DF
 
 		account_manager: DF.Link | None
 		accounts: DF.Table[PartyAccount]
@@ -138,7 +144,12 @@ class Customer(TransactionBase):
 		personal_id: DF.Data | None
 		personal_tax_id: DF.Data | None
 		phone: DF.ReadOnly | None
-		place_of_issuance: DF.Literal["", "B\u1ed9 C\u00f4ng An", "C\u1ee5c C\u1ea3nh s\u00e1t QLHC v\u1ec1 TTXH", "C\u1ee5c C\u1ea3nh s\u00e1t \u0111\u0103ng k\u00fd, qu\u1ea3n l\u00fd c\u01b0 tr\u00fa v\u00e0 d\u1eef li\u1ec7u qu\u1ed1c gia v\u1ec1 d\u00e2n c\u01b0"]
+		place_of_issuance: DF.Literal[
+			"",
+			"B\u1ed9 C\u00f4ng An",
+			"C\u1ee5c C\u1ea3nh s\u00e1t QLHC v\u1ec1 TTXH",
+			"C\u1ee5c C\u1ea3nh s\u00e1t \u0111\u0103ng k\u00fd, qu\u1ea3n l\u00fd c\u01b0 tr\u00fa v\u00e0 d\u1eef li\u1ec7u qu\u1ed1c gia v\u1ec1 d\u00e2n c\u01b0",
+		]
 		place_of_passport_issuance: DF.Link | None
 		portal_users: DF.Table[PortalUser]
 		primary_address: DF.SmallText | None
@@ -234,7 +245,7 @@ class Customer(TransactionBase):
 	def after_insert(self):
 		"""If customer created from Lead, update customer id in quotations, opportunities"""
 		self.update_lead_status()
-		
+
 	def before_save(self):
 		target_phone = self.phone if self.phone else self.mobile_no
 		if target_phone:
@@ -349,7 +360,7 @@ class Customer(TransactionBase):
 					"erpnext.selling.doctype.customer.customer_service.service.create_haravan_customer_job",
 					queue="default",
 					customer_name=self.name,
-					enqueue_after_commit=True
+					enqueue_after_commit=True,
 				)
 
 		self.update_customer_groups()
@@ -400,7 +411,7 @@ class Customer(TransactionBase):
 						filters={"phone": ["in", list(variants)]},
 						fields=["name"],
 						order_by="first_reach_at asc",
-						limit=1
+						limit=1,
 					)
 					if leads:
 						self.lead_name = leads[0].name
@@ -530,6 +541,7 @@ class Customer(TransactionBase):
 					frappe.bold(self.customer_name)
 				)
 			)
+
 
 @deprecated
 def create_contact(contact, party_type, party, email):
@@ -1005,6 +1017,7 @@ def parse_full_name(full_name: str) -> tuple[str, str | None, str | None]:
 
 	return first_name, middle_name, last_name
 
+
 @frappe.whitelist()
 def update_customer_priority_data(customer_name, haravan_id):
 	"""Background job: Fetch and update priority data for a single customer"""
@@ -1014,20 +1027,27 @@ def update_customer_priority_data(customer_name, haravan_id):
 	if response.status_code != 200:
 		frappe.log_error(
 			f"Priority API failed for customer {customer_name} (haravan_id: {haravan_id})",
-			"Priority API Error"
+			"Priority API Error",
 		)
 		return
 
 	data = response.json()
 
 	# Calculate actual_cumulative_revenue from ERP Sales Orders (our source of truth)
-	actual_revenue = frappe.db.sql("""
+	actual_revenue = (
+		frappe.db.sql(
+			"""
 		SELECT SUM(grand_total) as total
 		FROM `tabSales Order`
 		WHERE customer = %s
 		AND financial_status IN ('Paid', 'Partially Paid')
 		AND cancelled_status = 'Uncancelled'
-	""", (customer_name,), as_dict=True)[0].total or 0
+	""",
+			(customer_name,),
+			as_dict=True,
+		)[0].total
+		or 0
+	)
 
 	# Extract point data from Priority API (referral revenue now comes from coupons)
 	withdraw_point = data.get("withdrawPoint", 0)
@@ -1038,7 +1058,8 @@ def update_customer_priority_data(customer_name, haravan_id):
 	partner_role = data.get("role", "")  # Get role from Priority API (staff, partnerA, partnerB, etc.)
 
 	# Update customer fields (referral_cumulative_revenue removed - now calculated from coupons)
-	frappe.db.sql("""
+	frappe.db.sql(
+		"""
 		UPDATE `tabCustomer`
 		SET
 			actual_cumulative_revenue = %s,
@@ -1049,12 +1070,23 @@ def update_customer_priority_data(customer_name, haravan_id):
 			total_referral_point = %s,
 			partner_role = %s
 		WHERE name = %s
-	""", (actual_revenue, withdraw_point, available_point, withdraw_cash_amount,
-			withdraw_cash_pending, total_referral_point, partner_role, customer_name))
+	""",
+		(
+			actual_revenue,
+			withdraw_point,
+			available_point,
+			withdraw_cash_amount,
+			withdraw_cash_pending,
+			total_referral_point,
+			partner_role,
+			customer_name,
+		),
+	)
 
 	frappe.db.commit()
 
 	evaluate_and_update_customer_rank(customer_name)
+
 
 @frappe.whitelist()
 def reevaluate_customer_rank(customer_name):
@@ -1064,10 +1096,7 @@ def reevaluate_customer_rank(customer_name):
 		if not customer.haravan_id:
 			frappe.throw("Customer must have a Haravan ID to evaluate rank")
 
-		frappe.db.set_value("Customer", customer_name, {
-			"rank": None,
-			"rank_updated_at": None
-		})
+		frappe.db.set_value("Customer", customer_name, {"rank": None, "rank_updated_at": None})
 		frappe.db.commit()
 
 		update_customers_coupons(customer.name, customer.haravan_id)
@@ -1078,10 +1107,10 @@ def reevaluate_customer_rank(customer_name):
 
 	except Exception as e:
 		frappe.log_error(
-			f"Error reevaluating rank for {customer_name}: {str(e)}",
-			"Customer Rank Re-evaluation Error"
+			f"Error reevaluating rank for {customer_name}: {e!s}", "Customer Rank Re-evaluation Error"
 		)
-		frappe.throw(f"Failed to reevaluate customer rank: {str(e)}")
+		frappe.throw(f"Failed to reevaluate customer rank: {e!s}")
+
 
 @frappe.whitelist()
 def bulk_reevaluate_customer_rank(customer_names):
@@ -1101,10 +1130,7 @@ def bulk_reevaluate_customer_rank(customer_names):
 				failed_count += 1
 				continue
 
-			frappe.db.set_value("Customer", customer_name, {
-				"rank": None,
-				"rank_updated_at": None
-			})
+			frappe.db.set_value("Customer", customer_name, {"rank": None, "rank_updated_at": None})
 			frappe.db.commit()
 
 			update_customers_coupons(customer.name, customer.haravan_id)
@@ -1115,15 +1141,11 @@ def bulk_reevaluate_customer_rank(customer_names):
 
 		except Exception as e:
 			frappe.log_error(
-				f"Error re-evaluating rank for {customer_name}: {str(e)}",
-				"Bulk Rank Re-evaluation Error"
+				f"Error re-evaluating rank for {customer_name}: {e!s}", "Bulk Rank Re-evaluation Error"
 			)
 			failed_count += 1
 
-	return {
-		"success": success_count,
-		"failed": failed_count
-	}
+	return {"success": success_count, "failed": failed_count}
 
 
 def evaluate_and_update_customer_rank(customer_name, auto_commit=True):
@@ -1150,13 +1172,15 @@ def evaluate_and_update_customer_rank(customer_name, auto_commit=True):
 	# Update current 12-month score
 	_update_current_12_month_score(customer_name, auto_commit)
 
+
 def evaluate_all_customer_ranks():
 	"""
 	Scheduled job: Evaluate and update ranks for all customers
 	Runs every 15 minute via cron
 	"""
 
-	customers = frappe.db.sql("""
+	customers = frappe.db.sql(
+		"""
 		SELECT c.name, c.haravan_id, c.rank_updated_at, c.rank, c.total_cumulative_revenue
 		FROM `tabCustomer` c
 		WHERE c.haravan_id IS NOT NULL
@@ -1175,7 +1199,9 @@ def evaluate_all_customer_ranks():
 		)
 		ORDER BY c.rank_updated_at DESC
 		LIMIT 200
-	""", as_dict=True)
+	""",
+		as_dict=True,
+	)
 
 	for customer in customers:
 		try:
@@ -1184,9 +1210,9 @@ def evaluate_all_customer_ranks():
 			update_customer_priority_data(customer.name, customer.haravan_id)
 		except Exception as e:
 			frappe.log_error(
-				f"Error updating priority data for {customer.name}: {str(e)}",
-				"Priority Data Update Error"
+				f"Error updating priority data for {customer.name}: {e!s}", "Priority Data Update Error"
 			)
+
 
 def _get_first_paid_order_date(customer_name):
 	"""
@@ -1195,7 +1221,8 @@ def _get_first_paid_order_date(customer_name):
 	Criteria: financial_status IN ('Paid', 'Partially Paid') AND cancelled_status = 'Uncancelled'
 	Excludes: Pending, Refunded, Partially Refunded
 	"""
-	first_order = frappe.db.sql("""
+	first_order = frappe.db.sql(
+		"""
 		SELECT transaction_date
 		FROM `tabSales Order`
 		WHERE customer = %s
@@ -1203,11 +1230,15 @@ def _get_first_paid_order_date(customer_name):
 		AND cancelled_status = 'Uncancelled'
 		ORDER BY transaction_date ASC
 		LIMIT 1
-	""", (customer_name,), as_dict=True)
+	""",
+		(customer_name,),
+		as_dict=True,
+	)
 
 	if first_order:
 		return getdate(first_order[0].transaction_date)
 	return None
+
 
 def _get_first_coupon_date(customer_name):
 	"""
@@ -1215,18 +1246,23 @@ def _get_first_coupon_date(customer_name):
 	Returns the end_date of the first coupon (when referral was earned)
 	Falls back to start_date if end_date is NULL
 	"""
-	first_coupon = frappe.db.sql("""
+	first_coupon = frappe.db.sql(
+		"""
 		SELECT COALESCE(end_date, start_date) as coupon_date
 		FROM `tabCoupon`
 		WHERE parent = %s
 		AND payment_status IN ('Paid', 'Pending')
 		ORDER BY COALESCE(end_date, start_date) ASC
 		LIMIT 1
-	""", (customer_name,), as_dict=True)
+	""",
+		(customer_name,),
+		as_dict=True,
+	)
 
 	if first_coupon:
 		return getdate(first_coupon[0].coupon_date)
 	return None
+
 
 def _determine_rank_from_cumulative(revenue, referral_revenue):
 	"""Determine rank based on cumulative revenue"""
@@ -1248,13 +1284,15 @@ def _determine_rank_from_cumulative(revenue, referral_revenue):
 
 	return CustomerRank.SILVER
 
+
 def _calculate_12_month_score(customer_name, rank_updated_at):
 	"""Calculate purchasing activity in the 12 months since rank_updated_at
 	Only counts orders (grand_total), no buyback subtraction"""
 	start_date = getdate(rank_updated_at)
 	end_date = add_months(start_date, 12)
 
-	sales_orders = frappe.db.sql("""
+	sales_orders = frappe.db.sql(
+		"""
 		SELECT SUM(grand_total) as total
 		FROM `tabSales Order`
 		WHERE customer = %s
@@ -1262,12 +1300,16 @@ def _calculate_12_month_score(customer_name, rank_updated_at):
 		AND cancelled_status = 'Uncancelled'
 		AND transaction_date > %s
 		AND transaction_date < %s
-	""", (customer_name, start_date, end_date), as_dict=True)
+	""",
+		(customer_name, start_date, end_date),
+		as_dict=True,
+	)
 
 	actual_revenue = flt(sales_orders[0].total if sales_orders else 0)
 
 	# For rank evaluation, only count purchasing activity (no buyback subtraction)
 	return actual_revenue
+
 
 def _get_referral_revenue_in_12_month_period(customer_name, rank_updated_at):
 	"""Get referral revenue earned in the 12-month period after rank_updated_at
@@ -1275,16 +1317,21 @@ def _get_referral_revenue_in_12_month_period(customer_name, rank_updated_at):
 	start_date = getdate(rank_updated_at)
 	end_date = add_months(start_date, 12)
 
-	referral_revenue = frappe.db.sql("""
+	referral_revenue = frappe.db.sql(
+		"""
 		SELECT SUM(total_price) as total
 		FROM `tabCoupon`
 		WHERE parent = %s
 		AND DATE(COALESCE(end_date, start_date)) > %s
 		AND DATE(COALESCE(end_date, start_date)) < %s
 		AND payment_status IN ('Paid', 'Pending')
-	""", (customer_name, start_date, end_date), as_dict=True)
+	""",
+		(customer_name, start_date, end_date),
+		as_dict=True,
+	)
 
 	return flt(referral_revenue[0].total if referral_revenue else 0)
+
 
 def _get_buyback_revenue_in_period(customer_name, start_date, end_date):
 	"""
@@ -1303,10 +1350,10 @@ def _get_buyback_revenue_in_period(customer_name, start_date, end_date):
 			params={
 				"phone_number": phone_number,
 				"submitted_date_start": formatdate(start_date, "yyyy-MM-dd"),
-				"submitted_date_end": formatdate(end_date, "yyyy-MM-dd")
+				"submitted_date_end": formatdate(end_date, "yyyy-MM-dd"),
 			},
 			headers={"Authorization": f"Bearer {config.FN_BEARER_TOKEN}"},
-			timeout=10
+			timeout=10,
 		)
 
 		if response.status_code == 200:
@@ -1321,18 +1368,21 @@ def _get_buyback_revenue_in_period(customer_name, start_date, end_date):
 
 	except Exception as e:
 		frappe.log_error(
-			f"Error fetching buyback revenue for {customer_name} ({start_date} to {end_date}): {str(e)}",
-			"Buyback Revenue Calculation Error"
+			f"Error fetching buyback revenue for {customer_name} ({start_date} to {end_date}): {e!s}",
+			"Buyback Revenue Calculation Error",
 		)
 		return 0
+
 
 def _is_rank_higher(rank1, rank2):
 	"""Check if rank1 is higher than rank2"""
 	return RANK_ORDER.get(rank1, 0) > RANK_ORDER.get(rank2, 0)
 
+
 def _is_rank_lower(rank1, rank2):
 	"""Check if rank1 is lower than rank2"""
 	return RANK_ORDER.get(rank1, 0) < RANK_ORDER.get(rank2, 0)
+
 
 def _downgrade_one_level(current_rank):
 	"""Downgrade rank by one level (Silver is minimum - cannot downgrade below Silver)"""
@@ -1344,25 +1394,26 @@ def _downgrade_one_level(current_rank):
 		return CustomerRank.SILVER  # Cannot downgrade below Silver
 	return CustomerRank.NO_RANK
 
+
 def update_all_customers_revenue():
+	payload = {}  # Add any required payload if needed
+	response = requests.get(f"{config.PRIORITY_BASE_URL}/user/priority/get-all", json=payload)
 
-    payload = {}  # Add any required payload if needed
-    response = requests.get(f"{config.PRIORITY_BASE_URL}/user/priority/get-all", json=payload)
+	if response.status_code != 200:
+		frappe.throw("Failed to fetch data from priority API")
 
-    if response.status_code != 200:
-        frappe.throw("Failed to fetch data from priority API")
+	results = response.json().get("results", [])
 
-    results = response.json().get("results", [])
+	for result in results:
+		haravan_id = result.get("haravanId")
+		referrals_revenue = result.get("totalReferAmount", 0)
+		withdraw_cashback = result.get("withdrawAmount", 0)
+		pending_cashback = result.get("remainingCashBack", 0)
+		cashback = withdraw_cashback + pending_cashback
 
-    for result in results:
-        haravan_id = result.get("haravanId")
-        referrals_revenue = result.get("totalReferAmount", 0)
-        withdraw_cashback = result.get("withdrawAmount", 0)
-        pending_cashback = result.get("remainingCashBack", 0)
-        cashback = withdraw_cashback + pending_cashback
-
-        # Update tabCustomer table based on haravanId
-        frappe.db.sql("""
+		# Update tabCustomer table based on haravanId
+		frappe.db.sql(
+			"""
             UPDATE `tabCustomer`
             SET
                 referrals_revenue = %s,
@@ -1370,7 +1421,10 @@ def update_all_customers_revenue():
                 withdraw_cashback = %s,
                 pending_cashback = %s
             WHERE haravan_id = %s
-        """, (referrals_revenue, cashback, withdraw_cashback, pending_cashback, str(haravan_id)))
+        """,
+			(referrals_revenue, cashback, withdraw_cashback, pending_cashback, str(haravan_id)),
+		)
+
 
 @frappe.whitelist()
 def load_buyback_records_async(customer):
@@ -1385,7 +1439,7 @@ def load_buyback_records_async(customer):
 			url=f"{config.FN_BASE_URL}/api/larksuites/buyback-exchanges",
 			params={"phone_number": phone_number},
 			headers={"Authorization": f"Bearer {config.FN_BEARER_TOKEN}"},
-			timeout=3
+			timeout=3,
 		)
 
 		if response.status_code == 200:
@@ -1403,6 +1457,7 @@ def load_buyback_records_async(customer):
 		pass  # Silently fail
 
 	return []
+
 
 def _initialize_customer_rank(customer_name, auto_commit=True):
 	"""Phase 1: Initialize rank_updated_at and initial rank
@@ -1438,6 +1493,7 @@ def _initialize_customer_rank(customer_name, auto_commit=True):
 	if auto_commit:
 		frappe.db.commit()
 
+
 def _replay_rank_upgrades(customer_name, auto_commit=True):
 	"""Phase 2: Replay all orders AND coupons chronologically to find upgrade points"""
 	customer = frappe.get_doc("Customer", customer_name)
@@ -1445,25 +1501,33 @@ def _replay_rank_upgrades(customer_name, auto_commit=True):
 	current_rank = customer.rank
 	events = []
 
-	orders = frappe.db.sql("""
+	orders = frappe.db.sql(
+		"""
 		SELECT transaction_date as event_date
 		FROM `tabSales Order`
 		WHERE customer = %s
 		AND financial_status IN ('Paid', 'Partially Paid')
 		AND cancelled_status = 'Uncancelled'
 		AND transaction_date > %s
-	""", (customer_name, current_rank_updated_at), as_dict=True)
+	""",
+		(customer_name, current_rank_updated_at),
+		as_dict=True,
+	)
 
 	for order in orders:
 		events.append(getdate(order.event_date))
 
-	coupons = frappe.db.sql("""
+	coupons = frappe.db.sql(
+		"""
 		SELECT DATE(COALESCE(end_date, start_date)) as event_date
 		FROM `tabCoupon`
 		WHERE parent = %s
 		AND COALESCE(end_date, start_date) > %s
 		AND payment_status IN ('Paid', 'Pending')
-	""", (customer_name, current_rank_updated_at), as_dict=True)
+	""",
+		(customer_name, current_rank_updated_at),
+		as_dict=True,
+	)
 
 	for coupon in coupons:
 		events.append(getdate(coupon.event_date))
@@ -1486,10 +1550,13 @@ def _replay_rank_upgrades(customer_name, auto_commit=True):
 			if auto_commit:
 				frappe.db.commit()
 
-			frappe.logger().info(f"Upgraded {customer_name} from {current_rank} to {qualified_rank} on {event_date} (cumulative: {cumulative_at_date:,.2f})")
+			frappe.logger().info(
+				f"Upgraded {customer_name} from {current_rank} to {qualified_rank} on {event_date} (cumulative: {cumulative_at_date:,.2f})"
+			)
 
 			current_rank = qualified_rank
 			current_rank_updated_at = event_date
+
 
 def _check_12_month_downgrades(customer_name, auto_commit=True):
 	"""Phase 3: Check if 12-month downgrade evaluation is needed"""
@@ -1500,7 +1567,7 @@ def _check_12_month_downgrades(customer_name, auto_commit=True):
 	if not rank_updated_at:
 		return
 
-	partner_role = (getattr(customer, 'partner_role', '') or '').lower()
+	partner_role = (getattr(customer, "partner_role", "") or "").lower()
 	is_protected = partner_role in ["staff", "partnerA", "partnerB"]
 
 	today = getdate(nowdate())
@@ -1518,12 +1585,18 @@ def _check_12_month_downgrades(customer_name, auto_commit=True):
 
 			if not is_protected and current_rank != CustomerRank.SILVER:
 				customer.db_set("rank", downgraded_rank, update_modified=True)
-				frappe.logger().info(f"Downgraded {customer_name} from {current_rank} to {downgraded_rank} (12m score: {rank_score_12m})")
+				frappe.logger().info(
+					f"Downgraded {customer_name} from {current_rank} to {downgraded_rank} (12m score: {rank_score_12m})"
+				)
 				current_rank = downgraded_rank
 			elif is_protected:
-				frappe.logger().info(f"Protected role {partner_role}: Skipped downgrade for {customer_name} (12m score: {rank_score_12m})")
+				frappe.logger().info(
+					f"Protected role {partner_role}: Skipped downgrade for {customer_name} (12m score: {rank_score_12m})"
+				)
 			else:
-				frappe.logger().info(f"Already at Silver: No downgrade for {customer_name} (12m score: {rank_score_12m})")
+				frappe.logger().info(
+					f"Already at Silver: No downgrade for {customer_name} (12m score: {rank_score_12m})"
+				)
 
 			customer.db_set("rank_updated_at", next_evaluation_date, update_modified=True)
 			customer.db_set("rank_score_12m", rank_score_12m, update_modified=True)
@@ -1543,17 +1616,25 @@ def _check_12_month_downgrades(customer_name, auto_commit=True):
 			rank_updated_at = next_evaluation_date
 			next_evaluation_date = add_months(rank_updated_at, 12)
 
+
 def _get_cumulative_revenue_at_date(customer_name, target_date):
 	"""Calculate cumulative revenue up to a specific date (including that date)"""
 	# Get actual revenue from sales orders up to target_date
-	actual_revenue = frappe.db.sql("""
+	actual_revenue = (
+		frappe.db.sql(
+			"""
 		SELECT SUM(grand_total) as total
 		FROM `tabSales Order`
 		WHERE customer = %s
 		AND financial_status IN ('Paid', 'Partially Paid')
 		AND cancelled_status = 'Uncancelled'
 		AND transaction_date <= %s
-	""", (customer_name, target_date), as_dict=True)[0].total or 0
+	""",
+			(customer_name, target_date),
+			as_dict=True,
+		)[0].total
+		or 0
+	)
 
 	# Get referral revenue from coupons up to target_date (using end_date)
 	referral_revenue = _get_referral_revenue_up_to_date(customer_name, target_date)
@@ -1562,9 +1643,12 @@ def _get_cumulative_revenue_at_date(customer_name, target_date):
 	# Buybacks are only considered in 12-month evaluations, not for upgrade qualifications
 	return flt(actual_revenue) + flt(referral_revenue)
 
+
 def _get_cumulative_revenue_in_period(customer_name, start_date, end_date):
 	"""Calculate cumulative revenue in a specific period (from start_date to end_date, inclusive)"""
-	actual_revenue = frappe.db.sql("""
+	actual_revenue = (
+		frappe.db.sql(
+			"""
 		SELECT SUM(grand_total) as total
 		FROM `tabSales Order`
 		WHERE customer = %s
@@ -1572,34 +1656,50 @@ def _get_cumulative_revenue_in_period(customer_name, start_date, end_date):
 		AND cancelled_status = 'Uncancelled'
 		AND transaction_date > %s
 		AND transaction_date <= %s
-	""", (customer_name, start_date, end_date), as_dict=True)[0].total or 0
+	""",
+			(customer_name, start_date, end_date),
+			as_dict=True,
+		)[0].total
+		or 0
+	)
 
 	referral_revenue = _get_referral_revenue_in_period(customer_name, start_date, end_date)
 	return flt(actual_revenue) + flt(referral_revenue)
 
+
 def _get_referral_revenue_in_period(customer_name, start_date, end_date):
 	"""Get referral revenue from coupons in a specific period (using end_date or start_date if NULL)"""
-	referral_revenue = frappe.db.sql("""
+	referral_revenue = frappe.db.sql(
+		"""
 		SELECT SUM(total_price) as total
 		FROM `tabCoupon`
 		WHERE parent = %s
 		AND DATE(COALESCE(end_date, start_date)) > %s
 		AND DATE(COALESCE(end_date, start_date)) <= %s
 		AND payment_status IN ('Paid', 'Pending')
-	""", (customer_name, start_date, end_date), as_dict=True)
+	""",
+		(customer_name, start_date, end_date),
+		as_dict=True,
+	)
 	return flt(referral_revenue[0].total if referral_revenue else 0)
+
 
 def _get_referral_revenue_up_to_date(customer_name, target_date):
 	"""Get referral revenue from coupons up to a specific date (using end_date or start_date if NULL)"""
-	referral_revenue = frappe.db.sql("""
+	referral_revenue = frappe.db.sql(
+		"""
 		SELECT SUM(total_price) as total
 		FROM `tabCoupon`
 		WHERE parent = %s
 		AND DATE(COALESCE(end_date, start_date)) <= %s
 		AND payment_status IN ('Paid', 'Pending')
-	""", (customer_name, target_date), as_dict=True)
+	""",
+		(customer_name, target_date),
+		as_dict=True,
+	)
 
 	return flt(referral_revenue[0].total if referral_revenue else 0)
+
 
 def _get_buyback_revenue_up_to_date(customer_name, target_date):
 	"""Get total buyback revenue up to a specific date"""
@@ -1615,10 +1715,10 @@ def _get_buyback_revenue_up_to_date(customer_name, target_date):
 			url=f"{config.FN_BASE_URL}/api/larksuites/buyback-exchanges",
 			params={
 				"phone_number": phone_number,
-				"submitted_date_end": formatdate(target_date, "yyyy-MM-dd")
+				"submitted_date_end": formatdate(target_date, "yyyy-MM-dd"),
 			},
 			headers={"Authorization": f"Bearer {config.FN_BEARER_TOKEN}"},
-			timeout=10
+			timeout=10,
 		)
 
 		if response.status_code == 200:
@@ -1632,14 +1732,14 @@ def _get_buyback_revenue_up_to_date(customer_name, target_date):
 
 	except Exception as e:
 		frappe.log_error(
-			f"Error fetching buyback revenue up to {target_date} for {customer_name}: {str(e)}",
-			"Buyback Revenue Calculation Error"
+			f"Error fetching buyback revenue up to {target_date} for {customer_name}: {e!s}",
+			"Buyback Revenue Calculation Error",
 		)
 		return 0
 
+
 def _update_total_cumulative_revenue(customer_name, auto_commit=True):
-	"""Update the total_cumulative_revenue field
-	"""
+	"""Update the total_cumulative_revenue field"""
 	_update_referral_revenue_from_coupons(customer_name)
 	customer = frappe.get_doc("Customer", customer_name)
 
@@ -1659,12 +1759,19 @@ def _update_total_cumulative_revenue(customer_name, auto_commit=True):
 
 def _update_referral_revenue_from_coupons(customer_name):
 	"""Calculate referral_cumulative_revenue from sum of coupon total_price"""
-	total_referral = frappe.db.sql("""
+	total_referral = (
+		frappe.db.sql(
+			"""
 		SELECT SUM(total_price) as total
 		FROM `tabCoupon`
 		WHERE parent = %s
 		AND payment_status in ('Paid', 'Pending')
-	""", (customer_name,), as_dict=True)[0].total or 0
+	""",
+			(customer_name,),
+			as_dict=True,
+		)[0].total
+		or 0
+	)
 
 	frappe.db.set_value("Customer", customer_name, "referral_cumulative_revenue", total_referral)
 	frappe.db.commit()
@@ -1684,19 +1791,20 @@ def _update_current_12_month_score(customer_name, auto_commit=True):
 	if auto_commit:
 		frappe.db.commit()
 
+
 @frappe.whitelist()
-def get_customer_buybacks(customer_name=None, phone_number=None):	
+def get_customer_buybacks(customer_name=None, phone_number=None):
 	or_filters = []
 	if customer_name:
 		or_filters.append(["customer_name", "=", customer_name])
-		
+
 	if phone_number:
 		variants = get_phone_variants(phone_number)
 		if variants:
 			or_filters.append(["phone_number", "in", list(variants)])
 		else:
 			or_filters.append(["phone_number", "=", phone_number])
-			
+
 	if not or_filters:
 		return []
 
@@ -1710,9 +1818,9 @@ def get_customer_buybacks(customer_name=None, phone_number=None):
 			"refund_amount",
 			"status",
 			"reason",
-			"new_order_code"
+			"new_order_code",
 		],
-		order_by="submitted_date desc"
+		order_by="submitted_date desc",
 	)
 
 	for buyback in buybacks:
@@ -1722,8 +1830,11 @@ def get_customer_buybacks(customer_name=None, phone_number=None):
 				buyback["new_order_code"] = sales_order_name
 			except Exception as e:
 				buyback["new_order_code"] = None
-				frappe.log_error(f"Failed to convert order_number to Sales Order name: {e}", "Buyback Order Conversion")
+				frappe.log_error(
+					f"Failed to convert order_number to Sales Order name: {e}", "Buyback Order Conversion"
+				)
 	return buybacks
+
 
 def find_sales_order_by_order_number(raw_code):
 	if not raw_code:
@@ -1733,7 +1844,7 @@ def find_sales_order_by_order_number(raw_code):
 	if so_name:
 		return so_name
 
-	match = re.search(r'(\d+)', str(raw_code))
+	match = re.search(r"(\d+)", str(raw_code))
 	if not match:
 		return None
 

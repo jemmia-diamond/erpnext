@@ -210,11 +210,8 @@ def get_account_type_based_gl_data(company, filters=None):
 
 	if filters.include_default_book_entries:
 		company_fb = frappe.get_cached_value("Company", company, "default_finance_book")
-		cond = """ AND (finance_book in ({}, {}, '') OR finance_book IS NULL)
-			""".format(
-			frappe.db.escape(filters.finance_book),
-			frappe.db.escape(company_fb),
-		)
+		cond = f""" AND (finance_book in ({frappe.db.escape(filters.finance_book)}, {frappe.db.escape(company_fb)}, '') OR finance_book IS NULL)
+			"""
 	else:
 		cond = " AND (finance_book in (%s, '') OR finance_book IS NULL)" % (
 			frappe.db.escape(cstr(filters.finance_book))

@@ -1734,9 +1734,7 @@ class update_entries_after:
 					allowed_qty = abs(exceptions[0]["actual_qty"]) - abs(exceptions[0]["diff"])
 
 					if allowed_qty > 0:
-						msg = "{} As {} units are reserved for other sales orders, you are allowed to consume only {} units.".format(
-							msg, frappe.bold(self.reserved_stock), frappe.bold(allowed_qty)
-						)
+						msg = f"{msg} As {frappe.bold(self.reserved_stock)} units are reserved for other sales orders, you are allowed to consume only {frappe.bold(allowed_qty)} units."
 					else:
 						msg = f"{msg} As the full stock is reserved for other transactions, you're not allowed to consume the stock."
 
@@ -1861,7 +1859,7 @@ def get_previous_sle(args, for_update=False, extra_cond=None, for_report=False):
 	sle = get_stock_ledger_entries(
 		args, "<=", "desc", "limit 1", for_update=for_update, extra_cond=extra_cond, for_report=for_report
 	)
-	return sle and sle[0] or {}
+	return (sle and sle[0]) or {}
 
 
 def get_stock_ledger_entries(
@@ -1942,7 +1940,7 @@ def get_stock_ledger_entries(
 		{limit} {for_update}""".format(
 			conditions=conditions,
 			limit=limit or "",
-			for_update=for_update and "for update" or "",
+			for_update=(for_update and "for update") or "",
 			order=order,
 		),
 		previous_sle,

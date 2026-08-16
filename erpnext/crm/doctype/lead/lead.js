@@ -47,9 +47,12 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 		}
 
 		if (doc.__onload.is_customer) {
-			this.frm.add_custom_button(__("Appointment"), this.make_customer_appointment.bind(this), __("Create"));
+			this.frm.add_custom_button(
+				__("Appointment"),
+				this.make_customer_appointment.bind(this),
+				__("Create")
+			);
 		}
-
 
 		if (!this.frm.is_new()) {
 			frappe.contacts.render_address_and_contact(this.frm);
@@ -114,7 +117,7 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 			preferred_products: this.frm.doc.preferred_product_type,
 			status: "Open",
 			order_status: "Khách hẹn đến cửa hàng",
-			source: this.frm.doc.source
+			source: this.frm.doc.source,
 		});
 	}
 
@@ -132,7 +135,7 @@ erpnext.LeadController = class LeadController extends frappe.ui.form.Controller 
 			preferred_products: this.frm.doc.preferred_product_type,
 			status: "Open",
 			order_status: "Khách hẹn đến cửa hàng",
-			source: this.frm.doc.source
+			source: this.frm.doc.source,
 		});
 	}
 

@@ -1,6 +1,6 @@
 frappe.listview_settings["Customer"] = {
-	onload: function(listview) {
-		listview.page.add_actions_menu_item(__("Re-evaluate Rank"), function() {
+	onload: function (listview) {
+		listview.page.add_actions_menu_item(__("Re-evaluate Rank"), function () {
 			let selected = listview.get_checked_items();
 
 			if (selected.length === 0) {
@@ -10,33 +10,35 @@ frappe.listview_settings["Customer"] = {
 
 			if (selected.length > 500) {
 				frappe.msgprint({
-					message: __("You can only re-evaluate up to 500 customers at a time. You selected {0}.", [selected.length]),
+					message: __("You can only re-evaluate up to 500 customers at a time. You selected {0}.", [
+						selected.length,
+					]),
 					title: __("Too Many Customers"),
-					indicator: "red"
+					indicator: "red",
 				});
 				return;
 			}
 
 			frappe.confirm(
 				__("Re-evaluate rank for {0} selected customer(s)?", [selected.length]),
-				function() {
+				function () {
 					frappe.call({
 						method: "erpnext.selling.doctype.customer.customer.bulk_reevaluate_customer_rank",
 						args: {
-							customer_names: selected.map(item => item.name)
+							customer_names: selected.map((item) => item.name),
 						},
 						freeze: true,
 						freeze_message: __("Re-evaluating {0} customers...", [selected.length]),
-						callback: function(r) {
+						callback: function (r) {
 							if (r.message) {
 								frappe.msgprint({
 									message: __("Successfully re-evaluated"),
 									title: __("Rank Re-evaluation Complete"),
-									indicator: "green"
+									indicator: "green",
 								});
 								listview.refresh();
 							}
-						}
+						},
 					});
 				}
 			);

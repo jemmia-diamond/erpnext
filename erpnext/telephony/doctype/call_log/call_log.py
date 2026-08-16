@@ -2,20 +2,22 @@
 # For license information, please see license.txt
 
 
+import time
+
 import frappe
+import jwt
+import requests
 from frappe import _
 from frappe.contacts.doctype.contact.contact import get_contact_with_phone_number
 from frappe.core.doctype.dynamic_link.dynamic_link import deduplicate_dynamic_links
 from frappe.model.document import Document
 from frappe.utils.file_manager import get_file, save_file
+
+from erpnext.config.config import config
 from erpnext.crm.doctype.lead.lead import get_lead_with_phone_number
 from erpnext.crm.doctype.utils import get_scheduled_employees_for_popup, strip_number
-from erpnext.config.config import config
-from erpnext.utilities.phone_utils import get_phone_variants
 from erpnext.r2_storage import compress_and_upload_to_r2
-import jwt
-import time
-import requests
+from erpnext.utilities.phone_utils import get_phone_variants
 
 END_CALL_STATUSES = ["No Answer", "Completed", "Busy", "Failed"]
 ONGOING_CALL_STATUSES = ["Ringing", "In Progress"]
@@ -38,7 +40,17 @@ class CallLog(Document):
 		ai_action_item_text: DF.LongText | None
 		ai_summary: DF.LongText | None
 		call_received_by: DF.Link | None
-		customer_sentinent: DF.Literal["Can't detect", "Happy", "Neutral", "Frustrated", "Angry", "Confused", "Concerned", "Excited", "Impatient"]
+		customer_sentinent: DF.Literal[
+			"Can't detect",
+			"Happy",
+			"Neutral",
+			"Frustrated",
+			"Angry",
+			"Confused",
+			"Concerned",
+			"Excited",
+			"Impatient",
+		]
 		disposition: DF.Data | None
 		duration: DF.Duration | None
 		employee_user_id: DF.Link | None
@@ -53,7 +65,9 @@ class CallLog(Document):
 		provider_recording_url: DF.Text | None
 		recording_url: DF.Text | None
 		start_time: DF.Datetime | None
-		status: DF.Literal["Ringing", "In Progress", "Completed", "Failed", "Busy", "No Answer", "Queued", "Cancelled"]
+		status: DF.Literal[
+			"Ringing", "In Progress", "Completed", "Failed", "Busy", "No Answer", "Queued", "Cancelled"
+		]
 		summary: DF.SmallText | None
 		text_extracted: DF.LongText | None
 		to: DF.Data | None
@@ -89,7 +103,7 @@ class CallLog(Document):
 				"erpnext.telephony.doctype.call_log.call_log.download_and_attach_recording",
 				call_log_name=self.name,
 				queue="short",
-				enqueue_after_commit=True
+				enqueue_after_commit=True,
 			)
 
 	def before_save(self):
@@ -123,7 +137,7 @@ class CallLog(Document):
 			frappe.enqueue(
 				"erpnext.telephony.doctype.call_log.call_log.download_and_attach_recording",
 				call_log_name=self.name,
-				queue="short"
+				queue="short",
 			)
 
 	def is_incoming_call(self):
@@ -142,7 +156,7 @@ class CallLog(Document):
 			"Customer",
 			or_filters={"mobile_no": ["in", variants], "phone": ["in", variants]},
 			fields=["name"],
-			limit=1
+			limit=1,
 		)
 		if customers:
 			self.participant_type = "Customer"
@@ -153,15 +167,18 @@ class CallLog(Document):
 			"Lead",
 			or_filters={"mobile_no": ["in", variants], "phone": ["in", variants]},
 			fields=["name"],
-			limit=1
+			limit=1,
 		)
 		if leads:
 			self.participant_type = "Lead"
 			self.participant = leads[0].name
 
-
 	def set_participant_name(self):
-		if (not self.participant_name or self.participant_name == "Unidentified") and self.participant_type and self.participant:
+		if (
+			(not self.participant_name or self.participant_name == "Unidentified")
+			and self.participant_type
+			and self.participant
+		):
 			field = "customer_name" if self.participant_type == "Customer" else "first_name"
 			self.participant_name = frappe.db.get_value(self.participant_type, self.participant, field)
 
@@ -210,7 +227,9 @@ class CallLog(Document):
 		if self.call_received_by or getattr(self, "provider", "stringee") != "vbot" or not self.agent_id:
 			return
 
-		employee_data = frappe.db.get_value("Employee", {"vbot_id": self.agent_id}, ["name", "employee_name", "user_id"], as_dict=True)
+		employee_data = frappe.db.get_value(
+			"Employee", {"vbot_id": self.agent_id}, ["name", "employee_name", "user_id"], as_dict=True
+		)
 		if not employee_data:
 			try:
 				url = f"{config.VBOT_BASE_URL}/api/member/getByMemberNo?member_no={self.agent_id}"
@@ -218,11 +237,19 @@ class CallLog(Document):
 
 				if response.ok and (member_name := (response.json().get("data") or {}).get("member_name")):
 					self.agent_name = member_name
-					if emp_data := frappe.db.get_value("Employee", {"employee_name": member_name}, ["name", "user_id"], as_dict=True):
-						employee_data = {"name": emp_data.get("name"), "employee_name": member_name, "user_id": emp_data.get("user_id")}
+					if emp_data := frappe.db.get_value(
+						"Employee", {"employee_name": member_name}, ["name", "user_id"], as_dict=True
+					):
+						employee_data = {
+							"name": emp_data.get("name"),
+							"employee_name": member_name,
+							"user_id": emp_data.get("user_id"),
+						}
 						frappe.db.set_value("Employee", emp_data.get("name"), "vbot_id", self.agent_id)
 			except Exception as e:
-				frappe.log_error(f"Failed to fetch Vbot agent for Call Log {self.name}: {str(e)}", "Vbot Agent Lookup")
+				frappe.log_error(
+					f"Failed to fetch Vbot agent for Call Log {self.name}: {e!s}", "Vbot Agent Lookup"
+				)
 
 		if employee_data:
 			self.agent_name = employee_data.get("employee_name")
@@ -333,6 +360,7 @@ def get_linked_call_logs(doctype, docname):
 
 	return timeline_contents
 
+
 @frappe.whitelist()
 def get_stringee_access_token():
 	now = int(time.time())
@@ -342,10 +370,11 @@ def get_stringee_access_token():
 		"jti": f"{config.STRINGEE_API_KEY_SID}-{now}",
 		"iss": config.STRINGEE_API_KEY_SID,
 		"exp": exp,
-		"rest_api": True
+		"rest_api": True,
 	}
 	token = jwt.encode(payload, config.STRINGEE_API_KEY_SECRET, algorithm="HS256")
 	return token
+
 
 @frappe.whitelist()
 def download_and_attach_recording(call_log_name):
@@ -354,7 +383,9 @@ def download_and_attach_recording(call_log_name):
 	if not call_log.recording_url:
 		return
 
-	if frappe.db.exists("File", {"attached_to_doctype": "Call Log", "attached_to_name": call_log_name, "is_private": 1}):
+	if frappe.db.exists(
+		"File", {"attached_to_doctype": "Call Log", "attached_to_name": call_log_name, "is_private": 1}
+	):
 		return
 
 	headers = {}
@@ -366,7 +397,9 @@ def download_and_attach_recording(call_log_name):
 		if config.CC_API_KEY:
 			headers["X-API-Key"] = config.CC_API_KEY
 
-	compressor_url = frappe.conf.get("compressor_service_url") or getattr(config, "COMPRESSOR_SERVICE_URL", "")
+	compressor_url = frappe.conf.get("compressor_service_url") or getattr(
+		config, "COMPRESSOR_SERVICE_URL", ""
+	)
 	if not compressor_url:
 		try:
 			response = requests.get(download_url, headers=headers)
@@ -376,13 +409,16 @@ def download_and_attach_recording(call_log_name):
 					content=response.content,
 					dt="Call Log",
 					dn=call_log.name,
-					is_private=1
+					is_private=1,
 				)
 				frappe.db.set_value("Call Log", call_log_name, "recording_url", file_doc.file_url)
 				frappe.db.commit()
 				return
 		except Exception as e:
-			frappe.log_error(f"Old direct download failed for Call Log {call_log_name}: {str(e)}", "Call Log Recording Error")
+			frappe.log_error(
+				f"Old direct download failed for Call Log {call_log_name}: {e!s}",
+				"Call Log Recording Error",
+			)
 	else:
 		try:
 			final_r2_url = compress_and_upload_to_r2(
@@ -390,10 +426,13 @@ def download_and_attach_recording(call_log_name):
 				headers=headers,
 				file_name=f"recording_{call_log.name}.mp3",
 				attached_to_doctype="Call Log",
-				attached_to_name=call_log.name
+				attached_to_name=call_log.name,
 			)
 			if final_r2_url:
 				frappe.db.set_value("Call Log", call_log_name, "recording_url", final_r2_url)
 				frappe.db.commit()
 		except Exception as e:
-			frappe.log_error(f"Failed to compress recording for Call Log {call_log_name}: {str(e)}", "Call Log Recording Error")
+			frappe.log_error(
+				f"Failed to compress recording for Call Log {call_log_name}: {e!s}",
+				"Call Log Recording Error",
+			)

@@ -2,11 +2,13 @@
 # For license information, please see license.txt
 
 # import frappe
+import json
+
 import frappe
 import requests
-import json
 from frappe.model.document import Document
 from frappe.utils import getdate, nowdate
+
 from erpnext.config.config import config
 
 
@@ -40,28 +42,39 @@ class Promotion(Document):
 	# end: auto-generated types
 	pass
 
+
 def update_promotion_status():
 	today = nowdate()
 
-	frappe.db.sql("""
+	frappe.db.sql(
+		"""
 		UPDATE `tabPromotion`
 		SET is_active = 0
 		WHERE end_date < %s AND is_active = 1
-	""", (today,))
+	""",
+		(today,),
+	)
 
-	frappe.db.sql("""
+	frappe.db.sql(
+		"""
 		UPDATE `tabPromotion`
 		SET is_active = 1
 		WHERE start_date <= %s
 		AND (end_date >= %s OR end_date IS NULL)
 		AND is_active = 0
-	""", (today, today))
+	""",
+		(today, today),
+	)
 
-	frappe.db.sql("""
+	frappe.db.sql(
+		"""
 		UPDATE `tabPromotion`
 		SET is_active = 0
 		WHERE start_date > %s AND is_active = 1
-	""", (today,))
+	""",
+		(today,),
+	)
+
 
 @frappe.whitelist()
 def sync_diamond_collect():
@@ -84,13 +97,15 @@ def sync_diamond_collect():
 		frappe.log_error(f"Sync Diamond Collect failed: {e!s}")
 		frappe.throw(f"Đồng bộ thất bại: {e!s}")
 
+
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def promotion_query(doctype, txt, searchfield, start, page_len, filters):
 	transaction_date = filters.get("transaction_date")
 	real_order_date = filters.get("real_order_date")
 	scope = filters.get("scope") or "Line Item"
-	results = frappe.db.sql("""
+	results = frappe.db.sql(
+		"""
 		SELECT name, ifnull(title, name) as title
 		FROM `tabPromotion`
 		WHERE docstatus < 2
@@ -103,12 +118,15 @@ def promotion_query(doctype, txt, searchfield, start, page_len, filters):
 		AND (name LIKE %(txt)s OR title LIKE %(txt)s)
 		ORDER BY modified DESC
 		LIMIT %(start)s, %(page_len)s
-	""", {
-		"scope": scope,
-		"transaction_date": transaction_date,
-		"real_order_date": real_order_date,
-		"txt": f"%{txt}%",
-		"start": start,
-		"page_len": page_len
-	}, as_dict=True if filters.get("as_dict") else False)
+	""",
+		{
+			"scope": scope,
+			"transaction_date": transaction_date,
+			"real_order_date": real_order_date,
+			"txt": f"%{txt}%",
+			"start": start,
+			"page_len": page_len,
+		},
+		as_dict=True if filters.get("as_dict") else False,
+	)
 	return results

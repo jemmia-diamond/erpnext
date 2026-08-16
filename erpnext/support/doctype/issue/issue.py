@@ -163,9 +163,7 @@ class Issue(Document):
 				"comment_type": "Info",
 				"reference_doctype": "Issue",
 				"reference_name": replicated_issue.name,
-				"content": " - Split the Issue from <a href='/app/Form/Issue/{}'>{}</a>".format(
-					self.name, frappe.bold(self.name)
-				),
+				"content": f" - Split the Issue from <a href='/app/Form/Issue/{self.name}'>{frappe.bold(self.name)}</a>",
 			}
 		).insert(ignore_permissions=True)
 

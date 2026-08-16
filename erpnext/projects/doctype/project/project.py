@@ -313,7 +313,7 @@ class Project(Document):
 
 	def update_purchase_costing(self):
 		total_purchase_cost = calculate_total_purchase_cost(self.name)
-		self.total_purchase_cost = total_purchase_cost and total_purchase_cost[0][0] or 0
+		self.total_purchase_cost = (total_purchase_cost and total_purchase_cost[0][0]) or 0
 
 	def update_sales_amount(self):
 		total_sales_amount = frappe.db.sql(
@@ -322,7 +322,7 @@ class Project(Document):
 			self.name,
 		)
 
-		self.total_sales_amount = total_sales_amount and total_sales_amount[0][0] or 0
+		self.total_sales_amount = (total_sales_amount and total_sales_amount[0][0]) or 0
 
 	def update_billed_amount(self):
 		self.total_billed_amount = self.get_billed_amount_from_parent() + self.get_billed_amount_from_child()
@@ -338,7 +338,7 @@ class Project(Document):
 			self.name,
 		)
 
-		return total_billed_amount and total_billed_amount[0][0] or 0
+		return (total_billed_amount and total_billed_amount[0][0]) or 0
 
 	def get_billed_amount_from_child(self):
 		total_billed_amount = frappe.db.sql(
@@ -349,7 +349,7 @@ class Project(Document):
 			self.name,
 		)
 
-		return total_billed_amount and total_billed_amount[0][0] or 0
+		return (total_billed_amount and total_billed_amount[0][0]) or 0
 
 	def after_rename(self, old_name, new_name, merge=False):
 		if old_name == self.copied_from:

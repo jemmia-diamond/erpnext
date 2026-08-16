@@ -44,8 +44,7 @@ def boot_session(bootinfo):
 				LIMIT 1"""
 				)
 				and "Yes"
-				or "No"
-			)
+			) or "No"
 
 		bootinfo.docs += frappe.db.sql(
 			"""select name, default_currency, cost_center, default_selling_terms, default_buying_terms,

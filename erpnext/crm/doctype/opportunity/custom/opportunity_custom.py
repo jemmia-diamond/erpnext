@@ -1,11 +1,11 @@
-import frappe
 import json
 
+import frappe
 from frappe.query_builder import DocType, Interval
 from frappe.query_builder.functions import Now
-from erpnext.utilities.phone_utils import get_phone_variants
-from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
 
+from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
+from erpnext.utilities.phone_utils import get_phone_variants
 
 DEFAULT_LEAD_OPPORTUNITY_FIELD_MAPPINGS = [
 	("first_name", "title"),
@@ -43,7 +43,14 @@ def auto_close_opportunity():
 		filters={
 			"status": ["in", ["Nurturing", "Proposal", "Negotiation", "Delayed"]],
 		},
-		fields=["name", "status", "expected_delivery_date", "last_customer_message_at", "last_sales_message_at", "modified"],
+		fields=[
+			"name",
+			"status",
+			"expected_delivery_date",
+			"last_customer_message_at",
+			"last_sales_message_at",
+			"modified",
+		],
 	)
 
 	target_opps = []
@@ -58,14 +65,21 @@ def auto_close_opportunity():
 				if (not cust_at or frappe.utils.get_datetime(cust_at) < cutoff) and (
 					not sales_at or frappe.utils.get_datetime(sales_at) < cutoff
 				):
-					target_opps.append((opp.name, f"Tự động đóng: Quá 7 ngày tính từ ngày mua dự kiến ({opp.expected_delivery_date})"))
+					target_opps.append(
+						(
+							opp.name,
+							f"Tự động đóng: Quá 7 ngày tính từ ngày mua dự kiến ({opp.expected_delivery_date})",
+						)
+					)
 					continue
 
 		# Rule A (Doc Line 83): Inactive for over 7 days in Nurturing status without interaction -> Lost
 		if opp.status == "Nurturing":
-			if (not cust_at or frappe.utils.get_datetime(cust_at) < cutoff) and (
-				not sales_at or frappe.utils.get_datetime(sales_at) < cutoff
-			) and (frappe.utils.get_datetime(opp.modified) < cutoff):
+			if (
+				(not cust_at or frappe.utils.get_datetime(cust_at) < cutoff)
+				and (not sales_at or frappe.utils.get_datetime(sales_at) < cutoff)
+				and (frappe.utils.get_datetime(opp.modified) < cutoff)
+			):
 				target_opps.append((opp.name, "Tự động đóng: Quá 7 ngày ở Nuôi dưỡng mà không có tương tác"))
 
 	if target_opps:
@@ -110,10 +124,7 @@ def mark_opportunity_as_won_on_payment(doc, method=None):
 		or_filters.append(["phone", "in", list(variants)])
 
 	opp_names = frappe.get_all(
-		"Opportunity",
-		filters=[["status", "not in", ["Won", "Lost"]]],
-		or_filters=or_filters,
-		pluck="name"
+		"Opportunity", filters=[["status", "not in", ["Won", "Lost"]]], or_filters=or_filters, pluck="name"
 	)
 
 	if opp_names:
@@ -160,7 +171,9 @@ def sync_lead_fields_to_active_opportunities(doc, method=None):
 
 			if lead_field == "preferred_product_type":
 				lead_items = [r.product_type for r in val if getattr(r, "product_type", None)]
-				opp_items = [r.product_type for r in opp.preferred_product_type if getattr(r, "product_type", None)]
+				opp_items = [
+					r.product_type for r in opp.preferred_product_type if getattr(r, "product_type", None)
+				]
 				if lead_items != opp_items:
 					opp.set("preferred_product_type", [])
 					for pt in lead_items:
@@ -184,6 +197,7 @@ def sync_lead_fields_to_active_opportunities(doc, method=None):
 			opp.flags.ignore_mandatory = True
 			opp.save()
 
+
 def get_lead_to_opportunity_field_mappings(raw_mappings=None):
 	"""Parse custom JSON field mappings from CRM Settings or return default mapping list."""
 	if raw_mappings:
@@ -193,10 +207,7 @@ def get_lead_to_opportunity_field_mappings(raw_mappings=None):
 				return parsed
 		except Exception:
 			frappe.log_error(
-				title="Invalid Opportunity Sync Field Mappings JSON",
-				message=frappe.get_traceback()
+				title="Invalid Opportunity Sync Field Mappings JSON", message=frappe.get_traceback()
 			)
 
 	return DEFAULT_LEAD_OPPORTUNITY_FIELD_MAPPINGS
-
-

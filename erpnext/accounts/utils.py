@@ -1177,7 +1177,7 @@ def fix_total_debit_credit():
 
 	for d in vouchers:
 		if abs(d.diff) > 0:
-			dr_or_cr = d.voucher_type == "Sales Invoice" and "credit" or "debit"
+			dr_or_cr = (d.voucher_type == "Sales Invoice" and "credit") or "debit"
 
 			frappe.db.sql(
 				"""update `tabGL Entry` set {} = {} + {}

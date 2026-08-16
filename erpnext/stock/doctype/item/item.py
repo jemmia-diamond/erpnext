@@ -1174,10 +1174,10 @@ def get_last_purchase_details(item_code, doc_name=None, conversion_rate=1.0):
 	last_purchase_receipt = get_purchase_voucher_details("Purchase Receipt", item_code, doc_name)
 
 	purchase_order_date = getdate(
-		last_purchase_order and last_purchase_order[0].transaction_date or "1900-01-01"
+		(last_purchase_order and last_purchase_order[0].transaction_date) or "1900-01-01"
 	)
 	purchase_receipt_date = getdate(
-		last_purchase_receipt and last_purchase_receipt[0].posting_date or "1900-01-01"
+		(last_purchase_receipt and last_purchase_receipt[0].posting_date) or "1900-01-01"
 	)
 
 	if last_purchase_order and (purchase_order_date >= purchase_receipt_date or not last_purchase_receipt):

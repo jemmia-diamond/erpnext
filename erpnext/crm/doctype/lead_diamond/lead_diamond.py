@@ -19,7 +19,20 @@ class LeadDiamond(Document):
 		parent: DF.Data
 		parentfield: DF.Data
 		parenttype: DF.Data
-		shape: DF.Literal["Round", "Princess", "Cushion", "Emerald", "Asscher", "Oval", "Marquise", "Radiant", "Pear", "Heart", "Trillion", "Baguette"]
+		shape: DF.Literal[
+			"Round",
+			"Princess",
+			"Cushion",
+			"Emerald",
+			"Asscher",
+			"Oval",
+			"Marquise",
+			"Radiant",
+			"Pear",
+			"Heart",
+			"Trillion",
+			"Baguette",
+		]
 		size: DF.Float
 	# end: auto-generated types
 	pass

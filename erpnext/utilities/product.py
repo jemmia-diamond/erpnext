@@ -79,8 +79,7 @@ def get_price(item_code, price_list, customer_group, company, qty=1, party=None)
 						frappe.db.get_value("Currency", price_obj.currency, "symbol", cache=True)
 						or price_obj.currency
 					)
-					or ""
-				)
+				) or ""
 
 				uom_conversion_factor = frappe.db.sql(
 					"""select	C.conversion_factor

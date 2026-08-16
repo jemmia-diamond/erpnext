@@ -20,7 +20,7 @@ frappe.ui.form.on("Customer", {
 					gender: frm.doc.gender,
 					status: "Open",
 					order_status: "Khách hẹn đến cửa hàng",
-					source: frm.doc.first_source
+					source: frm.doc.first_source,
 				}),
 			// Quotation: () =>
 			// 	frappe.model.open_mapped_doc({
@@ -118,9 +118,9 @@ frappe.ui.form.on("Customer", {
 			};
 		});
 
-    frm.set_df_property("coupon_table", "cannot_add_rows", true);
-    frm.set_df_property("coupon_table", "cannot_delete_rows", true);
-	// frm.get_field("coupon_table").grid.only_sortable();
+		frm.set_df_property("coupon_table", "cannot_add_rows", true);
+		frm.set_df_property("coupon_table", "cannot_delete_rows", true);
+		// frm.get_field("coupon_table").grid.only_sortable();
 	},
 	customer_primary_address: function (frm) {
 		if (frm.doc.customer_primary_address) {
@@ -175,8 +175,8 @@ frappe.ui.form.on("Customer", {
 						method: "erpnext.selling.doctype.customer.customer.update_customer_priority_data",
 						args: {
 							customer_name: frm.doc.name,
-							haravan_id: frm.doc.haravan_id
-						}
+							haravan_id: frm.doc.haravan_id,
+						},
 					});
 				}, 1000);
 			}
@@ -186,7 +186,7 @@ frappe.ui.form.on("Customer", {
 				setTimeout(() => {
 					frappe.call({
 						method: "erpnext.selling.doctype.customer.customer.load_buyback_records_async",
-						args: { customer: frm.doc.name }
+						args: { customer: frm.doc.name },
 					});
 				}, 1500);
 			}
@@ -198,11 +198,11 @@ frappe.ui.form.on("Customer", {
 						method: "erpnext.selling.doctype.coupon.coupon.update_customers_coupons",
 						args: {
 							customer_name: frm.doc.name,
-							customer_haravan_id: parseInt(frm.doc.haravan_id)
+							customer_haravan_id: parseInt(frm.doc.haravan_id),
 						},
-						callback: function(r) {
+						callback: function (r) {
 							frm.reload_doc();
-						}
+						},
 					});
 				}, 2000);
 			}
@@ -217,12 +217,12 @@ frappe.ui.form.on("Customer", {
 					method: "erpnext.selling.doctype.customer.customer.get_customer_buybacks",
 					args: {
 						customer_name: frm.doc.name,
-						phone_number: frm.doc.phone || frm.doc.mobile_no
+						phone_number: frm.doc.phone || frm.doc.mobile_no,
 					},
-					callback: function(r) {
+					callback: function (r) {
 						if (r.message) {
 							frm.clear_table("buyback_history");
-							r.message.forEach(function(row) {
+							r.message.forEach(function (row) {
 								let child = frm.add_child("buyback_history");
 								child.buyback_exchange = row.name;
 								child.instance_type = row.instance_type;
@@ -234,7 +234,7 @@ frappe.ui.form.on("Customer", {
 							});
 							frm.refresh_field("buyback_history");
 						}
-					}
+					},
 				});
 			}
 
@@ -302,18 +302,18 @@ frappe.ui.form.on("Customer", {
 			coupon_grid.cannot_delete_rows = true;
 			// coupon_grid.only_sortable = false;
 
-			frm.fields_dict["coupon_table"].grid.wrapper.find('.grid-remove-rows').hide();
-			frm.fields_dict["coupon_table"].grid.wrapper.find('.grid-add-multiple-rows').hide();
-			frm.fields_dict["coupon_table"].grid.wrapper.find('.grid-add-row').hide();
+			frm.fields_dict["coupon_table"].grid.wrapper.find(".grid-remove-rows").hide();
+			frm.fields_dict["coupon_table"].grid.wrapper.find(".grid-add-multiple-rows").hide();
+			frm.fields_dict["coupon_table"].grid.wrapper.find(".grid-add-row").hide();
 			// frm.fields_dict("coupon_table").grid.wrapper.find('.grid-move-row').hide();
 			frm.fields_dict["coupon_table"].grid.grid_rows.forEach(function (row) {
-				row.wrapper.find('.grid-delete-row').hide();
-				row.wrapper.find('.grid-duplicate-row').hide();
-				row.wrapper.find('.grid-insert-row').hide();
-				row.wrapper.find('.grid-insert-row-below').hide();
-				row.wrapper.find('.grid-append-row').hide();
+				row.wrapper.find(".grid-delete-row").hide();
+				row.wrapper.find(".grid-duplicate-row").hide();
+				row.wrapper.find(".grid-insert-row").hide();
+				row.wrapper.find(".grid-insert-row-below").hide();
+				row.wrapper.find(".grid-append-row").hide();
 			});
-			frm.fields_dict["coupon_table"].grid.wrapper.off('click', '.grid-row');
+			frm.fields_dict["coupon_table"].grid.wrapper.off("click", ".grid-row");
 		} else {
 			frappe.contacts.clear_address_and_contact(frm);
 		}
@@ -403,32 +403,46 @@ frappe.ui.form.on("Customer", {
 			selling: 1,
 		});
 	},
-	load_sales_orders: function(frm) {
+	load_sales_orders: function (frm) {
 		const sales_order_wrapper = frm.get_field("sales_order_html").$wrapper;
 		if (!sales_order_wrapper) return;
 
 		sales_order_wrapper.empty();
 
 		// Show loading message
-		sales_order_wrapper.html('<div class="text-center"><i class="fa fa-spinner fa-spin"></i> Loading Orders...</div>');
+		sales_order_wrapper.html(
+			'<div class="text-center"><i class="fa fa-spinner fa-spin"></i> Loading Orders...</div>'
+		);
 
 		frappe.call({
-			method: 'frappe.client.get_list',
+			method: "frappe.client.get_list",
 			args: {
-				doctype: 'Sales Order',
+				doctype: "Sales Order",
 				filters: {
-					'customer': frm.doc.name,
-					'cancelled_status': 'Uncancelled'
+					customer: frm.doc.name,
+					cancelled_status: "Uncancelled",
 				},
-				fields: ['name', 'order_number', 'transaction_date', 'status', 'grand_total', 'currency', 'haravan_order_id', 'cancelled_status', 'financial_status', 'haravan_coupon_code'],
-				order_by: 'transaction_date desc',
-				limit_page_length: 20
+				fields: [
+					"name",
+					"order_number",
+					"transaction_date",
+					"status",
+					"grand_total",
+					"currency",
+					"haravan_order_id",
+					"cancelled_status",
+					"financial_status",
+					"haravan_coupon_code",
+				],
+				order_by: "transaction_date desc",
+				limit_page_length: 20,
 			},
-			callback: function(r) {
+			callback: function (r) {
 				sales_order_wrapper.empty();
 
 				if (r.message && r.message.length > 0) {
-					let tabledHeadStyle = "padding: 12px 15px; font-size: 13px; font-weight: 600; color: #6c757d; border: none;";
+					let tabledHeadStyle =
+						"padding: 12px 15px; font-size: 13px; font-weight: 600; color: #6c757d; border: none;";
 					let tableDataStyle = "padding: 12px 15px; border: none; vertical-align: middle;";
 					let html = `
 						<div style="margin-bottom: 10px;">
@@ -449,31 +463,41 @@ frappe.ui.form.on("Customer", {
 									<tbody>
 					`;
 
-					r.message.forEach(function(order) {
-						let order_color = order.cancelled_status === 'Cancelled' ? 'rgb(219, 48, 48)' : 'rgb(35, 98, 235)';
-						let financial_status_badge = '';
+					r.message.forEach(function (order) {
+						let order_color =
+							order.cancelled_status === "Cancelled" ? "rgb(219, 48, 48)" : "rgb(35, 98, 235)";
+						let financial_status_badge = "";
 
-						if (order.financial_status === 'Paid') {
-							financial_status_badge = '<span class="indicator-pill green no-indicator-dot filterable">Paid</span>';
-						} else if (order.financial_status === 'Partially Paid') {
-							financial_status_badge = '<span class="indicator-pill gray no-indicator-dot filterable">Partially Paid</span>';
+						if (order.financial_status === "Paid") {
+							financial_status_badge =
+								'<span class="indicator-pill green no-indicator-dot filterable">Paid</span>';
+						} else if (order.financial_status === "Partially Paid") {
+							financial_status_badge =
+								'<span class="indicator-pill gray no-indicator-dot filterable">Partially Paid</span>';
 						} else if (order.financial_status) {
 							financial_status_badge = `<span class="indicator-pill blue no-indicator-dot filterable">${order.financial_status}</span>`;
 						}
 
 						const display_order_number = order.order_number || order.name;
 
-						let coupon_display = '';
+						let coupon_display = "";
 						if (order.haravan_coupon_code) {
 							// Split by newline and wrap in code/badge
-							const coupons = order.haravan_coupon_code.split('\n').filter(c => c.trim());
-							coupon_display = coupons.map(c => `<span style="background-color: #f0f4f8; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #333; display: inline-block; margin-right: 4px; margin-bottom: 2px;">${c}</span>`).join('');
+							const coupons = order.haravan_coupon_code.split("\n").filter((c) => c.trim());
+							coupon_display = coupons
+								.map(
+									(c) =>
+										`<span style="background-color: #f0f4f8; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #333; display: inline-block; margin-right: 4px; margin-bottom: 2px;">${c}</span>`
+								)
+								.join("");
 						}
 
 						html += `
 							<tr style="border-bottom: 1px solid #f1f3f4;">
 								<td style="${tableDataStyle}">
-									<a href="/app/sales-order/${order.name}" style="color: ${order_color}; font-weight: 500; text-decoration: none;">${display_order_number}</a>
+									<a href="/app/sales-order/${
+										order.name
+									}" style="color: ${order_color}; font-weight: 500; text-decoration: none;">${display_order_number}</a>
 								</td>
 								<td style="${tableDataStyle} color: #6c757d;">
 									${frappe.datetime.str_to_user(order.transaction_date)}
@@ -508,21 +532,23 @@ frappe.ui.form.on("Customer", {
 					sales_order_wrapper.html(`
 						<div class="text-center text-muted" style="padding: 40px;">
 							<p style="margin-top: 15px;">No Orders found for this customer.</p>
-							<a href="/app/sales-order/new-sales-order?customer=${encodeURIComponent(frm.doc.name)}" class="btn btn-primary btn-sm">
+							<a href="/app/sales-order/new-sales-order?customer=${encodeURIComponent(
+								frm.doc.name
+							)}" class="btn btn-primary btn-sm">
 								${__("Create Order")}
 							</a>
 						</div>
 					`);
 				}
 			},
-			error: function(r) {
+			error: function (r) {
 				sales_order_wrapper.html(`
 					<div class="text-center text-danger" style="padding: 20px;">
 						<i class="fa fa-exclamation-triangle"></i>
 						<p>Error loading Orders. Please check your permissions.</p>
 					</div>
 				`);
-			}
+			},
 		});
 	},
 
@@ -531,7 +557,7 @@ frappe.ui.form.on("Customer", {
 			frappe.msgprint({
 				message: __("Customer must have a Haravan ID to evaluate rank"),
 				title: __("Missing Haravan ID"),
-				indicator: "red"
+				indicator: "red",
 			});
 			return;
 		}
@@ -539,13 +565,13 @@ frappe.ui.form.on("Customer", {
 		frappe.call({
 			method: "erpnext.selling.doctype.customer.customer.reevaluate_customer_rank",
 			args: {
-				customer_name: frm.doc.name
+				customer_name: frm.doc.name,
 			},
 			freeze: true,
 			freeze_message: __("Reevaluating customer rank..."),
 			callback: function (r) {
 				frm.reload_doc();
-			}
+			},
 		});
 	},
 });

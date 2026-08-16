@@ -273,7 +273,7 @@ class DeliveryNote(SellingController):
 					where item_code = %s and warehouse = %s""",
 					(d.item_code, d.warehouse),
 				)
-				d.actual_qty = actual_qty and flt(actual_qty[0][0]) or 0
+				d.actual_qty = (actual_qty and flt(actual_qty[0][0])) or 0
 
 	def so_required(self):
 		"""check in manage account if sales order required or not"""
@@ -733,7 +733,7 @@ def update_billed_amount_based_on_so(so_detail, update_modified=True):
 		)
 		.run()
 	)
-	billed_against_so = billed_against_so and billed_against_so[0][0] or 0
+	billed_against_so = (billed_against_so and billed_against_so[0][0]) or 0
 
 	# Get all Delivery Note Item rows against the Sales Order Item row
 	dn = frappe.qb.DocType("Delivery Note").as_("dn")
@@ -768,7 +768,7 @@ def update_billed_amount_based_on_so(so_detail, update_modified=True):
 				where dn_detail=%s and docstatus=1""",
 				dnd.name,
 			)
-			billed_amt_against_dn = billed_amt_against_dn and billed_amt_against_dn[0][0] or 0
+			billed_amt_against_dn = (billed_amt_against_dn and billed_amt_against_dn[0][0]) or 0
 
 		# Distribute billed amount directly against SO between DNs based on FIFO
 		if billed_against_so and billed_amt_against_dn < dnd.amount:

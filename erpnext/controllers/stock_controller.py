@@ -532,10 +532,11 @@ class StockController(AccountsController):
 			if (
 				row.get(field)
 				and (
-					qty_field == "qty"
-					and not row.get("return_qty_from_rejected_warehouse")
-					or qty_field == "rejected_qty"
-					and (row.get("return_qty_from_rejected_warehouse") or row.get("rejected_warehouse"))
+					(qty_field == "qty" and not row.get("return_qty_from_rejected_warehouse"))
+					or (
+						qty_field == "rejected_qty"
+						and (row.get("return_qty_from_rejected_warehouse") or row.get("rejected_warehouse"))
+					)
 				)
 				and not row.get("use_serial_batch_fields")
 				and not row.get(bundle_field)
@@ -1032,7 +1033,7 @@ class StockController(AccountsController):
 				"voucher_type": self.doctype,
 				"voucher_no": self.name,
 				"voucher_detail_no": d.name,
-				"actual_qty": (self.docstatus == 1 and 1 or -1) * flt(d.get("stock_qty")),
+				"actual_qty": ((self.docstatus == 1 and 1) or -1) * flt(d.get("stock_qty")),
 				"stock_uom": frappe.get_cached_value(
 					"Item", args.get("item_code") or d.get("item_code"), "stock_uom"
 				),
@@ -1170,18 +1171,14 @@ class StockController(AccountsController):
 			]:
 				if (
 					(
-						sl_dict.actual_qty > 0
-						and not self.get("is_return")
-						or sl_dict.actual_qty < 0
-						and self.get("is_return")
+						(sl_dict.actual_qty > 0 and not self.get("is_return"))
+						or (sl_dict.actual_qty < 0 and self.get("is_return"))
 					)
 					and self.doctype in ["Purchase Invoice", "Purchase Receipt", "Stock Entry"]
 				) or (
 					(
-						sl_dict.actual_qty < 0
-						and not self.get("is_return")
-						or sl_dict.actual_qty > 0
-						and self.get("is_return")
+						(sl_dict.actual_qty < 0 and not self.get("is_return"))
+						or (sl_dict.actual_qty > 0 and self.get("is_return"))
 					)
 					and self.doctype in ["Sales Invoice", "Delivery Note", "Stock Entry"]
 				):

@@ -4,44 +4,51 @@ frappe.listview_settings["Lead"] = {
 	hide_name_column: true,
 	get_indicator: function (doc) {
 		const colors = {
-			"Lead": "blue",
-			"New": "blue",
-			"Prospecting": "orange",
-			"Nurturing": "purple",
-			"Qualified": "green",
-			"Converted": "darkgreen",
+			Lead: "blue",
+			New: "blue",
+			Prospecting: "orange",
+			Nurturing: "purple",
+			Qualified: "green",
+			Converted: "darkgreen",
 			"Do Not Contact": "gray",
-			"Spam": "red"
+			Spam: "red",
 		};
 		const color = colors[doc.status] || "gray";
 		return [__(doc.status), color, "status,=," + doc.status];
 	},
 	onload: function (listview) {
-		const CONVERTIBLE_OPERATORS = ['like', 'not like', '=', '!='];
+		const CONVERTIBLE_OPERATORS = ["like", "not like", "=", "!="];
 
 		const original_get_args = listview.get_args.bind(listview);
-		listview.get_args = function() {
+		listview.get_args = function () {
 			const args = original_get_args();
 
 			if (args.filters) {
 				const newFilters = [];
 				const phoneOrFilters = [];
 
-				args.filters.forEach(filter => {
-					if (Array.isArray(filter) && filter[1] === 'phone' && CONVERTIBLE_OPERATORS.includes(filter[2]) && filter[3]) {
-						let phone = filter[3].replace(/%/g, '').trim();
-						phone = phone.replace(/[\s\-\(\)]/g, '');
+				args.filters.forEach((filter) => {
+					if (
+						Array.isArray(filter) &&
+						filter[1] === "phone" &&
+						CONVERTIBLE_OPERATORS.includes(filter[2]) &&
+						filter[3]
+					) {
+						let phone = filter[3].replace(/%/g, "").trim();
+						phone = phone.replace(/[\s\-\(\)]/g, "");
 
 						const operator = filter[2];
-						const useWildcards = operator.includes('like');
-						const phoneValue = useWildcards ? '%' + phone + '%' : phone;
-						const phone84Value = useWildcards ? '%84' + phone.substring(1) + '%' : '84' + phone.substring(1);
+						const useWildcards = operator.includes("like");
+						const phoneValue = useWildcards ? "%" + phone + "%" : phone;
+						const phone84Value = useWildcards
+							? "%84" + phone.substring(1) + "%"
+							: "84" + phone.substring(1);
 
-						if (phone.startsWith('0') && phone.length >= 4) {
-							phoneOrFilters.push(['Lead', 'phone', operator, phoneValue]);
-							phoneOrFilters.push(['Lead', 'phone', operator, phone84Value]);
+						if (phone.startsWith("0") && phone.length >= 4) {
+							phoneOrFilters.push(["Lead", "phone", operator, phoneValue]);
+							phoneOrFilters.push(["Lead", "phone", operator, phone84Value]);
 						} else {
-							phoneOrFilters.push(['Lead', 'phone', operator, phoneValue]);
+							phoneOrFilters.push(["Lead", "phone", operator, phoneValue]);
 						}
 					} else {
 						newFilters.push(filter);
@@ -114,7 +121,7 @@ frappe.listview_settings["Lead"] = {
 };
 
 function maskPhoneNumber(phone, visibleDigits) {
-	const maskedPart = '*'.repeat(phone.length - visibleDigits);
+	const maskedPart = "*".repeat(phone.length - visibleDigits);
 	const visiblePart = phone.slice(-visibleDigits);
 	return maskedPart + visiblePart;
 }

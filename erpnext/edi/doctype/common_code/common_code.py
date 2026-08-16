@@ -102,7 +102,7 @@ def import_genericode(code_list: str, file_name: str, column_map: dict, filters:
 	elements = root.xpath(xpath_expr)
 	total_elements = len(elements)
 	for i, xml_element in enumerate(elements, start=1):
-		common_code: "CommonCode" = frappe.new_doc("Common Code")
+		common_code: CommonCode = frappe.new_doc("Common Code")
 		common_code.code_list = code_list
 		common_code.from_genericode(column_map, xml_element)
 		common_code.save()

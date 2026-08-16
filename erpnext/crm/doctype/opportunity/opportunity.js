@@ -125,18 +125,18 @@ frappe.ui.form.on("Opportunity", {
 		// }
 
 		// if (!frm.doc.__islocal && frm.perm[0].write && frm.doc.docstatus == 0) {
-			// if (frm.doc.status === "Open") {
-			// 	frm.add_custom_button(__("Won"), function () {
-			// 		frm.set_value("status", "Won");
-			// 		frm.save();
-			// 	});
-			// } else {
-				// frm.add_custom_button(__("Reopen"), function () {
-				// 	frm.set_value("lost_reasons", []);
-				// 	frm.set_value("status", "Open");
-				// 	frm.save();
-				// });
-			// }
+		// if (frm.doc.status === "Open") {
+		// 	frm.add_custom_button(__("Won"), function () {
+		// 		frm.set_value("status", "Won");
+		// 		frm.save();
+		// 	});
+		// } else {
+		// frm.add_custom_button(__("Reopen"), function () {
+		// 	frm.set_value("lost_reasons", []);
+		// 	frm.set_value("status", "Open");
+		// 	frm.save();
+		// });
+		// }
 
 		// }
 

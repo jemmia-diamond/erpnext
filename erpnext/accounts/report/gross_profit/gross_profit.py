@@ -757,7 +757,7 @@ class GrossProfitGenerator:
 				and parent == sle.voucher_no
 				and sle.voucher_detail_no == item_row
 			):
-				previous_stock_value = len(my_sle) > i + 1 and flt(my_sle[i + 1].stock_value) or 0.0
+				previous_stock_value = (len(my_sle) > i + 1 and flt(my_sle[i + 1].stock_value)) or 0.0
 
 				if previous_stock_value:
 					return abs(previous_stock_value - flt(sle.stock_value)) * flt(row.qty) / abs(flt(sle.qty))

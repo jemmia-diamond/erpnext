@@ -1432,7 +1432,7 @@ def get_pos_profile(company, pos_profile=None, user=None):
 			.where((pf.company == company) & (pf.disabled == 0))
 		).run(as_dict=True)
 
-	return pos_profile and pos_profile[0] or None
+	return (pos_profile and pos_profile[0]) or None
 
 
 @frappe.whitelist()

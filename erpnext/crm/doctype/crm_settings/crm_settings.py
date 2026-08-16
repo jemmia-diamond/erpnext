@@ -3,7 +3,9 @@
 
 import frappe
 from frappe.model.document import Document
+
 from erpnext.crm.doctype.crm_settings.crm_settings_service import clear_crm_settings_cache
+
 
 class CRMSettings(Document):
 	# begin: auto-generated types

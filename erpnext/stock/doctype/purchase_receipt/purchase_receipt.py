@@ -366,7 +366,7 @@ class PurchaseReceipt(BuyingController):
 			and parent != %s""",
 			(po_detail, po, self.name),
 		)
-		return qty and flt(qty[0][0]) or 0.0
+		return (qty and flt(qty[0][0])) or 0.0
 
 	def get_po_qty_and_warehouse(self, po_detail):
 		po_qty, po_warehouse = frappe.db.get_value("Purchase Order Item", po_detail, ["qty", "warehouse"])
@@ -905,7 +905,7 @@ class PurchaseReceipt(BuyingController):
 						)
 					)
 				valuation_tax.setdefault(tax.name, 0)
-				valuation_tax[tax.name] += (tax.add_deduct_tax == "Add" and 1 or -1) * flt(
+				valuation_tax[tax.name] += ((tax.add_deduct_tax == "Add" and 1) or -1) * flt(
 					tax.base_tax_amount_after_discount_amount
 				)
 
