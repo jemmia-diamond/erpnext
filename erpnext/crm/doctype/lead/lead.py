@@ -1,6 +1,7 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 import json
+from typing import Any, cast
 
 import frappe
 from frappe import _
@@ -11,19 +12,28 @@ from frappe.contacts.address_and_contact import (
 from frappe.contacts.doctype.address.address import get_default_address
 from frappe.contacts.doctype.contact.contact import Contact, get_default_contact
 from frappe.email.inbox import link_communication_to_document
+from frappe.integrations.doctype.webhook.webhook import enqueue_webhook
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import comma_and, get_link_to_form, has_gravatar, validate_email_address
+from frappe.utils import (
+	comma_and,
+	date_diff,
+	get_datetime,
+	get_link_to_form,
+	has_gravatar,
+	now_datetime,
+	validate_email_address,
+)
 
 from erpnext.accounts.party import set_taxes
 from erpnext.config.config import config
 from erpnext.controllers.selling_controller import SellingController
-from erpnext.crm.utils import CRMNote, copy_comments, link_communications, link_open_events
-from erpnext.selling.doctype.customer.customer import parse_full_name
-from frappe.utils import date_diff, now_datetime, get_datetime
-from erpnext.utilities.phone_utils import get_phone_variants, normalize_to_standard_format
-from frappe.integrations.doctype.webhook.webhook import enqueue_webhook
 from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
+from erpnext.crm.utils import CRMNote, copy_comments, link_communications, link_open_events
 from erpnext.selling.doctype.customer.customer import make_opportunity as make_opp_from_customer
+from erpnext.selling.doctype.customer.customer import parse_full_name
+from erpnext.utilities.phone_utils import get_phone_variants, normalize_to_standard_format
+
+
 class Lead(SellingController, CRMNote):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
@@ -31,14 +41,17 @@ class Lead(SellingController, CRMNote):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
+		from frappe.types import DF
+
 		from erpnext.crm.doctype.crm_note.crm_note import CRMNote
 		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from erpnext.crm.doctype.sales_person_child.sales_person_child import SalesPersonChild
-		from frappe.types import DF
 
 		account_number: DF.Data | None
 		address: DF.Data | None
-		age_rage: DF.Literal["", "Under 18", "18 to 24", "25 to 34", "35 to 44", "45 to 54", "55 to 64", "65+", "Unidentified"]
+		age_rage: DF.Literal[
+			"", "Under 18", "18 to 24", "25 to 34", "35 to 44", "45 to 54", "55 to 64", "65+", "Unidentified"
+		]
 		annual_revenue: DF.Currency
 		bank_branch: DF.Literal[None]
 		bank_district: DF.Literal[None]
@@ -92,7 +105,11 @@ class Lead(SellingController, CRMNote):
 		personal_tax_id: DF.Data | None
 		phone: DF.Data | None
 		phone_ext: DF.Data | None
-		place_of_issuance: DF.Literal["Ministry of Public Security", "Department of Police for Administrative Management of Social Order", "Department of Police for Registration, Residency Management, and National Population Data"]
+		place_of_issuance: DF.Literal[
+			"Ministry of Public Security",
+			"Department of Police for Administrative Management of Social Order",
+			"Department of Police for Registration, Residency Management, and National Population Data",
+		]
 		preferred_product_type: DF.TableMultiSelect[LeadProductItem]
 		primary_sale: DF.Link | None
 		proposed_budget: DF.Link | None
@@ -107,7 +124,11 @@ class Lead(SellingController, CRMNote):
 		salutation: DF.Link | None
 		source: DF.Link
 		state: DF.Data | None
-		status: DF.Literal["New", "Prospecting", "Nurturing", "Qualified", "Converted", "Do Not Contact", "Spam"]
+		status: (
+			DF.Literal["New", "Prospecting", "Nurturing", "Qualified", "Converted", "Do Not Contact", "Spam"]
+			| str
+			| None
+		)
 		store: DF.Link | None
 		stringee_data: DF.JSON | None
 		support_sales: DF.TableMultiSelect[SalesPersonChild]
@@ -140,7 +161,7 @@ class Lead(SellingController, CRMNote):
 		# Skip normalization if backfilling flag (enable_auto_lead_insert) is turned off
 		if get_crm_settings().get("enable_auto_lead_insert", 1):
 			self.normalize_phone()
-			
+
 		self.check_email_id_is_unique()
 		self.check_phone_is_unique()
 		self.validate_email_id()
@@ -162,17 +183,16 @@ class Lead(SellingController, CRMNote):
 					self.contact_doc = frappe.get_doc("Contact", contact)
 					return
 
-			'''
+			"""
 			Pancake_data is not null when the leads are synced from Pancake
-			'''
+			"""
 			if self.pancake_data:
-
 				lead_source = self.check_lead_source()
 				if lead_source:
 					parsed_pancake_data = frappe.parse_json(self.pancake_data)
 					existing_contact = self.check_contact(
 						page_id=parsed_pancake_data.get("page_id"),
-						conversation_id=parsed_pancake_data.get("conversation_id")
+						conversation_id=parsed_pancake_data.get("conversation_id"),
 					)
 					if not existing_contact:
 						self.contact_doc = self.create_contact(lead_source)
@@ -188,7 +208,8 @@ class Lead(SellingController, CRMNote):
 			self.first_name, self.middle_name, self.last_name = parse_full_name(self.lead_name)
 
 		if self.pancake_data:
-			pancake_user_id = self.pancake_data.get("pancake_user_id", None)
+			parsed_pancake_data = frappe.parse_json(self.pancake_data)
+			pancake_user_id = parsed_pancake_data.get("pancake_user_id", None)
 			self.update_lead_owner(pancake_user_id)
 
 	def before_save(self):
@@ -206,7 +227,6 @@ class Lead(SellingController, CRMNote):
 		self.process_notes()
 		self.update_assignment_status()
 
-
 	def check_and_auto_create_opportunity_for_converted_lead(self):
 		"""Auto create a new Opportunity when a Converted Lead interacts again and has no active Opportunity."""
 		enabled = get_crm_settings().get("auto_create_opportunity_on_converted_lead")
@@ -216,7 +236,9 @@ class Lead(SellingController, CRMNote):
 		if not (self.last_customer_message_at and self.has_value_changed("last_customer_message_at")):
 			return
 
-		customer = getattr(self, "customer", None) or frappe.db.get_value("Customer", {"lead_name": self.name})
+		customer = getattr(self, "customer", None) or frappe.db.get_value(
+			"Customer", {"lead_name": self.name}
+		)
 		if not customer and self.phone:
 			variants = get_phone_variants(self.phone)
 			if variants:
@@ -224,7 +246,7 @@ class Lead(SellingController, CRMNote):
 					"Customer",
 					or_filters={"mobile_no": ["in", variants], "phone": ["in", variants]},
 					fields=["name"],
-					limit=1
+					limit=1,
 				)
 				if customers:
 					customer = customers[0].name
@@ -251,12 +273,14 @@ class Lead(SellingController, CRMNote):
 			)
 			if active_opp:
 				return
-				
+
 			opp = make_opportunity(self.name)
 
 		opp.flags.ignore_permissions = True
-		opp.insert()
-
+		try:
+			opp.insert()
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), "Auto-create Opportunity (converted lead) failed")
 
 	def check_and_auto_create_opportunity(self):
 		crm_settings = get_crm_settings()
@@ -267,7 +291,9 @@ class Lead(SellingController, CRMNote):
 		if not enabled or self.is_new() or self.status == "Converted":
 			return
 
-		mandatory_fields_str = crm_settings.get("auto_opportunity_mandatory_fields") or "budget_lead, phone, province"
+		mandatory_fields_str = (
+			crm_settings.get("auto_opportunity_mandatory_fields") or "budget_lead, phone, province"
+		)
 		mandatory_fields = [f.strip() for f in mandatory_fields_str.split(",") if f.strip()]
 
 		for field in mandatory_fields:
@@ -275,7 +301,7 @@ class Lead(SellingController, CRMNote):
 				return
 
 		# Check existing Opportunity (ANY opp if subsequent disabled, or ACTIVE opp if enabled)
-		opp_filter = {
+		opp_filter: dict[str, Any] = {
 			"opportunity_from": "Lead",
 			"party_name": self.name,
 		}
@@ -288,17 +314,32 @@ class Lead(SellingController, CRMNote):
 		opp = make_opportunity(self.name)
 		if sync_old_qualified_date and self.qualified_on:
 			cutoff_time = frappe.utils.get_datetime("2026-07-31 14:00:00")
-			if frappe.utils.get_datetime(self.qualified_on) < cutoff_time:
+			dt_qualified = frappe.utils.get_datetime(str(self.qualified_on))
+			if dt_qualified and cutoff_time and dt_qualified < cutoff_time:
 				opp.opportunity_date = frappe.utils.getdate(self.qualified_on)
 
-		if opp.expected_delivery_date and frappe.utils.getdate(opp.expected_delivery_date) < frappe.utils.getdate(frappe.utils.nowdate()):
+		dt_opp_deliv = (
+			frappe.utils.getdate(str(opp.expected_delivery_date))
+			if getattr(opp, "expected_delivery_date", None)
+			else None
+		)
+		dt_now = frappe.utils.getdate(frappe.utils.nowdate())
+		if dt_opp_deliv and dt_now and dt_opp_deliv < dt_now:
 			opp.expected_delivery_date = None
 		opp.flags.ignore_permissions = True
-		opp.insert()
+		try:
+			opp.insert()
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), "Auto-create Opportunity failed")
+			return
 
 		self.qualification_status = "Qualified"
 		if not self.qualified_on:
-			self.qualified_on = getattr(opp, "opportunity_date", None) or getattr(opp, "creation", None) or frappe.utils.now_datetime()
+			self.qualified_on = (
+				getattr(opp, "opportunity_date", None)
+				or getattr(opp, "creation", None)
+				or frappe.utils.now_datetime()
+			)
 		if not self.qualified_by:
 			self.qualified_by = frappe.session.user
 
@@ -320,7 +361,9 @@ class Lead(SellingController, CRMNote):
 				parsed_data = frappe.parse_json(self.pancake_data)
 				latest_message_at = parsed_data.get("latest_message_at")
 				if latest_message_at:
-					if not self.last_message_at or get_datetime(self.last_message_at) < get_datetime(latest_message_at):
+					dt_last = get_datetime(str(self.last_message_at))
+					dt_latest = get_datetime(str(latest_message_at))
+					if not self.last_message_at or (dt_last and dt_latest and dt_last < dt_latest):
 						self.last_message_at = latest_message_at
 
 				customer_msg_at = parsed_data.get("last_customer_message_at") or latest_message_at
@@ -336,7 +379,11 @@ class Lead(SellingController, CRMNote):
 						self.status = "Prospecting"
 
 				pancake_user_id = parsed_data.get("pancake_user_id", None)
-				if pancake_user_id and self.has_value_changed("pancake_data") and (not self.lead_owner or self.lead_owner == "tech@jemmia.vn"):
+				if (
+					pancake_user_id
+					and self.has_value_changed("pancake_data")
+					and (not self.lead_owner or self.lead_owner == "tech@jemmia.vn")
+				):
 					self.update_lead_owner(pancake_user_id)
 		except Exception as _:
 			pass
@@ -351,7 +398,7 @@ class Lead(SellingController, CRMNote):
 					self.status = "Spam"
 			except Exception:
 				pass
-				
+
 		if self.status == "Spam" and self.has_value_changed("status"):
 			self.qualification_status = "Unqualified"
 
@@ -389,7 +436,7 @@ class Lead(SellingController, CRMNote):
 						"party_name": self.name,
 						"status": ["not in", ["Won", "Lost"]],
 					},
-					pluck="name"
+					pluck="name",
 				)
 				if opps:
 					frappe.db.set_value("Opportunity", opps, updates)
@@ -397,7 +444,7 @@ class Lead(SellingController, CRMNote):
 			frappe.log_error(f"Failed to sync timestamps to opportunity for lead {self.name}: {e}")
 
 	def update_lead_stage(self):
-		if self.lead_stage=="Customer":
+		if self.lead_stage == "Customer":
 			return
 
 		lead_stage = self.get_lead_stage()
@@ -405,9 +452,11 @@ class Lead(SellingController, CRMNote):
 		if lead_stage:
 			self.lead_stage = lead_stage
 
-		if  self.has_value_changed("lead_stage") \
-			and  not self.qualified_lead_date \
-			and self.lead_stage != "Lead" :
+		if (
+			self.has_value_changed("lead_stage")
+			and not self.qualified_lead_date
+			and self.lead_stage != "Lead"
+		):
 			self.qualified_lead_date = frappe.utils.now_datetime()
 
 	def update_qualification_status(self):
@@ -422,7 +471,7 @@ class Lead(SellingController, CRMNote):
 
 		old_doc = self.get_doc_before_save()
 		old_status = old_doc.get("qualification_status") if old_doc else "Unqualified"
-		status_changed = (self.qualification_status != old_status)
+		status_changed = self.qualification_status != old_status
 
 		if status_changed and has_permission:
 			pass
@@ -447,14 +496,13 @@ class Lead(SellingController, CRMNote):
 			if old_qualified_on and not self.qualified_on:
 				self.qualified_on = old_qualified_on
 
-
-	def update_lead_owner(self, pancake_user_id:str | None):
+	def update_lead_owner(self, pancake_user_id: str | None):
 		"""
 		update lead owner
 		"""
 		user = None
 		if pancake_user_id:
-			user = frappe.db.get_value('User', {"pancake_id": pancake_user_id, "enabled": 1}, "name")
+			user = frappe.db.get_value("User", {"pancake_id": pancake_user_id, "enabled": 1}, "name")
 
 		if not user and self.get("_assign"):
 			try:
@@ -481,8 +529,8 @@ class Lead(SellingController, CRMNote):
 				if not self.first_reach_at:
 					self.first_reach_at = inserted_at_dt
 				else:
-					first_reach_at_dt = frappe.utils.get_datetime(self.first_reach_at)
-					if inserted_at_dt < first_reach_at_dt:
+					first_reach_at_dt = frappe.utils.get_datetime(str(self.first_reach_at))
+					if inserted_at_dt and first_reach_at_dt and inserted_at_dt < first_reach_at_dt:
 						self.first_reach_at = inserted_at_dt
 
 	def upsert_lead_source(self):
@@ -501,31 +549,31 @@ class Lead(SellingController, CRMNote):
 				{
 					"pancake_page_id": parsed_pancake_data.get("page_id", None),
 					"pancake_conversation_id": parsed_pancake_data.get("conversation_id", None),
-					"pancake_customer_id": parsed_pancake_data.get("customer_id", None)
+					"pancake_customer_id": parsed_pancake_data.get("customer_id", None),
 				},
 			)
 
 			if check_contact:
 				self.contact_doc = frappe.get_doc("Contact", check_contact)
-				self.source = self.contact_doc.source
+				self.source = str(getattr(self.contact_doc, "source", "")) or self.source
 				self.link_to_contact()
 			else:
 				self.contact_doc = self.create_contact(lead_source)
 				if self.contact_doc:
-					self.source = self.contact_doc.source
+					self.source = str(getattr(self.contact_doc, "source", "")) or self.source
 					self.link_to_contact()
 
 	def check_contact(self, page_id, conversation_id):
-		'''
+		"""
 		If contact with pancake data exists, do not create again
-		'''
+		"""
 		existing_contact_name = frappe.db.get_value(
 			"Contact",
 			{
 				"pancake_page_id": page_id,
 				"pancake_conversation_id": conversation_id,
 			},
-			"name"
+			"name",
 		)
 		if existing_contact_name:
 			return frappe.get_doc("Contact", existing_contact_name)
@@ -540,20 +588,23 @@ class Lead(SellingController, CRMNote):
 			parsed_pancake_data = pancake_data
 		else:
 			try:
-				parsed_pancake_data = frappe.parse_json(self.pancake_data)
+				parsed_pancake_data = frappe.parse_json(str(self.pancake_data))
 			except Exception:
 				parsed_pancake_data = None
 
 		if parsed_pancake_data is None:
 			return
 		if parsed_pancake_data.get("page_id", None):
-			lead_source = frappe.db.get_value("Lead Source",
-			{"pancake_page_id": parsed_pancake_data.get("page_id")}, ["name", "source_name", "pancake_platform" ])
+			lead_source = frappe.db.get_value(
+				"Lead Source",
+				{"pancake_page_id": parsed_pancake_data.get("page_id")},
+				["name", "source_name", "pancake_platform"],
+			)
 			if lead_source is None or lead_source == "":
 				lead_source = frappe.new_doc("Lead Source")
 
 				pc_platform = parsed_pancake_data.get("platform", None)
-				lead_source_prefix = ''
+				lead_source_prefix = ""
 				lead_source_platform = None
 				if "facebook" in pc_platform:
 					lead_source_platform = "Facebook"
@@ -578,27 +629,35 @@ class Lead(SellingController, CRMNote):
 				if lead_source_prefix:
 					source_name = f"{lead_source_prefix} {parsed_pancake_data.get('page_name', '')}"
 				else:
-					source_name = parsed_pancake_data.get("page_name", '')
+					source_name = parsed_pancake_data.get("page_name", "")
 
-				lead_source.update({
-					"source_name": source_name,
-					"pancake_page_id": parsed_pancake_data.get("page_id", None),
-					"pancake_platform": lead_source_platform
-				})
+				lead_source.update(
+					{
+						"source_name": source_name,
+						"pancake_page_id": parsed_pancake_data.get("page_id", None),
+						"pancake_platform": lead_source_platform,
+					}
+				)
 				lead_source.insert(ignore_permissions=True)
 				lead_source.reload()
-				lead_source = frappe.db.get_value("Lead Source", {"name": lead_source.name}, ["name", "source_name", "pancake_platform"])
+				lead_source = frappe.db.get_value(
+					"Lead Source", {"name": lead_source.name}, ["name", "source_name", "pancake_platform"]
+				)
 
 		return lead_source
 
 	def after_insert(self):
 		if self.contact_doc:
-			contact_link = frappe.get_value("Dynamic Link", {
+			contact_link = frappe.get_value(
+				"Dynamic Link",
+				{
 					"link_doctype": self.doctype,
 					"link_name": self.name,
 					"parenttype": "Contact",
-					"parent": self.contact_doc.name
-			}, "name")
+					"parent": self.contact_doc.name,
+				},
+				"name",
+			)
 			if contact_link:
 				return
 		self.link_to_contact()
@@ -611,11 +670,12 @@ class Lead(SellingController, CRMNote):
 
 	def handle_spam_side_effects(self):
 		if self.status == "Spam" and self.has_value_changed("status"):
-			active_opps = frappe.get_all("Opportunity", filters={
-				"party_name": self.name,
-				"status": ["not in", ["Won", "Lost"]]
-			}, pluck="name")
-			
+			active_opps = frappe.get_all(
+				"Opportunity",
+				filters={"party_name": self.name, "status": ["not in", ["Won", "Lost"]]},
+				pluck="name",
+			)
+
 			if not active_opps:
 				return
 
@@ -628,12 +688,9 @@ class Lead(SellingController, CRMNote):
 						lost_reason = messages.get("spam_from_lead") or lost_reason
 				except Exception:
 					pass
-			
+
 			for opp in active_opps:
-				frappe.db.set_value("Opportunity", opp, {
-					"status": "Lost",
-					"order_lost_reason": lost_reason
-				})
+				frappe.db.set_value("Opportunity", opp, {"status": "Lost", "order_lost_reason": lost_reason})
 
 	def sync_lead_owner_to_todos(self):
 		if not self.has_value_changed("lead_owner"):
@@ -641,23 +698,28 @@ class Lead(SellingController, CRMNote):
 
 		if not self.lead_owner:
 			# If user clears lead_owner, cancel any open assignments so it doesn't revert back
-			open_todos = frappe.get_all("ToDo", filters={
-				"reference_type": "Lead",
-				"reference_name": self.name,
-				"status": "Open"
-			}, pluck="name")
+			open_todos = frappe.get_all(
+				"ToDo",
+				filters={"reference_type": "Lead", "reference_name": self.name, "status": "Open"},
+				pluck="name",
+			)
 
 			for todo_name in open_todos:
 				frappe.db.set_value("ToDo", todo_name, "status", "Cancelled")
 				frappe.clear_document_cache("ToDo", todo_name)
 			return
 
-		open_todos = frappe.get_all("ToDo", filters={
-			"reference_type": "Lead",
-			"reference_name": self.name,
-			"status": "Open",
-			"allocated_to": ["!=", self.lead_owner]
-		}, fields=["name"], limit=1)
+		open_todos = frappe.get_all(
+			"ToDo",
+			filters={
+				"reference_type": "Lead",
+				"reference_name": self.name,
+				"status": "Open",
+				"allocated_to": ["!=", self.lead_owner],
+			},
+			fields=["name"],
+			limit=1,
+		)
 
 		if open_todos:
 			todo_name = open_todos[0].name
@@ -672,16 +734,16 @@ class Lead(SellingController, CRMNote):
 		from erpnext.crm.doctype.opportunity.custom.opportunity_custom import (
 			sync_lead_fields_to_active_opportunities,
 		)
+
 		sync_lead_fields_to_active_opportunities(self)
 
 	def on_trash(self):
 		frappe.db.set_value("Issue", {"lead": self.name}, "lead", None)
 		try:
-			delete_contact_and_address(self.doctype, self.name)
+			delete_contact_and_address(self.doctype, str(self.name))
 		except Exception:
 			frappe.log_error(
-				title=f"Error deleting contact/address for Lead {self.name}",
-				message=frappe.get_traceback()
+				title=f"Error deleting contact/address for Lead {self.name}", message=frappe.get_traceback()
 			)
 		finally:
 			frappe.db.delete(
@@ -689,7 +751,7 @@ class Lead(SellingController, CRMNote):
 				{
 					"link_doctype": self.doctype,
 					"link_name": self.name,
-				}
+				},
 			)
 		self.remove_link_from_prospect()
 
@@ -707,7 +769,7 @@ class Lead(SellingController, CRMNote):
 			elif self.company_name:
 				self.lead_name = self.company_name
 			else:
-				self.lead_name = self.email_id.split("@")[0]
+				self.lead_name = str(self.email_id).split("@")[0]
 
 	def set_title(self):
 		self.title = self.company_name or self.lead_name
@@ -716,9 +778,8 @@ class Lead(SellingController, CRMNote):
 		if self.email_id:
 			# validate email is unique
 			if not get_crm_settings().get("allow_lead_duplication_based_on_emails"):
-				duplicate_leads = frappe.get_all(
-					"Lead", filters={"email_id": self.email_id, "name": ["!=", self.name]}
-				)
+				filters: dict[str, Any] = {"email_id": self.email_id, "name": ["!=", self.name]}
+				duplicate_leads = frappe.get_all("Lead", filters=filters)
 				duplicate_leads = [
 					frappe.bold(get_link_to_form("Lead", lead.name)) for lead in duplicate_leads
 				]
@@ -745,13 +806,11 @@ class Lead(SellingController, CRMNote):
 	def check_phone_is_unique(self):
 		if self.phone:
 			# Validate phone number is unique
-			filters = {"phone": self.phone}
+			filters: dict[str, Any] = {"phone": self.phone}
 			if self.name:
 				filters["name"] = ["!=", self.name]
 			duplicate_leads = frappe.get_all("Lead", filters=filters)
-			duplicate_leads = [
-				frappe.bold(get_link_to_form("Lead", lead.name)) for lead in duplicate_leads
-			]
+			duplicate_leads = [frappe.bold(get_link_to_form("Lead", lead.name)) for lead in duplicate_leads]
 			if duplicate_leads:
 				frappe.throw(
 					_("Phone Number must be unique, it is already used in {0}").format(
@@ -773,23 +832,26 @@ class Lead(SellingController, CRMNote):
 			page_id = pancake_data.get("page_id")
 			conversation_id = pancake_data.get("conversation_id")
 
-			self.contact_doc = self.check_contact(
-				page_id=page_id,
-				conversation_id=conversation_id
-			)
+			self.contact_doc = self.check_contact(page_id=page_id, conversation_id=conversation_id)
 
 			if not self.contact_doc:
 				self.contact_doc = self.create_contact(pancake_data=pancake_data)
 			else:
-				self.update_contact(self.contact_doc, pancake_data=pancake_data)
+				from typing import cast
+
+				self.update_contact(cast(Contact, self.contact_doc), pancake_data=pancake_data)
 
 			if self.contact_doc:
-				contact_link = frappe.get_value("Dynamic Link", {
+				contact_link = frappe.get_value(
+					"Dynamic Link",
+					{
 						"link_doctype": self.doctype,
 						"link_name": self.name,
 						"parenttype": "Contact",
-						"parent": self.contact_doc.name
-				}, "name")
+						"parent": self.contact_doc.name,
+					},
+					"name",
+				)
 				if not contact_link:
 					self.link_to_contact()
 
@@ -812,7 +874,7 @@ class Lead(SellingController, CRMNote):
 				("customer_id", "pancake_customer_id"),
 				("inserted_at", "pancake_inserted_at"),
 				("inserted_at", "inserted_at"),
-				("ad_ids", "ad_ids")
+				("ad_ids", "ad_ids"),
 			]
 
 			for pancake_field, contact_field in fields_map:
@@ -845,11 +907,14 @@ class Lead(SellingController, CRMNote):
 							f"update_contact: skipping phone {self.phone} — already owned by lead {phone_owner}"
 						)
 					else:
-						contact.append("phone_nos", {
-							"phone": self.phone,
-							"is_primary_phone": 0 if has_primary_phone else 1,
-							"is_primary_mobile_no": 0 if has_primary_mobile else 1
-						})
+						contact.append(
+							"phone_nos",
+							{
+								"phone": self.phone,
+								"is_primary_phone": 0 if has_primary_phone else 1,
+								"is_primary_mobile_no": 0 if has_primary_mobile else 1,
+							},
+						)
 						has_changed = True
 
 			if has_changed:
@@ -861,7 +926,7 @@ class Lead(SellingController, CRMNote):
 	def set_first_lead_source(self):
 		try:
 			source = frappe.db.sql(
-				'''
+				"""
 				SELECT tc.source
 				FROM `tabDynamic Link` as tdl
 				JOIN `tabContact` as tc ON tdl.parent = tc.name
@@ -871,8 +936,8 @@ class Lead(SellingController, CRMNote):
 					AND tc.inserted_at IS NOT NULL
 				ORDER BY tc.inserted_at ASC
 				LIMIT 1
-				''',
-				(self.name,)
+				""",
+				(self.name,),
 			)
 
 			if source and source[0][0]:
@@ -937,7 +1002,7 @@ class Lead(SellingController, CRMNote):
 		customer = frappe.db.get_value("Customer", {"lead_name": self.name})
 		if customer:
 			return customer
-			
+
 		if self.phone or self.mobile_no:
 			phones = set()
 			if self.phone:
@@ -950,19 +1015,23 @@ class Lead(SellingController, CRMNote):
 					phones.add(normalize_to_standard_format(self.mobile_no))
 				except Exception:
 					phones.add(self.mobile_no)
-					
+
 			if phones:
 				for p in phones:
-					cust = frappe.db.get_value("Customer", {"phone": p}) or frappe.db.get_value("Customer", {"mobile_no": p})
+					cust = frappe.db.get_value("Customer", {"phone": p}) or frappe.db.get_value(
+						"Customer", {"mobile_no": p}
+					)
 					if cust:
 						return cust
 		return None
 
 	def has_opportunity(self):
-		opp = frappe.db.get_value("Opportunity", {"party_name": self.name, "status": ["not in", ["Won", "Lost"]]})
+		opp = frappe.db.get_value(
+			"Opportunity", {"party_name": self.name, "status": ["not in", ["Won", "Lost"]]}
+		)
 		if opp:
 			return opp
-			
+
 		if self.phone or self.mobile_no:
 			phones = set()
 			if self.phone:
@@ -975,10 +1044,12 @@ class Lead(SellingController, CRMNote):
 					phones.add(normalize_to_standard_format(self.mobile_no))
 				except Exception:
 					phones.add(self.mobile_no)
-			
+
 			if phones:
 				for p in phones:
-					found_opp = frappe.db.get_value("Opportunity", {"phone": p, "status": ["not in", ["Won", "Lost"]]})
+					found_opp = frappe.db.get_value(
+						"Opportunity", {"phone": p, "status": ["not in", ["Won", "Lost"]]}
+					)
 					if found_opp:
 						return found_opp
 		return None
@@ -1000,11 +1071,12 @@ class Lead(SellingController, CRMNote):
 			return
 
 		# Get lastest Opportunity
-		latest_opportunity = frappe.db.get_value("Opportunity",
+		latest_opportunity = frappe.db.get_value(
+			"Opportunity",
 			{"party_name": self.name, "opportunity_from": "Lead"},
 			["name", "status", "creation"],
 			as_dict=True,
-			order_by="creation desc"
+			order_by="creation desc",
 		)
 
 		if latest_opportunity:
@@ -1013,6 +1085,7 @@ class Lead(SellingController, CRMNote):
 
 		opportunity = make_opportunity(self.name)
 		opportunity.insert(ignore_permissions=True)
+
 	@frappe.whitelist()
 	def create_prospect_and_contact(self, data):
 		data = frappe._dict(data)
@@ -1061,8 +1134,10 @@ class Lead(SellingController, CRMNote):
 				"pancake_updated_at": pancake_dict.get("updated_at") or None,
 				"pancake_page_id": pancake_dict.get("page_id") or None,
 				"can_inbox": pancake_dict.get("can_inbox") or 0,
-				"last_message_time" :  pancake_dict.get("latest_message_at") or None,
-				"ad_ids": json.dumps(pancake_dict.get("ad_ids")) if isinstance(pancake_dict.get("ad_ids"), list) else (pancake_dict.get("ad_ids") or None)
+				"last_message_time": pancake_dict.get("latest_message_at") or None,
+				"ad_ids": json.dumps(pancake_dict.get("ad_ids"))
+				if isinstance(pancake_dict.get("ad_ids"), list)
+				else (pancake_dict.get("ad_ids") or None),
 			}
 		)
 
@@ -1076,10 +1151,7 @@ class Lead(SellingController, CRMNote):
 			contact.append("phone_nos", {"phone": self.mobile_no, "is_primary_mobile_no": 1})
 
 		if lead_source:
-			contact.update({
-				"source": lead_source[0],
-				"source_group": lead_source[2]
-			})
+			contact.update({"source": lead_source[0], "source_group": lead_source[2]})
 		try:
 			contact.insert(
 				ignore_permissions=True,
@@ -1089,8 +1161,7 @@ class Lead(SellingController, CRMNote):
 			return contact
 
 		except frappe.LinkValidationError as e:
-			frappe.log_error(
-				f"Failed to create contact for lead (LinkValidationError): {e!s}")
+			frappe.log_error(f"Failed to create contact for lead (LinkValidationError): {e!s}")
 			frappe.throw(_(f"Failed to create contact for lead (LinkValidationError): {e!s}."))
 		except Exception as e:
 			frappe.log_error(f"Error create_contact: {e}")
@@ -1099,7 +1170,9 @@ class Lead(SellingController, CRMNote):
 
 	def create_prospect(self, company_name):
 		try:
-			prospect = frappe.new_doc("Prospect")
+			from typing import Any, cast
+
+			prospect = cast(Any, frappe.new_doc("Prospect"))
 
 			prospect.company_name = company_name or self.company_name
 			prospect.no_of_employees = self.no_of_employees
@@ -1131,19 +1204,18 @@ class Lead(SellingController, CRMNote):
 			frappe.throw(_("Prospect {0} already exists").format(company_name or self.company_name))
 
 	def get_lead_stage(self):
-
 		if not self.phone or not self.province:
 			return "Lead"
 
-		#TODO
+		# TODO
 		# hide this feature
 		# if not self.budget_lead or not self.purpose_lead or not self.preferred_product_type:
 		# 	return "Qualified Lead"
 
-
 		# return "Opportunity"
 
 		return "Qualified Lead"
+
 	def get_qualification_status(self):
 		"""
 		Determine qualification status based on 4 core fields:
@@ -1165,6 +1237,7 @@ class Lead(SellingController, CRMNote):
 			normalized = normalize_to_standard_format(self.phone)
 			if normalized:
 				self.phone = normalized
+
 
 @frappe.whitelist()
 def make_customer(source_name, target_doc=None):
@@ -1255,7 +1328,7 @@ def make_quotation(source_name, target_doc=None):
 		set_missing_values,
 	)
 
-	target_doc.quotation_to = "Lead"
+	cast(Any, target_doc).quotation_to = "Lead"
 	target_doc.run_method("set_missing_values")
 	target_doc.run_method("set_other_charges")
 	target_doc.run_method("calculate_taxes_and_totals")
@@ -1302,7 +1375,9 @@ def get_lead_details(lead, posting_date=None, company=None, doctype=None):
 
 	out = frappe._dict()
 
-	lead_doc = frappe.get_doc("Lead", lead)
+	from typing import cast
+
+	lead_doc = cast(Lead, frappe.get_doc("Lead", lead))
 	lead = lead_doc
 
 	out.update(
@@ -1336,7 +1411,9 @@ def get_lead_details(lead, posting_date=None, company=None, doctype=None):
 def make_lead_from_communication(communication, ignore_communication_links=False):
 	"""raise a issue from email"""
 
-	doc = frappe.get_doc("Communication", communication)
+	from typing import Any, cast
+
+	doc = cast(Any, frappe.get_doc("Communication", communication))
 	lead_name = None
 	if doc.sender:
 		lead_name = frappe.db.get_value("Lead", {"email_id": doc.sender})
@@ -1388,7 +1465,9 @@ def add_lead_to_prospect(lead, prospect):
 	prospect.append("leads", {"lead": lead})
 	prospect.save(ignore_permissions=True)
 
-	carry_forward_communication_and_comments = get_crm_settings().get("carry_forward_communication_and_comments")
+	carry_forward_communication_and_comments = get_crm_settings().get(
+		"carry_forward_communication_and_comments"
+	)
 
 	if carry_forward_communication_and_comments:
 		copy_comments("Lead", lead, prospect)
@@ -1396,10 +1475,13 @@ def add_lead_to_prospect(lead, prospect):
 	link_open_events("Lead", lead, prospect)
 
 	frappe.msgprint(
-		_("Lead {0} has been added to prospect {1}.").format(frappe.bold(lead), frappe.bold(prospect.name)),
+		_("Lead {0} has been added to prospect {1}.").format(
+			frappe.bold(str(lead)), frappe.bold(str(prospect.name))
+		),
 		title=_("Lead -> Prospect"),
 		indicator="green",
 	)
+
 
 @frappe.whitelist()
 def get_related_notes(doctype, docname):
@@ -1413,19 +1495,14 @@ def get_related_notes(doctype, docname):
 	if doctype == "Lead":
 		lead_name = docname
 		opps = frappe.get_all(
-			"Opportunity",
-			filters={"opportunity_from": "Lead", "party_name": docname},
-			fields=["name"]
+			"Opportunity", filters={"opportunity_from": "Lead", "party_name": docname}, fields=["name"]
 		)
 		for opp in opps:
 			targets.append(("Opportunity", opp["name"]))
 
 	elif doctype == "Opportunity":
 		opp_fields = frappe.db.get_value(
-			"Opportunity",
-			docname,
-			["opportunity_from", "party_name"],
-			as_dict=True
+			"Opportunity", docname, ["opportunity_from", "party_name"], as_dict=True
 		)
 		if opp_fields and opp_fields.opportunity_from == "Lead" and opp_fields.party_name:
 			lead_name = opp_fields.party_name
@@ -1434,12 +1511,8 @@ def get_related_notes(doctype, docname):
 			# Get other Opportunities from the same Lead, excluding the current Opportunity
 			other_opps = frappe.get_all(
 				"Opportunity",
-				filters={
-					"opportunity_from": "Lead",
-					"party_name": lead_name,
-					"name": ["!=", docname]
-				},
-				fields=["name"]
+				filters={"opportunity_from": "Lead", "party_name": lead_name, "name": ["!=", docname]},
+				fields=["name"],
 			)
 			for opp in other_opps:
 				targets.append(("Opportunity", opp["name"]))
@@ -1447,25 +1520,26 @@ def get_related_notes(doctype, docname):
 	appointments = []
 	if lead_name:
 		appointments = frappe.get_all(
-			"Appointment",
-			filters={"lead": lead_name},
-			fields=["name", "notes", "owner", "creation"]
+			"Appointment", filters={"lead": lead_name}, fields=["name", "notes", "owner", "creation"]
 		)
 
 	for app in appointments:
 		targets.append(("Appointment", app["name"]))
 		if app.get("notes") and app["notes"].strip():
-			notes.append({
-				"name": app["name"],
-				"note": app["notes"],
-				"added_by": app["owner"],
-				"added_on": app["creation"],
-				"notify_to": None,
-				"parent": app["name"],
-				"parenttype": "Appointment"
-			})
+			notes.append(
+				{
+					"name": app["name"],
+					"note": app["notes"],
+					"added_by": app["owner"],
+					"added_on": app["creation"],
+					"notify_to": None,
+					"parent": app["name"],
+					"parenttype": "Appointment",
+				}
+			)
 
 	from collections import defaultdict
+
 	grouped_targets = defaultdict(list)
 	for ptype, pname in targets:
 		grouped_targets[ptype].append(pname)
@@ -1474,7 +1548,7 @@ def get_related_notes(doctype, docname):
 		items = frappe.db.get_all(
 			"CRM Note",
 			filters={"parent": ["in", parents], "parenttype": parenttype},
-			fields=["name", "note", "added_by", "added_on", "notify_to", "parent", "parenttype"]
+			fields=["name", "note", "added_by", "added_on", "notify_to", "parent", "parenttype"],
 		)
 		notes.extend(items)
 
@@ -1482,9 +1556,7 @@ def get_related_notes(doctype, docname):
 	name_map = {}
 	if notify_emails:
 		users = frappe.db.get_all(
-			"User",
-			filters={"name": ["in", notify_emails]},
-			fields=["name", "full_name"]
+			"User", filters={"name": ["in", notify_emails]}, fields=["name", "full_name"]
 		)
 		name_map = {u["name"]: u["full_name"] for u in users}
 
@@ -1565,9 +1637,11 @@ def update_primary_sale_from_todo(doc, method=None):
 					try:
 						manual_lead_owner_enqueue(doc.reference_name)
 					except Exception:
-						frappe.log_error(title="Manual Lead Webhook Call Failed", message=frappe.get_traceback())
+						frappe.log_error(
+							title="Manual Lead Webhook Call Failed", message=frappe.get_traceback()
+						)
 
-	except Exception as e:
+	except Exception:
 		frappe.log_error(title="DEBUG ASSIGN LEAD EXCEPTION", message=frappe.get_traceback())
 
 
@@ -1591,4 +1665,6 @@ def manual_lead_owner_enqueue(lead_name):
 		enqueue_webhook(lead_doc, webhook)
 		frappe.logger().info(f"Manual webhook '{webhook_name}' triggered successfully for Lead: {lead_name}")
 	except Exception:
-		frappe.log_error(title=f"Manual Lead Webhook Enqueue Error for {lead_name}", message=frappe.get_traceback())
+		frappe.log_error(
+			title=f"Manual Lead Webhook Enqueue Error for {lead_name}", message=frappe.get_traceback()
+		)
