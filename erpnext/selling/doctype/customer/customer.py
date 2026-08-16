@@ -3,6 +3,7 @@
 
 
 import json
+import re
 
 import frappe
 import frappe.defaults
@@ -181,6 +182,11 @@ class Customer(TransactionBase):
 		withdraw_cash_amount_pending: DF.Currency
 		withdraw_point: DF.Float
 	# end: auto-generated types
+
+	def autoname(self):
+		if frappe.flags.in_test and self.customer_name and self.customer_name.startswith("_Test"):
+			self.name = self.customer_name
+			return
 
 	def onload(self):
 		# Load address and contacts in `__onload`

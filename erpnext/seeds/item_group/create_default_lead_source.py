@@ -41,6 +41,7 @@ groups = [
 
 
 def execute():
+	frappe.reload_doc("crm", "doctype", "lead_source")
 	create_groups(groups)
 
 
