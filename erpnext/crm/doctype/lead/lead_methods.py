@@ -60,11 +60,13 @@ def normalize_phone_number(phone: str | None) -> str | None:
 	return res if res else None
 
 @frappe.whitelist(methods=["POST", "PUT"])
-def insert_lead_by_batch(docs=None):
+def insert_lead_by_batch(docs: list[dict] | str | None = None):
 	"""Insert multiple lead
 
 	:param docs: JSON or list of dict objects to be inserted in one request"""
-	
+	if not docs:
+		return {"results": [], "failed_docs": []}
+
 	crm_settings = get_crm_settings()
 	if not crm_settings.get("enable_auto_lead_insert", 1):
 		frappe.throw("currently backfilling")
@@ -75,41 +77,31 @@ def insert_lead_by_batch(docs=None):
 	if len(docs) > 200:
 		frappe.throw(_("Only 200 inserts allowed in one request"))
 
-	result = []
+	results: list[dict] = []
+	failed_docs: list[dict] = []
 	for doc in docs:
 		doc = doc.copy()
 		pancake_data = doc.get("pancake_data", {})
 		conversation_id = pancake_data.get("conversation_id")
 
 		if not is_non_empty(conversation_id):
-			frappe.logger().warning(
-				"insert_lead_by_batch: missing conversation_id",
-				exc_info=False
-			)
-			result.append({
-				"name": None,
-				"conversation_id": conversation_id
-			})
+			frappe.logger().warning("insert_lead_by_batch: missing conversation_id", exc_info=False)
+			results.append({"name": None, "conversation_id": conversation_id})
+			failed_docs.append({"doc": doc, "exc": "missing conversation_id"})
 			continue
 
 		try:
 			inserted_doc = insert_lead(doc)
 			if inserted_doc:
-				result.append({
-					"name": inserted_doc.name,
-					"conversation_id": conversation_id
-				})
+				results.append({"name": inserted_doc.name, "conversation_id": conversation_id})
 			else:
-				result.append({
-					"name": None,
-					"conversation_id": conversation_id
-				})
+				results.append({"name": None, "conversation_id": conversation_id})
+				failed_docs.append({"doc": doc, "exc": "insert_lead returned None"})
 		except Exception:
-			result.append({
-				"name": None,
-				"conversation_id": conversation_id
-			})
-	return result
+			frappe.log_error(frappe.get_traceback(), "insert_lead_by_batch failed")
+			results.append({"name": None, "conversation_id": conversation_id})
+			failed_docs.append({"doc": doc, "exc": frappe.utils.get_traceback()})
+	return {"results": results, "failed_docs": failed_docs}
 
 def insert_lead(doc) -> "Document":
 	"""Inserts document and returns parent document object with appended child document
@@ -1216,46 +1208,33 @@ def process_fix_duplicate_conversations(pairs):
 	for row in pairs:
 		master_lead = row.master_lead
 		duplicate_lead = row.duplicate_lead
-		
+
 		try:
 			# Skip if it was already deleted in a previous iteration
 			if not frappe.db.exists("Lead", master_lead) or not frappe.db.exists("Lead", duplicate_lead):
 				continue
-				
+
 			master_doc = frappe.get_doc("Lead", master_lead)
 			loser_doc = frappe.get_doc("Lead", duplicate_lead)
-			
+
 			if master_doc.name == loser_doc.name:
 				continue
-				
-			# Standard merge pipeline
-			_transfer_lead_fields(master_doc, loser_doc)
-			_transfer_child_tables(master_doc, loser_doc)
-			_merge_tags(master_doc, loser_doc)
-			_merge_system_fields(master_doc, loser_doc)
-			_merge_assign(master_doc, loser_doc)
-			_transfer_notes(loser_doc.name, master_doc)
-			
-			_relink_dynamic_links(loser_doc.name, master_doc.name)
-			_relink_downstream_docs(loser_doc.name, master_doc.name)
-			transfer_lead_todos(loser_doc.name, master_doc.name)
-			
-			master_doc.set_first_lead_source()
-			master_doc.save(ignore_permissions=True)
-			
-			frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True)
-			
+
+			_merge_lead(master_doc, loser_doc)
 			frappe.db.commit()
 			print(f"[{processed_count + 1}/1000] Successfully merged {duplicate_lead} into {master_lead}")
-			
+
 			processed_count += 1
 			if processed_count >= 1000:
 				print("Reached 1000 successful merges. Stopping as requested.")
 				break
-				
+
 		except Exception as e:
 			frappe.db.rollback()
-			frappe.log_error(f"Bulk Conversation Merge: Failed to merge {duplicate_lead} into {master_lead}: {e}", "Lead Merge Error")
+			frappe.log_error(
+				f"Bulk Conversation Merge: Failed to merge {duplicate_lead} into {master_lead}: {e}",
+				"Lead Merge Error",
+			)
 			print(f"Error merging {duplicate_lead} into {master_lead}: {e}")
 
 @frappe.whitelist()
@@ -1304,3 +1283,15 @@ def reassign_leads_in_bulk(lead_names, assignment_rule=None):
 
 	return {"status": "success", "processed": len(lead_names)}
 
+
+
+def _merge_lead(master_doc, loser_doc):
+	_relink_dynamic_links(loser_doc.name, master_doc.name)
+	_relink_downstream_docs(loser_doc.name, master_doc.name)
+	_transfer_lead_fields(master_doc, loser_doc)
+	_merge_system_fields(master_doc, loser_doc)
+	_transfer_child_tables(master_doc, loser_doc)
+	transfer_lead_todos(loser_doc.name, master_doc.name)
+	frappe.delete_doc("Lead", loser_doc.name, ignore_permissions=True, force=True)
+	master_doc.set_first_lead_source()
+	master_doc.save(ignore_permissions=True)
