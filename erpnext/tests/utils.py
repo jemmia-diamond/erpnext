@@ -666,6 +666,7 @@ class BootStrapTestData:
 				"status": "Open",
 				"territory": "_Test Territory",
 				"naming_series": "_T-Lead-",
+				"source": "Walk In",
 			},
 			{
 				"doctype": "Lead",
@@ -673,6 +674,7 @@ class BootStrapTestData:
 				"lead_name": "_Test Lead 1",
 				"status": "Open",
 				"naming_series": "_T-Lead-",
+				"source": "Walk In",
 			},
 			{
 				"doctype": "Lead",
@@ -680,6 +682,7 @@ class BootStrapTestData:
 				"lead_name": "_Test Lead 2",
 				"status": "New",
 				"naming_series": "_T-Lead-",
+				"source": "Walk In",
 			},
 			{
 				"doctype": "Lead",
@@ -687,6 +690,7 @@ class BootStrapTestData:
 				"lead_name": "_Test Lead 3",
 				"status": "Converted",
 				"naming_series": "_T-Lead-",
+				"source": "Walk In",
 			},
 			{
 				"doctype": "Lead",
@@ -695,6 +699,7 @@ class BootStrapTestData:
 				"company_name": "_Test Lead 4",
 				"status": "Open",
 				"naming_series": "_T-Lead-",
+				"source": "Walk In",
 			},
 		]
 		self.make_records(["email_id"], records)
