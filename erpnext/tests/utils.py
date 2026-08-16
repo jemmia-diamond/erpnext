@@ -632,26 +632,33 @@ class BootStrapTestData:
 		self.make_records(["first_name"], records)
 
 	def make_sales_person(self):
+		sales_team_name = frappe.db.get_value("Sales Person", {"sales_person_name": "Sales Team"}, "name")
+		if not sales_team_name:
+			sales_team_doc = frappe.get_doc(
+				{"doctype": "Sales Person", "sales_person_name": "Sales Team", "is_group": 1}
+			).insert(ignore_permissions=True)
+			sales_team_name = sales_team_doc.name
+
 		records = [
 			{
 				"doctype": "Sales Person",
 				"employee": "_T-Employee-00001",
 				"is_group": 0,
-				"parent_sales_person": "Sales Team",
+				"parent_sales_person": sales_team_name,
 				"sales_person_name": "_Test Sales Person",
 			},
 			{
 				"doctype": "Sales Person",
 				"employee": "_T-Employee-00002",
 				"is_group": 0,
-				"parent_sales_person": "Sales Team",
+				"parent_sales_person": sales_team_name,
 				"sales_person_name": "_Test Sales Person 1",
 			},
 			{
 				"doctype": "Sales Person",
 				"employee": "_T-Employee-00003",
 				"is_group": 0,
-				"parent_sales_person": "Sales Team",
+				"parent_sales_person": sales_team_name,
 				"sales_person_name": "_Test Sales Person 2",
 			},
 		]
