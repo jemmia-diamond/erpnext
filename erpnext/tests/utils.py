@@ -658,6 +658,9 @@ class BootStrapTestData:
 		self.make_records(["sales_person_name"], records)
 
 	def make_leads(self):
+		if not frappe.db.exists("Lead Source", "Walk In"):
+			frappe.get_doc({"doctype": "Lead Source", "source_name": "Walk In"}).insert()
+
 		records = [
 			{
 				"doctype": "Lead",
