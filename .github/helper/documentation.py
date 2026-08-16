@@ -41,7 +41,9 @@ def contains_documentation_link(body: str) -> bool:
 
 
 def check_pull_request(number: str) -> "tuple[int, str]":
-	response = requests.get(f"https://api.github.com/repos/frappe/erpnext/pulls/{number}")
+	import os
+	repo = os.environ.get("GITHUB_REPOSITORY", "frappe/erpnext")
+	response = requests.get(f"https://api.github.com/repos/{repo}/pulls/{number}")
 	if not response.ok:
 		return 1, "Pull Request Not Found! ⚠️"
 
