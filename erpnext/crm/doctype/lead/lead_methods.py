@@ -60,11 +60,13 @@ def normalize_phone_number(phone: str | None) -> str | None:
 	return res if res else None
 
 @frappe.whitelist(methods=["POST", "PUT"])
-def insert_lead_by_batch(docs=None):
+def insert_lead_by_batch(docs: list[dict] | str | None = None):
 	"""Insert multiple lead
 
 	:param docs: JSON or list of dict objects to be inserted in one request"""
-	
+	if not docs:
+		return {"results": [], "failed_docs": []}
+
 	crm_settings = get_crm_settings()
 	if not crm_settings.get("enable_auto_lead_insert", 1):
 		frappe.throw("currently backfilling")
@@ -75,41 +77,31 @@ def insert_lead_by_batch(docs=None):
 	if len(docs) > 200:
 		frappe.throw(_("Only 200 inserts allowed in one request"))
 
-	result = []
+	results: list[dict] = []
+	failed_docs: list[dict] = []
 	for doc in docs:
 		doc = doc.copy()
 		pancake_data = doc.get("pancake_data", {})
 		conversation_id = pancake_data.get("conversation_id")
 
 		if not is_non_empty(conversation_id):
-			frappe.logger().warning(
-				"insert_lead_by_batch: missing conversation_id",
-				exc_info=False
-			)
-			result.append({
-				"name": None,
-				"conversation_id": conversation_id
-			})
+			frappe.logger().warning("insert_lead_by_batch: missing conversation_id", exc_info=False)
+			results.append({"name": None, "conversation_id": conversation_id})
+			failed_docs.append({"doc": doc, "exc": "missing conversation_id"})
 			continue
 
 		try:
 			inserted_doc = insert_lead(doc)
 			if inserted_doc:
-				result.append({
-					"name": inserted_doc.name,
-					"conversation_id": conversation_id
-				})
+				results.append({"name": inserted_doc.name, "conversation_id": conversation_id})
 			else:
-				result.append({
-					"name": None,
-					"conversation_id": conversation_id
-				})
+				results.append({"name": None, "conversation_id": conversation_id})
+				failed_docs.append({"doc": doc, "exc": "insert_lead returned None"})
 		except Exception:
-			result.append({
-				"name": None,
-				"conversation_id": conversation_id
-			})
-	return result
+			frappe.log_error(frappe.get_traceback(), "insert_lead_by_batch failed")
+			results.append({"name": None, "conversation_id": conversation_id})
+			failed_docs.append({"doc": doc, "exc": frappe.utils.get_traceback()})
+	return {"results": results, "failed_docs": failed_docs}
 
 def insert_lead(doc) -> "Document":
 	"""Inserts document and returns parent document object with appended child document
@@ -204,84 +196,6 @@ def insert_lead(doc) -> "Document":
 			return None
 
 @frappe.whitelist(methods=["PUT", "PATCH"])
-def backfill_lead_info(docs):
-    """Bulk update leads"""
-    if isinstance(docs, str):
-        docs = json.loads(docs)
-
-    failed_docs = []
-    try:
-        # Prepare parts for the dynamic SQL query
-        name_case_when_clauses = []
-        phone_case_when_clauses = []
-        ids_to_update = []
-        sql_params_name = []  # Separate list for first_name parameters
-        sql_params_phone = []  # Separate list for phone parameters
-
-        for doc in docs:
-            lead_id = doc.get("docname")
-            new_name = truncate_string(doc.get("new_name"))
-            new_phone = doc.get("new_phone")
-
-            if not lead_id:
-                failed_docs.append({"doc": doc, "exc": "Missing 'docname' (lead ID). Skipping this document."})
-                continue # Skip this document if docname is missing
-
-            ids_to_update.append(lead_id)
-
-            # Build CASE WHEN clauses for first_name with nested conditions
-            if is_non_empty(new_name):  # Only add clause if new_name is not empty
-                name_case_when_clauses.append("""
-                    WHEN name = %s THEN
-                        CASE
-                            WHEN first_name IS NULL OR first_name = '' OR first_name = 'Chưa rõ' THEN %s
-                            ELSE first_name
-                        END
-                """)
-                # Parameters for this clause: lead_id (for outer WHEN) and new_name (for inner THEN)
-                sql_params_name.extend([lead_id, new_name])
-
-            # Build CASE WHEN clauses for phone with nested conditions
-            if is_non_empty(new_phone):  # Only add clause if new_phone is not empty
-                phone_case_when_clauses.append("""
-                    WHEN name = %s THEN
-                        CASE
-                            WHEN phone IS NULL OR phone = '' THEN %s
-                            ELSE phone
-                        END
-                """)
-                # Parameters for this clause: lead_id (for outer WHEN) and new_phone (for inner THEN)
-                sql_params_phone.extend([lead_id, new_phone])
-
-        # If no valid documents were processed to build clauses, return
-        if not ids_to_update:
-            return {"failed_docs": failed_docs}
-        # Add all lead IDs for the WHERE IN clause at the very end of the parameters list
-        ids_clause_placeholders = ", ".join(["%s"] * len(ids_to_update))
-
-        # Construct SQL query dynamically
-        sql_query = f"""
-            UPDATE `tabLead`
-            SET
-                first_name = CASE
-                    {' '.join(name_case_when_clauses)}
-                    ELSE first_name -- Fallback: if name matches but no WHEN clause matched, keep current first_name
-                END,
-                phone = CASE
-                    {' '.join(phone_case_when_clauses)}
-                    ELSE phone -- Fallback: if name matches but no WHEN clause matched, keep current phone
-                END
-            WHERE name IN ({ids_clause_placeholders})
-        """
-        sql_params = sql_params_name + sql_params_phone + ids_to_update
-
-        frappe.db.sql(sql_query, tuple(sql_params))
-
-    except Exception:
-        for doc in docs:
-            failed_docs.append({"doc": doc, "exc": frappe.utils.get_traceback()})
-
-    return {"failed_docs": failed_docs}
 
 @frappe.whitelist(methods=["POST", "PUT"])
 def update_lead_by_batch(docs):
