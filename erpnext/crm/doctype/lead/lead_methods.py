@@ -60,11 +60,13 @@ def normalize_phone_number(phone: str | None) -> str | None:
 	return res if res else None
 
 @frappe.whitelist(methods=["POST", "PUT"])
-def insert_lead_by_batch(docs=None):
+def insert_lead_by_batch(docs: list[dict] | str | None = None):
 	"""Insert multiple lead
 
 	:param docs: JSON or list of dict objects to be inserted in one request"""
-	
+	if not docs:
+		return {"results": [], "failed_docs": []}
+
 	crm_settings = get_crm_settings()
 	if not crm_settings.get("enable_auto_lead_insert", 1):
 		frappe.throw("currently backfilling")
@@ -75,41 +77,31 @@ def insert_lead_by_batch(docs=None):
 	if len(docs) > 200:
 		frappe.throw(_("Only 200 inserts allowed in one request"))
 
-	result = []
+	results: list[dict] = []
+	failed_docs: list[dict] = []
 	for doc in docs:
 		doc = doc.copy()
 		pancake_data = doc.get("pancake_data", {})
 		conversation_id = pancake_data.get("conversation_id")
 
 		if not is_non_empty(conversation_id):
-			frappe.logger().warning(
-				"insert_lead_by_batch: missing conversation_id",
-				exc_info=False
-			)
-			result.append({
-				"name": None,
-				"conversation_id": conversation_id
-			})
+			frappe.logger().warning("insert_lead_by_batch: missing conversation_id", exc_info=False)
+			results.append({"name": None, "conversation_id": conversation_id})
+			failed_docs.append({"doc": doc, "exc": "missing conversation_id"})
 			continue
 
 		try:
 			inserted_doc = insert_lead(doc)
 			if inserted_doc:
-				result.append({
-					"name": inserted_doc.name,
-					"conversation_id": conversation_id
-				})
+				results.append({"name": inserted_doc.name, "conversation_id": conversation_id})
 			else:
-				result.append({
-					"name": None,
-					"conversation_id": conversation_id
-				})
+				results.append({"name": None, "conversation_id": conversation_id})
+				failed_docs.append({"doc": doc, "exc": "insert_lead returned None"})
 		except Exception:
-			result.append({
-				"name": None,
-				"conversation_id": conversation_id
-			})
-	return result
+			frappe.log_error(frappe.get_traceback(), "insert_lead_by_batch failed")
+			results.append({"name": None, "conversation_id": conversation_id})
+			failed_docs.append({"doc": doc, "exc": frappe.utils.get_traceback()})
+	return {"results": results, "failed_docs": failed_docs}
 
 def insert_lead(doc) -> "Document":
 	"""Inserts document and returns parent document object with appended child document
