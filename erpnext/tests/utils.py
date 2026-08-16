@@ -658,8 +658,10 @@ class BootStrapTestData:
 		self.make_records(["sales_person_name"], records)
 
 	def make_leads(self):
-		if not frappe.db.exists("Lead Source", "Walk In"):
-			frappe.get_doc({"doctype": "Lead Source", "source_name": "Walk In"}).insert()
+		source_name = frappe.db.get_value("Lead Source", {"source_name": "Walk In"}, "name")
+		if not source_name:
+			source_doc = frappe.get_doc({"doctype": "Lead Source", "source_name": "Walk In"}).insert()
+			source_name = source_doc.name
 
 		records = [
 			{
@@ -669,7 +671,7 @@ class BootStrapTestData:
 				"status": "Open",
 				"territory": "_Test Territory",
 				"naming_series": "_T-Lead-",
-				"source": "Walk In",
+				"source": source_name,
 			},
 			{
 				"doctype": "Lead",
@@ -677,7 +679,7 @@ class BootStrapTestData:
 				"lead_name": "_Test Lead 1",
 				"status": "Open",
 				"naming_series": "_T-Lead-",
-				"source": "Walk In",
+				"source": source_name,
 			},
 			{
 				"doctype": "Lead",
@@ -685,7 +687,7 @@ class BootStrapTestData:
 				"lead_name": "_Test Lead 2",
 				"status": "New",
 				"naming_series": "_T-Lead-",
-				"source": "Walk In",
+				"source": source_name,
 			},
 			{
 				"doctype": "Lead",
@@ -693,7 +695,7 @@ class BootStrapTestData:
 				"lead_name": "_Test Lead 3",
 				"status": "Converted",
 				"naming_series": "_T-Lead-",
-				"source": "Walk In",
+				"source": source_name,
 			},
 			{
 				"doctype": "Lead",
@@ -702,7 +704,7 @@ class BootStrapTestData:
 				"company_name": "_Test Lead 4",
 				"status": "Open",
 				"naming_series": "_T-Lead-",
-				"source": "Walk In",
+				"source": source_name,
 			},
 		]
 		self.make_records(["email_id"], records)
