@@ -1514,14 +1514,12 @@ class SalesOrder(SellingController):
 		frappe.throw(_("Sales Order Submission is not allowed."))
 
 	def update_customer_revenue_fields(self):
-		cumulative = self.calculate_customer_cumulative_revenue()
-		true_cumulative = self.calculate_customer_true_cumulative_revenue()
+		from erpnext.selling.doctype.customer.customer import evaluate_and_update_customer_rank
 
-		frappe.db.set_value(
-			"Customer",
-			self.customer,
-			{"cumulative_revenue": cumulative, "true_cumulative_revenue": true_cumulative},
-		)
+		try:
+			evaluate_and_update_customer_rank(self.customer, auto_commit=False)
+		except Exception as e:
+			frappe.log_error(f"Failed to update customer rank for {self.customer}: {e!s}")
 
 	def update_ref_order_payment_entry_current_order_number(self):
 		"""
@@ -1653,33 +1651,6 @@ class SalesOrder(SellingController):
 
 		except Exception as e:
 			frappe.log_error(f"Error transferring payment entry references to current order: {e!s}")
-
-	def calculate_customer_cumulative_revenue(self):
-		result = frappe.db.sql(
-			"""
-			SELECT SUM(grand_total)
-			FROM `tabSales Order`
-			WHERE customer = %s AND cancelled_status = 'Uncancelled'
-		""",
-			(self.customer,),
-			as_list=True,
-		)
-		return result[0][0] if result and result[0][0] else 0
-
-	def calculate_customer_true_cumulative_revenue(self):
-		result = frappe.db.sql(
-			"""
-			SELECT SUM(grand_total)
-			FROM `tabSales Order`
-			WHERE customer = %s
-			AND cancelled_status = 'Uncancelled'
-			AND financial_status = 'Paid'
-			AND fulfillment_status = 'Fulfilled'
-		""",
-			(self.customer,),
-			as_list=True,
-		)
-		return result[0][0] if result and result[0][0] else 0
 
 	def copy_from_reference_order(self):
 		"""Copy manual fields from previous order when haravan_ref_order_id is set"""
