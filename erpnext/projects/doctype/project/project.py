@@ -331,7 +331,7 @@ class Project(Document):
 		total_billed_amount = frappe.db.sql(
 			"""select sum(base_net_amount)
 			from `tabSales Invoice` si join `tabSales Invoice Item` si_item on si_item.parent = si.name
-				where si_item.project is null
+				where (si_item.project is null or si_item.project = '')
 				and si.project is not null
 				and si.project = %s
 				and si.docstatus = 1""",

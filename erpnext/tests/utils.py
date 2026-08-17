@@ -632,7 +632,7 @@ class BootStrapTestData:
 		self.make_records(["first_name"], records)
 
 	def make_sales_person(self):
-		sales_team_name = frappe.db.get_value("Sales Person", {"sales_person_name": "Sales Team"}, "name")
+		sales_team_name = frappe.db.exists("Sales Person", {"sales_person_name": "Sales Team"})
 		if not sales_team_name:
 			sales_team_doc = frappe.get_doc(
 				{"doctype": "Sales Person", "sales_person_name": "Sales Team", "is_group": 1}
@@ -665,9 +665,11 @@ class BootStrapTestData:
 		self.make_records(["sales_person_name"], records)
 
 	def make_leads(self):
-		source_name = frappe.db.get_value("Lead Source", {"source_name": "Walk In"}, "name")
+		source_name = frappe.db.exists("Lead Source", {"source_name": "Walk In"})
 		if not source_name:
-			source_doc = frappe.get_doc({"doctype": "Lead Source", "source_name": "Walk In"}).insert()
+			source_doc = frappe.get_doc({"doctype": "Lead Source", "source_name": "Walk In"}).insert(
+				ignore_permissions=True
+			)
 			source_name = source_doc.name
 
 		records = [

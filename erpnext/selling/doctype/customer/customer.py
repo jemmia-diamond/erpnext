@@ -184,7 +184,11 @@ class Customer(TransactionBase):
 	# end: auto-generated types
 
 	def autoname(self):
-		if frappe.flags.in_test and self.customer_name and self.customer_name.startswith("_Test"):
+		if (
+			frappe.flags.in_test
+			and self.customer_name
+			and (self.customer_name.startswith("_Test") or self.customer_name.startswith("Test "))
+		):
 			self.name = self.customer_name
 			return
 
