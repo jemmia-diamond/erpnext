@@ -27,6 +27,7 @@
   "close_opportunity_after_days",
   "column_break_9",
   "auto_create_opportunity",
+  "move_to_opportunity",
   "auto_create_opportunity_on_converted_lead",
   "lost_reason_messages",
   "allow_subsequent_auto_opportunity",
@@ -36,7 +37,10 @@
   "section_break_13",
   "carry_forward_communication_and_comments",
   "column_break_junk",
-  "update_timestamp_on_new_communication"
+  "update_timestamp_on_new_communication",
+  "haravan_integration_tab",
+  "create_haravan_customer",
+  "create_haravan_customer_automatically"
  ],
  "fields": [
   {
@@ -120,8 +124,8 @@
    "description": "JSON object mapping scenarios to lost reasons (e.g. {\"spam_from_lead\": \"Lead marked as Spam\"}).",
    "fieldname": "lost_reason_messages",
    "fieldtype": "Code",
-   "options": "JSON",
-   "label": "Lost Reason Messages"
+   "label": "Lost Reason Messages",
+   "options": "JSON"
   },
   {
    "description": "Comma-separated list of fieldnames required to auto-create an Opportunity (e.g. phone, province, budget_lead)",
@@ -140,6 +144,12 @@
    "fieldname": "allow_auto_create_lead_product",
    "fieldtype": "Check",
    "label": "Allow Auto Create Lead Product"
+  },
+  {
+   "default": "0",
+   "fieldname": "move_to_opportunity",
+   "fieldtype": "Check",
+   "label": "Move Data to Opportunity"
   },
   {
    "description": "Comma-separated list of product types allowed to be created (e.g. s\u1ea3n ph\u1ea9m 1, s\u1ea3n ph\u1ea9m 2,). Leave empty to allow all.",
@@ -247,7 +257,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-08-11 23:28:00.000000",
+ "modified": "2026-08-17 18:28:03.002280",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "CRM Settings",

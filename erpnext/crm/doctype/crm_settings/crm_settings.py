@@ -27,10 +27,16 @@ class CRMSettings(Document):
 		campaign_naming_by: DF.Literal["Campaign Name", "Naming Series"]
 		carry_forward_communication_and_comments: DF.Check
 		close_opportunity_after_days: DF.Int
+		create_haravan_customer: DF.Check
+		create_haravan_customer_automatically: DF.Check
 		default_valid_till: DF.Data | None
+		enable_auto_lead_insert: DF.Check
+		enable_lead_phone_update_or_merge: DF.Check
+		lost_reason_messages: DF.Code | None
+		move_to_opportunity: DF.Check
 		not_allowed_product_types: DF.Text | None
 		opportunity_sync_field_mappings: DF.Code | None
-		lost_reason_messages: DF.Code | None
+		overwrite_existing_lead_owner: DF.Check
 		sync_lead_to_in_progress_opportunity: DF.Check
 		sync_opportunity_date_from_old_lead_qualified_on: DF.Check
 		transfer_assign_to_lead_owner: DF.Check
