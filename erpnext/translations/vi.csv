@@ -750,7 +750,7 @@ Delivery Note {0} is not submitted,Phiếu giao hàng {0} không được ghi,
 Delivery Note {0} must not be submitted,Phiếu giao hàng {0} không phải nộp,
 Delivery Notes {0} must be cancelled before cancelling this Sales Order,Phiếu giao hàng {0} phải được hủy bỏ trước khi hủy bỏ đơn đặt hàng này,
 Delivery Notes {0} updated,Ghi chú giao hàng {0} được cập nhật,
-Delivery Status,Tình trạng giao,
+Delivery Status,Trạng thái giao hàng,
 Delivery Trip,Giao hàng tận nơi,
 Delivery warehouse required for stock item {0},Cần nhập kho giao/nhận cho hàng hóa {0},
 Department,Cục,
@@ -902,7 +902,7 @@ Excise Invoice,Tiêu thụ đặc biệt Invoice,
 Execution,Thực hiện,
 Executive Search,Điều hành Tìm kiếm,
 Expand All,Mở rộng tất cả,
-Expected Delivery Date,Ngày Dự kiến giao hàng,
+Expected Delivery Date,Ngày dự kiến giao hàng,
 Expected Delivery Date should be after Sales Order Date,Ngày giao hàng dự kiến sẽ là sau Ngày đặt hàng bán hàng,
 Expected End Date,Ngày Dự kiến kết thúc,
 Expected Hrs,Thời gian dự kiến,
@@ -8754,7 +8754,6 @@ Lead Received Date: 22-05-2025 18:24:54, Ngày nhận Tiềm năng: 22-05-2025 1
 Time Zone: Asia/Vientiane, Múi giờ: Asia/Vientiane
 Qualified Information, Thông tin đủ điều kiện
 Budget Lead, Ngân sách Tiềm năng
-Expected Delivery Date, Ngày Dự kiến giao hàng
 Preferred Product Type, Loại sản phẩm ưu tiên
 Preferred Diamond, Kim cương ưu tiên
 Shape,Hình dáng
@@ -8771,7 +8770,6 @@ District, Quận
 Ward, Phường
 Purpose Lead, Nhu cầu Tiềm năng
 Budget Lead, Ngân sách Tiềm năng
-Expected Delivery Date, Ngày Dự kiến giao hàng
 Preferred Product Type, Loại sản phẩm ưu tiên
 Preferred Diamond, Kim cương ưu tiên
 - Shape, - Hình dáng
@@ -8831,3 +8829,11 @@ Add Selected,Thêm đã chọn
 Select Promotions,Chọn khuyến mãi
 New Promotions,Khuyến mãi mới
 Promotions,Khuyến mãi
+Split Order Group Name,Nhóm đơn hàng,
+Order Number,Mã đơn hàng,
+Real Order Date,Ngày tạo đơn gốc,
+Haravan Created At,Ngày tạo đơn Haravan,
+Order Policies,Chính sách thu mua / thu đổi,
+Financial Status,Trạng thái thanh toán,
+Cancelled Status,Trạng thái hủy,
+Ref Sales Order,Đơn hàng tham chiếu,
