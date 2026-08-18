@@ -152,7 +152,6 @@ class Opportunity(TransactionBase, CRMNote):
 		self.validate_item_details()
 		self.validate_uom_is_integer("uom", "qty")
 		self.validate_cust_name()
-		self.map_fields()
 		self.set_exchange_rate()
 
 		if not self.title:
