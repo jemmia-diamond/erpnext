@@ -12,7 +12,7 @@ from frappe.share import add_docshare
 from frappe.utils import get_url, getdate, now
 from frappe.utils.verified_command import get_signed_params
 from erpnext.utilities.phone_utils import get_phone_variants, search_doc_by_phone
-
+from erpnext.selling.doctype.customer.customer_service.service import has_paid_sales_order
 class Appointment(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
@@ -148,6 +148,10 @@ class Appointment(Document):
 					customer = frappe.db.get_value("Customer", {"mobile_no": ("in", variants)}, "name")
 					if not customer:
 						customer = frappe.db.get_value("Customer", {"phone": ("in", variants)}, "name")
+					
+					if customer:
+						if not has_paid_sales_order(customer):
+							customer = None
 						
 					if customer:
 						self.appointment_with = "Customer"
@@ -162,6 +166,11 @@ class Appointment(Document):
 			else:
 				lead = self.find_lead_by_email()
 				customer = self.find_customer_by_email()
+				
+				if customer:
+					if not has_paid_sales_order(customer):
+						customer = None
+
 				if customer:
 					self.appointment_with = "Customer"
 					self.party = customer

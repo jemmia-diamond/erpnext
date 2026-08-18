@@ -24,6 +24,8 @@ from erpnext.utilities.phone_utils import get_phone_variants, normalize_to_stand
 from frappe.integrations.doctype.webhook.webhook import enqueue_webhook
 from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
 from erpnext.selling.doctype.customer.customer import make_opportunity as make_opp_from_customer
+from erpnext.selling.doctype.customer.customer_service.service import has_paid_sales_order
+
 class Lead(SellingController, CRMNote):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
@@ -132,6 +134,11 @@ class Lead(SellingController, CRMNote):
 		load_address_and_contact(self)
 		self.set_onload("linked_prospects", self.get_linked_prospects())
 
+	def set_status(self, update=False, status=None, update_modified=True):
+		if not status and self.status in ("Spam", "Do Not Contact"):
+			return
+		super().set_status(update, status, update_modified)
+
 	def validate(self):
 		self.set_full_name()
 		self.set_lead_name()
@@ -228,7 +235,13 @@ class Lead(SellingController, CRMNote):
 				)
 				if customers:
 					customer = customers[0].name
-		if customer:
+		
+		
+		make_from_customer = False
+		if customer and has_paid_sales_order(customer):
+			make_from_customer = True
+
+		if make_from_customer:
 			active_opp = frappe.db.exists(
 				"Opportunity",
 				{
@@ -628,12 +641,15 @@ class Lead(SellingController, CRMNote):
 						lost_reason = messages.get("spam_from_lead") or lost_reason
 				except Exception:
 					pass
-			
-			for opp in active_opps:
-				frappe.db.set_value("Opportunity", opp, {
-					"status": "Lost",
-					"order_lost_reason": lost_reason
-				})
+
+			for opp_name in active_opps:
+				opp = frappe.get_doc("Opportunity", opp_name)
+				opp.status = "Lost"
+				opp.order_lost_reason = lost_reason
+				opp.append("lost_reasons", {"lost_reason": "Auto Lost"})
+				opp.flags.ignore_permissions = True
+				opp.flags.ignore_mandatory = True
+				opp.save()
 
 	def sync_lead_owner_to_todos(self):
 		if not self.has_value_changed("lead_owner"):

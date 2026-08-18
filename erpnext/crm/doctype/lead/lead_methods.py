@@ -21,7 +21,8 @@ from erpnext.crm.doctype.lead.lead_dao import get_lead_by_name, get_lead_name_by
 from erpnext.crm.doctype.lead_budget.lead_budget_dao import find_range_budget
 from erpnext.crm.doctype.lead_demand.lead_demand_dao import get_lead_purpose
 from erpnext.crm.doctype.lead_product.lead_product_dao import create_lead_product, get_lead_product
-from erpnext.utilities.phone_utils import is_valid_phone_number, normalize_to_standard_format, get_phone_variants
+from erpnext.utilities.phone_utils import is_valid_phone_number, normalize_to_standard_format, get_phone_variants, search_doc_by_phone
+from erpnext.crm.doctype.opportunity.custom.opportunity_custom import move_to_opportunity
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
@@ -959,14 +960,26 @@ def update_lead_from_summary(data):
 	new_lead_purpose = get_lead_purpose(purpose)
 	new_lead_province = get_lead_province(province)
 
+	move_to_opportunity_flag = get_crm_settings().get("move_to_opportunity", 0)
 	products = []
+	opp_products = []
 	if product_names:
 		for product_name in product_names:
 			lead_product = get_lead_product(product_name)
 			if not lead_product:
 				lead_product = create_lead_product(product_name)
 			if lead_product:
-				products.append(lead_product)
+				if move_to_opportunity_flag:
+					opp_products.append(lead_product)
+				else:
+					products.append(lead_product)
+
+	opp_purpose = new_lead_purpose.name if new_lead_purpose and move_to_opportunity_flag else None
+	opp_date = expected_receiving_date if expected_receiving_date and move_to_opportunity_flag else None
+
+	if opp_products or opp_purpose or opp_date:
+		phone = lead.get("phone")
+		move_to_opportunity(phone, products=opp_products, purpose_lead=opp_purpose, expected_delivery_date=opp_date)
 	max_retries = 3
 	for attempt in range(max_retries):
 		try:
@@ -975,9 +988,9 @@ def update_lead_from_summary(data):
 
 			if new_lead_budget:
 				lead.budget_lead = new_lead_budget.name
-			if new_lead_purpose:
+			if new_lead_purpose and not move_to_opportunity_flag:
 				lead.purpose_lead = new_lead_purpose.name
-			if expected_receiving_date:
+			if expected_receiving_date and not move_to_opportunity_flag:
 				lead.expected_delivery_date = expected_receiving_date
 			if new_lead_province:
 				lead.province = new_lead_province.name
