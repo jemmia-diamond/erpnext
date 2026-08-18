@@ -1,5 +1,6 @@
 import frappe
 import json
+import time
 
 from frappe.query_builder import DocType, Interval
 from frappe.query_builder.functions import Now
@@ -38,6 +39,16 @@ def auto_close_opportunity():
 	cutoff = frappe.utils.add_days(frappe.utils.now_datetime(), -auto_close_after_days)
 	today_date = frappe.utils.nowdate()
 
+	messages = {}
+	messages_json = crm_settings.get("lost_reason_messages")
+	if messages_json:
+		try:
+			parsed = frappe.parse_json(messages_json)
+			if isinstance(parsed, dict):
+				messages = parsed
+		except Exception:
+			pass
+
 	opps = frappe.get_all(
 		"Opportunity",
 		filters={
@@ -58,7 +69,8 @@ def auto_close_opportunity():
 				if (not cust_at or frappe.utils.get_datetime(cust_at) < cutoff) and (
 					not sales_at or frappe.utils.get_datetime(sales_at) < cutoff
 				):
-					target_opps.append((opp.name, f"Tự động đóng: Quá 7 ngày tính từ ngày mua dự kiến ({opp.expected_delivery_date})"))
+					reason = messages.get("auto_lost_opportunity_expected_delivery") or f"Tự động đóng: Quá 7 ngày tính từ ngày mua dự kiến ({opp.expected_delivery_date})"
+					target_opps.append((opp.name, reason))
 					continue
 
 		# Rule A (Doc Line 83): Inactive for over 7 days in Nurturing status without interaction -> Lost
@@ -66,7 +78,8 @@ def auto_close_opportunity():
 			if (not cust_at or frappe.utils.get_datetime(cust_at) < cutoff) and (
 				not sales_at or frappe.utils.get_datetime(sales_at) < cutoff
 			) and (frappe.utils.get_datetime(opp.modified) < cutoff):
-				target_opps.append((opp.name, "Tự động đóng: Quá 7 ngày ở Nuôi dưỡng mà không có tương tác"))
+				reason = messages.get("auto_lost_opportunity_nurturing") or "Tự động đóng: Quá 7 ngày ở Nuôi dưỡng mà không có tương tác"
+				target_opps.append((opp.name, reason))
 
 	if target_opps:
 		if not frappe.db.exists("Opportunity Lost Reason", "Auto Lost"):
@@ -198,5 +211,59 @@ def get_lead_to_opportunity_field_mappings(raw_mappings=None):
 			)
 
 	return DEFAULT_LEAD_OPPORTUNITY_FIELD_MAPPINGS
+
+def move_to_opportunity(phone, products=None, purpose_lead=None, expected_delivery_date=None):
+	if not phone or (not products and not purpose_lead and not expected_delivery_date):
+		return
+		
+	from erpnext.utilities.phone_utils import search_doc_by_phone
+	party_type, party_name = search_doc_by_phone(phone)
+	if not (party_type and party_name):
+		return
+		
+	opportunities = frappe.get_all(
+		"Opportunity",
+		filters={
+			"opportunity_from": party_type,
+			"party_name": party_name,
+			"status": ["not in", ["Won", "Lost"]]
+		},
+		order_by="creation desc",
+		limit=1
+	)
+	
+	if opportunities:
+		max_retries_opp = 3
+		for attempt in range(max_retries_opp):
+			try:
+				opp_doc = frappe.get_doc("Opportunity", opportunities[0].name)
+				updated = False
+				
+				if products:
+					existing_opp_prods = {item.product_type for item in opp_doc.get("preferred_product_type", [])}
+					for p in products:
+						if p.name not in existing_opp_prods:
+							opp_doc.append("preferred_product_type", {"product_type": p.name})
+							updated = True
+							
+				if purpose_lead and opp_doc.purpose_lead != purpose_lead:
+					opp_doc.purpose_lead = purpose_lead
+					updated = True
+					
+				if expected_delivery_date and opp_doc.expected_delivery_date != expected_delivery_date:
+					opp_doc.expected_delivery_date = expected_delivery_date
+					updated = True
+					
+				if updated:
+					opp_doc.save(ignore_permissions=True)
+					frappe.db.commit()
+				break
+			except frappe.TimestampMismatchError:
+				if attempt < max_retries_opp - 1:
+					time.sleep(1)
+					continue
+			except Exception:
+				frappe.log_error("Opportunity Update Failed", frappe.get_traceback())
+				break
 
 

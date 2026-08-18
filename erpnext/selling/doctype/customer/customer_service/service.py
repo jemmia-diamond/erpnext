@@ -112,3 +112,14 @@ class CustomerService:
 @frappe.whitelist()
 def create_haravan_customer_job(customer_name):
     CustomerService.create_haravan_customer(customer_name)
+
+@frappe.whitelist()
+def has_paid_sales_order(customer_name=None):
+    if not customer_name:
+        return False
+
+    revenue = frappe.db.get_value("Customer", customer_name, "total_cumulative_revenue")
+    if revenue and float(revenue) > 0:
+        return True
+        
+    return False
