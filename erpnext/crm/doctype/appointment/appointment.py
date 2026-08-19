@@ -25,7 +25,7 @@ class Appointment(Document):
 		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from frappe.types import DF
 
-		appointment_reason: DF.Literal["Warranty Service", "Trade-in", "Purchase", "Consultation", "Cleaning", "Other"]
+		appointment_reason: DF.Literal["Warranty Service", "Trade-in", "Purchase", "Consultation", "Cleaning", "Buyback", "Other"]
 		appointment_with: DF.Link | None
 		at_store: DF.Literal["72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh", "63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i", "209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1"]
 		auto_close: DF.Check

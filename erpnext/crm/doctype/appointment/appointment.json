@@ -249,7 +249,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Appointment reason",
-   "options": "Warranty Service\nTrade-in\nPurchase\nConsultation\nCleaning\nOther",
+   "options": "Warranty Service\nTrade-in\nPurchase\nConsultation\nCleaning\nBuyback\nOther",
    "reqd": 1
   },
   {
