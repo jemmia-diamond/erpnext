@@ -449,7 +449,7 @@
    "fieldtype": "Tab Break",
    "hide_days": 1,
    "hide_seconds": 1,
-   "label": "Khách hàng",
+   "label": "Customer",
    "options": "fa fa-bullhorn"
   },
   {
@@ -2124,7 +2124,7 @@
   {
    "fieldname": "details",
    "fieldtype": "Tab Break",
-   "label": "Tổng quan"
+   "label": "Overview"
   },
   {
    "fieldname": "contact_info_heading",
@@ -2395,7 +2395,7 @@
   {
    "fieldname": "section_break_order_status",
    "fieldtype": "Section Break",
-   "label": "Trạng thái đơn hàng"
+   "label": "Order Status"
   },
   {
    "fieldname": "column_break_status2",
@@ -2408,12 +2408,12 @@
   {
    "fieldname": "section_break_ref_orders",
    "fieldtype": "Section Break",
-   "label": "Đơn hàng tham chiếu"
+   "label": "Reference Orders"
   },
   {
    "fieldname": "section_thong_tin_khach_hang",
    "fieldtype": "Section Break",
-   "label": "Thông tin khách hàng"
+   "label": "Customer Information"
   },
   {
    "fieldname": "column_break_kh1",
