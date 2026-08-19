@@ -1094,8 +1094,7 @@ def auto_nurture_leads():
 	if not enabled:
 		return
 
-	cutoff_time = frappe.utils.add_hours(frappe.utils.now_datetime(), -48)
-
+	cutoff_time = frappe.utils.add_to_date(frappe.utils.now_datetime(), hours=-48)
 	leads = frappe.get_all(
 		"Lead",
 		filters=[
@@ -1129,7 +1128,7 @@ def auto_nurture_leads():
 				target_leads.append(lead.name)
 
 	if target_leads:
-		frappe.db.set_value("Lead", target_leads, "status", "Nurturing", update_modified=False)
+		frappe.db.set_value("Lead", target_leads, "status", "Nurturing")
 
 @frappe.whitelist()
 def get_lead_by_conversation_id(conversation_id):
