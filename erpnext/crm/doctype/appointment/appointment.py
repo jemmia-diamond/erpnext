@@ -9,7 +9,7 @@ from frappe import _
 from frappe.desk.form.assign_to import add as add_assignment
 from frappe.model.document import Document
 from frappe.share import add_docshare
-from frappe.utils import get_url, getdate, now
+from frappe.utils import get_url, getdate, now, add_to_date, now_datetime
 from frappe.utils.verified_command import get_signed_params
 from erpnext.utilities.phone_utils import get_phone_variants, search_doc_by_phone
 from erpnext.selling.doctype.customer.customer_service.service import has_paid_sales_order
@@ -25,7 +25,7 @@ class Appointment(Document):
 		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from frappe.types import DF
 
-		appointment_reason: DF.Literal["Warranty Service", "Trade-in", "Purchase", "Consultation", "Cleaning", "Other"]
+		appointment_reason: DF.Literal["Warranty Service", "Trade-in", "Purchase", "Consultation", "Cleaning", "Buyback", "Other"]
 		appointment_with: DF.Link | None
 		at_store: DF.Literal["72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh", "63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i", "209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1"]
 		auto_close: DF.Check
@@ -406,3 +406,23 @@ def _get_employee_from_user(user):
 		return frappe.get_doc("Employee", employee_docname)
 	return None
 
+
+def auto_cancel_overdue_appointments():
+	"""
+	Cancel appointments 24 hours after the scheduled_time if they are still Open.
+	"""
+	cutoff_time = add_to_date(now_datetime(), hours=-24)
+
+	appointments = frappe.get_all(
+		"Appointment",
+		filters=[
+			["status", "=", "Open"],
+			["scheduled_time", "<", cutoff_time],
+		],
+		pluck="name"
+	)
+
+	if appointments:
+		for app_name in appointments:
+			frappe.db.set_value("Appointment", app_name, "status", "Cancelled")
+		frappe.db.commit()

@@ -455,9 +455,10 @@ scheduler_events = {
 		]
 	},
 	"hourly": [
-		"erpnext.projects.doctype.project.project.hourly_reminder",
-		"erpnext.projects.doctype.project.project.collect_project_status",
-		"erpnext.accounts.doctype.payment_entry.payment_entry.cancel_pending_transfers"
+		# "erpnext.projects.doctype.project.project.hourly_reminder",
+		# "erpnext.projects.doctype.project.project.collect_project_status",
+		"erpnext.accounts.doctype.payment_entry.payment_entry.cancel_pending_transfers",
+		"erpnext.crm.doctype.appointment.appointment.auto_cancel_overdue_appointments"
 	],
 	"hourly_long": [],
 	"hourly_maintenance": [
