@@ -1426,7 +1426,6 @@ class SalesOrder(SellingController):
 				row._notify_assigned_user()
 
 	def after_insert(self):
-		self.update_customer_revenue_fields()
 		self.copy_from_reference_order()
 		self.auto_detect_split_orders()
 		self.update_ref_order_payment_entry_current_order_number()

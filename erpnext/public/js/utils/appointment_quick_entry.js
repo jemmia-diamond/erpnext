@@ -25,6 +25,10 @@ frappe.ui.form.AppointmentQuickEntryForm = class AppointmentQuickEntryForm exten
 				reqd: 1
 			},
 			{
+				fieldname: "scheduled_time_presets",
+				fieldtype: "HTML"
+			},
+			{
 				fieldname: "at_store",
 				fieldtype: "Select",
 				label: __("At Store"),
@@ -52,6 +56,63 @@ frappe.ui.form.AppointmentQuickEntryForm = class AppointmentQuickEntryForm exten
 				}
 			});
 		this.check_existing_appointment();
+		this.setup_time_presets();
+	}
+
+	setup_time_presets() {
+		let wrapper = this.dialog.get_field("scheduled_time_presets").$wrapper;
+		let html = `
+			<div style="margin-top: -10px; margin-bottom: 10px; display: flex; gap: 5px; flex-wrap: wrap;">
+				<button type="button" class="btn btn-xs btn-default btn-preset" data-preset="today">Hôm nay</button>
+				<button type="button" class="btn btn-xs btn-default btn-preset" data-preset="tomorrow_now">Ngày mai</button>
+				<button type="button" class="btn btn-xs btn-default btn-preset" data-preset="tomorrow">Sáng mai</button>
+				<button type="button" class="btn btn-xs btn-default btn-preset" data-preset="day_after">Sáng mốt</button>
+				<button type="button" class="btn btn-xs btn-default btn-preset" data-preset="next_week">Tuần sau</button>
+				<button type="button" class="btn btn-xs btn-default btn-preset" data-preset="next_month">Tháng sau</button>
+			</div>
+			<div style="margin-bottom: 15px; display: flex; gap: 5px;">
+				<button type="button" class="btn btn-xs btn-default btn-preset" data-preset="minus_1_hour">-1 giờ</button>
+				<button type="button" class="btn btn-xs btn-default btn-preset" data-preset="plus_1_hour">+1 giờ</button>
+			</div>
+		`;
+		wrapper.html(html);
+
+		wrapper.find(".btn-preset").on("click", (e) => {
+			let preset = $(e.currentTarget).data("preset");
+			let is_relative = ["minus_1_hour", "plus_1_hour"].includes(preset);
+			let current_val = this.dialog.get_value("scheduled_time");
+
+			// If adjusting an already selected time, do it directly without double tz conversion
+			if (is_relative && current_val) {
+				let dt = moment(current_val, "YYYY-MM-DD HH:mm:ss");
+				if (preset === "minus_1_hour") dt.subtract(1, "hours");
+				else if (preset === "plus_1_hour") dt.add(1, "hours");
+				this.dialog.set_value("scheduled_time", dt.format("YYYY-MM-DD HH:mm:ss"));
+				return;
+			}
+
+			let dt = moment(frappe.datetime.now_datetime(), "YYYY-MM-DD HH:mm:ss");
+			if (preset === "minus_1_hour") {
+				dt.subtract(1, "hours");
+			} else if (preset === "plus_1_hour") {
+				dt.add(1, "hours");
+			} else if (preset === "today") {
+				dt.add(1, "hours").startOf("hour");
+			} else if (preset === "tomorrow_now") {
+				dt.add(1, "days").seconds(0);
+				dt.minutes(dt.minutes() < 30 ? 0 : 30);
+			} else if (preset === "tomorrow") {
+				dt.add(1, "days").hours(9).minutes(0).seconds(0);
+			} else if (preset === "day_after") {
+				dt.add(2, "days").hours(9).minutes(0).seconds(0);
+			} else if (preset === "next_week") {
+				dt.add(1, "weeks").hours(9).minutes(0).seconds(0);
+			} else if (preset === "next_month") {
+				dt.add(1, "months").hours(9).minutes(0).seconds(0);
+			}
+			let local_time = dt.format("YYYY-MM-DD HH:mm:ss");
+			this.dialog.set_value("scheduled_time", frappe.datetime.convert_to_system_tz(local_time));
+		});
 	}
 
 	check_existing_appointment() {

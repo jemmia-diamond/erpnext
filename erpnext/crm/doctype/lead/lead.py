@@ -283,9 +283,17 @@ class Lead(SellingController, CRMNote):
 		mandatory_fields_str = crm_settings.get("auto_opportunity_mandatory_fields") or "budget_lead, phone, province"
 		mandatory_fields = [f.strip() for f in mandatory_fields_str.split(",") if f.strip()]
 
-		for field in mandatory_fields:
-			if not self.get(field):
-				return
+		exempt_sources_str = crm_settings.get("auto_opportunity_exempt_sources") or ""
+		exempt_sources = [s.strip() for s in exempt_sources_str.split(",") if s.strip()]
+
+		ignore_mandatory_fields = False
+		if self.source and self.source in exempt_sources:
+			ignore_mandatory_fields = True
+
+		if not ignore_mandatory_fields:
+			for field in mandatory_fields:
+				if not self.get(field):
+					return
 
 		# Check existing Opportunity (ANY opp if subsequent disabled, or ACTIVE opp if enabled)
 		opp_filter = {

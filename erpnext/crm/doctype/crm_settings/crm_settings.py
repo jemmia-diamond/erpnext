@@ -23,6 +23,7 @@ class CRMSettings(Document):
 		auto_create_opportunity_on_converted_lead: DF.Check
 		auto_creation_of_contact: DF.Check
 		auto_nurture_leads: DF.Check
+		auto_opportunity_exempt_sources: DF.Text | None
 		auto_opportunity_mandatory_fields: DF.Text | None
 		campaign_naming_by: DF.Literal["Campaign Name", "Naming Series"]
 		carry_forward_communication_and_comments: DF.Check

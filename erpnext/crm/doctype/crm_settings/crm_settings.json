@@ -25,6 +25,7 @@
   "opportunity_sync_field_mappings",
   "auto_close_opportunity",
   "close_opportunity_after_days",
+  "auto_opportunity_exempt_sources",
   "column_break_9",
   "auto_create_opportunity",
   "move_to_opportunity",
@@ -132,6 +133,12 @@
    "fieldname": "auto_opportunity_mandatory_fields",
    "fieldtype": "Text",
    "label": "Mandatory Fields for Auto Opportunity"
+  },
+  {
+   "description": "Comma-separated list of Lead Sources (Source Name or Code) that are exempt from the mandatory fields check.",
+   "fieldname": "auto_opportunity_exempt_sources",
+   "fieldtype": "Text",
+   "label": "Exempt Sources from Mandatory Fields"
   },
   {
    "default": "1",
@@ -257,7 +264,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-08-17 18:28:03.002280",
+ "modified": "2026-08-19 10:37:50.843906",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "CRM Settings",
