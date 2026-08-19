@@ -15,7 +15,7 @@ frappe.ui.form.on("Sales Order", {
 			"Sales Invoice": "Sales Invoice",
 			"Material Request": "Material Request",
 			"Purchase Order": "Purchase Order",
-			"Project": "Project",
+			Project: "Project",
 			"Payment Entry": "Payment",
 			"Work Order": "Work Order",
 		};
@@ -57,11 +57,10 @@ frappe.ui.form.on("Sales Order", {
 		frm.set_df_property("packed_items", "cannot_delete_rows", true);
 	},
 	delivery_date(frm) {
-		if (frm.doc.delivery_date) {
-			frm.doc.items.forEach((d) => {
-				frappe.model.set_value(d.doctype, d.name, "delivery_date", frm.doc.delivery_date);
-			});
-		}
+		$.each(frm.doc.items || [], function (i, d) {
+			if (!d.delivery_date) d.delivery_date = frm.doc.delivery_date;
+		});
+		refresh_field("items");
 	},
 	validate: function (frm) {
 		if (frm.is_new()) return;
@@ -72,7 +71,7 @@ frappe.ui.form.on("Sales Order", {
 		}
 
 		let message = "";
-		(frm.doc.items || []).forEach(item => {
+		(frm.doc.items || []).forEach((item) => {
 			if (erpnext.utils.item.isJewelryItem(item)) {
 				if (!item.serial_numbers) {
 					message = __("Chưa nhập serial number cho sản phẩm {0}", [item.item_name]);
@@ -87,7 +86,7 @@ frappe.ui.form.on("Sales Order", {
 		}
 
 		// Validate product_availability_status is set on all items
-		let missing_availability = (frm.doc.items || []).filter(item => {
+		let missing_availability = (frm.doc.items || []).filter((item) => {
 			if (!item.product_availability_status) {
 				if (erpnext.utils.item.isWarrantyItem(item) || erpnext.utils.item.isGiftItemByName(item)) {
 					return false;
@@ -99,9 +98,10 @@ frappe.ui.form.on("Sales Order", {
 		if (missing_availability.length) {
 			frappe.validated = false;
 
-			let item_rows_html = missing_availability.map((item, i) => {
-				let safe_name = frappe.utils.escape_html(item.item_name || item.item_code);
-				return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0;">
+			let item_rows_html = missing_availability
+				.map((item, i) => {
+					let safe_name = frappe.utils.escape_html(item.item_name || item.item_code);
+					return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0;">
 					<span style="flex:1;font-weight:600;color:#333;font-size:13px;">${i + 1}. ${safe_name}</span>
 					<div style="display:flex;gap:16px;flex-shrink:0;">
 						<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;color:#555;">
@@ -112,7 +112,8 @@ frappe.ui.form.on("Sales Order", {
 						</label>
 					</div>
 				</div>`;
-			}).join("");
+				})
+				.join("");
 
 			let d = new frappe.ui.Dialog({
 				title: __("Thiếu trạng thái tồn kho sản phẩm"),
@@ -122,13 +123,13 @@ frappe.ui.form.on("Sales Order", {
 						options: `<div style="margin-bottom:4px;">
 							<div style="color:#555;margin-bottom:8px;font-size:13px;">Vui lòng chọn <b>Trạng thái tồn kho</b> cho từng sản phẩm:</div>
 							<div>${item_rows_html}</div>
-						</div>`
-					}
+						</div>`,
+					},
 				],
 				primary_action_label: __("Áp dụng & Lưu"),
 				primary_action() {
-					let all_set = missing_availability.every((item, i) =>
-						d.$wrapper.find(`input[name="avail_${i}"]:checked`).length > 0
+					let all_set = missing_availability.every(
+						(item, i) => d.$wrapper.find(`input[name="avail_${i}"]:checked`).length > 0
 					);
 					if (!all_set) {
 						frappe.msgprint(__("Vui lòng chọn trạng thái cho tất cả sản phẩm."));
@@ -144,19 +145,21 @@ frappe.ui.form.on("Sales Order", {
 				secondary_action_label: __("Tự điền thủ công"),
 				secondary_action() {
 					d.hide();
-				}
+				},
 			});
 			d.show();
 			return;
 		}
 
-		var items_with_promos = (frm.doc.items || []).filter(item => parse_promos(item.new_promotions).length > 0);
-		var has_order_promos = (frm.doc.promotions || []).some(row => row.promotion);
+		var items_with_promos = (frm.doc.items || []).filter(
+			(item) => parse_promos(item.new_promotions).length > 0
+		);
+		var has_order_promos = (frm.doc.promotions || []).some((row) => row.promotion);
 
 		var items_missing_promos = (frm.doc.items || []).filter(function (item) {
 			if (parse_promos(item.new_promotions).length > 0) return false;
 			if (!item.price_list_rate) return false;
-			var diff = Math.abs((item.rate * item.qty) - (item.price_list_rate * item.qty));
+			var diff = Math.abs(item.rate * item.qty - item.price_list_rate * item.qty);
 			return diff > 5000;
 		});
 
@@ -169,7 +172,7 @@ frappe.ui.form.on("Sales Order", {
 					frappe.msgprint({
 						title: __("Giá không khớp với khuyến mãi"),
 						message: errors.join("<br>"),
-						indicator: "red"
+						indicator: "red",
 					});
 				} else {
 					frm._promo_validated = true;
@@ -186,10 +189,15 @@ frappe.ui.form.on("Sales Order", {
 				callback: function (r) {
 					let was_updated = false;
 					if (r.message && r.message.length > 0) {
-						r.message.forEach(data => {
+						r.message.forEach((data) => {
 							let row = frappe.get_doc("Sales Order Item", data.name);
 							if (row) {
-								frappe.model.set_value(row.doctype, row.name, "new_promotions", data.new_promotions);
+								frappe.model.set_value(
+									row.doctype,
+									row.name,
+									"new_promotions",
+									data.new_promotions
+								);
 								was_updated = true;
 							}
 						});
@@ -200,19 +208,19 @@ frappe.ui.form.on("Sales Order", {
 					} else {
 						run_price_validation();
 					}
-				}
+				},
 			});
 		} else {
 			run_price_validation();
 		}
 	},
 
-	onload_post_render: async function(frm) {
+	onload_post_render: async function (frm) {
 		if (erpnext.utils.sales_order_gallery && erpnext.utils.sales_order_gallery.render_gallery) {
 			await erpnext.utils.sales_order_gallery.render_gallery(frm);
 		}
 	},
-	attachments_update: async function(frm) {
+	attachments_update: async function (frm) {
 		if (erpnext.utils.sales_order_gallery && erpnext.utils.sales_order_gallery.render_gallery) {
 			await erpnext.utils.sales_order_gallery.render_gallery(frm);
 		}
@@ -251,39 +259,40 @@ frappe.ui.form.on("Sales Order", {
 			// Add indicator
 			if (is_original) {
 				frm.dashboard.add_indicator(
-					__('Split Order Group: {0} (Original Order)', [formatted_group]),
-					'orange'
+					__("Split Order Group: {0} (Original Order)", [formatted_group]),
+					"orange"
 				);
 			} else {
-				frm.dashboard.add_indicator(
-					__('Split Order Group: {0}', [formatted_group]),
-					'blue'
-				);
+				frm.dashboard.add_indicator(__("Split Order Group: {0}", [formatted_group]), "blue");
 			}
 
 			// Add button to view related split orders
-			frm.add_custom_button(__('View Related Split Orders'), function () {
-				frappe.route_options = {
-					"split_order_group": frm.doc.split_order_group,
-					"is_split_order": 1,
-					"cancelled_status": "Uncancelled"
-				};
-				frappe.set_route("List", "Sales Order");
-			}, __("Actions"));
+			frm.add_custom_button(
+				__("View Related Split Orders"),
+				function () {
+					frappe.route_options = {
+						split_order_group: frm.doc.split_order_group,
+						is_split_order: 1,
+						cancelled_status: "Uncancelled",
+					};
+					frappe.set_route("List", "Sales Order");
+				},
+				__("Actions")
+			);
 
 			// Load and display related split orders in the form
 			frappe.call({
-				method: 'frappe.client.get_list',
+				method: "frappe.client.get_list",
 				args: {
-					doctype: 'Sales Order',
+					doctype: "Sales Order",
 					filters: {
-						'split_order_group': frm.doc.split_order_group,
-						'is_split_order': 1,
-						'cancelled_status': 'Uncancelled'
+						split_order_group: frm.doc.split_order_group,
+						is_split_order: 1,
+						cancelled_status: "Uncancelled",
 					},
-					fields: ['name', 'order_number', 'grand_total', 'haravan_order_id'],
-					order_by: 'transaction_date asc',
-					limit_page_length: 20
+					fields: ["name", "order_number", "grand_total", "haravan_order_id"],
+					order_by: "transaction_date asc",
+					limit_page_length: 20,
 				},
 				callback: function (r) {
 					if (r.message && r.message.length > 0) {
@@ -295,7 +304,8 @@ frappe.ui.form.on("Sales Order", {
 							total_group_amount += order.grand_total || 0;
 						});
 
-						let html = '<div class="split-orders-info" style="margin-top: 10px; padding: 10px; background-color: #f0f4f7; border-radius: 5px;">';
+						let html =
+							'<div class="split-orders-info" style="margin-top: 10px; padding: 10px; background-color: #f0f4f7; border-radius: 5px;">';
 						html += `<h6 style="margin-bottom: 10px; color: #3498db; font-size: 13px;"><i class="fa fa-link"></i> All Orders in Split Group: <b>${all_orders.length}</b></h6>`;
 						html += '<ul style="margin: 0; padding-left: 20px;">';
 
@@ -303,53 +313,65 @@ frappe.ui.form.on("Sales Order", {
 							const is_original = order.haravan_order_id === frm.doc.split_order_group;
 							const is_current = order.name === frm.doc.name;
 
-							let badge = '';
+							let badge = "";
 							if (is_original) {
-								badge = '<span style="background: #95a5a6; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 5px;">ORIGINAL</span>';
+								badge =
+									'<span style="background: #95a5a6; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 5px;">ORIGINAL</span>';
 							}
 
-							const style = is_current ? 'font-weight: bold;' : '';
-							html += `<li style="${style}"><a href="/app/sales-order/${order.name}" target="_blank">${order.order_number}</a> - ${format_currency(order.grand_total, frm.doc.currency)}${badge}</li>`;
+							const style = is_current ? "font-weight: bold;" : "";
+							html += `<li style="${style}"><a href="/app/sales-order/${
+								order.name
+							}" target="_blank">${order.order_number}</a> - ${format_currency(
+								order.grand_total,
+								frm.doc.currency
+							)}${badge}</li>`;
 						});
 
-						html += '</ul>';
-						html += '<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #d1d8dd;">';
-						html += `<p style="margin: 5px 0; font-size: 13px; color: #2c3e50;"><b>Total Amount (All Split Orders): ${format_currency(total_group_amount, frm.doc.currency)}</b></p>`;
-						html += '</div>';
-						html += '</div>';
+						html += "</ul>";
+						html +=
+							'<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #d1d8dd;">';
+						html += `<p style="margin: 5px 0; font-size: 13px; color: #2c3e50;"><b>Total Amount (All Split Orders): ${format_currency(
+							total_group_amount,
+							frm.doc.currency
+						)}</b></p>`;
+						html += "</div>";
+						html += "</div>";
 
-						frm.set_df_property('split_order_group', 'description', html);
+						frm.set_df_property("split_order_group", "description", html);
 					}
-				}
+				},
 			});
 		}
 
-		frm.add_custom_button(__('View On Haravan'), function () {
+		frm.add_custom_button(__("View On Haravan"), function () {
 			const haravanUrl = `https://jemmiavn.myharavan.com/admin/orders/${frm.doc.haravan_order_id}`;
-			window.open(haravanUrl, '_blank');
+			window.open(haravanUrl, "_blank");
 		});
 
-		frm.add_custom_button(__("Send Order To Lark"), frappe.utils.debounce(() => {
-			frappe.db.get_doc("Sales Order", frm.doc.name).then((doc) => {
+		frm.add_custom_button(
+			__("Send Order To Lark"),
+			frappe.utils.debounce(() => {
+				frappe.db.get_doc("Sales Order", frm.doc.name).then((doc) => {
+					const btn = frm.custom_buttons[__("Send Order To Lark")];
+					$(btn).prop("disabled", true);
 
-				const btn = frm.custom_buttons[__("Send Order To Lark")];
-				$(btn).prop("disabled", true);
-
-				frappe.call({
-					method: "erpnext.selling.doctype.sales_order.sales_order.larksuite_notification",
-					args: { sales_order_doc: doc },
-					callback: (r) => {
-						if (r.message) frappe.msgprint(r.message);
-					},
-					always: () => {
-						$(btn).prop("disabled", false);
-					}
+					frappe.call({
+						method: "erpnext.selling.doctype.sales_order.sales_order.larksuite_notification",
+						args: { sales_order_doc: doc },
+						callback: (r) => {
+							if (r.message) frappe.msgprint(r.message);
+						},
+						always: () => {
+							$(btn).prop("disabled", false);
+						},
+					});
 				});
-			});
-		}, 2000));
+			}, 2000)
+		);
 
 		// hide sales order item grid footer (buttons)
-		$('[data-fieldname="items"] .grid-footer').addClass('hidden');
+		$('[data-fieldname="items"] .grid-footer').addClass("hidden");
 
 		// fetch customer details
 		frappe.db.get_doc("Customer", frm.doc.customer).then((doc) => {
@@ -359,17 +381,17 @@ frappe.ui.form.on("Sales Order", {
 			frm.set_value("customer_personal_id", doc.personal_id);
 			frm.set_value("customer_passport_id", doc.passport_id);
 			frm.set_value("gender", doc.gender);
-		})
+		});
 
 		// link filters for promotions
 		frm.set_query("promotions", function () {
 			return {
 				query: "erpnext.selling.doctype.promotion.promotion.promotion_query",
 				filters: {
-					"scope": "Order",
-					"transaction_date": frm.doc.transaction_date,
-					"real_order_date": frm.doc.real_order_date
-				}
+					scope: "Order",
+					transaction_date: frm.doc.transaction_date,
+					real_order_date: frm.doc.real_order_date,
+				},
 			};
 		});
 
@@ -481,16 +503,16 @@ frappe.ui.form.on("Sales Order", {
 
 		// Handle buyback button visibility and click
 		const can_add_buyback = !frm.doc.__islocal && frm.doc.docstatus === 0;
-		frm.toggle_display('buyback_items', can_add_buyback);
+		frm.toggle_display("buyback_items", can_add_buyback);
 
 		if (can_add_buyback) {
 			// For Button field, bind to the input element
-			frm.fields_dict.buyback_items.$input.off('click').on('click', function () {
-				frm.trigger('show_buyback_selector');
+			frm.fields_dict.buyback_items.$input.off("click").on("click", function () {
+				frm.trigger("show_buyback_selector");
 			});
 		}
-		frm.trigger('render_buyback_items');
-		frm.trigger('auto_fetch_item_policies');
+		frm.trigger("render_buyback_items");
+		frm.trigger("auto_fetch_item_policies");
 	},
 
 	trigger_fetch_policy: function (frm, item_name, item_code, show_alert = true) {
@@ -499,10 +521,10 @@ frappe.ui.form.on("Sales Order", {
 			args: { item_name: item_name },
 			callback: function (r) {
 				if (r.message && show_alert) {
-					let label = item_code ? __('cho {0}', [item_code]) : '';
-					frappe.show_alert(__('Đang tự động lấy thông tin chính sách {0} ...', [label]), 5);
+					let label = item_code ? __("cho {0}", [item_code]) : "";
+					frappe.show_alert(__("Đang tự động lấy thông tin chính sách {0} ...", [label]), 5);
 				}
-			}
+			},
 		});
 	},
 
@@ -510,7 +532,10 @@ frappe.ui.form.on("Sales Order", {
 		const row = locals[cdt][cdn];
 		if (!row.serial_numbers) return;
 
-		const serials = row.serial_numbers.split('\n').map(s => s.trim()).filter(s => s);
+		const serials = row.serial_numbers
+			.split("\n")
+			.map((s) => s.trim())
+			.filter((s) => s);
 		const target_serial = serials[serials.length - 1];
 
 		if (!target_serial) return;
@@ -519,35 +544,36 @@ frappe.ui.form.on("Sales Order", {
 			method: "erpnext.selling.doctype.sales_order.sales_order.get_item_promotions_by_serial",
 			args: {
 				source_order: frm.doc.name,
-				target_serial: target_serial
+				target_serial: target_serial,
 			},
 			callback: function (r) {
 				if (r.message && r.message.new_promotions) {
 					const data = r.message;
 					if (data.new_promotions && data.new_promotions !== "[]") {
-						frappe.model.set_value(cdt, cdn, 'new_promotions', data.new_promotions);
+						frappe.model.set_value(cdt, cdn, "new_promotions", data.new_promotions);
 
 						if (typeof render_promotion_pills !== "undefined") {
 							setTimeout(() => render_promotion_pills(frm, cdt, cdn), 100);
 						}
 					}
 				}
-				frm.refresh_field('items');
-			}
+				frm.refresh_field("items");
+			},
 		});
 	},
 
 	auto_fetch_item_policies: function (frm) {
 		if (frm.doc.docstatus !== 0 || frm.doc.__islocal) return;
 
-		let items_to_fetch = frm.doc.items.filter(item => {
-			let is_new = item.__islocal ||
+		let items_to_fetch = frm.doc.items.filter((item) => {
+			let is_new =
+				item.__islocal ||
 				(item.name && (item.name.startsWith("New ") || item.name.startsWith("new-")));
 			return !is_new && !item.item_policy && item.is_policy_locked !== 1;
 		});
 
 		if (items_to_fetch.length > 0) {
-			items_to_fetch.forEach(item => {
+			items_to_fetch.forEach((item) => {
 				frm.events.trigger_fetch_policy(frm, item.name, item.item_code, false);
 			});
 		}
@@ -558,66 +584,66 @@ frappe.ui.form.on("Sales Order", {
 		const phone = frm.doc.contact_mobile || frm.doc.contact_phone;
 
 		if (!phone) {
-			frappe.msgprint(__('Please set customer phone before selecting buyback items.'));
+			frappe.msgprint(__("Please set customer phone before selecting buyback items."));
 			return;
 		}
 
 		// Fetch available buyback items
 		frappe.call({
-			method: 'erpnext.selling.doctype.sales_order.sales_order.get_available_buyback_items',
+			method: "erpnext.selling.doctype.sales_order.sales_order.get_available_buyback_items",
 			args: {
-				phone: phone
+				phone: phone,
 			},
 			callback: function (r) {
 				if (r.message && r.message.length > 0) {
 					frm.events.open_buyback_dialog(frm, r.message);
 				} else {
-					frappe.msgprint(__('No available buyback items found for this customer phone.'));
+					frappe.msgprint(__("No available buyback items found for this customer phone."));
 				}
-			}
+			},
 		});
 	},
 
 	open_buyback_dialog(frm, items) {
 		let d = new frappe.ui.Dialog({
-			title: __('Select Buyback Items to Link'),
-			size: 'large',
+			title: __("Select Buyback Items to Link"),
+			size: "large",
 			fields: [
 				{
-					fieldname: 'items_html',
-					fieldtype: 'HTML'
-				}
+					fieldname: "items_html",
+					fieldtype: "HTML",
+				},
 			],
-			primary_action_label: __('Link Selected Items'),
+			primary_action_label: __("Link Selected Items"),
 			primary_action(values) {
 				const selected = [];
 				d.$wrapper.find('input[type="checkbox"]:checked').each(function () {
-					selected.push($(this).data('item-name'));
+					selected.push($(this).data("item-name"));
 				});
 
 				if (selected.length === 0) {
-					frappe.msgprint(__('Please select at least one item'));
+					frappe.msgprint(__("Please select at least one item"));
 					return;
 				}
 
 				frappe.call({
-					method: 'erpnext.selling.doctype.sales_order.sales_order.link_buyback_items',
+					method: "erpnext.selling.doctype.sales_order.sales_order.link_buyback_items",
 					args: {
 						sales_order: frm.doc.name,
-						item_names: selected
+						item_names: selected,
 					},
 					callback: function (r) {
 						if (r.message && r.message.success) {
 							frappe.show_alert({
-								message: __('Successfully linked {0} buyback item(s)', [r.message.count]),
-								indicator: 'green'
+								message: __("Successfully linked {0} buyback item(s)", [r.message.count]),
+								indicator: "green",
 							});
 							d.hide();
 							frm.reload_doc();
 						}
-					}
+					},
 				});
-			}
+			},
 		});
 
 		// Build HTML table with direct borders (simple)
@@ -630,46 +656,66 @@ frappe.ui.form.on("Sales Order", {
 								<th style="padding: 14px 16px; width: 5%; border-bottom: none; text-align: center;">
 									<!-- No Select All for single selection -->
 								</th>
-								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 20%; text-align: center;">${__("Product")}</th>
-								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__("Item Code")}</th>
-								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__("Sale Price")}</th>
-								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__("Buyback Price")}</th>
-								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__("Buyback %")}</th>
-								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__("Prev Sales Order")}</th>
+								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 20%; text-align: center;">${__(
+									"Product"
+								)}</th>
+								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__(
+									"Item Code"
+								)}</th>
+								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__(
+									"Sale Price"
+								)}</th>
+								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__(
+									"Buyback Price"
+								)}</th>
+								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__(
+									"Buyback %"
+								)}</th>
+								<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 16%; text-align: center;">${__(
+									"Prev Sales Order"
+								)}</th>
 							</tr>
 						</thead>
 						<tbody>
 		`;
 
 		// Escape text to HTML entities to be safe in JS strings and HTML
-		const escape = (str) => (str || "").toString()
-			.replace(/&/g, "&amp;")
-			.replace(/</g, "&lt;")
-			.replace(/>/g, "&gt;")
-			.replace(/"/g, "&quot;")
-			.replace(/'/g, "&#39;");
+		const escape = (str) =>
+			(str || "")
+				.toString()
+				.replace(/&/g, "&amp;")
+				.replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;")
+				.replace(/"/g, "&quot;")
+				.replace(/'/g, "&#39;");
 
 		// Normalize frappe.format output: verify no single quotes break the template
 		const safeFormat = (val, doc) => {
-			let s = frappe.format(val, { fieldtype: 'Currency', currency: doc.currency });
+			let s = frappe.format(val, { fieldtype: "Currency", currency: doc.currency });
 			// Replace single quotes in HTML attributes with double quotes to be template-safe
 			return (s || "").toString().replace(/'/g, '"');
 		};
 
 		items.forEach((item, index) => {
 			const prevOrder = item.prev_sales_order || item.order_code;
-			const rowBg = index % 2 === 0 ? '#ffffff' : '#fafbfc';
+			const rowBg = index % 2 === 0 ? "#ffffff" : "#fafbfc";
 			html += `
 				<tr style="background-color: ${rowBg}; border-bottom: 1px solid #f0f1f3; transition: background-color 0.15s ease;">
 					<td style="padding: 16px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f0f1f3;">
-						<input type="checkbox" class="buyback-item-checkbox" data-item-name="${escape(item.name)}" style="width: 16px; height: 16px; cursor: pointer;">
+						<input type="checkbox" class="buyback-item-checkbox" data-item-name="${escape(
+							item.name
+						)}" style="width: 16px; height: 16px; cursor: pointer;">
 					</td>
 					<td style="padding: 16px; vertical-align: middle; border-bottom: 1px solid #f0f1f3;">
-						<div style="font-size: 14px; color: #111827; line-height: 1.4; word-wrap: break-word;" title="${escape(item.product_name)}">${escape(item.product_name || "-")}</div>
+						<div style="font-size: 14px; color: #111827; line-height: 1.4; word-wrap: break-word;" title="${escape(
+							item.product_name
+						)}">${escape(item.product_name || "-")}</div>
 					</td>
 					<td style="padding: 16px; vertical-align: middle; border-bottom: 1px solid #f0f1f3;">
 						<div style="font-size: 12px; color: #374151; line-height: 1.6;">
-							<span style="font-family: Menlo, Monaco, Consolas, monospace; color: #111827;">${escape(item.item_code)}</span>
+							<span style="font-family: Menlo, Monaco, Consolas, monospace; color: #111827;">${escape(
+								item.item_code
+							)}</span>
 						</div>
 					</td>
 					<td style="padding: 16px; vertical-align: middle; text-align: right; border-bottom: 1px solid #f0f1f3; color: #111827;">
@@ -682,7 +728,15 @@ frappe.ui.form.on("Sales Order", {
 						${item.buyback_percentage}%
 					</td>
 					<td style="padding: 16px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f0f1f3;">
-						${prevOrder ? `<a href="/app/sales-order/${escape(prevOrder)}" target="_blank" style="text-decoration: underline;">${escape(prevOrder)}</a>` : "-"}
+						${
+							prevOrder
+								? `<a href="/app/sales-order/${escape(
+										prevOrder
+								  )}" target="_blank" style="text-decoration: underline;">${escape(
+										prevOrder
+								  )}</a>`
+								: "-"
+						}
 					</td>
 				</tr>
 			`;
@@ -698,9 +752,9 @@ frappe.ui.form.on("Sales Order", {
 		d.fields_dict.items_html.$wrapper.html(html);
 
 		// Single selection logic: uncheck others when one is checked
-		d.$wrapper.find('.buyback-item-checkbox').on('change', function () {
-			if ($(this).prop('checked')) {
-				d.$wrapper.find('.buyback-item-checkbox').not(this).prop('checked', false);
+		d.$wrapper.find(".buyback-item-checkbox").on("change", function () {
+			if ($(this).prop("checked")) {
+				d.$wrapper.find(".buyback-item-checkbox").not(this).prop("checked", false);
 			}
 		});
 
@@ -712,7 +766,7 @@ frappe.ui.form.on("Sales Order", {
 		frappe.call({
 			method: "erpnext.selling.doctype.sales_order.sales_order.get_buyback_items",
 			args: {
-				sales_order: frm.doc.name
+				sales_order: frm.doc.name,
 			},
 			callback: function (r) {
 				if (r.message && r.message.length > 0) {
@@ -722,12 +776,24 @@ frappe.ui.form.on("Sales Order", {
 								<table class="table table-bordered" style="margin-bottom: 0; border-collapse: collapse; width: 100%; min-width: 800px; table-layout: fixed;">
 									<thead>
 										<tr style="background: linear-gradient(180deg, #f8f9fb 0%, #f3f4f6 100%); border-bottom: 2px solid #e4e7eb;">
-											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 20%; text-align: center;">${__("Product")}</th>
-											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 17%; text-align: center;">${__("Item Code")}</th>
-											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; text-align: center; border-bottom: none; width: 15%;">${__("Sale Price")}</th>
-											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; text-align: center; border-bottom: none; width: 15%;">${__("Exchange Amount")}</th>
-											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; text-align: center; width: 12%;">${__("Buyback %")}</th>
-											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; text-align: center; border-bottom: none; width: 16%;">${__("Prev Sales Order")}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 20%; text-align: center;">${__(
+												"Product"
+											)}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; width: 17%; text-align: center;">${__(
+												"Item Code"
+											)}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; text-align: center; border-bottom: none; width: 15%;">${__(
+												"Sale Price"
+											)}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; text-align: center; border-bottom: none; width: 15%;">${__(
+												"Exchange Amount"
+											)}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; border-bottom: none; text-align: center; width: 12%;">${__(
+												"Buyback %"
+											)}</th>
+											<th style="padding: 14px 16px; font-weight: 600; font-size: 12px; color: #4b5563; letter-spacing: 0.5px; text-align: center; border-bottom: none; width: 16%;">${__(
+												"Prev Sales Order"
+											)}</th>
 											<th style="padding: 14px 16px; width: 9%; border-bottom: none; text-align: center;">${__("Actions")}</th>
 										</tr>
 									</thead>
@@ -735,30 +801,36 @@ frappe.ui.form.on("Sales Order", {
 					`;
 
 					// Escape text to HTML entities
-					const escape = (str) => (str || "").toString()
-						.replace(/&/g, "&amp;")
-						.replace(/</g, "&lt;")
-						.replace(/>/g, "&gt;")
-						.replace(/"/g, "&quot;")
-						.replace(/'/g, "&#39;");
+					const escape = (str) =>
+						(str || "")
+							.toString()
+							.replace(/&/g, "&amp;")
+							.replace(/</g, "&lt;")
+							.replace(/>/g, "&gt;")
+							.replace(/"/g, "&quot;")
+							.replace(/'/g, "&#39;");
 
 					// Normalize frappe.format output
 					const safeFormat = (val, doc) => {
-						let s = frappe.format(val, { fieldtype: 'Currency', currency: doc.currency });
+						let s = frappe.format(val, { fieldtype: "Currency", currency: doc.currency });
 						return (s || "").toString().replace(/'/g, '"');
 					};
 
 					r.message.forEach((item, index) => {
 						const prevOrder = item.prev_sales_order || item.order_code;
-						const rowBg = index % 2 === 0 ? '#ffffff' : '#fafbfc';
+						const rowBg = index % 2 === 0 ? "#ffffff" : "#fafbfc";
 						html += `
 							<tr style="background-color: ${rowBg}; border-bottom: 1px solid #f0f1f3; transition: background-color 0.15s ease;">
 								<td style="padding: 16px; vertical-align: middle; border-bottom: 1px solid #f0f1f3;">
-									<div style="font-size: 14px; color: #111827; margin-bottom: 4px; line-height: 1.4; word-wrap: break-word;" title="${escape(item.product_name)}">${escape(item.product_name || "-")}</div>
+									<div style="font-size: 14px; color: #111827; margin-bottom: 4px; line-height: 1.4; word-wrap: break-word;" title="${escape(
+										item.product_name
+									)}">${escape(item.product_name || "-")}</div>
 								</td>
 								<td style="padding: 16px; vertical-align: middle; border-bottom: 1px solid #f0f1f3;">
 									<div style="font-size: 12px; color: #374151; line-height: 1.6;">
-										<span style="font-family: Menlo, Monaco, Consolas, monospace; color: #111827;">${escape(item.item_code)}</span>
+										<span style="font-family: Menlo, Monaco, Consolas, monospace; color: #111827;">${escape(
+											item.item_code
+										)}</span>
 									</div>
 								</td>
 								<td style="padding: 16px; vertical-align: middle; text-align: right; border-bottom: 1px solid #f0f1f3; color: #111827;">
@@ -771,14 +843,26 @@ frappe.ui.form.on("Sales Order", {
 									${item.buyback_percentage}%
 								</td>
 								<td style="padding: 16px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f0f1f3;">
-									${prevOrder ? `<a href="/app/sales-order/${escape(prevOrder)}" target="_blank" style="text-decoration: underline;">${escape(prevOrder)}</a>` : "-"}
+									${
+										prevOrder
+											? `<a href="/app/sales-order/${escape(
+													prevOrder
+											  )}" target="_blank" style="text-decoration: underline;">${escape(
+													prevOrder
+											  )}</a>`
+											: "-"
+									}
 								</td>
 								<td style="padding: 16px; vertical-align: middle; text-align: center; border-bottom: 1px solid #f0f1f3;">
 									<div style="display: flex; justify-content: center; gap: 8px;">
-										<a href="/app/buyback-exchange/${escape(item.parent)}" class="btn btn-sm" title="${__('View Exchange')}" target="_blank" style="padding: 6px 10px; background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; color: #374151; transition: all 0.15s ease;">
+										<a href="/app/buyback-exchange/${escape(item.parent)}" class="btn btn-sm" title="${__(
+							"View Exchange"
+						)}" target="_blank" style="padding: 6px 10px; background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; color: #374151; transition: all 0.15s ease;">
 											<i class="fa fa-external-link" style="font-size: 12px;"></i>
 										</a>
-										<button class="btn btn-sm btn-unlink-buyback" data-item-name="${escape(item.name)}" title="${__('Unlink Item')}" style="padding: 6px 10px; background-color: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; color: #dc2626; transition: all 0.15s ease;">
+										<button class="btn btn-sm btn-unlink-buyback" data-item-name="${escape(item.name)}" title="${__(
+							"Unlink Item"
+						)}" style="padding: 6px 10px; background-color: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; color: #dc2626; transition: all 0.15s ease;">
 											<i class="fa fa-times" style="font-size: 12px;"></i>
 										</button>
 									</div>
@@ -800,30 +884,36 @@ frappe.ui.form.on("Sales Order", {
 
 					// Add click handlers for unlink buttons
 					setTimeout(() => {
-						if (frm.fields_dict.buyback_items_html && frm.fields_dict.buyback_items_html.$wrapper) {
-							frm.fields_dict.buyback_items_html.$wrapper.find('.btn-unlink-buyback').off('click').on('click', function (e) {
-								e.preventDefault();
-								const item_name = $(this).data('item-name');
+						if (
+							frm.fields_dict.buyback_items_html &&
+							frm.fields_dict.buyback_items_html.$wrapper
+						) {
+							frm.fields_dict.buyback_items_html.$wrapper
+								.find(".btn-unlink-buyback")
+								.off("click")
+								.on("click", function (e) {
+									e.preventDefault();
+									const item_name = $(this).data("item-name");
 
-								frappe.confirm(
-									__('Are you sure you want to unlink this buyback item?'),
-									() => {
-										frappe.call({
-											method: 'erpnext.selling.doctype.sales_order.sales_order.unlink_buyback_item',
-											args: { item_name: item_name },
-											callback: function (r) {
-												if (r.message && r.message.success) {
-													frappe.show_alert({
-														message: __('Buyback item unlinked successfully'),
-														indicator: 'green'
-													});
-													frm.reload_doc();
-												}
-											}
-										});
-									}
-								);
-							});
+									frappe.confirm(
+										__("Are you sure you want to unlink this buyback item?"),
+										() => {
+											frappe.call({
+												method: "erpnext.selling.doctype.sales_order.sales_order.unlink_buyback_item",
+												args: { item_name: item_name },
+												callback: function (r) {
+													if (r.message && r.message.success) {
+														frappe.show_alert({
+															message: __("Buyback item unlinked successfully"),
+															indicator: "green",
+														});
+														frm.reload_doc();
+													}
+												},
+											});
+										}
+									);
+								});
 						}
 					}, 100);
 				} else {
@@ -833,7 +923,7 @@ frappe.ui.form.on("Sales Order", {
 
 				// Always show the Buyback section
 				frm.set_df_property("buyback_section_break", "hidden", 0);
-			}
+			},
 		});
 	},
 
@@ -928,13 +1018,6 @@ frappe.ui.form.on("Sales Order", {
 				frm.set_value("birth_date", "");
 			}
 		}
-	},
-
-	delivery_date: function (frm) {
-		$.each(frm.doc.items || [], function (i, d) {
-			if (!d.delivery_date) d.delivery_date = frm.doc.delivery_date;
-		});
-		refresh_field("items");
 	},
 
 	create_stock_reservation_entries(frm) {
@@ -1619,9 +1702,9 @@ frappe.ui.form.on("Sales Order Item", {
 				frappe.msgprint({
 					title: __("Không hỗ trợ Serial"),
 					indicator: "orange",
-					message: __("Chỉ sản phẩm Trang sức mới sử dụng số Serial.")
+					message: __("Chỉ sản phẩm Trang sức mới sử dụng số Serial."),
 				});
-				frappe.model.set_value(cdt, cdn, 'serial', null);
+				frappe.model.set_value(cdt, cdn, "serial", null);
 				return;
 			}
 
@@ -1630,39 +1713,52 @@ frappe.ui.form.on("Sales Order Item", {
 				method: "erpnext.selling.doctype.sales_order.sales_order.validate_serial_number",
 				args: {
 					serial_number: val,
-					sales_order_name: frm.doc.name
+					sales_order_name: frm.doc.name,
 				},
 				callback: function (r) {
 					if (r.message && !r.message.allowed) {
 						frappe.msgprint({
 							title: __("Trùng số Serial"),
 							indicator: "red",
-							message: __("Số Serial <b>{0}</b> đã được điền trong Đơn hàng <b>{1}</b>.", [val, r.message.duplicate_order])
+							message: __("Số Serial <b>{0}</b> đã được điền trong Đơn hàng <b>{1}</b>.", [
+								val,
+								r.message.duplicate_order,
+							]),
 						});
-						frappe.model.set_value(cdt, cdn, 'serial', null);
+						frappe.model.set_value(cdt, cdn, "serial", null);
 						return;
 					}
 
-					const current_serials = row.serial_numbers ? row.serial_numbers.split('\n') : [];
+					const current_serials = row.serial_numbers ? row.serial_numbers.split("\n") : [];
 					if (!current_serials.includes(val)) {
 						const new_list = row.serial_numbers ? `${row.serial_numbers}\n${val}` : val;
-						frappe.model.set_value(cdt, cdn, 'serial_numbers', new_list.replace(/\n+/g, '\n').trim());
+						frappe.model.set_value(
+							cdt,
+							cdn,
+							"serial_numbers",
+							new_list.replace(/\n+/g, "\n").trim()
+						);
 					}
 
-					frappe.model.set_value(cdt, cdn, 'serial', null);
+					frappe.model.set_value(cdt, cdn, "serial", null);
 
-					if ((frm.doc.haravan_ref_order_id || frm.doc.split_order_group) && (!row.new_promotions || row.new_promotions == "[]")) {
+					if (
+						(frm.doc.haravan_ref_order_id || frm.doc.split_order_group) &&
+						(!row.new_promotions || row.new_promotions == "[]")
+					) {
 						frm.events.sync_reference_promotion_by_serial(frm, cdt, cdn);
 					}
 
-					frappe.db.get_value('Serial', val, 'serial_number').then((r) => {
+					frappe.db.get_value("Serial", val, "serial_number").then((r) => {
 						if (r && r.message && r.message.serial_number && r.message.serial_number !== val) {
 							const official = r.message.serial_number;
-							const updated = row.serial_numbers.split('\n').map(s => s === val ? official : s);
-							frappe.model.set_value(cdt, cdn, 'serial_numbers', updated.join('\n'));
+							const updated = row.serial_numbers
+								.split("\n")
+								.map((s) => (s === val ? official : s));
+							frappe.model.set_value(cdt, cdn, "serial_numbers", updated.join("\n"));
 						}
 					});
-				}
+				},
 			});
 		}
 	},
@@ -1670,20 +1766,28 @@ frappe.ui.form.on("Sales Order Item", {
 	promotion: function (frm, cdt, cdn) {
 		var row = locals[cdt][cdn];
 		if (row.promotion) {
-			var selected_promotions = [row.promotion_1, row.promotion_2, row.promotion_3, row.promotion_4, row.promotion_5];
+			var selected_promotions = [
+				row.promotion_1,
+				row.promotion_2,
+				row.promotion_3,
+				row.promotion_4,
+				row.promotion_5,
+			];
 			var is_earring = false;
 
 			const type = row.type ? decode_unicode(row.type) : "";
 			const title = row.variant_title ? decode_unicode(row.variant_title) : "";
 
-			if (type.includes("Bông Tai") || (type.toLowerCase() === "virtual" && title.includes("Bông Tai"))) {
+			if (
+				type.includes("Bông Tai") ||
+				(type.toLowerCase() === "virtual" && title.includes("Bông Tai"))
+			) {
 				is_earring = true;
 			}
 
-			var promotion_count = selected_promotions.filter(p => p === row.promotion).length;
+			var promotion_count = selected_promotions.filter((p) => p === row.promotion).length;
 
 			if (!selected_promotions.includes(row.promotion) || (is_earring && promotion_count < 2)) {
-
 				if (!row.promotion_1) {
 					row.promotion_1 = row.promotion;
 				} else if (!row.promotion_2) {
@@ -1697,9 +1801,9 @@ frappe.ui.form.on("Sales Order Item", {
 				}
 			}
 			row.promotion = null;
-			frm.refresh_field('items');
+			frm.refresh_field("items");
 		}
-	}
+	},
 });
 
 erpnext.selling.SalesOrderController = class SalesOrderController extends erpnext.selling.SellingController {
@@ -2202,10 +2306,10 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 							frappe.msgprint(
 								__("Material Request {0} submitted.", [
 									'<a href="/app/material-request/' +
-									r.message.name +
-									'">' +
-									r.message.name +
-									"</a>",
+										r.message.name +
+										'">' +
+										r.message.name +
+										"</a>",
 								])
 							);
 						}
@@ -2242,8 +2346,8 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 						</div>
 					</div>
 					${delivery_dates
-					.map(
-						(date) => `
+						.map(
+							(date) => `
 						<div class="list-item">
 							<div class="list-item__content list-item__content--flex-2">
 								<label>
@@ -2257,8 +2361,8 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 							</div>
 						</div>
 					`
-					)
-					.join("")}
+						)
+						.join("")}
 				</div>
 			`);
 
@@ -2573,7 +2677,7 @@ frappe.ui.form.on("Sales Team", {
 	},
 	denominator: function (frm, cdt, cdn) {
 		calculate_allocated_percentage(frm, cdt, cdn);
-	}
+	},
 });
 
 // Order and Debt Tracking event handlers
@@ -2590,10 +2694,14 @@ frappe.ui.form.on("Order and Debt Tracking", {
 		let default_options = [
 			"Khách đã chốt ngày đến nhận tại cửa hàng",
 			"Sale sẽ giao tận nơi cho khách",
-			"Gửi đơn vị vận chuyển (COD) về địa chỉ khách"
+			"Gửi đơn vị vận chuyển (COD) về địa chỉ khách",
 		];
-		frm.fields_dict['debt_history'].grid.update_docfield_property('status_reason', 'options', default_options.join('\n'));
-	}
+		frm.fields_dict["debt_history"].grid.update_docfield_property(
+			"status_reason",
+			"options",
+			default_options.join("\n")
+		);
+	},
 });
 
 function set_reason_options(frm, cdt, cdn) {
@@ -2603,36 +2711,40 @@ function set_reason_options(frm, cdt, cdn) {
 		"Đủ hàng – khách sẽ nhận tuần tới": [
 			"Khách đã chốt ngày đến nhận tại cửa hàng",
 			"Sale sẽ giao tận nơi cho khách",
-			"Gửi đơn vị vận chuyển (COD) về địa chỉ khách"
+			"Gửi đơn vị vận chuyển (COD) về địa chỉ khách",
 		],
 		"Đủ hàng – khách chưa chốt ngày nhận": [
 			"Khách chưa hẹn ngày nhận cụ thể, sale đang care thêm",
 			"Khách bận (công tác, nước ngoài, du lịch...)",
 			"Khách chưa đủ tiền / đang gom tiền",
-			"Đơn quá hạn công nợ, đã làm đề xuất gia hạn"
+			"Đơn quá hạn công nợ, đã làm đề xuất gia hạn",
 		],
 		"Chưa đủ hàng": [
 			"Đang gia công",
 			"Đợi quà tặng",
 			"Khách chờ nhận cùng các đơn khác",
-			"Hàng lỗi, đang bảo hành tại xưởng"
+			"Hàng lỗi, đang bảo hành tại xưởng",
 		],
 		"Đã giao – chưa thu đủ tiền": [
 			"Đã giao hàng nhưng chưa thanh toán đủ (quản lý đã duyệt)",
 			"Chờ đơn vị vận chuyển trả tiền COD",
 			"Chờ hoàn tất thủ tục thu đổi",
-			"Đã cà thẻ – Chờ tiền về tài khoản"
-		]
+			"Đã cà thẻ – Chờ tiền về tài khoản",
+		],
 	};
 
 	let options = valid_reasons[row.progress_status] || [""];
 
-	if (frm.fields_dict['debt_history'] && frm.fields_dict['debt_history'].grid) {
-		frm.fields_dict['debt_history'].grid.update_docfield_property('status_reason', 'options', options.join('\n'));
+	if (frm.fields_dict["debt_history"] && frm.fields_dict["debt_history"].grid) {
+		frm.fields_dict["debt_history"].grid.update_docfield_property(
+			"status_reason",
+			"options",
+			options.join("\n")
+		);
 	}
 
 	if (!options.includes(row.status_reason)) {
-		frappe.model.set_value(cdt, cdn, 'status_reason', options[0]);
+		frappe.model.set_value(cdt, cdn, "status_reason", options[0]);
 	}
 }
 
@@ -2648,8 +2760,8 @@ function calculate_allocated_percentage(frm, cdt, cdn) {
 
 // Helper to decode unicode escape sequences (e.g. B\u00f4ng Tai -> Bông Tai)
 function decode_unicode(str) {
-	return str.replace(/\\u[\dA-F]{4}/gi,
-		(match) => String.fromCharCode(parseInt(match.replace(/\\u/g, ''), 16))
+	return str.replace(/\\u[\dA-F]{4}/gi, (match) =>
+		String.fromCharCode(parseInt(match.replace(/\\u/g, ""), 16))
 	);
 }
 
@@ -2706,20 +2818,25 @@ function apply_promo_discount(price, p, scope) {
 
 function fetch_promo_map(names) {
 	return new Promise(function (resolve) {
-		if (!names || !names.length) { resolve({}); return; }
+		if (!names || !names.length) {
+			resolve({});
+			return;
+		}
 		frappe.call({
 			method: "frappe.client.get_list",
 			args: {
 				doctype: "Promotion",
 				filters: { name: ["in", names] },
 				fields: ["name", "title", "priority", "discount_type", "discount_amount", "discount_percent"],
-				limit_page_length: 0
+				limit_page_length: 0,
 			},
 			callback: function (r) {
 				var map = {};
-				(r.message || []).forEach(function (p) { map[p.name] = p; });
+				(r.message || []).forEach(function (p) {
+					map[p.name] = p;
+				});
 				resolve(map);
-			}
+			},
 		});
 	});
 }
@@ -2733,7 +2850,11 @@ function validate_promotion_prices(frm, items, items_missing_promos) {
 		});
 	});
 
-	var order_promo_names = (frm.doc.promotions || []).map(function (row) { return row.promotion; }).filter(Boolean);
+	var order_promo_names = (frm.doc.promotions || [])
+		.map(function (row) {
+			return row.promotion;
+		})
+		.filter(Boolean);
 	order_promo_names.forEach(function (p) {
 		if (!all_promo_names.includes(p)) all_promo_names.push(p);
 	});
@@ -2742,16 +2863,21 @@ function validate_promotion_prices(frm, items, items_missing_promos) {
 		var errors = [];
 
 		(items_missing_promos || []).forEach(function (item) {
-			var diff = Math.abs((item.rate * item.qty) - (item.price_list_rate * item.qty));
-			errors.push(__("Sản phẩm {0}: giá {1} lệch {2} so với giá niêm yết {3} nhưng chưa chọn khuyến mãi", [
-				item.item_name,
-				format_currency(item.rate, frm.doc.currency),
-				format_currency(diff, frm.doc.currency),
-				format_currency(item.price_list_rate, frm.doc.currency)
-			]));
+			var diff = Math.abs(item.rate * item.qty - item.price_list_rate * item.qty);
+			errors.push(
+				__("Sản phẩm {0}: giá {1} lệch {2} so với giá niêm yết {3} nhưng chưa chọn khuyến mãi", [
+					item.item_name,
+					format_currency(item.rate, frm.doc.currency),
+					format_currency(diff, frm.doc.currency),
+					format_currency(item.price_list_rate, frm.doc.currency),
+				])
+			);
 		});
 
-		if (!all_promo_names.length) { resolve(errors); return; }
+		if (!all_promo_names.length) {
+			resolve(errors);
+			return;
+		}
 
 		fetch_promo_map(all_promo_names).then(function (promo_map) {
 			items.forEach(function (item) {
@@ -2759,37 +2885,49 @@ function validate_promotion_prices(frm, items, items_missing_promos) {
 				if (!promos.length) return;
 
 				var expected = item.price_list_rate || 0;
-				var promo_objects = promos.map(function (name) { return promo_map[name]; }).filter(Boolean);
+				var promo_objects = promos
+					.map(function (name) {
+						return promo_map[name];
+					})
+					.filter(Boolean);
 				promo_objects.forEach(function (p) {
 					expected = apply_promo_discount(expected, p, "Line Item");
 				});
 
-				var diff = Math.abs((item.rate * item.qty) - (expected * item.qty));
+				var diff = Math.abs(item.rate * item.qty - expected * item.qty);
 				if (diff > 5000) {
-					errors.push(__("Sản phẩm {0}: giá thực tế {1} lệch {2} so với giá sau khuyến mãi {3}", [
-						item.item_name,
-						format_currency(item.rate, frm.doc.currency),
-						format_currency(diff, frm.doc.currency),
-						format_currency(expected, frm.doc.currency)
-					]));
+					errors.push(
+						__("Sản phẩm {0}: giá thực tế {1} lệch {2} so với giá sau khuyến mãi {3}", [
+							item.item_name,
+							format_currency(item.rate, frm.doc.currency),
+							format_currency(diff, frm.doc.currency),
+							format_currency(expected, frm.doc.currency),
+						])
+					);
 				}
 			});
 
 			var base_total = (frm.doc.items || []).reduce(function (sum, item) {
-				return sum + (item.rate * item.qty);
+				return sum + item.rate * item.qty;
 			}, 0);
 			var expected_total = base_total;
-			var order_promo_objects = order_promo_names.map(function (name) { return promo_map[name]; }).filter(Boolean);
+			var order_promo_objects = order_promo_names
+				.map(function (name) {
+					return promo_map[name];
+				})
+				.filter(Boolean);
 			order_promo_objects.forEach(function (p) {
 				expected_total = apply_promo_discount(expected_total, p, "Order");
 			});
 			var order_diff = Math.abs(frm.doc.grand_total - expected_total);
 			if (order_diff > 5000) {
-				errors.push(__("Tổng đơn hàng: giá thực tế {0} lệch {1} so với giá sau khuyến mãi {2}", [
-					format_currency(frm.doc.grand_total, frm.doc.currency),
-					format_currency(order_diff, frm.doc.currency),
-					format_currency(expected_total, frm.doc.currency)
-				]));
+				errors.push(
+					__("Tổng đơn hàng: giá thực tế {0} lệch {1} so với giá sau khuyến mãi {2}", [
+						format_currency(frm.doc.grand_total, frm.doc.currency),
+						format_currency(order_diff, frm.doc.currency),
+						format_currency(expected_total, frm.doc.currency),
+					])
+				);
 			}
 
 			resolve(errors);
@@ -2797,10 +2935,14 @@ function validate_promotion_prices(frm, items, items_missing_promos) {
 	});
 }
 function parse_promos(val) {
-	try { return JSON.parse(val) || []; } catch (e) { return []; }
+	try {
+		return JSON.parse(val) || [];
+	} catch (e) {
+		return [];
+	}
 }
 
-frappe.ui.form.on('Sales Order Item', {
+frappe.ui.form.on("Sales Order Item", {
 	select_promotions: function (frm, cdt, cdn) {
 		var dialog = new frappe.ui.form.MultiSelectDialog({
 			doctype: "Promotion",
@@ -2817,8 +2959,8 @@ frappe.ui.form.on('Sales Order Item', {
 						transaction_date: frm.doc.transaction_date,
 						real_order_date: frm.doc.real_order_date,
 						scope: "Line Item",
-						as_dict: 1
-					}
+						as_dict: 1,
+					},
 				};
 			},
 			action(selections) {
@@ -2834,11 +2976,13 @@ frappe.ui.form.on('Sales Order Item', {
 				if (grid_row) {
 					grid_row.toggle_view(true);
 					if (grid_row.grid_form && grid_row.grid_form.fields_dict.select_promotions) {
-						$(grid_row.grid_form.fields_dict.select_promotions.wrapper).find(".promo-validation-warning").remove();
+						$(grid_row.grid_form.fields_dict.select_promotions.wrapper)
+							.find(".promo-validation-warning")
+							.remove();
 					}
 					render_promotion_pills(frm, cdt, cdn);
 				}
-			}
+			},
 		});
 
 		setTimeout(() => {
@@ -2860,16 +3004,25 @@ frappe.ui.form.on('Sales Order Item', {
 	form_render: function (frm, cdt, cdn) {
 		render_promotion_pills(frm, cdt, cdn);
 		var grid_row = frm.fields_dict.items.grid.grid_rows_by_docname[cdn];
+		if (grid_row && grid_row.grid_form) {
+			$(grid_row.grid_form.wrapper)
+				.find(
+					".grid-insert-row-below, .grid-insert-row, .grid-duplicate-row, .grid-move-row, .grid-append-row"
+				)
+				.addClass("hidden");
+		}
 		if (grid_row && grid_row.grid_form && grid_row.grid_form.fields_dict.fetch_policy) {
 			var $wrapper = $(grid_row.grid_form.fields_dict.fetch_policy.wrapper);
-			if (!$wrapper.prev('.promo-guidance').length) {
-				$('<div class="promo-guidance" style="margin-bottom:20px;font-size:12px;color:#666;">' +
-					'<b>Lưu ý:</b><br>' +
-					'Mỗi CTKM chỉ áp dụng cho sản phẩm đơn chiếc nên cần lưu ý trong trường hợp sản phẩm là <b>Bông Tai</b>:<br>' +
-					'- <b>Đối với Sản phẩm tạm:</b> Chọn 02 mã CTKM (tương ứng cho 02 chiếc đơn lẻ cấu thành một cặp). (ví dụ: với SPT giảm 2tr, chọn 2 voucher giảm 1tr)<br>' +
-					'- <b>Đối với Sản phẩm tồn kho:</b> Chỉ chọn duy nhất 01 CTKM. (ví dụ, với Bông Tai giảm 1tr, chỉ chọn 1 voucher giảm 500.000)<br><br>' +
-					'Nếu không tìm thấy, liên hệ Marketing để được hỗ trợ' +
-					'</div>').insertBefore($wrapper);
+			if (!$wrapper.prev(".promo-guidance").length) {
+				$(
+					'<div class="promo-guidance" style="margin-bottom:20px;font-size:12px;color:#666;">' +
+						"<b>Lưu ý:</b><br>" +
+						"Mỗi CTKM chỉ áp dụng cho sản phẩm đơn chiếc nên cần lưu ý trong trường hợp sản phẩm là <b>Bông Tai</b>:<br>" +
+						"- <b>Đối với Sản phẩm tạm:</b> Chọn 02 mã CTKM (tương ứng cho 02 chiếc đơn lẻ cấu thành một cặp). (ví dụ: với SPT giảm 2tr, chọn 2 voucher giảm 1tr)<br>" +
+						"- <b>Đối với Sản phẩm tồn kho:</b> Chỉ chọn duy nhất 01 CTKM. (ví dụ, với Bông Tai giảm 1tr, chỉ chọn 1 voucher giảm 500.000)<br><br>" +
+						"Nếu không tìm thấy, liên hệ Marketing để được hỗ trợ" +
+						"</div>"
+				).insertBefore($wrapper);
 			}
 		}
 	},
@@ -2881,7 +3034,7 @@ frappe.ui.form.on('Sales Order Item', {
 	},
 	qty: function (frm, cdt, cdn) {
 		render_promotion_pills(frm, cdt, cdn);
-	}
+	},
 });
 
 function render_promotion_pills(frm, cdt, cdn) {
@@ -2895,22 +3048,32 @@ function render_promotion_pills(frm, cdt, cdn) {
 
 	var initial_price = locals[cdt][cdn].price_list_rate || 0;
 
-	var $pills = $('<div class="promotion-pills" style="display:flex;flex-direction:column;gap:10px;margin-top:6px;"></div>');
+	var $pills = $(
+		'<div class="promotion-pills" style="display:flex;flex-direction:column;gap:10px;margin-top:6px;"></div>'
+	);
 	promos.forEach((promo, idx) => {
-		$pills.append($(`<div class="promo-pill" draggable="true" data-promo="${frappe.utils.escape_html(promo)}" data-idx="${idx}" style="background:#f5f5f5;color:#333;padding:8px 14px;border-radius:8px;font-size:13px;display:flex;align-items:center;justify-content:space-between;border:1px solid #d9d9d9;cursor:grab;">
+		$pills.append(
+			$(`<div class="promo-pill" draggable="true" data-promo="${frappe.utils.escape_html(
+				promo
+			)}" data-idx="${idx}" style="background:#f5f5f5;color:#333;padding:8px 14px;border-radius:8px;font-size:13px;display:flex;align-items:center;justify-content:space-between;border:1px solid #d9d9d9;cursor:grab;">
 			<div style="display:flex;flex-direction:column;">
 				<span class="promo-label" style="font-weight:600;">${frappe.utils.escape_html(promo)}</span>
 				<span class="promo-price" style="font-size:12px;color:#1976d2;margin-top:2px;">...</span>
 			</div>
 			<span class="remove-promo" data-idx="${idx}" style="cursor:pointer;font-size:16px;font-weight:bold;color:#999;margin-left:10px;">&times;</span>
-		</div>`));
+		</div>`)
+		);
 	});
 	$field.append($pills);
 
 	fetch_promo_map(promos).then(function (promo_map) {
 		var current_price = initial_price;
 
-		var promo_objects = promos.map(function (name) { return promo_map[name]; }).filter(Boolean);
+		var promo_objects = promos
+			.map(function (name) {
+				return promo_map[name];
+			})
+			.filter(Boolean);
 
 		promo_objects.forEach(function (p) {
 			current_price = apply_promo_discount(current_price, p, "Line Item");
@@ -2922,19 +3085,39 @@ function render_promotion_pills(frm, cdt, cdn) {
 			var p = promo_map[name];
 			if (p) {
 				running_price = apply_promo_discount(running_price, p, "Line Item");
-				$(this).find(".promo-label").text(p.title || p.name);
-				$(this).find(".promo-price").text("Sau khuyến mãi: " + format_currency(running_price, frm.doc.currency).replace(/,00$/, ""));
+				$(this)
+					.find(".promo-label")
+					.text(p.title || p.name);
+				$(this)
+					.find(".promo-price")
+					.text(
+						"Sau khuyến mãi: " +
+							format_currency(running_price, frm.doc.currency).replace(/,00$/, "")
+					);
 			} else {
 				$(this).find(".promo-price").text("Không tìm thấy trợ giá");
 			}
 		});
 
 		$field.find(".promo-validation-warning").remove();
-		var diff = Math.abs((locals[cdt][cdn].rate * locals[cdt][cdn].qty) - (current_price * locals[cdt][cdn].qty));
+		var diff = Math.abs(
+			locals[cdt][cdn].rate * locals[cdt][cdn].qty - current_price * locals[cdt][cdn].qty
+		);
 		if (current_price >= 0 && diff > 5000) {
-			$field.append($(`<div class="promo-validation-warning" style="color:#d32f2f;font-size:12px;margin-top:5px;padding:6px 10px;background:#fdeaea;border-radius:4px;border:1px solid #f5c6c6;"><i class="fa fa-exclamation-triangle"></i> Gi\u00e1 b\u1ecb l\u1ec7ch ${format_currency(diff, frm.doc.currency).replace(/,00$/, "")} so v\u1edbi th\u1ef1c t\u1ebf</div>`));
+			$field.append(
+				$(
+					`<div class="promo-validation-warning" style="color:#d32f2f;font-size:12px;margin-top:5px;padding:6px 10px;background:#fdeaea;border-radius:4px;border:1px solid #f5c6c6;"><i class="fa fa-exclamation-triangle"></i> Gi\u00e1 b\u1ecb l\u1ec7ch ${format_currency(
+						diff,
+						frm.doc.currency
+					).replace(/,00$/, "")} so v\u1edbi th\u1ef1c t\u1ebf</div>`
+				)
+			);
 		} else if (current_price >= 0) {
-			$field.append($(`<div class="promo-validation-warning" style="color:#2e7d32;font-size:12px;margin-top:5px;padding:6px 10px;background:#e8f5e9;border-radius:4px;border:1px solid #c8e6c9;"><i class="fa fa-check-circle"></i> Gi\u00e1 kh\u1edbp v\u1edbi gi\u00e1 th\u1ef1c t\u1ebf</div>`));
+			$field.append(
+				$(
+					`<div class="promo-validation-warning" style="color:#2e7d32;font-size:12px;margin-top:5px;padding:6px 10px;background:#e8f5e9;border-radius:4px;border:1px solid #c8e6c9;"><i class="fa fa-check-circle"></i> Gi\u00e1 kh\u1edbp v\u1edbi gi\u00e1 th\u1ef1c t\u1ebf</div>`
+				)
+			);
 		}
 	});
 
