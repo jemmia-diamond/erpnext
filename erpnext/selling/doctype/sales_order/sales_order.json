@@ -1389,7 +1389,6 @@
   {
    "fieldname": "delivery_status",
    "fieldtype": "Select",
-   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Delivery Status",
@@ -2105,7 +2104,7 @@
   {
    "fieldname": "details",
    "fieldtype": "Tab Break",
-   "label": "Th\u00f4ng tin \u0111\u01a1n h\u00e0ng"
+   "label": "Thông tin đơn hàng"
   },
   {
    "fieldname": "contact_info_heading",
@@ -2226,7 +2225,7 @@
    "fieldname": "delivery_location",
    "fieldtype": "Select",
    "label": "Delivery location ",
-   "options": "\n209, \u0110 30 th\u00e1ng 4, Xu\u00e2n Kh\u00e1nh, Ninh Ki\u1ec1u, C\u1ea7n Th\u01a1\n63 Kim M\u00e3, Qu\u1eadn Ba \u0110\u00ecnh, H\u00e0 N\u1ed9i\n72 Nguy\u1ec5n C\u01b0 Trinh, Qu\u1eadn 1, Th\u00e0nh Ph\u1ed1 H\u1ed3 Ch\u00ed Minh\nGiao v\u1ec1 \u0111\u1ecba ch\u1ec9 kh\u00e1ch"
+   "options": "\n209, Đ 30 tháng 4, Xuân Khánh, Ninh Kiều, Cần Thơ\n63 Kim Mã, Quận Ba Đình, Hà Nội\n72 Nguyễn Cư Trinh, Quận 1, Thành Phố Hồ Chí Minh\nGiao về địa chỉ khách"
   },
   {
    "fieldname": "consultation_date",
@@ -2289,7 +2288,7 @@
    "fieldname": "billing_address",
    "fieldtype": "Select",
    "label": "Billing Address",
-   "options": "\n72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh\n63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i\n209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1"
+   "options": "\n72 Nguyễn Cư Trinh, Phường Bến Thành, TP Hồ Chí Minh\n63 Kim Mã, Phường Giảng Võ, TP Hà Nội\n209 Đường 30 Tháng 4, Phường Ninh Kiều, TP Cần Thơ"
   },
   {
    "fieldname": "column_break_ybsp",
@@ -2373,7 +2372,7 @@
   {
    "fieldname": "section_break_order_status",
    "fieldtype": "Section Break",
-   "label": "Tr\u1ea1ng th\u00e1i \u0111\u01a1n h\u00e0ng"
+   "label": "Trạng thái đơn hàng"
   },
   {
    "fieldname": "column_break_status2",
@@ -2386,7 +2385,7 @@
   {
    "fieldname": "section_break_ref_orders",
    "fieldtype": "Section Break",
-   "label": "\u0110\u01a1n h\u00e0ng tham chi\u1ebfu"
+   "label": "Đơn hàng tham chiếu"
   }
  ],
  "grid_page_length": 50,
