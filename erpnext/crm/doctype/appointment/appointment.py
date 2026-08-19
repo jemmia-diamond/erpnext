@@ -9,7 +9,7 @@ from frappe import _
 from frappe.desk.form.assign_to import add as add_assignment
 from frappe.model.document import Document
 from frappe.share import add_docshare
-from frappe.utils import get_url, getdate, now
+from frappe.utils import get_url, getdate, now, add_to_date, now_datetime
 from frappe.utils.verified_command import get_signed_params
 from erpnext.utilities.phone_utils import get_phone_variants, search_doc_by_phone
 from erpnext.selling.doctype.customer.customer_service.service import has_paid_sales_order
@@ -406,3 +406,23 @@ def _get_employee_from_user(user):
 		return frappe.get_doc("Employee", employee_docname)
 	return None
 
+
+def auto_cancel_overdue_appointments():
+	"""
+	Cancel appointments 24 hours after the scheduled_time if they are still Open.
+	"""
+	cutoff_time = add_to_date(now_datetime(), hours=-24)
+
+	appointments = frappe.get_all(
+		"Appointment",
+		filters=[
+			["status", "=", "Open"],
+			["scheduled_time", "<", cutoff_time],
+		],
+		pluck="name"
+	)
+
+	if appointments:
+		for app_name in appointments:
+			frappe.db.set_value("Appointment", app_name, "status", "Cancelled")
+		frappe.db.commit()
