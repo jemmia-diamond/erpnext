@@ -18,6 +18,7 @@
   "column_break_sp2",
   "barcode",
   "product_availability_status",
+  "qty",
   "promotion_section",
   "promotion_1",
   "promotion_2",
@@ -59,7 +60,6 @@
   "brand",
   "quantity_and_rate",
   "column_break_plpb",
-  "qty",
   "stock_uom",
   "subcontracted_qty",
   "uom",
@@ -259,8 +259,7 @@
    "precision": "0",
    "print_width": "100px",
    "reqd": 1,
-   "width": "100px",
-   "hidden": 1
+   "width": "100px"
   },
   {
    "depends_on": "eval:doc.uom != doc.stock_uom",
