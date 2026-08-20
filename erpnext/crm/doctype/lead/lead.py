@@ -628,36 +628,51 @@ class Lead(SellingController, CRMNote):
 		# self.update_prospect()
 		self.sync_active_opportunities()
 		self.sync_lead_owner_to_todos()
-		self.handle_spam_side_effects()
+		self.handle_terminal_status_side_effects()
 
-	def handle_spam_side_effects(self):
-		if self.status == "Spam" and self.has_value_changed("status"):
-			active_opps = frappe.get_all("Opportunity", filters={
-				"party_name": self.name,
-				"status": ["not in", ["Won", "Lost"]]
-			}, pluck="name")
-			
-			if not active_opps:
-				return
+	def handle_terminal_status_side_effects(self):
+		status_config = {
+			"Spam": {
+				"key": "spam_from_lead",
+				"default": "Marked as Spam",
+			},
+			"Do Not Contact": {
+				"key": "do_not_contact_from_lead",
+				"default": "Marked as Do Not Contact",
+			},
+		}
 
-			lost_reason = "Marked as Spam"
-			messages_json = get_crm_settings().get("lost_reason_messages")
-			if messages_json:
-				try:
-					messages = frappe.parse_json(messages_json)
-					if messages and isinstance(messages, dict):
-						lost_reason = messages.get("spam_from_lead") or lost_reason
-				except Exception:
-					pass
+		if self.status not in status_config or not self.has_value_changed("status"):
+			return
 
-			for opp_name in active_opps:
-				opp = frappe.get_doc("Opportunity", opp_name)
-				opp.status = "Lost"
-				opp.order_lost_reason = lost_reason
-				opp.append("lost_reasons", {"lost_reason": "Auto Lost"})
-				opp.flags.ignore_permissions = True
-				opp.flags.ignore_mandatory = True
-				opp.save()
+		active_opps = frappe.get_all("Opportunity", filters={
+			"party_name": self.name,
+			"status": ["not in", ["Won", "Lost"]]
+		}, pluck="name")
+
+		if not active_opps:
+			return
+
+		cfg = status_config[self.status]
+		lost_reason = cfg["default"]
+
+		messages_json = get_crm_settings().get("lost_reason_messages")
+		if messages_json:
+			try:
+				messages = frappe.parse_json(messages_json)
+				if isinstance(messages, dict):
+					lost_reason = messages.get(cfg["key"]) or lost_reason
+			except Exception:
+				pass
+
+		for opp_name in active_opps:
+			opp = frappe.get_doc("Opportunity", opp_name)
+			opp.status = "Lost"
+			opp.order_lost_reason = lost_reason
+			opp.append("lost_reasons", {"lost_reason": "Auto Lost"})
+			opp.flags.ignore_permissions = True
+			opp.flags.ignore_mandatory = True
+			opp.save()
 
 	def sync_lead_owner_to_todos(self):
 		if not self.has_value_changed("lead_owner"):
