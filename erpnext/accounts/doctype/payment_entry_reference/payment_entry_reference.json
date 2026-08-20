@@ -69,6 +69,7 @@
    "depends_on": "eval:doc.reference_doctype=='Sales Order'",
    "fieldname": "order_number",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Order Number",
    "read_only": 1,
    "search_index": 1
@@ -77,7 +78,6 @@
    "columns": 2,
    "fieldname": "mode_of_payment",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Mode of Payment",
    "options": "Mode of Payment",
    "read_only": 1
@@ -87,7 +87,6 @@
    "fieldname": "gateway",
    "fieldtype": "Data",
    "hidden": 1,
-   "in_list_view": 1,
    "label": "Gateway",
    "read_only": 1
   },
@@ -113,7 +112,6 @@
    "columns": 2,
    "fieldname": "payment_order_status",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "Payment Status",
    "read_only": 1
   },
@@ -128,7 +126,6 @@
    "fieldname": "due_date",
    "fieldtype": "Date",
    "hidden": 1,
-   "in_list_view": 1,
    "label": "Due Date",
    "read_only": 1
   },
@@ -158,7 +155,6 @@
    "fieldname": "total_amount",
    "fieldtype": "Currency",
    "hidden": 1,
-   "in_list_view": 1,
    "label": "Total Amount",
    "precision": "0",
    "print_hide": 1,
@@ -169,7 +165,6 @@
    "fieldname": "outstanding_amount",
    "fieldtype": "Currency",
    "hidden": 1,
-   "in_list_view": 1,
    "label": "Outstanding",
    "read_only": 1
   },
