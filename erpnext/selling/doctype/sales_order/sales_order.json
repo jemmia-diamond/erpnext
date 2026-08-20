@@ -147,12 +147,19 @@
   "column_break_ybsp",
   "billing_address",
   "contact_info",
+  "section_thong_tin_khach_hang",
+  "customer_name",
+  "contact_person",
+  "column_break_kh1",
+  "customer_type",
+  "contact_mobile",
+  "column_break_kh2",
+  "sales_order_purposes",
+  "delivery_location",
   "address_contact_section",
   "contact_info_heading",
-  "contact_person",
   "contact_display",
   "contact_phone",
-  "contact_mobile",
   "contact_email",
   "column_break_biok",
   "default_address_heading",
@@ -182,10 +189,7 @@
   "company_contact_person",
   "more_info",
   "deposit_location",
-  "sales_order_purposes",
   "column_break_cbgk",
-  "delivery_location",
-  "customer_type",
   "tracking_number",
   "section_break_ctso",
   "section_break_78",
@@ -319,7 +323,6 @@
    "fetch_from": "customer.customer_name",
    "fieldname": "customer_name",
    "fieldtype": "Data",
-   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "in_global_search": 1,
@@ -446,7 +449,7 @@
    "fieldtype": "Tab Break",
    "hide_days": 1,
    "hide_seconds": 1,
-   "label": "Address & Contact",
+   "label": "Customer",
    "options": "fa fa-bullhorn"
   },
   {
@@ -456,7 +459,8 @@
    "hide_seconds": 1,
    "label": "Customer Address",
    "options": "Address",
-   "print_hide": 1
+   "print_hide": 1,
+   "hidden": 1
   },
   {
    "allow_on_submit": 1,
@@ -465,7 +469,8 @@
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Address",
-   "read_only": 1
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "fieldname": "contact_person",
@@ -483,7 +488,8 @@
    "hide_seconds": 1,
    "in_global_search": 1,
    "label": "Contact",
-   "read_only": 1
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "fieldname": "contact_mobile",
@@ -511,7 +517,8 @@
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Company Address",
-   "read_only": 1
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "fieldname": "company_address",
@@ -519,7 +526,8 @@
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Company Address Name",
-   "options": "Address"
+   "options": "Address",
+   "hidden": 1
   },
   {
    "fieldname": "col_break46",
@@ -1585,7 +1593,8 @@
    "in_standard_filter": 1,
    "label": "Phone",
    "options": "Phone",
-   "read_only": 1
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "default": "0",
@@ -1637,7 +1646,8 @@
    "fieldname": "dispatch_address",
    "fieldtype": "Text Editor",
    "label": "Dispatch Address",
-   "read_only": 1
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "allow_on_submit": 1,
@@ -1702,7 +1712,8 @@
   },
   {
    "fieldname": "column_break_92",
-   "fieldtype": "Column Break"
+   "fieldtype": "Column Break",
+   "hidden": 1
   },
   {
    "collapsible": 1,
@@ -1790,7 +1801,8 @@
    "fieldtype": "Link",
    "label": "Company Contact Person",
    "options": "Contact",
-   "print_hide": 1
+   "print_hide": 1,
+   "hidden": 1
   },
   {
    "default": "0",
@@ -1992,46 +2004,54 @@
    "fetch_if_empty": 1,
    "fieldname": "customer_personal_id",
    "fieldtype": "Data",
-   "label": "CMND/CCCD"
+   "label": "CMND/CCCD",
+   "hidden": 1
   },
   {
    "fetch_from": "customer.passport_id",
    "fetch_if_empty": 1,
    "fieldname": "customer_passport_id",
    "fieldtype": "Data",
-   "label": "Passport ID"
+   "label": "Passport ID",
+   "hidden": 1
   },
   {
    "fetch_from": "customer.place_of_issuance",
    "fieldname": "place_of_issuance",
    "fieldtype": "Data",
-   "label": "Place of Issuance"
+   "label": "Place of Issuance",
+   "hidden": 1
   },
   {
    "fetch_from": "customer.date_of_issuance",
    "fieldname": "date_of_issuance",
    "fieldtype": "Date",
-   "label": "Date of Issuance"
+   "label": "Date of Issuance",
+   "hidden": 1
   },
   {
    "fetch_from": "customer.birth_date",
    "fieldname": "birth_date",
    "fieldtype": "Date",
-   "label": "Birth Date"
+   "label": "Birth Date",
+   "hidden": 1
   },
   {
    "fetch_from": "customer.gender",
    "fieldname": "gender",
    "fieldtype": "Data",
-   "label": "Gender"
+   "label": "Gender",
+   "hidden": 1
   },
   {
    "fieldname": "address_contact_section",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "hidden": 1
   },
   {
    "fieldname": "column_break_biok",
-   "fieldtype": "Column Break"
+   "fieldtype": "Column Break",
+   "hidden": 1
   },
   {
    "fieldname": "column_break_xnxx",
@@ -2104,22 +2124,25 @@
   {
    "fieldname": "details",
    "fieldtype": "Tab Break",
-   "label": "Thông tin đơn hàng"
+   "label": "Overview"
   },
   {
    "fieldname": "contact_info_heading",
    "fieldtype": "Heading",
-   "label": "Contact Info Heading"
+   "label": "Contact Info Heading",
+   "hidden": 1
   },
   {
    "fieldname": "default_address_heading",
    "fieldtype": "Heading",
-   "label": "Default Address Heading"
+   "label": "Default Address Heading",
+   "hidden": 1
   },
   {
    "fieldname": "customer_section_break",
    "fieldtype": "Section Break",
-   "label": "Customer Private Information"
+   "label": "Customer Private Information",
+   "hidden": 1
   },
   {
    "fieldname": "payment_section_section",
@@ -2372,7 +2395,7 @@
   {
    "fieldname": "section_break_order_status",
    "fieldtype": "Section Break",
-   "label": "Trạng thái đơn hàng"
+   "label": "Order Status"
   },
   {
    "fieldname": "column_break_status2",
@@ -2385,7 +2408,20 @@
   {
    "fieldname": "section_break_ref_orders",
    "fieldtype": "Section Break",
-   "label": "Đơn hàng tham chiếu"
+   "label": "Reference Orders"
+  },
+  {
+   "fieldname": "section_thong_tin_khach_hang",
+   "fieldtype": "Section Break",
+   "label": "Customer Information"
+  },
+  {
+   "fieldname": "column_break_kh1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_kh2",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
