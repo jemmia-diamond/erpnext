@@ -1202,7 +1202,7 @@
    "fieldtype": "Tab Break",
    "hide_days": 1,
    "hide_seconds": 1,
-   "label": "Payment Schedule"
+   "label": "Payment"
   },
   {
    "fieldname": "payment_terms_template",
@@ -2083,7 +2083,8 @@
   },
   {
    "fieldname": "section_break_group_payment",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "hidden": 1
   },
   {
    "fieldname": "group_payment_entries",
@@ -2108,11 +2109,13 @@
   },
   {
    "fieldname": "section_break_payment_records",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Payment History"
   },
   {
    "fieldname": "payment_records",
    "fieldtype": "Table",
+   "hidden": 1,
    "options": "Sales Order Payment Record",
    "read_only": 1
   },
@@ -2147,6 +2150,7 @@
   {
    "fieldname": "payment_section_section",
    "fieldtype": "Section Break",
+   "label": "Payment Items",
    "read_only": 1
   },
   {

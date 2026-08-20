@@ -5,22 +5,24 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "reference_doctype",
   "reference_name",
-  "order_number",
   "split_order_group_name",
   "paid_amount",
+  "column_break_per1",
+  "order_number",
+  "payment_date",
   "allocated_amount",
-  "unallocated_amount",
-  "balance",
+  "column_break_per2",
+  "payment_order_status",
   "mode_of_payment",
-  "gateway",
+  "balance",
   "bank_account",
+  "reference_doctype",
+  "unallocated_amount",
+  "gateway",
   "bank",
   "bank_account_no",
   "bank_account_branch",
-  "payment_date",
-  "payment_order_status",
   "due_date",
   "bill_no",
   "payment_term",
@@ -46,6 +48,7 @@
    "columns": 1,
    "fieldname": "reference_doctype",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Type",
    "options": "DocType",
    "reqd": 1,
@@ -83,6 +86,7 @@
    "columns": 2,
    "fieldname": "gateway",
    "fieldtype": "Data",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Gateway",
    "read_only": 1
@@ -123,6 +127,7 @@
   {
    "fieldname": "due_date",
    "fieldtype": "Date",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Due Date",
    "read_only": 1
@@ -130,18 +135,29 @@
   {
    "fieldname": "bill_no",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Supplier Invoice No",
    "no_copy": 1,
    "read_only": 1
   },
   {
-   "fieldname": "column_break_4",
+   "fieldname": "column_break_per1",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_per2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break",
+   "hidden": 1
   },
   {
    "columns": 2,
    "fieldname": "total_amount",
    "fieldtype": "Currency",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Total Amount",
    "precision": "0",
@@ -152,6 +168,7 @@
    "columns": 2,
    "fieldname": "outstanding_amount",
    "fieldtype": "Currency",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Outstanding",
    "read_only": 1
@@ -178,6 +195,7 @@
    "depends_on": "eval:(doc.reference_doctype=='Purchase Invoice')",
    "fieldname": "exchange_rate",
    "fieldtype": "Float",
+   "hidden": 1,
    "label": "Exchange Rate",
    "print_hide": 1,
    "read_only": 1
@@ -185,6 +203,7 @@
   {
    "fieldname": "payment_term",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Payment Term",
    "options": "Payment Term"
   },
@@ -192,6 +211,7 @@
    "depends_on": "exchange_gain_loss",
    "fieldname": "exchange_gain_loss",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Exchange Gain/Loss",
    "options": "Company:company:default_currency",
    "read_only": 1
@@ -199,22 +219,26 @@
   {
    "fieldname": "account",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Account",
    "options": "Account"
   },
   {
    "fieldname": "account_type",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Account Type"
   },
   {
    "fieldname": "payment_type",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Payment Type"
   },
   {
    "fieldname": "payment_request",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Payment Request",
    "options": "Payment Request"
   },
@@ -222,6 +246,7 @@
    "depends_on": "eval: doc.payment_term",
    "fieldname": "payment_term_outstanding",
    "fieldtype": "Float",
+   "hidden": 1,
    "label": "Payment Term Outstanding",
    "read_only": 1
   },
@@ -229,6 +254,7 @@
    "depends_on": "eval: doc.payment_request && doc.payment_request_outstanding",
    "fieldname": "payment_request_outstanding",
    "fieldtype": "Float",
+   "hidden": 1,
    "is_virtual": 1,
    "label": "Payment Request Outstanding",
    "read_only": 1
@@ -236,6 +262,7 @@
   {
    "fieldname": "reconcile_effect_on",
    "fieldtype": "Date",
+   "hidden": 1,
    "label": "Reconcile Effect On",
    "read_only": 1
   },
@@ -243,6 +270,7 @@
    "columns": 2,
    "fieldname": "advance_voucher_type",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Advance Voucher Type",
    "options": "DocType",
    "read_only": 1
@@ -251,6 +279,7 @@
    "columns": 2,
    "fieldname": "advance_voucher_no",
    "fieldtype": "Dynamic Link",
+   "hidden": 1,
    "label": "Advance Voucher No",
    "options": "advance_voucher_type",
    "read_only": 1
@@ -266,34 +295,40 @@
   {
    "fieldname": "bank",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Bank",
    "read_only": 1
   },
   {
    "fieldname": "bank_account_no",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Bank Account No",
    "read_only": 1
   },
   {
    "fieldname": "bank_account_branch",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Branch",
    "read_only": 1
   },
   {
    "fieldname": "ref_order_number",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Ref Order Number"
   },
   {
    "fieldname": "ref_order_date",
    "fieldtype": "Date",
+   "hidden": 1,
    "label": "Ref Order Date"
   },
   {
    "fieldname": "unallocated_amount",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Unallocated",
    "precision": "0",
    "read_only": 1
