@@ -1599,7 +1599,6 @@ def update_primary_sale_from_todo(doc, method=None):
 			if can_update:
 				frappe.db.set_value("Lead", doc.reference_name, "lead_owner", doc.allocated_to)
 				frappe.clear_document_cache("Lead", doc.reference_name)
-				frappe.db.commit()
 				if doc.allocated_to != "tech@jemmia.vn":
 					try:
 						manual_lead_owner_enqueue(doc.reference_name)
