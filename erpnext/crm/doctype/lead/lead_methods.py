@@ -7,7 +7,7 @@ import frappe
 import pymysql
 from frappe import _
 from frappe.automation.doctype.assignment_rule.assignment_rule import apply
-from frappe.utils import get_datetime, validate_phone_number
+from frappe.utils import get_datetime, sbool, validate_phone_number
 from frappe.www.contact import get_contacts_by_conversation_id
 from pymysql.constants import ER, FIELD_TYPE
 from pymysql.converters import conversions, escape_string
@@ -1404,12 +1404,22 @@ def process_fix_duplicate_conversations(pairs):
 
 
 @frappe.whitelist()
-def reassign_leads_in_bulk(lead_names, assignment_rule=None):
+def reassign_leads_in_bulk(lead_names, assignment_rule=None, enqueue=False):
 	if isinstance(lead_names, str):
 		lead_names = frappe.parse_json(lead_names)
 
 	if not lead_names:
 		return {"status": "failed", "message": "No leads provided."}
+
+	if sbool(enqueue) is True:
+		frappe.enqueue(
+			"erpnext.crm.doctype.lead.lead_methods.reassign_leads_in_bulk",
+			lead_names=lead_names,
+			assignment_rule=assignment_rule,
+			enqueue=False,
+			queue="long",
+		)
+		return {"status": "success", "message": "Enqueued lead reassignment", "enqueued": True, "count": len(lead_names)}
 
 	frappe.db.set_value(
 		"Lead",
