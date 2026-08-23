@@ -36,7 +36,8 @@ def auto_close_opportunity():
 		return
 
 	auto_close_after_days = crm_settings.get("close_opportunity_after_days") or 7
-	cutoff = frappe.utils.add_days(frappe.utils.now_datetime(), -auto_close_after_days)
+	cutoff_str = frappe.utils.add_days(frappe.utils.now_datetime(), -auto_close_after_days)
+	cutoff = frappe.utils.get_datetime(cutoff_str)
 	today_date = frappe.utils.nowdate()
 
 	messages = {}
