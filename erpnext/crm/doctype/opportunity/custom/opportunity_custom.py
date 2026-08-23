@@ -1,5 +1,6 @@
 import json
 import time
+from typing import Any, cast
 
 import frappe
 from frappe.query_builder import DocType, Interval
@@ -38,7 +39,7 @@ def auto_close_opportunity():
 	auto_close_after_days = crm_settings.get("close_opportunity_after_days") or 7
 	cutoff_str = frappe.utils.add_days(frappe.utils.now_datetime(), -auto_close_after_days)
 	cutoff = frappe.utils.get_datetime(cutoff_str)
-	today_date = frappe.utils.nowdate()
+	today_date = frappe.utils.getdate(frappe.utils.nowdate())
 
 	messages = {}
 	messages_json = crm_settings.get("lost_reason_messages")
@@ -67,35 +68,40 @@ def auto_close_opportunity():
 
 	target_opps = []
 	for opp in opps:
-		cust_at = opp.last_customer_message_at
-		sales_at = opp.last_sales_message_at
+		cust_at = opp.get("last_customer_message_at")
+		sales_at = opp.get("last_sales_message_at")
 
 		# Rule B (Doc Line 83): Past expected purchase date + 7 days without interaction -> Lost
-		if opp.expected_delivery_date:
-			exp_cutoff = frappe.utils.add_days(opp.expected_delivery_date, 7)
-			if str(today_date) > str(exp_cutoff):
-				if (not cust_at or frappe.utils.get_datetime(cust_at) < cutoff) and (
-					not sales_at or frappe.utils.get_datetime(sales_at) < cutoff
-				):
+		if opp.get("expected_delivery_date"):
+			exp_cutoff_str = frappe.utils.add_days(opp.get("expected_delivery_date"), 7)
+			exp_cutoff = frappe.utils.getdate(exp_cutoff_str)
+			if today_date and exp_cutoff and today_date > exp_cutoff:
+				cust_dt = frappe.utils.get_datetime(cust_at)
+				sales_dt = frappe.utils.get_datetime(sales_at)
+				is_cust_inactive = cust_dt < cutoff if cust_dt and cutoff else True
+				is_sales_inactive = sales_dt < cutoff if sales_dt and cutoff else True
+				if is_cust_inactive and is_sales_inactive:
 					reason = (
 						messages.get("auto_lost_opportunity_expected_delivery")
-						or f"Tự động đóng: Quá 7 ngày tính từ ngày mua dự kiến ({opp.expected_delivery_date})"
+						or f"Tự động đóng: Quá 7 ngày tính từ ngày mua dự kiến ({opp.get('expected_delivery_date')})"
 					)
-					target_opps.append((opp.name, reason))
+					target_opps.append((opp.get("name"), reason))
 					continue
 
 		# Rule A (Doc Line 83): Inactive for over 7 days in Nurturing status without interaction -> Lost
-		if opp.status == "Nurturing":
-			if (
-				(not cust_at or frappe.utils.get_datetime(cust_at) < cutoff)
-				and (not sales_at or frappe.utils.get_datetime(sales_at) < cutoff)
-				and (frappe.utils.get_datetime(opp.modified) < cutoff)
-			):
+		if opp.get("status") == "Nurturing":
+			cust_dt = frappe.utils.get_datetime(cust_at)
+			sales_dt = frappe.utils.get_datetime(sales_at)
+			mod_dt = frappe.utils.get_datetime(opp.get("modified"))
+			is_cust_inactive = cust_dt < cutoff if cust_dt and cutoff else True
+			is_sales_inactive = sales_dt < cutoff if sales_dt and cutoff else True
+			is_mod_inactive = mod_dt < cutoff if mod_dt and cutoff else True
+			if is_cust_inactive and is_sales_inactive and is_mod_inactive:
 				reason = (
 					messages.get("auto_lost_opportunity_nurturing")
 					or "Tự động đóng: Quá 7 ngày ở Nuôi dưỡng mà không có tương tác"
 				)
-				target_opps.append((opp.name, reason))
+				target_opps.append((opp.get("name"), reason))
 
 	if target_opps:
 		if not frappe.db.exists("Opportunity Lost Reason", "Auto Lost"):
@@ -104,14 +110,15 @@ def auto_close_opportunity():
 			)
 
 		for opp_name, reason_text in target_opps:
-			opp = frappe.get_doc("Opportunity", opp_name)
-			opp.status = "Lost"
-			opp.order_lost_reason = reason_text
-			if not any(r.lost_reason == "Auto Lost" for r in opp.lost_reasons):
-				opp.append("lost_reasons", {"lost_reason": "Auto Lost"})
-			opp.flags.ignore_permissions = True
-			opp.flags.ignore_mandatory = True
-			opp.save()
+			opp_doc = cast(Any, frappe.get_doc("Opportunity", opp_name))
+			opp_doc.status = "Lost"
+			opp_doc.order_lost_reason = reason_text
+			lost_reasons = opp_doc.get("lost_reasons") or []
+			if not any(getattr(r, "lost_reason", None) == "Auto Lost" for r in lost_reasons):
+				opp_doc.append("lost_reasons", {"lost_reason": "Auto Lost"})
+			opp_doc.flags.ignore_permissions = True
+			opp_doc.flags.ignore_mandatory = True
+			opp_doc.save()
 
 
 def mark_opportunity_as_won_on_payment(doc, method=None):
@@ -176,7 +183,7 @@ def sync_lead_fields_to_active_opportunities(doc, method=None):
 	today = frappe.utils.getdate(frappe.utils.nowdate())
 
 	for opp_name in opp_names:
-		opp = frappe.get_doc("Opportunity", opp_name)
+		opp = cast(Any, frappe.get_doc("Opportunity", opp_name))
 		updated = False
 
 		for lead_field, opp_field in field_mappings:
@@ -185,9 +192,12 @@ def sync_lead_fields_to_active_opportunities(doc, method=None):
 				continue
 
 			if lead_field == "preferred_product_type":
-				lead_items = [r.product_type for r in val if getattr(r, "product_type", None)]
+				lead_items = [
+					getattr(r, "product_type", None) for r in val if getattr(r, "product_type", None)
+				]
+				opp_pref = opp.get("preferred_product_type") or []
 				opp_items = [
-					r.product_type for r in opp.preferred_product_type if getattr(r, "product_type", None)
+					getattr(r, "product_type", None) for r in opp_pref if getattr(r, "product_type", None)
 				]
 				if lead_items != opp_items:
 					opp.set("preferred_product_type", [])
@@ -198,7 +208,7 @@ def sync_lead_fields_to_active_opportunities(doc, method=None):
 			elif lead_field == "expected_delivery_date":
 				if not opp.expected_delivery_date:
 					doc_exp = frappe.utils.getdate(val)
-					if doc_exp >= today:
+					if doc_exp and today and doc_exp >= today:
 						opp.expected_delivery_date = val
 						updated = True
 
@@ -255,7 +265,7 @@ def move_to_opportunity(phone, products=None, purpose_lead=None, expected_delive
 		max_retries_opp = 3
 		for attempt in range(max_retries_opp):
 			try:
-				opp_doc = frappe.get_doc("Opportunity", opportunities[0].name)
+				opp_doc = cast(Any, frappe.get_doc("Opportunity", opportunities[0].name))
 				updated = False
 
 				if products:
