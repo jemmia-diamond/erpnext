@@ -70,44 +70,6 @@ def normalize_phone_number(phone: str | None) -> str | None:
 	return res if res else None
 
 
-@frappe.whitelist(methods=["POST", "PUT"])
-def insert_lead_by_batch(docs=None):
-	"""Insert multiple lead
-
-	:param docs: JSON or list of dict objects to be inserted in one request"""
-
-	crm_settings = get_crm_settings()
-	if not crm_settings.get("enable_auto_lead_insert", 1):
-		frappe.throw("currently backfilling")
-
-	if not docs:
-		return []
-
-	if len(docs) > 200:
-		frappe.throw(_("Only 200 inserts allowed in one request"))
-
-	result: list[dict[str, Any]] = []
-	for doc in docs:
-		doc = doc.copy()
-		pancake_data = doc.get("pancake_data", {})
-		conversation_id = pancake_data.get("conversation_id")
-
-		if not is_non_empty(conversation_id):
-			frappe.logger().warning("insert_lead_by_batch: missing conversation_id", exc_info=False)
-			result.append({"name": None, "conversation_id": conversation_id})
-			continue
-
-		try:
-			inserted_doc = insert_lead(doc)
-			if inserted_doc:
-				result.append({"name": inserted_doc.name, "conversation_id": conversation_id})
-			else:
-				result.append({"name": None, "conversation_id": conversation_id})
-		except Exception:
-			result.append({"name": None, "conversation_id": conversation_id})
-	return result
-
-
 def insert_lead(doc) -> "Document | None":
 	"""Inserts document and returns parent document object with appended child document
 	if `doc` is child document else returns the inserted document object
@@ -1419,7 +1381,12 @@ def reassign_leads_in_bulk(lead_names, assignment_rule=None, enqueue=False):
 			enqueue=False,
 			queue="long",
 		)
-		return {"status": "success", "message": "Enqueued lead reassignment", "enqueued": True, "count": len(lead_names)}
+		return {
+			"status": "success",
+			"message": "Enqueued lead reassignment",
+			"enqueued": True,
+			"count": len(lead_names),
+		}
 
 	frappe.db.set_value(
 		"Lead",
