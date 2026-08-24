@@ -24,6 +24,10 @@ from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settin
 from erpnext.utilities.phone_utils import normalize_to_standard_format
 from erpnext.setup.utils import get_exchange_rate
 from erpnext.utilities.transaction_base import TransactionBase
+from erpnext.crm.doctype.opportunity.custom.opportunity_custom import (
+	update_lead_status_on_lost,
+	update_lead_temperature_from_opportunity,
+)
 
 
 class Opportunity(TransactionBase, CRMNote):
@@ -204,6 +208,8 @@ class Opportunity(TransactionBase, CRMNote):
 
 	def on_update(self):
 		self.update_prospect()
+		update_lead_status_on_lost(self)
+		update_lead_temperature_from_opportunity(self)
 
 	def map_fields(self):
 		for field in self.meta.get_valid_columns():
