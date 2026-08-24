@@ -919,7 +919,8 @@
    "fieldname": "haravan_id",
    "fieldtype": "Data",
    "label": "Haravan ID",
-   "permlevel": 5
+   "permlevel": 5,
+   "unique": 1
   },
   {
    "fieldname": "bizfly_id",
@@ -1265,7 +1266,7 @@
  ],
  "quick_entry": 1,
  "row_format": "Dynamic",
- "search_fields": "customer_group,territory, mobile_no,primary_address",
+ "search_fields": "customer_group,territory,phone,mobile_no,primary_address",
  "show_name_in_global_search": 1,
  "show_title_field_in_link": 1,
  "sort_field": "modified",
