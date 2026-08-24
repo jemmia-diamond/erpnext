@@ -1293,7 +1293,7 @@ def _get_buyback_revenue_in_period(customer_name, start_date, end_date):
 	from frappe.utils import formatdate
 
 	customer = frappe.get_doc("Customer", customer_name)
-	phone_number = customer.phone or customer.mobile_no
+	phone_number = normalize_to_standard_format(customer.phone or customer.mobile_no)
 	if not phone_number:
 		return 0
 
@@ -1376,7 +1376,7 @@ def update_all_customers_revenue():
 def load_buyback_records_async(customer):
 	"""Async method to load buyback records after page load"""
 	customer_doc = frappe.get_doc("Customer", customer)
-	phone_number = customer_doc.phone or customer_doc.mobile_no
+	phone_number = normalize_to_standard_format(customer_doc.phone or customer_doc.mobile_no)
 	if not phone_number:
 		return []
 
@@ -1604,7 +1604,7 @@ def _get_referral_revenue_up_to_date(customer_name, target_date):
 def _get_buyback_revenue_up_to_date(customer_name, target_date):
 	"""Get total buyback revenue up to a specific date"""
 	customer = frappe.get_doc("Customer", customer_name)
-	phone_number = customer.phone or customer.mobile_no
+	phone_number = normalize_to_standard_format(customer.phone or customer.mobile_no)
 	if not phone_number:
 		return 0
 
