@@ -46,6 +46,7 @@ class CallLog(Document):
 		id: DF.Data | None
 		links: DF.Table[DynamicLink]
 		medium: DF.Data | None
+		message_id: DF.Data | None
 		participant: DF.DynamicLink | None
 		participant_name: DF.Data | None
 		participant_type: DF.Link | None

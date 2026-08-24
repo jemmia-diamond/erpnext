@@ -40,6 +40,7 @@
   "type_of_call",
   "column_break_pbqv",
   "updated_by",
+  "message_id",
   "section_break_zdif",
   "summary",
   "section_break_19",
@@ -298,12 +299,18 @@
   {
    "fieldname": "section_break_zdif",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "message_id",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Message ID"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-05 06:50:32.444718",
+ "modified": "2026-08-24 06:53:52.558233",
  "modified_by": "Administrator",
  "module": "Telephony",
  "name": "Call Log",
