@@ -220,8 +220,6 @@ def sync_lead_fields_to_active_opportunities(doc, method=None):
 		if updated:
 			opp.flags.ignore_permissions = True
 			opp.flags.ignore_mandatory = True
-			opp.flags.ignore_validate = True
-			opp.flags.ignore_links = True
 			opp.save()
 
 
