@@ -82,6 +82,7 @@ class Lead(SellingController, CRMNote):
 		lead_source_name: DF.Data | None
 		lead_source_platform: DF.Data | None
 		lead_stage: DF.Literal["Lead", "Qualified Lead", "Opportunity", "Customer"]
+		lead_temperature: DF.Literal["", "Not Potential", "Cold", "Warm", "Hot"]
 		market_segment: DF.Link | None
 		middle_name: DF.Data | None
 		mobile_no: DF.Data | None
