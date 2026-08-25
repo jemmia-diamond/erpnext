@@ -14,6 +14,7 @@ class TargetDetail(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		appointment_target: DF.Link | None
 		distribution_id: DF.Link
 		fiscal_year: DF.Link
 		item_group: DF.Link | None

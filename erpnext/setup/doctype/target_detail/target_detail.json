@@ -10,6 +10,7 @@
   "target_qty",
   "target_amount",
   "distribution_id",
+  "appointment_target",
   "target_qualified_leads",
   "target_lead_received",
   "target_previous_month_qualified",
@@ -66,26 +67,37 @@
    "reqd": 1
   },
   {
+   "fieldname": "appointment_target",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Appointment Target",
+   "options": "Appointment Target"
+  },
+  {
    "fieldname": "target_lead_received",
    "fieldtype": "Int",
+   "hidden": 1,
    "in_preview": 1,
    "label": "Target Lead Received"
   },
   {
    "fieldname": "target_previous_month_qualified",
    "fieldtype": "Int",
+   "hidden": 1,
    "in_preview": 1,
    "label": "Target Previous Month Qualified"
   },
   {
    "fieldname": "target_qualified_to_orders",
    "fieldtype": "Int",
+   "hidden": 1,
    "in_preview": 1,
    "label": "Target Qualified to Orders"
   },
   {
    "fieldname": "target_qualified_leads",
    "fieldtype": "Int",
+   "hidden": 1,
    "in_preview": 1,
    "label": "Target Qualified Leads"
   }
@@ -93,13 +105,14 @@
  "idx": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-20 07:01:19.078126",
+ "modified": "2026-08-25 10:19:50.719954",
  "modified_by": "Administrator",
  "module": "Setup",
  "name": "Target Detail",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

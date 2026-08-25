@@ -32,6 +32,14 @@ frappe.ui.form.on("Sales Person", {
 			};
 		};
 
+		// frm.fields_dict["targets"].grid.get_field("appointment_target").get_query = function (doc, cdt, cdn) {
+		// 	return {
+		// 		filters: {
+		// 			enabled: 1,
+		// 		},
+		// 	};
+		// };
+
 		frm.make_methods = {
 			"Sales Order": () =>
 				frappe
