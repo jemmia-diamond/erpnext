@@ -74,33 +74,22 @@ class SalesOrder(SellingController):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from frappe.types import DF
-
 		from erpnext.accounts.doctype.item_wise_tax_detail.item_wise_tax_detail import ItemWiseTaxDetail
-		from erpnext.accounts.doctype.payment_entry_reference.payment_entry_reference import (
-			PaymentEntryReference,
-		)
+		from erpnext.accounts.doctype.payment_entry_reference.payment_entry_reference import PaymentEntryReference
 		from erpnext.accounts.doctype.payment_schedule.payment_schedule import PaymentSchedule
 		from erpnext.accounts.doctype.pricing_rule_detail.pricing_rule_detail import PricingRuleDetail
-		from erpnext.accounts.doctype.sales_taxes_and_charges.sales_taxes_and_charges import (
-			SalesTaxesandCharges,
-		)
-		from erpnext.selling.doctype.order_and_debt_tracking.order_and_debt_tracking import (
-			OrderandDebtTracking,
-		)
+		from erpnext.accounts.doctype.sales_taxes_and_charges.sales_taxes_and_charges import SalesTaxesandCharges
+		from erpnext.selling.doctype.order_and_debt_tracking.order_and_debt_tracking import OrderandDebtTracking
 		from erpnext.selling.doctype.sales_order_item.sales_order_item import SalesOrderItem
-		from erpnext.selling.doctype.sales_order_payment_record.sales_order_payment_record import (
-			SalesOrderPaymentRecord,
-		)
+		from erpnext.selling.doctype.sales_order_payment_record.sales_order_payment_record import SalesOrderPaymentRecord
 		from erpnext.selling.doctype.sales_order_policy.sales_order_policy import SalesOrderPolicy
-		from erpnext.selling.doctype.sales_order_product_category.sales_order_product_category import (
-			SalesOrderProductCategory,
-		)
+		from erpnext.selling.doctype.sales_order_product_category.sales_order_product_category import SalesOrderProductCategory
 		from erpnext.selling.doctype.sales_order_promotion.sales_order_promotion import SalesOrderPromotion
 		from erpnext.selling.doctype.sales_order_purpose.sales_order_purpose import SalesOrderPurpose
 		from erpnext.selling.doctype.sales_order_reference.sales_order_reference import SalesOrderReference
 		from erpnext.selling.doctype.sales_team.sales_team import SalesTeam
 		from erpnext.stock.doctype.packed_item.packed_item import PackedItem
+		from frappe.types import DF
 
 		additional_discount_percentage: DF.Float
 		address_display: DF.TextEditor | None
@@ -120,12 +109,7 @@ class SalesOrder(SellingController):
 		base_rounding_adjustment: DF.Currency
 		base_total: DF.Currency
 		base_total_taxes_and_charges: DF.Currency
-		billing_address: DF.Literal[
-			"",
-			"72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh",
-			"63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i",
-			"209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1",
-		]
+		billing_address: DF.Literal["", "72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh", "63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i", "209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1"]
 		billing_status: DF.Literal["Not Billed", "Fully Billed", "Partly Billed", "Closed"]
 		birth_date: DF.Date | None
 		cancelled_status: DF.Literal["", "Uncancelled", "Cancelled"]
@@ -156,16 +140,8 @@ class SalesOrder(SellingController):
 		date_of_issuance: DF.Date | None
 		debt_history: DF.Table[OrderandDebtTracking]
 		delivery_date: DF.Date | None
-		delivery_location: DF.Literal[
-			"",
-			"209, \u0110 30 th\u00e1ng 4, Xu\u00e2n Kh\u00e1nh, Ninh Ki\u1ec1u, C\u1ea7n Th\u01a1",
-			"63 Kim M\u00e3, Qu\u1eadn Ba \u0110\u00ecnh, H\u00e0 N\u1ed9i",
-			"72 Nguy\u1ec5n C\u01b0 Trinh, Qu\u1eadn 1, Th\u00e0nh Ph\u1ed1 H\u1ed3 Ch\u00ed Minh",
-			"Giao v\u1ec1 \u0111\u1ecba ch\u1ec9 kh\u00e1ch",
-		]
-		delivery_status: DF.Literal[
-			"Not Delivered", "Fully Delivered", "Partially Delivered", "Closed", "Not Applicable"
-		]
+		delivery_location: DF.Literal["", "209, \u0110 30 th\u00e1ng 4, Xu\u00e2n Kh\u00e1nh, Ninh Ki\u1ec1u, C\u1ea7n Th\u01a1", "63 Kim M\u00e3, Qu\u1eadn Ba \u0110\u00ecnh, H\u00e0 N\u1ed9i", "72 Nguy\u1ec5n C\u01b0 Trinh, Qu\u1eadn 1, Th\u00e0nh Ph\u1ed1 H\u1ed3 Ch\u00ed Minh", "Giao v\u1ec1 \u0111\u1ecba ch\u1ec9 kh\u00e1ch"]
+		delivery_status: DF.Literal["Not Delivered", "Fully Delivered", "Partially Delivered", "Closed", "Not Applicable"]
 		deposit_amount: DF.Currency
 		deposit_in_words: DF.SmallText | None
 		deposit_location: DF.Link | None
@@ -176,9 +152,7 @@ class SalesOrder(SellingController):
 		dispatch_address_name: DF.Link | None
 		expected_delivery_date: DF.Date | None
 		expected_payment_date: DF.Date | None
-		financial_status: DF.Literal[
-			"", "Paid", "Partially Paid", "Partially Refunded", "Refunded", "Pending"
-		]
+		financial_status: DF.Literal["", "Paid", "Partially Paid", "Partially Refunded", "Refunded", "Pending"]
 		from_date: DF.Date | None
 		fulfillment_completion_date: DF.Datetime | None
 		fulfillment_status: DF.Literal["", "Fulfilled", "Not Fulfilled"]
@@ -257,18 +231,7 @@ class SalesOrder(SellingController):
 		split_order_group: DF.Data | None
 		split_order_group_name: DF.Data | None
 		split_reason: DF.Literal["", "Gold Regulation", "Customer Request", "Other"]
-		status: DF.Literal[
-			"",
-			"Draft",
-			"On Hold",
-			"To Pay",
-			"To Deliver and Bill",
-			"To Bill",
-			"To Deliver",
-			"Completed",
-			"Cancelled",
-			"Closed",
-		]
+		status: DF.Literal["", "Draft", "On Hold", "To Pay", "To Deliver and Bill", "To Bill", "To Deliver", "Completed", "Cancelled", "Closed"]
 		tax_category: DF.Link | None
 		tax_id: DF.Data | None
 		taxes: DF.Table[SalesTaxesandCharges]

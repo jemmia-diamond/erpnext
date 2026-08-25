@@ -10,31 +10,32 @@
  "engine": "InnoDB",
  "field_order": [
   "details",
+  "order_number",
   "split_order_group_name",
   "split_order_group",
-  "real_order_date",
-  "promotions",
   "column_break0",
-  "order_number",
   "haravan_created_at",
-  "policies",
-  "column_break1",
   "is_split_order",
-  "expected_delivery_date",
+  "column_break1",
+  "real_order_date",
   "deposit_method",
-  "section_break_order_status",
-  "delivery_status",
-  "column_break_status2",
-  "financial_status",
-  "column_break_status3",
-  "cancelled_status",
+  "split_reason",
   "section_break_ref_orders",
   "ref_sales_orders",
+  "section_break_order_status",
+  "delivery_status",
+  "fulfillment_status",
+  "column_break_status2",
+  "financial_status",
+  "tracking_number",
+  "column_break_status3",
+  "cancelled_status",
+  "expected_delivery_date",
+  "consultation_date",
   "customer_section",
   "company",
   "naming_series",
   "tax_id",
-  "haravan_coupon_code",
   "order_type",
   "transaction_time",
   "delivery_date",
@@ -44,16 +45,10 @@
   "has_unit_price_items",
   "is_subcontracted",
   "amended_from",
-  "group_order_section",
-  "column_break_wcaf",
-  "split_reason",
   "section_break_uceh",
-  "customer_name",
   "transaction_date",
-  "consultation_date",
   "column_break_dqxa",
   "payment_completion_date",
-  "fulfillment_status",
   "fulfillment_completion_date",
   "carrier_status",
   "accounting_dimensions_section",
@@ -85,13 +80,25 @@
   "additional_discount_percentage",
   "section_break_31",
   "column_break_33a",
+  "promotions",
   "product_categories",
+  "policies",
   "order_policies",
   "column_break_bscz",
+  "haravan_coupon_code",
   "total_qty",
   "total",
   "discount_amount",
   "grand_total",
+  "buyback_section_break",
+  "buyback_items",
+  "return_amount",
+  "buyback_items_html",
+  "section_break_kqyq",
+  "deposit_location",
+  "deposit_amount",
+  "column_break_cbgk",
+  "billing_address",
   "section_break_ownx",
   "column_break_33",
   "base_total",
@@ -136,25 +143,16 @@
   "packed_items",
   "pricing_rule_details",
   "pricing_rules",
-  "buyback_section_break",
-  "buyback_items",
-  "return_amount",
-  "buyback_items_html",
-  "invoice_information",
-  "deposit_amount",
-  "order_currency",
-  "deposit_in_words",
-  "column_break_ybsp",
-  "billing_address",
   "contact_info",
   "section_thong_tin_khach_hang",
+  "customer",
   "customer_name",
   "contact_person",
   "column_break_kh1",
   "customer_type",
+  "sales_order_purposes",
   "contact_mobile",
   "column_break_kh2",
-  "sales_order_purposes",
   "delivery_location",
   "address_contact_section",
   "contact_info_heading",
@@ -171,7 +169,6 @@
   "shipping_address",
   "customer_section_break",
   "column_break_xnxx",
-  "customer",
   "gender",
   "column_break_93",
   "customer_personal_id",
@@ -188,10 +185,10 @@
   "column_break_92",
   "company_contact_person",
   "more_info",
-  "deposit_location",
-  "column_break_cbgk",
-  "tracking_number",
-  "section_break_ctso",
+  "invoice_information",
+  "order_currency",
+  "deposit_in_words",
+  "column_break_ybsp",
   "section_break_78",
   "status",
   "per_delivered",
@@ -235,21 +232,24 @@
   "inter_company_order_reference",
   "party_account_currency",
   "payment_schedule_section",
-  "total_amount",
+  "section_break_group_payment",
+  "group_payment_entries",
+  "section_break_vxpl",
+  "total_allocated_group_payment",
+  "column_break_mjsh",
+  "balance_group_payment",
+  "column_break_rfhz",
   "expected_payment_date",
+  "total_group_balance",
+  "payment_section_section",
+  "payment_entries",
+  "section_break_kelr",
+  "total_amount",
   "column_break_yifm",
   "paid_amount",
   "column_break_ptow",
   "balance",
-  "payment_section_section",
-  "payment_entries",
-  "section_break_group_payment",
-  "group_payment_entries",
-  "total_allocated_group_payment",
-  "balance_group_payment",
-  "total_group_balance",
   "section_break_payment_records",
-  "payment_records",
   "debt_history",
   "payment_terms_section",
   "ignore_default_payment_terms_template",
@@ -269,11 +269,14 @@
   "haravan_ref_order_id",
   "column_break_phue",
   "source_name",
+  "section_break_rtya",
+  "payment_records",
   "connections_tab",
   "payment_entries_tab"
  ],
  "fields": [
   {
+   "collapsible": 1,
    "fieldname": "customer_section",
    "fieldtype": "Section Break",
    "hide_days": 1,
@@ -323,6 +326,7 @@
    "fetch_from": "customer.customer_name",
    "fieldname": "customer_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "in_global_search": 1,
@@ -385,6 +389,7 @@
    "default": "Today",
    "fieldname": "transaction_date",
    "fieldtype": "Date",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "in_list_view": 1,
@@ -455,26 +460,27 @@
   {
    "fieldname": "customer_address",
    "fieldtype": "Link",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Customer Address",
    "options": "Address",
-   "print_hide": 1,
-   "hidden": 1
+   "print_hide": 1
   },
   {
    "allow_on_submit": 1,
    "fieldname": "address_display",
    "fieldtype": "Text Editor",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Address",
-   "read_only": 1,
-   "hidden": 1
+   "read_only": 1
   },
   {
    "fieldname": "contact_person",
    "fieldtype": "Link",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Contact Person",
@@ -484,16 +490,17 @@
   {
    "fieldname": "contact_display",
    "fieldtype": "Small Text",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "in_global_search": 1,
    "label": "Contact",
-   "read_only": 1,
-   "hidden": 1
+   "read_only": 1
   },
   {
    "fieldname": "contact_mobile",
    "fieldtype": "Small Text",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Mobile No",
@@ -514,20 +521,20 @@
   {
    "fieldname": "company_address_display",
    "fieldtype": "Text Editor",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Company Address",
-   "read_only": 1,
-   "hidden": 1
+   "read_only": 1
   },
   {
    "fieldname": "company_address",
    "fieldtype": "Link",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Company Address Name",
-   "options": "Address",
-   "hidden": 1
+   "options": "Address"
   },
   {
    "fieldname": "col_break46",
@@ -747,6 +754,7 @@
   {
    "fieldname": "total_qty",
    "fieldtype": "Float",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Total Quantity",
@@ -1224,6 +1232,7 @@
    "print_hide": 1
   },
   {
+   "collapsible": 1,
    "collapsible_depends_on": "terms",
    "fieldname": "terms_section_break",
    "fieldtype": "Section Break",
@@ -1259,6 +1268,7 @@
    "collapsible_depends_on": "project",
    "fieldname": "more_info",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "More Info",
@@ -1402,6 +1412,7 @@
    "label": "Delivery Status",
    "no_copy": 1,
    "options": "Not Delivered\nFully Delivered\nPartially Delivered\nClosed\nNot Applicable",
+   "permlevel": 2,
    "print_hide": 1
   },
   {
@@ -1588,13 +1599,13 @@
    "fetch_from": "contact_person.phone",
    "fieldname": "contact_phone",
    "fieldtype": "Data",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "in_standard_filter": 1,
    "label": "Phone",
    "options": "Phone",
-   "read_only": 1,
-   "hidden": 1
+   "read_only": 1
   },
   {
    "default": "0",
@@ -1645,9 +1656,9 @@
    "depends_on": "dispatch_address_name",
    "fieldname": "dispatch_address",
    "fieldtype": "Text Editor",
+   "hidden": 1,
    "label": "Dispatch Address",
-   "read_only": 1,
-   "hidden": 1
+   "read_only": 1
   },
   {
    "allow_on_submit": 1,
@@ -1696,6 +1707,7 @@
    "show_dashboard": 1
   },
   {
+   "collapsible": 1,
    "fieldname": "payment_terms_section",
    "fieldtype": "Section Break",
    "hidden": 1,
@@ -1799,10 +1811,10 @@
   {
    "fieldname": "company_contact_person",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Company Contact Person",
    "options": "Contact",
-   "print_hide": 1,
-   "hidden": 1
+   "print_hide": 1
   },
   {
    "default": "0",
@@ -1871,6 +1883,7 @@
    "collapsible": 1,
    "fieldname": "utm_analytics_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "UTM Analytics"
   },
   {
@@ -1987,7 +2000,8 @@
   },
   {
    "fieldname": "section_break_uceh",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "hidden": 1
   },
   {
    "fieldname": "column_break_dqxa",
@@ -2004,44 +2018,44 @@
    "fetch_if_empty": 1,
    "fieldname": "customer_personal_id",
    "fieldtype": "Data",
-   "label": "CMND/CCCD",
-   "hidden": 1
+   "hidden": 1,
+   "label": "CMND/CCCD"
   },
   {
    "fetch_from": "customer.passport_id",
    "fetch_if_empty": 1,
    "fieldname": "customer_passport_id",
    "fieldtype": "Data",
-   "label": "Passport ID",
-   "hidden": 1
+   "hidden": 1,
+   "label": "Passport ID"
   },
   {
    "fetch_from": "customer.place_of_issuance",
    "fieldname": "place_of_issuance",
    "fieldtype": "Data",
-   "label": "Place of Issuance",
-   "hidden": 1
+   "hidden": 1,
+   "label": "Place of Issuance"
   },
   {
    "fetch_from": "customer.date_of_issuance",
    "fieldname": "date_of_issuance",
    "fieldtype": "Date",
-   "label": "Date of Issuance",
-   "hidden": 1
+   "hidden": 1,
+   "label": "Date of Issuance"
   },
   {
    "fetch_from": "customer.birth_date",
    "fieldname": "birth_date",
    "fieldtype": "Date",
-   "label": "Birth Date",
-   "hidden": 1
+   "hidden": 1,
+   "label": "Birth Date"
   },
   {
    "fetch_from": "customer.gender",
    "fieldname": "gender",
    "fieldtype": "Data",
-   "label": "Gender",
-   "hidden": 1
+   "hidden": 1,
+   "label": "Gender"
   },
   {
    "fieldname": "address_contact_section",
@@ -2078,17 +2092,17 @@
   {
    "fieldname": "payment_entries",
    "fieldtype": "Table",
-   "label": "Payment Entries",
    "options": "Payment Entry Reference"
   },
   {
+   "collapsible": 1,
    "fieldname": "section_break_group_payment",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Group Orders"
   },
   {
    "fieldname": "group_payment_entries",
    "fieldtype": "Table",
-   "label": "Group Payment Entries",
    "options": "Payment Entry Reference",
    "read_only": 1
   },
@@ -2113,6 +2127,7 @@
   {
    "fieldname": "payment_records",
    "fieldtype": "Table",
+   "label": "Haravan Payment Records",
    "options": "Sales Order Payment Record",
    "read_only": 1
   },
@@ -2129,24 +2144,25 @@
   {
    "fieldname": "contact_info_heading",
    "fieldtype": "Heading",
-   "label": "Contact Info Heading",
-   "hidden": 1
+   "hidden": 1,
+   "label": "Contact Info Heading"
   },
   {
    "fieldname": "default_address_heading",
    "fieldtype": "Heading",
-   "label": "Default Address Heading",
-   "hidden": 1
+   "hidden": 1,
+   "label": "Default Address Heading"
   },
   {
    "fieldname": "customer_section_break",
    "fieldtype": "Section Break",
-   "label": "Customer Private Information",
-   "hidden": 1
+   "label": "Customer Private Information"
   },
   {
+   "collapsible": 1,
    "fieldname": "payment_section_section",
    "fieldtype": "Section Break",
+   "label": "Current Order",
    "read_only": 1
   },
   {
@@ -2155,13 +2171,9 @@
    "read_only": 1
   },
   {
-   "fieldname": "section_break_ctso",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "ref_sales_orders",
    "fieldtype": "Table",
-   "label": "Ref Sales Order",
+   "label": "Reference Orders",
    "options": "Sales Order Reference"
   },
   {
@@ -2248,7 +2260,7 @@
    "fieldname": "delivery_location",
    "fieldtype": "Select",
    "label": "Delivery location ",
-   "options": "\n209, Đ 30 tháng 4, Xuân Khánh, Ninh Kiều, Cần Thơ\n63 Kim Mã, Quận Ba Đình, Hà Nội\n72 Nguyễn Cư Trinh, Quận 1, Thành Phố Hồ Chí Minh\nGiao về địa chỉ khách"
+   "options": "\n209, \u0110 30 th\u00e1ng 4, Xu\u00e2n Kh\u00e1nh, Ninh Ki\u1ec1u, C\u1ea7n Th\u01a1\n63 Kim M\u00e3, Qu\u1eadn Ba \u0110\u00ecnh, H\u00e0 N\u1ed9i\n72 Nguy\u1ec5n C\u01b0 Trinh, Qu\u1eadn 1, Th\u00e0nh Ph\u1ed1 H\u1ed3 Ch\u00ed Minh\nGiao v\u1ec1 \u0111\u1ecba ch\u1ec9 kh\u00e1ch"
   },
   {
    "fieldname": "consultation_date",
@@ -2286,6 +2298,7 @@
   {
    "fieldname": "invoice_information",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Invoice information"
   },
   {
@@ -2304,6 +2317,7 @@
   {
    "fieldname": "deposit_method",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Deposit Method",
    "options": "\nCash\nBank Transfer\nCard"
   },
@@ -2311,7 +2325,7 @@
    "fieldname": "billing_address",
    "fieldtype": "Select",
    "label": "Billing Address",
-   "options": "\n72 Nguyễn Cư Trinh, Phường Bến Thành, TP Hồ Chí Minh\n63 Kim Mã, Phường Giảng Võ, TP Hà Nội\n209 Đường 30 Tháng 4, Phường Ninh Kiều, TP Cần Thơ"
+   "options": "\n72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh\n63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i\n209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1"
   },
   {
    "fieldname": "column_break_ybsp",
@@ -2328,15 +2342,6 @@
    "fieldname": "custom_all_images_html",
    "fieldtype": "HTML",
    "label": "Attached images"
-  },
-  {
-   "fieldname": "group_order_section",
-   "fieldtype": "Section Break",
-   "label": "Group Order"
-  },
-  {
-   "fieldname": "column_break_wcaf",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "split_order_group_name",
@@ -2407,8 +2412,7 @@
   },
   {
    "fieldname": "section_break_ref_orders",
-   "fieldtype": "Section Break",
-   "label": "Reference Orders"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "section_thong_tin_khach_hang",
@@ -2422,6 +2426,31 @@
   {
    "fieldname": "column_break_kh2",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_kqyq",
+   "fieldtype": "Section Break",
+   "label": "Invoice Information"
+  },
+  {
+   "fieldname": "section_break_rtya",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_kelr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_vxpl",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_mjsh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_rfhz",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
@@ -2429,7 +2458,7 @@
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-04 10:03:34.006083",
+ "modified": "2026-08-25 08:38:44.820872",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
