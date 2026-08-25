@@ -1,0 +1,56 @@
+{
+ "actions": [],
+ "creation": "2026-08-25 17:45:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "target_name",
+  "total_appointment",
+  "total_revenue",
+  "bonus"
+ ],
+ "fields": [
+  {
+   "fieldname": "target_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Target Name",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_appointment",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Total Appointment"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_revenue",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Revenue"
+  },
+  {
+   "default": "0",
+   "fieldname": "bonus",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Bonus"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-08-25 17:45:00.000000",
+ "modified_by": "Administrator",
+ "module": "CRM",
+ "name": "Appointment Target Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
