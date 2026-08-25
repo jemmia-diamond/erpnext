@@ -267,3 +267,50 @@ def move_to_opportunity(phone, products=None, purpose_lead=None, expected_delive
 				break
 
 
+def update_lead_status_on_lost(doc, method=None):
+	"""Transition linked Lead status to Nurturing and lead_temperature to Cold when Opportunity is Lost, unless Spam, Do Not Contact, or Converted."""
+	if getattr(doc, "opportunity_from", None) != "Lead" or not getattr(doc, "party_name", None):
+		return
+
+	if getattr(doc, "status", None) != "Lost" or not doc.has_value_changed("status"):
+		return
+
+	lead_status = frappe.db.get_value("Lead", doc.party_name, "status")
+	if not lead_status or lead_status in ("Spam", "Do Not Contact", "Converted"):
+		return
+
+	frappe.db.set_value(
+		"Lead",
+		doc.party_name,
+		{
+			"status": "Nurturing",
+			"lead_temperature": "Cold",
+		},
+	)
+	frappe.clear_document_cache("Lead", doc.party_name)
+
+
+def update_lead_temperature_from_opportunity(doc, method=None):
+	"""Update Lead lead_temperature based on active Opportunity expected_delivery_date.
+	- <= 30 days from today -> Hot
+	- > 30 days from today or empty date -> Warm
+	"""
+	if getattr(doc, "opportunity_from", None) != "Lead" or not getattr(doc, "party_name", None):
+		return
+
+	# Temperature based on active opp (Lost/Won handled separately)
+	if getattr(doc, "status", None) in ("Won", "Lost"):
+		return
+
+	lead_status = frappe.db.get_value("Lead", doc.party_name, "status")
+	if not lead_status or lead_status in ("Spam", "Do Not Contact", "Converted"):
+		return
+
+	temperature = "Warm"
+	expected_date = getattr(doc, "expected_delivery_date", None)
+	if expected_date and frappe.utils.date_diff(expected_date, frappe.utils.nowdate()) <= 30:
+		temperature = "Hot"
+
+	frappe.db.set_value("Lead", doc.party_name, "lead_temperature", temperature)
+	frappe.clear_document_cache("Lead", doc.party_name)
+

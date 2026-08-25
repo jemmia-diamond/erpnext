@@ -21,6 +21,7 @@
   "salutation",
   "middle_name",
   "territory",
+  "lead_temperature",
   "lead_stage",
   "column_break_1",
   "lead_owner",
@@ -976,6 +977,13 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Performed By"
+  },
+  {
+   "fieldname": "lead_temperature",
+   "fieldtype": "Select",
+   "label": "Lead Temperature",
+   "options": "\nNot Potential\nCold\nWarm\nHot",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -983,7 +991,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-08-06 05:00:10.758945",
+ "modified": "2026-08-24 23:35:24.930372",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",

@@ -82,6 +82,7 @@ class Lead(SellingController, CRMNote):
 		lead_source_name: DF.Data | None
 		lead_source_platform: DF.Data | None
 		lead_stage: DF.Literal["Lead", "Qualified Lead", "Opportunity", "Customer"]
+		lead_temperature: DF.Literal["", "Not Potential", "Cold", "Warm", "Hot"]
 		market_segment: DF.Link | None
 		middle_name: DF.Data | None
 		mobile_no: DF.Data | None
@@ -208,6 +209,7 @@ class Lead(SellingController, CRMNote):
 		self.sync_pancake_data_fields()
 		self.set_spam_status()
 		self.update_status_from_message_timestamps()
+		self.set_lead_temperature()
 		self.check_and_auto_create_opportunity_for_converted_lead()
 		self.check_and_auto_create_opportunity()
 		self.process_notes()
@@ -375,6 +377,26 @@ class Lead(SellingController, CRMNote):
 				
 		if self.status == "Spam" and self.has_value_changed("status"):
 			self.qualification_status = "Unqualified"
+
+	def set_lead_temperature(self):
+		"""
+		Update lead_temperature based on status and active Opportunity:
+		- 'Not Potential': If status in ('Spam', 'Do Not Contact')
+		- 'Hot': If status == 'Converted' OR active Opportunity delivery <= 30 days
+		- 'Cold': If status == 'Nurturing'
+		- 'Warm': Controlled by active Opportunity (> 30 days or no date) or default
+		"""
+		if self.status in ("Spam", "Do Not Contact"):
+			self.lead_temperature = "Not Potential"
+			return
+
+		if self.status == "Converted":
+			self.lead_temperature = "Hot"
+			return
+
+		if self.status == "Nurturing":
+			self.lead_temperature = "Cold"
+			return
 
 	def update_status_from_message_timestamps(self):
 		"""
