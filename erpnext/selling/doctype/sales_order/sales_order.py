@@ -3495,13 +3495,16 @@ def larksuite_notification(sales_order_doc):
 		response.raise_for_status()
 
 		try:
-			return response.json().get("message", "Success")
+			return response.json()
 		except json.JSONDecodeError:
 			return response.text
 
 	except requests.exceptions.HTTPError:
-		error_message = f"Error ({response.status_code}): {response.text}"
-		return error_message
+		try:
+			return response.json()
+		except Exception:
+			error_message = f"Error ({response.status_code}): {response.text}"
+			return error_message
 
 	except Exception as e:
 		return str(e)
