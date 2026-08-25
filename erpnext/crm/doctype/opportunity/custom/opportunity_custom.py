@@ -268,7 +268,7 @@ def move_to_opportunity(phone, products=None, purpose_lead=None, expected_delive
 
 
 def update_lead_status_on_lost(doc, method=None):
-	"""Transition linked Lead status to Nurturing and lead_temperature to Cold when Opportunity is Lost, unless Spam, Do Not Contact, or Converted."""
+	"""Transition linked Lead status to Nurturing and lead_temperature to Not Potential when Opportunity is Lost, unless Spam, Do Not Contact, or Converted."""
 	if getattr(doc, "opportunity_from", None) != "Lead" or not getattr(doc, "party_name", None):
 		return
 
@@ -284,7 +284,7 @@ def update_lead_status_on_lost(doc, method=None):
 		doc.party_name,
 		{
 			"status": "Nurturing",
-			"lead_temperature": "Cold",
+			"lead_temperature": "Not Potential",
 		},
 	)
 	frappe.clear_document_cache("Lead", doc.party_name)

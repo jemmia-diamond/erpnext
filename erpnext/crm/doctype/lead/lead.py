@@ -380,11 +380,10 @@ class Lead(SellingController, CRMNote):
 
 	def set_lead_temperature(self):
 		"""
-		Update lead_temperature based on status and active Opportunity:
+		Update lead_temperature based on status:
 		- 'Not Potential': If status in ('Spam', 'Do Not Contact')
-		- 'Hot': If status == 'Converted' OR active Opportunity delivery <= 30 days
-		- 'Cold': If status == 'Nurturing'
-		- 'Warm': Controlled by active Opportunity (> 30 days or no date) or default
+		- 'Hot': If status == 'Converted'
+		- 'Cold': If status in ('New', 'Prospecting', 'Nurturing')
 		"""
 		if self.status in ("Spam", "Do Not Contact"):
 			self.lead_temperature = "Not Potential"
@@ -394,7 +393,7 @@ class Lead(SellingController, CRMNote):
 			self.lead_temperature = "Hot"
 			return
 
-		if self.status == "Nurturing":
+		if self.status in ("New", "Prospecting", "Nurturing"):
 			self.lead_temperature = "Cold"
 			return
 

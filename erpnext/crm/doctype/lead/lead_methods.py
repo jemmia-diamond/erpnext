@@ -1215,7 +1215,14 @@ def auto_nurture_leads():
 					target_leads.append(lead.name)
 
 	if target_leads:
-		frappe.db.set_value("Lead", target_leads, "status", "Nurturing")
+		frappe.db.set_value(
+			"Lead",
+			target_leads,
+			{
+				"status": "Nurturing",
+				"lead_temperature": "Cold",
+			},
+		)
 
 
 @frappe.whitelist()
