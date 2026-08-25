@@ -31,6 +31,9 @@ if TYPE_CHECKING:
 	from frappe.model.document import Document
 
 
+
+
+
 def is_non_empty(value: str | None) -> bool:
 	return bool(value and value.strip())
 
@@ -732,68 +735,34 @@ def _relink_dynamic_links(from_lead: str, to_lead: str):
 				(to_lead, from_lead, doc.name),
 			)
 
+DOWNSTREAM_RELINK_SPECS = [
+	("tabCustomer", "lead_name", "lead_name = %(from_lead)s"),
+	("tabAppointment", ["party", "lead"], "appointment_with = 'Lead' AND party = %(from_lead)s"),
+	("tabOpportunity", "party_name", "opportunity_from = 'Lead' AND party_name = %(from_lead)s"),
+	("tabCall Log", "participant", "participant_type = 'Lead' AND participant = %(from_lead)s"),
+	("tabCRM Note", "parent", "parenttype = 'Lead' AND parent = %(from_lead)s"),
+	("tabCommunication", "reference_name", "reference_doctype = 'Lead' AND reference_name = %(from_lead)s"),
+	("tabFile", "attached_to_name", "attached_to_doctype = 'Lead' AND attached_to_name = %(from_lead)s"),
+	("tabVersion", "docname", "ref_doctype = 'Lead' AND docname = %(from_lead)s"),
+	("tabComment", "reference_name", "reference_doctype = 'Lead' AND reference_name = %(from_lead)s"),
+]
 
 def _relink_downstream_docs(from_lead: str, to_lead: str):
 	"""Re-link all downstream documents, logs, and audits from one lead to another."""
-	# Customers linked via lead_name
-	frappe.db.sql(
-		"""
-		UPDATE `tabCustomer`
-		SET lead_name = %s
-		WHERE lead_name = %s
-	""",
-		(to_lead, from_lead),
-	)
-
-	# Appointments linked via lead
-	frappe.db.sql(
-		"""
-		UPDATE `tabAppointment`
-		SET `lead` = %s
-		WHERE `lead` = %s
-	""",
-		(to_lead, from_lead),
-	)
-
-	# Communications referencing this lead
-	frappe.db.sql(
-		"""
-		UPDATE `tabCommunication`
-		SET reference_name = %s
-		WHERE reference_doctype = 'Lead' AND reference_name = %s
-	""",
-		(to_lead, from_lead),
-	)
-
-	# File attachments
-	frappe.db.sql(
-		"""
-		UPDATE `tabFile`
-		SET attached_to_name = %s
-		WHERE attached_to_doctype = 'Lead' AND attached_to_name = %s
-	""",
-		(to_lead, from_lead),
-	)
-
-	# Version Audit Trail
-	frappe.db.sql(
-		"""
-		UPDATE `tabVersion`
-		SET docname = %s
-		WHERE ref_doctype = 'Lead' AND docname = %s
-	""",
-		(to_lead, from_lead),
-	)
-
-	# Comments timeline
-	frappe.db.sql(
-		"""
-		UPDATE `tabComment`
-		SET reference_name = %s
-		WHERE reference_doctype = 'Lead' AND reference_name = %s
-	""",
-		(to_lead, from_lead),
-	)
+	params = {"from_lead": from_lead, "to_lead": to_lead}
+	for table, fields, condition in DOWNSTREAM_RELINK_SPECS:
+		try:
+			if isinstance(fields, (list, tuple)):
+				set_clause = ", ".join(f"`{f}` = %(to_lead)s" for f in fields)
+			else:
+				set_clause = f"`{fields}` = %(to_lead)s"
+			frappe.db.sql(f"UPDATE `{table}` SET {set_clause} WHERE {condition}", params)
+		except Exception as e:
+			frappe.log_error(
+				f"Failed to relink {table} from {from_lead} to {to_lead}: {e!s}",
+				"Lead Relink Downstream Error",
+			)
+			raise
 
 
 def _transfer_lead_fields(master_doc, loser_doc):
