@@ -132,13 +132,13 @@ class Appointment(Document):
 			self.handle_missing_party_or_source()
 
 	def before_insert(self):
-		number_of_appointments_in_same_slot = frappe.db.count(
-			"Appointment", filters={"scheduled_time": self.scheduled_time}
-		)
-		number_of_agents = frappe.db.get_single_value("Appointment Booking Settings", "number_of_agents")
-		if number_of_agents != 0:
-			if number_of_appointments_in_same_slot >= number_of_agents:
-				frappe.throw(_("Time slot is not available"))
+		# number_of_appointments_in_same_slot = frappe.db.count(
+		# 	"Appointment", filters={"scheduled_time": self.scheduled_time}
+		# )
+		# number_of_agents = frappe.db.get_single_value("Appointment Booking Settings", "number_of_agents")
+		# if number_of_agents != 0:
+		# 	if number_of_appointments_in_same_slot >= number_of_agents:
+		# 		frappe.throw(_("Time slot is not available"))
 		# Link lead or customer ( API Flow )
 		if not self.party:
 			if not self.appointment_with:
@@ -424,5 +424,12 @@ def auto_cancel_overdue_appointments():
 
 	if appointments:
 		for app_name in appointments:
-			frappe.db.set_value("Appointment", app_name, "status", "Cancelled")
+			try:
+				doc = frappe.get_doc("Appointment", app_name)
+				doc.performed_by = frappe.session.user or "Administrator"
+				doc.status = "Cancelled"
+				doc.save(ignore_permissions=True)
+			except Exception as e:
+				frappe.log_error(f"Failed to auto cancel appointment {app_name}: {e!s}")
 		frappe.db.commit()
+
