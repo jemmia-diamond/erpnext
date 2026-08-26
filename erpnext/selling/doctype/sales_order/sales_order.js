@@ -362,17 +362,17 @@ frappe.ui.form.on("Sales Order", {
 			frm.set_value("gender", doc.gender);
 		});
 
-		// link filters for promotions
-		frm.set_query("promotions", function () {
-			return {
-				query: "erpnext.selling.doctype.promotion.promotion.promotion_query",
-				filters: {
-					scope: "Order",
-					transaction_date: frm.doc.transaction_date,
-					real_order_date: frm.doc.real_order_date,
-				},
-			};
-		});
+		// // link filters for promotions
+		// frm.set_query("promotions", function () {
+		// 	return {
+		// 		query: "erpnext.selling.doctype.promotion.promotion.promotion_query",
+		// 		filters: {
+		// 			scope: "Order",
+		// 			transaction_date: frm.doc.transaction_date,
+		// 			real_order_date: frm.doc.real_order_date,
+		// 		},
+		// 	};
+		// });
 
 		if (frm.doc.docstatus === 1) {
 			if (
@@ -507,39 +507,39 @@ frappe.ui.form.on("Sales Order", {
 		});
 	},
 
-	sync_reference_promotion_by_serial: function (frm, cdt, cdn) {
-		const row = locals[cdt][cdn];
-		if (!row.serial_numbers) return;
-
-		const serials = row.serial_numbers
-			.split("\n")
-			.map((s) => s.trim())
-			.filter((s) => s);
-		const target_serial = serials[serials.length - 1];
-
-		if (!target_serial) return;
-
-		frappe.call({
-			method: "erpnext.selling.doctype.sales_order.sales_order.get_item_promotions_by_serial",
-			args: {
-				source_order: frm.doc.name,
-				target_serial: target_serial,
-			},
-			callback: function (r) {
-				if (r.message && r.message.new_promotions) {
-					const data = r.message;
-					if (data.new_promotions && data.new_promotions !== "[]") {
-						frappe.model.set_value(cdt, cdn, "new_promotions", data.new_promotions);
-
-						if (typeof render_promotion_pills !== "undefined") {
-							setTimeout(() => render_promotion_pills(frm, cdt, cdn), 100);
-						}
-					}
-				}
-				frm.refresh_field("items");
-			},
-		});
-	},
+	// sync_reference_promotion_by_serial: function (frm, cdt, cdn) {
+	// 	const row = locals[cdt][cdn];
+	// 	if (!row.serial_numbers) return;
+	
+	// 	const serials = row.serial_numbers
+	// 		.split("\n")
+	// 		.map((s) => s.trim())
+	// 		.filter((s) => s);
+	// 	const target_serial = serials[serials.length - 1];
+	
+	// 	if (!target_serial) return;
+	
+	// 	frappe.call({
+	// 		method: "erpnext.selling.doctype.sales_order.sales_order.get_item_promotions_by_serial",
+	// 		args: {
+	// 			source_order: frm.doc.name,
+	// 			target_serial: target_serial,
+	// 		},
+	// 		callback: function (r) {
+	// 			if (r.message && r.message.new_promotions) {
+	// 				const data = r.message;
+	// 				if (data.new_promotions && data.new_promotions !== "[]") {
+	// 					frappe.model.set_value(cdt, cdn, "new_promotions", data.new_promotions);
+	
+	// 					if (typeof render_promotion_pills !== "undefined") {
+	// 						setTimeout(() => render_promotion_pills(frm, cdt, cdn), 100);
+	// 					}
+	// 				}
+	// 			}
+	// 			frm.refresh_field("items");
+	// 		},
+	// 	});
+	// },
 
 	auto_fetch_item_policies: function (frm) {
 		if (frm.doc.docstatus !== 0 || frm.doc.__islocal) return;
@@ -1674,73 +1674,73 @@ frappe.ui.form.on("Sales Order Item", {
 		frm.events.trigger_fetch_policy(frm, row.name, row.item_code, true);
 	},
 
-	serial: function (frm, cdt, cdn) {
-		var row = locals[cdt][cdn];
-		if (row.serial) {
-			if (!erpnext.utils.item.isJewelryItem(row)) {
-				frappe.msgprint({
-					title: __("Không hỗ trợ Serial"),
-					indicator: "orange",
-					message: __("Chỉ sản phẩm Trang sức mới sử dụng số Serial."),
-				});
-				frappe.model.set_value(cdt, cdn, "serial", null);
-				return;
-			}
+	// serial: function (frm, cdt, cdn) {
+	// 	var row = locals[cdt][cdn];
+	// 	if (row.serial) {
+	// 		if (!erpnext.utils.item.isJewelryItem(row)) {
+	// 			frappe.msgprint({
+	// 				title: __("Không hỗ trợ Serial"),
+	// 				indicator: "orange",
+	// 				message: __("Chỉ sản phẩm Trang sức mới sử dụng số Serial."),
+	// 			});
+	// 			frappe.model.set_value(cdt, cdn, "serial", null);
+	// 			return;
+	// 		}
 
-			const val = row.serial;
-			frappe.call({
-				method: "erpnext.selling.doctype.sales_order.sales_order.validate_serial_number",
-				args: {
-					serial_number: val,
-					sales_order_name: frm.doc.name,
-				},
-				callback: function (r) {
-					if (r.message && !r.message.allowed) {
-						frappe.msgprint({
-							title: __("Trùng số Serial"),
-							indicator: "red",
-							message: __("Số Serial <b>{0}</b> đã được điền trong Đơn hàng <b>{1}</b>.", [
-								val,
-								r.message.duplicate_order,
-							]),
-						});
-						frappe.model.set_value(cdt, cdn, "serial", null);
-						return;
-					}
+	// 		const val = row.serial;
+	// 		frappe.call({
+	// 			method: "erpnext.selling.doctype.sales_order.sales_order.validate_serial_number",
+	// 			args: {
+	// 				serial_number: val,
+	// 				sales_order_name: frm.doc.name,
+	// 			},
+	// 			callback: function (r) {
+	// 				if (r.message && !r.message.allowed) {
+	// 					frappe.msgprint({
+	// 						title: __("Trùng số Serial"),
+	// 						indicator: "red",
+	// 						message: __("Số Serial <b>{0}</b> đã được điền trong Đơn hàng <b>{1}</b>.", [
+	// 							val,
+	// 							r.message.duplicate_order,
+	// 						]),
+	// 					});
+	// 					frappe.model.set_value(cdt, cdn, "serial", null);
+	// 					return;
+	// 				}
 
-					const current_serials = row.serial_numbers ? row.serial_numbers.split("\n") : [];
-					if (!current_serials.includes(val)) {
-						const new_list = row.serial_numbers ? `${row.serial_numbers}\n${val}` : val;
-						frappe.model.set_value(
-							cdt,
-							cdn,
-							"serial_numbers",
-							new_list.replace(/\n+/g, "\n").trim()
-						);
-					}
+	// 				const current_serials = row.serial_numbers ? row.serial_numbers.split("\n") : [];
+	// 				if (!current_serials.includes(val)) {
+	// 					const new_list = row.serial_numbers ? `${row.serial_numbers}\n${val}` : val;
+	// 					frappe.model.set_value(
+	// 						cdt,
+	// 						cdn,
+	// 						"serial_numbers",
+	// 						new_list.replace(/\n+/g, "\n").trim()
+	// 					);
+	// 				}
 
-					frappe.model.set_value(cdt, cdn, "serial", null);
+	// 				frappe.model.set_value(cdt, cdn, "serial", null);
 
-					if (
-						(frm.doc.haravan_ref_order_id || frm.doc.split_order_group) &&
-						(!row.new_promotions || row.new_promotions == "[]")
-					) {
-						frm.events.sync_reference_promotion_by_serial(frm, cdt, cdn);
-					}
+	// 				if (
+	// 					(frm.doc.haravan_ref_order_id || frm.doc.split_order_group) &&
+	// 					(!row.new_promotions || row.new_promotions == "[]")
+	// 				) {
+	// 					frm.events.sync_reference_promotion_by_serial?.(frm, cdt, cdn);
+	// 				}
 
-					frappe.db.get_value("Serial", val, "serial_number").then((r) => {
-						if (r && r.message && r.message.serial_number && r.message.serial_number !== val) {
-							const official = r.message.serial_number;
-							const updated = row.serial_numbers
-								.split("\n")
-								.map((s) => (s === val ? official : s));
-							frappe.model.set_value(cdt, cdn, "serial_numbers", updated.join("\n"));
-						}
-					});
-				},
-			});
-		}
-	},
+	// 				frappe.db.get_value("Serial", val, "serial_number").then((r) => {
+	// 					if (r && r.message && r.message.serial_number && r.message.serial_number !== val) {
+	// 						const official = r.message.serial_number;
+	// 						const updated = row.serial_numbers
+	// 							.split("\n")
+	// 							.map((s) => (s === val ? official : s));
+	// 						frappe.model.set_value(cdt, cdn, "serial_numbers", updated.join("\n"));
+	// 					}
+	// 				});
+	// 			},
+	// 		});
+	// 	}
+	// },
 
 	promotion: function (frm, cdt, cdn) {
 		var row = locals[cdt][cdn];
@@ -2921,220 +2921,220 @@ function parse_promos(val) {
 	}
 }
 
-frappe.ui.form.on("Sales Order Item", {
-	select_promotions: function (frm, cdt, cdn) {
-		var dialog = new frappe.ui.form.MultiSelectDialog({
-			doctype: "Promotion",
-			target: frm,
-			setters: {
-				title: null,
-			},
-			read_only_setters: ["title"],
-			primary_action_label: "Add Selected",
-			get_query() {
-				return {
-					query: "erpnext.selling.doctype.promotion.promotion.promotion_query",
-					filters: {
-						transaction_date: frm.doc.transaction_date,
-						real_order_date: frm.doc.real_order_date,
-						scope: "Line Item",
-						as_dict: 1,
-					},
-				};
-			},
-			action(selections) {
-				var existing = parse_promos(locals[cdt][cdn]["new_promotions"]);
-				existing.push(...selections);
-				locals[cdt][cdn]["new_promotions"] = JSON.stringify(existing);
-				frm.dirty();
-				dialog.dialog.$wrapper.modal("hide");
-				dialog.dialog.$wrapper.remove();
-				$(".modal-backdrop").last().remove();
-				$("body").addClass("modal-open");
-				var grid_row = frm.fields_dict.items.grid.grid_rows_by_docname[cdn];
-				if (grid_row) {
-					grid_row.toggle_view(true);
-					if (grid_row.grid_form && grid_row.grid_form.fields_dict.select_promotions) {
-						$(grid_row.grid_form.fields_dict.select_promotions.wrapper)
-							.find(".promo-validation-warning")
-							.remove();
-					}
-					render_promotion_pills(frm, cdt, cdn);
-				}
-			},
-		});
+// frappe.ui.form.on("Sales Order Item", {
+// 	select_promotions: function (frm, cdt, cdn) {
+// 		var dialog = new frappe.ui.form.MultiSelectDialog({
+// 			doctype: "Promotion",
+// 			target: frm,
+// 			setters: {
+// 				title: null,
+// 			},
+// 			read_only_setters: ["title"],
+// 			primary_action_label: "Add Selected",
+// 			get_query() {
+// 				return {
+// 					query: "erpnext.selling.doctype.promotion.promotion.promotion_query",
+// 					filters: {
+// 						transaction_date: frm.doc.transaction_date,
+// 						real_order_date: frm.doc.real_order_date,
+// 						scope: "Line Item",
+// 						as_dict: 1,
+// 					},
+// 				};
+// 			},
+// 			action(selections) {
+// 				var existing = parse_promos(locals[cdt][cdn]["new_promotions"]);
+// 				existing.push(...selections);
+// 				locals[cdt][cdn]["new_promotions"] = JSON.stringify(existing);
+// 				frm.dirty();
+// 				dialog.dialog.$wrapper.modal("hide");
+// 				dialog.dialog.$wrapper.remove();
+// 				$(".modal-backdrop").last().remove();
+// 				$("body").addClass("modal-open");
+// 				var grid_row = frm.fields_dict.items.grid.grid_rows_by_docname[cdn];
+// 				if (grid_row) {
+// 					grid_row.toggle_view(true);
+// 					if (grid_row.grid_form && grid_row.grid_form.fields_dict.select_promotions) {
+// 						$(grid_row.grid_form.fields_dict.select_promotions.wrapper)
+// 							.find(".promo-validation-warning")
+// 							.remove();
+// 					}
+// 					render_promotion_pills(frm, cdt, cdn);
+// 				}
+// 			},
+// 		});
 
-		setTimeout(() => {
-			dialog.dialog.get_field("search_term").set_label("Search Promotion Title");
-			dialog.dialog.get_secondary_btn().hide();
-			dialog.dialog.get_field("title").$wrapper.hide();
-			dialog.dialog.$wrapper.on("hidden.bs.modal", function () {
-				$(this).remove();
-				$(".modal-backdrop").last().remove();
-				$("body").addClass("modal-open");
-				var grid_row = frm.fields_dict.items.grid.grid_rows_by_docname[cdn];
-				if (grid_row) {
-					grid_row.toggle_view(true);
-					render_promotion_pills(frm, cdt, cdn);
-				}
-			});
-		}, 100);
-	},
-	form_render: function (frm, cdt, cdn) {
-		render_promotion_pills(frm, cdt, cdn);
-		var grid_row = frm.fields_dict.items.grid.grid_rows_by_docname[cdn];
-		if (grid_row && grid_row.grid_form) {
-			$(grid_row.grid_form.wrapper)
-				.find(
-					".grid-insert-row-below, .grid-insert-row, .grid-duplicate-row, .grid-move-row, .grid-append-row"
-				)
-				.addClass("hidden");
-		}
-		if (grid_row && grid_row.grid_form && grid_row.grid_form.fields_dict.fetch_policy) {
-			var $wrapper = $(grid_row.grid_form.fields_dict.fetch_policy.wrapper);
-			if (!$wrapper.prev(".promo-guidance").length) {
-				$(
-					'<div class="promo-guidance" style="margin-bottom:20px;font-size:12px;color:#666;">' +
-						"<b>Lưu ý:</b><br>" +
-						"Mỗi CTKM chỉ áp dụng cho sản phẩm đơn chiếc nên cần lưu ý trong trường hợp sản phẩm là <b>Bông Tai</b>:<br>" +
-						"- <b>Đối với Sản phẩm tạm:</b> Chọn 02 mã CTKM (tương ứng cho 02 chiếc đơn lẻ cấu thành một cặp). (ví dụ: với SPT giảm 2tr, chọn 2 voucher giảm 1tr)<br>" +
-						"- <b>Đối với Sản phẩm tồn kho:</b> Chỉ chọn duy nhất 01 CTKM. (ví dụ, với Bông Tai giảm 1tr, chỉ chọn 1 voucher giảm 500.000)<br><br>" +
-						"Nếu không tìm thấy, liên hệ Marketing để được hỗ trợ" +
-						"</div>"
-				).insertBefore($wrapper);
-			}
-		}
-	},
-	rate: function (frm, cdt, cdn) {
-		render_promotion_pills(frm, cdt, cdn);
-	},
-	price_list_rate: function (frm, cdt, cdn) {
-		render_promotion_pills(frm, cdt, cdn);
-	},
-	qty: function (frm, cdt, cdn) {
-		render_promotion_pills(frm, cdt, cdn);
-	},
-});
+// 		setTimeout(() => {
+// 			dialog.dialog.get_field("search_term").set_label("Search Promotion Title");
+// 			dialog.dialog.get_secondary_btn().hide();
+// 			dialog.dialog.get_field("title").$wrapper.hide();
+// 			dialog.dialog.$wrapper.on("hidden.bs.modal", function () {
+// 				$(this).remove();
+// 				$(".modal-backdrop").last().remove();
+// 				$("body").addClass("modal-open");
+// 				var grid_row = frm.fields_dict.items.grid.grid_rows_by_docname[cdn];
+// 				if (grid_row) {
+// 					grid_row.toggle_view(true);
+// 					render_promotion_pills(frm, cdt, cdn);
+// 				}
+// 			});
+// 		}, 100);
+// 	},
+// 	form_render: function (frm, cdt, cdn) {
+// 		render_promotion_pills(frm, cdt, cdn);
+// 		var grid_row = frm.fields_dict.items.grid.grid_rows_by_docname[cdn];
+// 		if (grid_row && grid_row.grid_form) {
+// 			$(grid_row.grid_form.wrapper)
+// 				.find(
+// 					".grid-insert-row-below, .grid-insert-row, .grid-duplicate-row, .grid-move-row, .grid-append-row"
+// 				)
+// 				.addClass("hidden");
+// 		}
+// 		if (grid_row && grid_row.grid_form && grid_row.grid_form.fields_dict.fetch_policy) {
+// 			var $wrapper = $(grid_row.grid_form.fields_dict.fetch_policy.wrapper);
+// 			if (!$wrapper.prev(".promo-guidance").length) {
+// 				$(
+// 					'<div class="promo-guidance" style="margin-bottom:20px;font-size:12px;color:#666;">' +
+// 						"<b>Lưu ý:</b><br>" +
+// 						"Mỗi CTKM chỉ áp dụng cho sản phẩm đơn chiếc nên cần lưu ý trong trường hợp sản phẩm là <b>Bông Tai</b>:<br>" +
+// 						"- <b>Đối với Sản phẩm tạm:</b> Chọn 02 mã CTKM (tương ứng cho 02 chiếc đơn lẻ cấu thành một cặp). (ví dụ: với SPT giảm 2tr, chọn 2 voucher giảm 1tr)<br>" +
+// 						"- <b>Đối với Sản phẩm tồn kho:</b> Chỉ chọn duy nhất 01 CTKM. (ví dụ, với Bông Tai giảm 1tr, chỉ chọn 1 voucher giảm 500.000)<br><br>" +
+// 						"Nếu không tìm thấy, liên hệ Marketing để được hỗ trợ" +
+// 						"</div>"
+// 				).insertBefore($wrapper);
+// 			}
+// 		}
+// 	},
+// 	rate: function (frm, cdt, cdn) {
+// 		render_promotion_pills(frm, cdt, cdn);
+// 	},
+// 	price_list_rate: function (frm, cdt, cdn) {
+// 		render_promotion_pills(frm, cdt, cdn);
+// 	},
+// 	qty: function (frm, cdt, cdn) {
+// 		render_promotion_pills(frm, cdt, cdn);
+// 	},
+// });
 
-function render_promotion_pills(frm, cdt, cdn) {
-	var promos = parse_promos(locals[cdt][cdn]["new_promotions"]);
-	var grid_row = frm.fields_dict.items.grid.grid_rows_by_docname[cdn];
-	if (!grid_row || !grid_row.grid_form) return;
+// function render_promotion_pills(frm, cdt, cdn) {
+// 	var promos = parse_promos(locals[cdt][cdn]["new_promotions"]);
+// 	var grid_row = frm.fields_dict.items.grid.grid_rows_by_docname[cdn];
+// 	if (!grid_row || !grid_row.grid_form) return;
 
-	var $field = $(grid_row.grid_form.fields_dict.select_promotions.wrapper);
-	$field.find(".promotion-pills").remove();
-	if (!promos.length) return;
+// 	var $field = $(grid_row.grid_form.fields_dict.select_promotions.wrapper);
+// 	$field.find(".promotion-pills").remove();
+// 	if (!promos.length) return;
 
-	var initial_price = locals[cdt][cdn].price_list_rate || 0;
+// 	var initial_price = locals[cdt][cdn].price_list_rate || 0;
 
-	var $pills = $(
-		'<div class="promotion-pills" style="display:flex;flex-direction:column;gap:10px;margin-top:6px;"></div>'
-	);
-	promos.forEach((promo, idx) => {
-		$pills.append(
-			$(`<div class="promo-pill" draggable="true" data-promo="${frappe.utils.escape_html(
-				promo
-			)}" data-idx="${idx}" style="background:#f5f5f5;color:#333;padding:8px 14px;border-radius:8px;font-size:13px;display:flex;align-items:center;justify-content:space-between;border:1px solid #d9d9d9;cursor:grab;">
-			<div style="display:flex;flex-direction:column;">
-				<span class="promo-label" style="font-weight:600;">${frappe.utils.escape_html(promo)}</span>
-				<span class="promo-price" style="font-size:12px;color:#1976d2;margin-top:2px;">...</span>
-			</div>
-			<span class="remove-promo" data-idx="${idx}" style="cursor:pointer;font-size:16px;font-weight:bold;color:#999;margin-left:10px;">&times;</span>
-		</div>`)
-		);
-	});
-	$field.append($pills);
+// 	var $pills = $(
+// 		'<div class="promotion-pills" style="display:flex;flex-direction:column;gap:10px;margin-top:6px;"></div>'
+// 	);
+// 	promos.forEach((promo, idx) => {
+// 		$pills.append(
+// 			$(`<div class="promo-pill" draggable="true" data-promo="${frappe.utils.escape_html(
+// 				promo
+// 			)}" data-idx="${idx}" style="background:#f5f5f5;color:#333;padding:8px 14px;border-radius:8px;font-size:13px;display:flex;align-items:center;justify-content:space-between;border:1px solid #d9d9d9;cursor:grab;">
+// 			<div style="display:flex;flex-direction:column;">
+// 				<span class="promo-label" style="font-weight:600;">${frappe.utils.escape_html(promo)}</span>
+// 				<span class="promo-price" style="font-size:12px;color:#1976d2;margin-top:2px;">...</span>
+// 			</div>
+// 			<span class="remove-promo" data-idx="${idx}" style="cursor:pointer;font-size:16px;font-weight:bold;color:#999;margin-left:10px;">&times;</span>
+// 		</div>`)
+// 		);
+// 	});
+// 	$field.append($pills);
 
-	fetch_promo_map(promos).then(function (promo_map) {
-		var current_price = initial_price;
+// 	fetch_promo_map(promos).then(function (promo_map) {
+// 		var current_price = initial_price;
 
-		var promo_objects = promos
-			.map(function (name) {
-				return promo_map[name];
-			})
-			.filter(Boolean);
+// 		var promo_objects = promos
+// 			.map(function (name) {
+// 				return promo_map[name];
+// 			})
+// 			.filter(Boolean);
 
-		promo_objects.forEach(function (p) {
-			current_price = apply_promo_discount(current_price, p, "Line Item");
-		});
+// 		promo_objects.forEach(function (p) {
+// 			current_price = apply_promo_discount(current_price, p, "Line Item");
+// 		});
 
-		var running_price = initial_price;
-		$pills.find(".promo-pill").each(function () {
-			var name = $(this).attr("data-promo");
-			var p = promo_map[name];
-			if (p) {
-				running_price = apply_promo_discount(running_price, p, "Line Item");
-				$(this)
-					.find(".promo-label")
-					.text(p.title || p.name);
-				$(this)
-					.find(".promo-price")
-					.text(
-						"Sau khuyến mãi: " +
-							format_currency(running_price, frm.doc.currency).replace(/,00$/, "")
-					);
-			} else {
-				$(this).find(".promo-price").text("Không tìm thấy trợ giá");
-			}
-		});
+// 		var running_price = initial_price;
+// 		$pills.find(".promo-pill").each(function () {
+// 			var name = $(this).attr("data-promo");
+// 			var p = promo_map[name];
+// 			if (p) {
+// 				running_price = apply_promo_discount(running_price, p, "Line Item");
+// 				$(this)
+// 					.find(".promo-label")
+// 					.text(p.title || p.name);
+// 				$(this)
+// 					.find(".promo-price")
+// 					.text(
+// 						"Sau khuyến mãi: " +
+// 							format_currency(running_price, frm.doc.currency).replace(/,00$/, "")
+// 					);
+// 			} else {
+// 				$(this).find(".promo-price").text("Không tìm thấy trợ giá");
+// 			}
+// 		});
 
-		$field.find(".promo-validation-warning").remove();
-		var diff = Math.abs(
-			locals[cdt][cdn].rate * locals[cdt][cdn].qty - current_price * locals[cdt][cdn].qty
-		);
-		if (current_price >= 0 && diff > 5000) {
-			$field.append(
-				$(
-					`<div class="promo-validation-warning" style="color:#d32f2f;font-size:12px;margin-top:5px;padding:6px 10px;background:#fdeaea;border-radius:4px;border:1px solid #f5c6c6;"><i class="fa fa-exclamation-triangle"></i> Gi\u00e1 b\u1ecb l\u1ec7ch ${format_currency(
-						diff,
-						frm.doc.currency
-					).replace(/,00$/, "")} so v\u1edbi th\u1ef1c t\u1ebf</div>`
-				)
-			);
-		} else if (current_price >= 0) {
-			$field.append(
-				$(
-					`<div class="promo-validation-warning" style="color:#2e7d32;font-size:12px;margin-top:5px;padding:6px 10px;background:#e8f5e9;border-radius:4px;border:1px solid #c8e6c9;"><i class="fa fa-check-circle"></i> Gi\u00e1 kh\u1edbp v\u1edbi gi\u00e1 th\u1ef1c t\u1ebf</div>`
-				)
-			);
-		}
-	});
+// 		$field.find(".promo-validation-warning").remove();
+// 		var diff = Math.abs(
+// 			locals[cdt][cdn].rate * locals[cdt][cdn].qty - current_price * locals[cdt][cdn].qty
+// 		);
+// 		if (current_price >= 0 && diff > 5000) {
+// 			$field.append(
+// 				$(
+// 					`<div class="promo-validation-warning" style="color:#d32f2f;font-size:12px;margin-top:5px;padding:6px 10px;background:#fdeaea;border-radius:4px;border:1px solid #f5c6c6;"><i class="fa fa-exclamation-triangle"></i> Gi\u00e1 b\u1ecb l\u1ec7ch ${format_currency(
+// 						diff,
+// 						frm.doc.currency
+// 					).replace(/,00$/, "")} so v\u1edbi th\u1ef1c t\u1ebf</div>`
+// 				)
+// 			);
+// 		} else if (current_price >= 0) {
+// 			$field.append(
+// 				$(
+// 					`<div class="promo-validation-warning" style="color:#2e7d32;font-size:12px;margin-top:5px;padding:6px 10px;background:#e8f5e9;border-radius:4px;border:1px solid #c8e6c9;"><i class="fa fa-check-circle"></i> Gi\u00e1 kh\u1edbp v\u1edbi gi\u00e1 th\u1ef1c t\u1ebf</div>`
+// 				)
+// 			);
+// 		}
+// 	});
 
-	$pills.on("click", ".remove-promo", function () {
-		var arr = parse_promos(locals[cdt][cdn]["new_promotions"]);
-		arr.splice(parseInt($(this).attr("data-idx")), 1);
-		frappe.model.set_value(cdt, cdn, "new_promotions", JSON.stringify(arr));
-		frm.dirty();
-		$field.find(".promo-validation-warning").remove();
-		render_promotion_pills(frm, cdt, cdn);
-	});
+// 	$pills.on("click", ".remove-promo", function () {
+// 		var arr = parse_promos(locals[cdt][cdn]["new_promotions"]);
+// 		arr.splice(parseInt($(this).attr("data-idx")), 1);
+// 		frappe.model.set_value(cdt, cdn, "new_promotions", JSON.stringify(arr));
+// 		frm.dirty();
+// 		$field.find(".promo-validation-warning").remove();
+// 		render_promotion_pills(frm, cdt, cdn);
+// 	});
 
-	var drag_src = null;
-	$pills.on("dragstart", ".promo-pill", function (e) {
-		drag_src = this;
-		$(this).css("opacity", "0.4");
-		e.originalEvent.dataTransfer.effectAllowed = "move";
-	});
-	$pills.on("dragover", ".promo-pill", function (e) {
-		e.preventDefault();
-		$(this).css("border-top", "2px solid #999");
-	});
-	$pills.on("dragleave", ".promo-pill", function () {
-		$(this).css("border-top", "");
-	});
-	$pills.on("drop", ".promo-pill", function (e) {
-		e.preventDefault();
-		$(this).css("border-top", "");
-		if (drag_src === this) return;
-		var arr = parse_promos(locals[cdt][cdn]["new_promotions"]);
-		var item = arr.splice(parseInt($(drag_src).attr("data-idx")), 1)[0];
-		arr.splice(parseInt($(this).attr("data-idx")), 0, item);
-		frappe.model.set_value(cdt, cdn, "new_promotions", JSON.stringify(arr));
-		frm.dirty();
-		$field.find(".promo-validation-warning").remove();
-		render_promotion_pills(frm, cdt, cdn);
-	});
-	$pills.on("dragend", ".promo-pill", function () {
-		$(this).css("opacity", "1");
-	});
-}
+// 	var drag_src = null;
+// 	$pills.on("dragstart", ".promo-pill", function (e) {
+// 		drag_src = this;
+// 		$(this).css("opacity", "0.4");
+// 		e.originalEvent.dataTransfer.effectAllowed = "move";
+// 	});
+// 	$pills.on("dragover", ".promo-pill", function (e) {
+// 		e.preventDefault();
+// 		$(this).css("border-top", "2px solid #999");
+// 	});
+// 	$pills.on("dragleave", ".promo-pill", function () {
+// 		$(this).css("border-top", "");
+// 	});
+// 	$pills.on("drop", ".promo-pill", function (e) {
+// 		e.preventDefault();
+// 		$(this).css("border-top", "");
+// 		if (drag_src === this) return;
+// 		var arr = parse_promos(locals[cdt][cdn]["new_promotions"]);
+// 		var item = arr.splice(parseInt($(drag_src).attr("data-idx")), 1)[0];
+// 		arr.splice(parseInt($(this).attr("data-idx")), 0, item);
+// 		frappe.model.set_value(cdt, cdn, "new_promotions", JSON.stringify(arr));
+// 		frm.dirty();
+// 		$field.find(".promo-validation-warning").remove();
+// 		render_promotion_pills(frm, cdt, cdn);
+// 	});
+// 	$pills.on("dragend", ".promo-pill", function () {
+// 		$(this).css("opacity", "1");
+// 	});
+// }
