@@ -141,7 +141,9 @@ class Opportunity(TransactionBase, CRMNote):
 		if self.opportunity_from == "Lead":
 			frappe.get_doc("Lead", self.party_name).set_status(update=True)
 
-			link_open_tasks(self.opportunity_from, self.party_name, self)
+			# Reasonse for commented out
+			# Do not move Lead ToDos to Opportunity; moving ToDo causes Lead to become unassigned and reassigned by Assignment Rules
+			# link_open_tasks(self.opportunity_from, self.party_name, self)
 			link_open_events(self.opportunity_from, self.party_name, self)
 			if get_crm_settings().get("carry_forward_communication_and_comments"):
 				copy_comments(self.opportunity_from, self.party_name, self)
