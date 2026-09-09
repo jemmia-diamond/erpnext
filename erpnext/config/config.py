@@ -15,5 +15,6 @@ class BaseConfig:
     CC_API_KEY: str = frappe.conf.get("cc_api_key")
     HARAVAN_TOKEN: str = frappe.conf.get("haravan_token")
     COMPRESSOR_SERVICE_URL: str = frappe.conf.get("compressor_service_url")
+    COMPRESSOR_SERVICE_API_KEY: str = frappe.conf.get("compressor_service_api_key")
 
 config = BaseConfig()

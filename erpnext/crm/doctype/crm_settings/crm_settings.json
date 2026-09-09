@@ -39,6 +39,7 @@
   "carry_forward_communication_and_comments",
   "column_break_junk",
   "update_timestamp_on_new_communication",
+  "compressing_audio_enabled",
   "haravan_integration_tab",
   "create_haravan_customer",
   "create_haravan_customer_automatically"
@@ -241,6 +242,13 @@
    "label": "Update timestamp on new communication"
   },
   {
+   "default": "0",
+   "description": "If enabled, Call Log audio recordings will be compressed and uploaded to Cloud Storage.",
+   "fieldname": "compressing_audio_enabled",
+   "fieldtype": "Check",
+   "label": "Compress Audio Recordings"
+  },
+  {
    "fieldname": "haravan_integration_tab",
    "fieldtype": "Tab Break",
    "label": "Haravan Integration"
@@ -264,7 +272,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-08-19 10:37:50.843906",
+ "modified": "2026-09-09 15:37:50.843906",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "CRM Settings",
