@@ -40,9 +40,10 @@ frappe.ui.form.on("Payment Entry", {
 		});
 
 		if (frm.is_new()) {
-			if (!frm.doc.created_by_display) {
-				frm.set_value("created_by_display", frappe.session.user);
-			}
+			// [CUSTOM LOGIC MOVED TO Client Script]
+			// if (!frm.doc.created_by_display) {
+			// 	frm.set_value("created_by_display", frappe.session.user);
+			// }
 			set_default_party_type(frm);
 			frm.clear_table("tax_withholding_entries");
 		}
@@ -69,63 +70,64 @@ frappe.ui.form.on("Payment Entry", {
 			};
 		});
 
-		frm.set_query("party_type", function () {
-			frm.events.validate_company(frm);
-			return {
-				filters: {
-					name: ["in", Object.keys(frappe.boot.party_account_types)],
-				},
-			};
-		});
+		// [CUSTOM LOGIC MOVED TO Client Script]
+		// frm.set_query("party_type", function () {
+		// 	frm.events.validate_company(frm);
+		// 	return {
+		// 		filters: {
+		// 			name: ["in", Object.keys(frappe.boot.party_account_types)],
+		// 		},
+		// 	};
+		// });
 
-		frm.set_query("party_bank_account", function () {
-			return {
-				filters: {
-					is_company_account: 0,
-					party_type: frm.doc.party_type,
-					party: frm.doc.party,
-				},
-			};
-		});
+		// frm.set_query("party_bank_account", function () {
+		// 	return {
+		// 		filters: {
+		// 			is_company_account: 0,
+		// 			party_type: frm.doc.party_type,
+		// 			party: frm.doc.party,
+		// 		},
+		// 	};
+		// });
 
-		frm.set_query("bank_account", function () {
-			return {
-				filters: {
-					is_company_account: 1,
-					company: frm.doc.company,
-				},
-			};
-		});
+		// frm.set_query("bank_account", function () {
+		// 	return {
+		// 		filters: {
+		// 			is_company_account: 1,
+		// 			company: frm.doc.company,
+		// 		},
+		// 	};
+		// });
 
-		frm.set_query("contact_person", function () {
-			if (frm.doc.party) {
-				return {
-					query: "frappe.contacts.doctype.contact.contact.contact_query",
-					filters: {
-						link_doctype: frm.doc.party_type,
-						link_name: frm.doc.party,
-					},
-				};
-			}
-		});
+		// frm.set_query("contact_person", function () {
+		// 	if (frm.doc.party) {
+		// 		return {
+		// 			query: "frappe.contacts.doctype.contact.contact.contact_query",
+		// 			filters: {
+		// 				link_doctype: frm.doc.party_type,
+		// 				link_name: frm.doc.party,
+		// 			},
+		// 		};
+		// 	}
+		// });
 
-		frm.set_query("paid_to", function () {
-			frm.events.validate_company(frm);
+		// frm.set_query("paid_to", function () {
+		// 	frm.events.validate_company(frm);
 
-			var account_types = ["Receive", "Internal Transfer"].includes(frm.doc.payment_type)
-				? ["Bank", "Cash"]
-				: [frappe.boot.party_account_types[frm.doc.party_type]];
-			if (frm.doc.party_type == "Shareholder") {
-				account_types.push("Equity");
-			}
-			return {
-				filters: {
-					account_type: ["in", account_types],
-					is_group: 0,
-					company: frm.doc.company,
-				},
-			};
-		});
+		// 	var account_types = ["Receive", "Internal Transfer"].includes(frm.doc.payment_type)
+		// 		? ["Bank", "Cash"]
+		// 		: [frappe.boot.party_account_types[frm.doc.party_type]];
+		// 	if (frm.doc.party_type == "Shareholder") {
+		// 		account_types.push("Equity");
+		// 	}
+		// 	return {
+		// 		filters: {
+		// 			account_type: ["in", account_types],
+		// 			is_group: 0,
+		// 			company: frm.doc.company,
+		// 		},
+		// 	};
+		// });
 
 		frm.set_query("account", "deductions", function () {
 			return {
@@ -234,128 +236,130 @@ frappe.ui.form.on("Payment Entry", {
 			"Payment Entry Reference"
 		);
 
-		frm.set_query("bank_transaction", "bank_transactions", function() {
-			return {
-				query: "erpnext.accounts.doctype.payment_entry.payment_entry.get_bank_transactions",
-				filters: {
-					company: frm.doc.company
-				}
-			};
-		});
+		// [CUSTOM LOGIC MOVED TO Client Script]
+		// frm.set_query("bank_transaction", "bank_transactions", function() {
+		// 	return {
+		// 		query: "erpnext.accounts.doctype.payment_entry.payment_entry.get_bank_transactions",
+		// 		filters: {
+		// 			company: frm.doc.company
+		// 		}
+		// 	};
+		// });
 
-		frm.set_query("reference_name", "references", function(doc, cdt, cdn) {
-			let row = locals[cdt][cdn];
-			if (row.reference_doctype === "Sales Order") {
-				return {
-					query: "erpnext.accounts.doctype.payment_entry.payment_entry.get_sales_orders_for_payment",
-					filters: {
-						company: frm.doc.company,
-						customer: frm.doc.party
-					}
-				};
-			}
-		});
+		// frm.set_query("reference_name", "references", function(doc, cdt, cdn) {
+		// 	let row = locals[cdt][cdn];
+		// 	if (row.reference_doctype === "Sales Order") {
+		// 		return {
+		// 			query: "erpnext.accounts.doctype.payment_entry.payment_entry.get_sales_orders_for_payment",
+		// 			filters: {
+		// 				company: frm.doc.company,
+		// 				customer: frm.doc.party
+		// 			}
+		// 		};
+		// 	}
+		// });
 	},
 
-	get_payment_code: function(frm, callback) {
-		if (!frm.doc.mode_of_payment) {
-			callback(null);
-			return;
-		}
+	// [CUSTOM LOGIC MOVED TO Client Script]
+	// get_payment_code: function(frm, callback) {
+	// 	if (!frm.doc.mode_of_payment) {
+	// 		callback(null);
+	// 		return;
+	// 	}
 
-		frappe.db.get_value("Mode of Payment", frm.doc.mode_of_payment, "payment_code", (r) => {
-			callback(r ? r.payment_code : null);
-		});
-	},
+	// 	frappe.db.get_value("Mode of Payment", frm.doc.mode_of_payment, "payment_code", (r) => {
+	// 		callback(r ? r.payment_code : null);
+	// 	});
+	// },
 
-	update_gateway_options: function(frm) {
-		frm.events.get_payment_code(frm, (payment_code) => {
-			if (payment_code === "pos") {
-				frm.set_df_property("gateway", "options", ["Payoo", "Vietcombank", "ACB"]);
-				if (!frm.doc.gateway || !["Payoo", "Vietcombank", "ACB"].includes(frm.doc.gateway)) {
-					frm.set_value("gateway", "Payoo");
-				}
-			} else if (payment_code === "payment_link") {
-				frm.set_df_property("gateway", "options", ["Payoo", "ZaloPay"]);
-				if (!frm.doc.gateway || !["Payoo", "ZaloPay"].includes(frm.doc.gateway)) {
-					frm.set_value("gateway", "Payoo");
-				}
-			} else if (payment_code === "cash") {
-				frm.set_df_property("gateway", "options", ["Thu Ngân"]);
-				if (!frm.doc.gateway || frm.doc.gateway !== "Thu Ngân") {
-					frm.set_value("gateway", "Thu Ngân");
-				}
-			} else if (payment_code === "cash_on_delivery") {
-				frm.set_df_property("gateway", "options", ["HTC", "Nhất Tín"]);
-				if (!frm.doc.gateway || !["HTC", "Nhất Tín"].includes(frm.doc.gateway)) {
-					frm.set_value("gateway", "HTC");
-				}
-			} else {
-				frm.set_df_property("gateway", "options", [""]);
-				frm.set_value("gateway", "");
-			}
-		});
-	},
+	// update_gateway_options: function(frm) {
+	// 	frm.events.get_payment_code(frm, (payment_code) => {
+	// 		if (payment_code === "pos") {
+	// 			frm.set_df_property("gateway", "options", ["Payoo", "Vietcombank", "ACB"]);
+	// 			if (!frm.doc.gateway || !["Payoo", "Vietcombank", "ACB"].includes(frm.doc.gateway)) {
+	// 				frm.set_value("gateway", "Payoo");
+	// 			}
+	// 		} else if (payment_code === "payment_link") {
+	// 			frm.set_df_property("gateway", "options", ["Payoo", "ZaloPay"]);
+	// 			if (!frm.doc.gateway || !["Payoo", "ZaloPay"].includes(frm.doc.gateway)) {
+	// 				frm.set_value("gateway", "Payoo");
+	// 			}
+	// 		} else if (payment_code === "cash") {
+	// 			frm.set_df_property("gateway", "options", ["Thu Ngân"]);
+	// 			if (!frm.doc.gateway || frm.doc.gateway !== "Thu Ngân") {
+	// 				frm.set_value("gateway", "Thu Ngân");
+	// 			}
+	// 		} else if (payment_code === "cash_on_delivery") {
+	// 			frm.set_df_property("gateway", "options", ["HTC", "Nhất Tín"]);
+	// 			if (!frm.doc.gateway || !["HTC", "Nhất Tín"].includes(frm.doc.gateway)) {
+	// 				frm.set_value("gateway", "HTC");
+	// 			}
+	// 		} else {
+	// 			frm.set_df_property("gateway", "options", [""]);
+	// 			frm.set_value("gateway", "");
+	// 		}
+	// 	});
+	// },
 
-	update_bank_branch_logic: function (frm) {
-		frm.events.get_payment_code(frm, (payment_code) => {
-			if (payment_code === "banking") {
-				frm.set_df_property("bank_account_branch", "read_only", 1);
-				if (frm.doc.bank_account) {
-					frappe.db.get_value("Bank Account", frm.doc.bank_account, "account_type", (r) => {
-						if (r && r.account_type) {
-							frm.set_df_property("bank_account_branch", "options", [r.account_type]);
-							frm.set_value("bank_account_branch", r.account_type);
-						}
-					});
-				} else {
-					frm.set_value("bank_account_branch", "");
-				}
-			} else {
-				frm.set_df_property("bank_account_branch", "options", [
-					"Cửa hàng HCM",
-					"Cửa hàng Cần Thơ",
-					"Cửa hàng Hà Nội",
-				]);
-				frm.set_df_property("bank_account_branch", "read_only", 0);
-			}
-		});
-	},
+	// update_bank_branch_logic: function (frm) {
+	// 	frm.events.get_payment_code(frm, (payment_code) => {
+	// 		if (payment_code === "banking") {
+	// 			frm.set_df_property("bank_account_branch", "read_only", 1);
+	// 			if (frm.doc.bank_account) {
+	// 				frappe.db.get_value("Bank Account", frm.doc.bank_account, "account_type", (r) => {
+	// 					if (r && r.account_type) {
+	// 						frm.set_df_property("bank_account_branch", "options", [r.account_type]);
+	// 						frm.set_value("bank_account_branch", r.account_type);
+	// 					}
+	// 				});
+	// 			} else {
+	// 				frm.set_value("bank_account_branch", "");
+	// 			}
+	// 		} else {
+	// 			frm.set_df_property("bank_account_branch", "options", [
+	// 				"Cửa hàng HCM",
+	// 				"Cửa hàng Cần Thơ",
+	// 				"Cửa hàng Hà Nội",
+	// 			]);
+	// 			frm.set_df_property("bank_account_branch", "read_only", 0);
+	// 		}
+	// 	});
+	// },
 
-	update_field_visibility: function(frm) {
-		if (!frm.doc.mode_of_payment) {
-			frm.toggle_display("gateway", false);
-			frm.toggle_display("bank_account", false);
-			frm.toggle_display("qr_section_break", false);
-			frm.set_df_property("bank_account", "reqd", 0);
-			frm.set_df_property("payment_date", "reqd", 1);
-			return;
-		}
+	// update_field_visibility: function(frm) {
+	// 	if (!frm.doc.mode_of_payment) {
+	// 		frm.toggle_display("gateway", false);
+	// 		frm.toggle_display("bank_account", false);
+	// 		frm.toggle_display("qr_section_break", false);
+	// 		frm.set_df_property("bank_account", "reqd", 0);
+	// 		frm.set_df_property("payment_date", "reqd", 1);
+	// 		return;
+	// 	}
 
-		frm.events.get_payment_code(frm, (payment_code) => {
-			frm.toggle_display("gateway", ["payment_link", "pos", "cash", "cash_on_delivery"].includes(payment_code));
+	// 	frm.events.get_payment_code(frm, (payment_code) => {
+	// 		frm.toggle_display("gateway", ["payment_link", "pos", "cash", "cash_on_delivery"].includes(payment_code));
 
-			const show_bank_account = payment_code && !["cash", "pos", "payment_link", "cash_on_delivery"].includes(payment_code);
-			frm.toggle_display("bank_account", show_bank_account);
+	// 		const show_bank_account = payment_code && !["cash", "pos", "payment_link", "cash_on_delivery"].includes(payment_code);
+	// 		frm.toggle_display("bank_account", show_bank_account);
 
-			const is_new_or_has_bank = frm.is_new() || frm.doc.bank_account;
-			const make_required = show_bank_account && frm.doc.docstatus === 0 && is_new_or_has_bank;
-			frm.set_df_property("bank_account", "reqd", make_required ? 1 : 0);
-			frm.toggle_display("qr_section_break", payment_code === "banking");
+	// 		const is_new_or_has_bank = frm.is_new() || frm.doc.bank_account;
+	// 		const make_required = show_bank_account && frm.doc.docstatus === 0 && is_new_or_has_bank;
+	// 		frm.set_df_property("bank_account", "reqd", make_required ? 1 : 0);
+	// 		frm.toggle_display("qr_section_break", payment_code === "banking");
 
-			const payment_date_required = !["cash_on_delivery"].includes(payment_code);
-			frm.set_df_property("payment_date", "reqd", payment_date_required ? 1 : 0);
-		});
-	},
+	// 		const payment_date_required = !["cash_on_delivery"].includes(payment_code);
+	// 		frm.set_df_property("payment_date", "reqd", payment_date_required ? 1 : 0);
+	// 	});
+	// },
 
-	update_button_visibility: function(frm) {
-		if (frm.doc.docstatus === 0) {
-			if (frm.page.btn_primary) {
-				frm.page.btn_primary.hide();
-			}
-			frm.page.remove_inner_button(__("Submit"));
-		}
-	},
+	// update_button_visibility: function(frm) {
+	// 	if (frm.doc.docstatus === 0) {
+	// 		if (frm.page.btn_primary) {
+	// 			frm.page.btn_primary.hide();
+	// 		}
+	// 		frm.page.remove_inner_button(__("Submit"));
+	// 	}
+	// },
 
 	refresh: function (frm) {
 		if (!frm.is_new()) {
@@ -364,9 +368,10 @@ frappe.ui.form.on("Payment Entry", {
 			frm.set_df_property("mode_of_payment", "read_only", 0);
 		}
 
-		frm.events.update_gateway_options(frm);
-		frm.events.update_bank_branch_logic(frm);
-		frm.events.update_field_visibility(frm);
+		// [CUSTOM LOGIC MOVED TO Client Script]
+		// frm.events.update_gateway_options(frm);
+		// frm.events.update_bank_branch_logic(frm);
+		// frm.events.update_field_visibility(frm);
 		// frm.events.update_button_visibility(frm);
 		erpnext.hide_company(frm);
 		frm.events.hide_unhide_fields(frm);
@@ -393,178 +398,164 @@ frappe.ui.form.on("Payment Entry", {
 		erpnext.accounts.unreconcile_payment.add_unreconcile_btn(frm);
 		frappe.flags.allocate_payment_amount = true;
 
-		if (frm.doc.docstatus === 0 && !frm.is_new()) {
-			frm.events.get_payment_code(frm, (payment_code) => {
-				let can_cancel = true;
-				if (payment_code === "banking") {
-					if (frm.doc.bank_transactions && frm.doc.bank_transactions.length > 0) {
-						can_cancel = false;
-					}
-				}
-
-				if (["cash_on_delivery", "cash", "pos", "payment_link"].includes(payment_code)) {
-					if (frm.doc.verified_by) {
-						can_cancel = false;
-					}
-				}
-
-				if (frappe.user.has_role("Administrator") || frappe.user.has_role("Developer")) {
-					can_cancel = true;
-				}
-
-				if (can_cancel) {
-					frm.add_custom_button(__("Cancel"), function () {
-						frappe.confirm(
-							__("Bạn có chắc chắn muốn huỷ Phiếu thanh toán này không?"),
-							function () {
-								frappe.call({
-									method: "cancel_draft_payment_entry",
-									doc: frm.doc,
-									callback: function (r) {
-										if (!r.exc) {
-											frappe.show_alert({
-												message: __("Huỷ Phiếu thanh toán thành công"),
-												indicator: "green"
-											});
-											frm.reload_doc();
-										}
-									}
-								});
-							}
-						);
-					}).addClass("btn-danger");
-				}
-			});
-		}
-
-
-		if (frm.doc.qr_url) {
-			const qr_group = __("Mã QR");
-			frm.add_custom_button(__("Copy URL"), () => {
-				frappe.utils.copy_to_clipboard(frm.doc.qr_url);
-			}, qr_group);
-
-			frm.add_custom_button(__("Tải mã xuống"), () => {
-				window.open(`${frm.doc.qr_url}&download=true`);
-			}, qr_group);
-
-			frm.add_custom_button(__("Mở mã QR"), () => {
-				window.open(frm.doc.qr_url);
-			}, qr_group);
-		}
-
-		// Quick Re-create button for Cancelled Banking PEs
-		if (frm.doc.docstatus === 2) {
-			frm.events.get_payment_code(frm, (payment_code) => {
-				if (payment_code === "banking") {
-					frm.add_custom_button(__("Tạo lại phiếu nhanh"), function() {
-						frappe.call({
-							method: "erpnext.accounts.doctype.payment_entry.payment_entry.recreate_payment_entry",
-							args: {
-								payment_entry_name: frm.doc.name
-							},
-							freeze: true,
-							freeze_message: __("Đang tạo phiếu mới và map giao dịch ngân hàng"),
-							callback: function(r) {
-								if (r.message) {
-									if (r.message.name) {
-										frappe.set_route("Form", "Payment Entry", r.message.name);
-									}
-									if (r.message.alert) {
-										frappe.show_alert({
-											message: r.message.alert,
-											indicator: r.message.indicator || 'orange'
-										});
-									}
-								}
-							}
-						});
-					}).addClass("btn-primary");
-				}
-			});
-		}
-
-		// Add Verify button
-		if (
-			!frm.is_new() &&
-			!frm.doc.verified_by &&
-			(frm.doc.payment_order_status === "Draft" || frm.doc.payment_order_status === "Pending" || frm.doc.payment_order_status === "Success") &&
-			(frappe.user.has_role("Accounts User") || frappe.user.has_role("Accounts Manager"))
-		) {
-			let has_sales_order = frm.doc.references && frm.doc.references.some(ref => ref.reference_doctype === "Sales Order");
-
-			let btn = frm.add_custom_button(__("Xác nhận giao dịch"), () => {
-				frm.events.get_payment_code(frm, (payment_code) => {
-					let requires_bank_transaction = payment_code === "banking";
-					if (requires_bank_transaction && (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0)) {
-						frappe.msgprint({
-							title: __("Không thể xác minh"),
-							indicator: "red",
-							message: __("- Thanh toán chuyển khoản phải có ít nhất <b>một giao dịch</b> ngân hàng để xác minh.<br><br><b>Yêu cầu: Bổ sung giao dịch ngân hàng.</b>")
-						});
-						return;
-					}
-
-					if (!frm.doc.references || !frm.doc.references.some(r => r.reference_doctype === "Sales Order")) {
-						frappe.msgprint({
-							title: __("Không thể xác minh"),
-							indicator: "red",
-							message: __("- Phiếu thanh toán phải có ít nhất <b>một đơn hàng</b> tham chiếu để xác minh.<br><br><b>Yêu cầu: Bổ sung đơn hàng.</b>")
-						});
-						return;
-					}
-
-					frappe.call({
-						method: "verify_payment",
-						doc: frm.doc,
-						callback: function(r) {
-							if (!r.exc) {
-								frm.reload_doc();
-							}
-						}
-					});
-				});
-			});
-
-			if (!has_sales_order) {
-				btn.addClass('disabled').prop('disabled', true);
-			}
-		}
+		// [CUSTOM LOGIC MOVED TO Client Script]
+		// if (frm.doc.docstatus === 0 && !frm.is_new()) {
+		// 	frm.events.get_payment_code(frm, (payment_code) => {
+		// 		let can_cancel = true;
+		// 		if (payment_code === "banking") {
+		// 			if (frm.doc.bank_transactions && frm.doc.bank_transactions.length > 0) {
+		// 				can_cancel = false;
+		// 			}
+		// 		}
+		// 		if (["cash_on_delivery", "cash", "pos", "payment_link"].includes(payment_code)) {
+		// 			if (frm.doc.verified_by) {
+		// 				can_cancel = false;
+		// 			}
+		// 		}
+		// 		if (frappe.user.has_role("Administrator") || frappe.user.has_role("Developer")) {
+		// 			can_cancel = true;
+		// 		}
+		// 		if (can_cancel) {
+		// 			frm.add_custom_button(__("Cancel"), function () {
+		// 				frappe.confirm(
+		// 					__("Bạn có chắc chắn muốn huỷ Phiếu thanh toán này không?"),
+		// 					function () {
+		// 						frappe.call({
+		// 							method: "cancel_draft_payment_entry",
+		// 							doc: frm.doc,
+		// 							callback: function (r) {
+		// 								if (!r.exc) {
+		// 									frappe.show_alert({
+		// 										message: __("Huỷ Phiếu thanh toán thành công"),
+		// 										indicator: "green"
+		// 									});
+		// 									frm.reload_doc();
+		// 								}
+		// 							}
+		// 						});
+		// 					}
+		// 				);
+		// 			}).addClass("btn-danger");
+		// 		}
+		// 	});
+		// }
+		// if (frm.doc.qr_url) {
+		// 	const qr_group = __("Mã QR");
+		// 	frm.add_custom_button(__("Copy URL"), () => {
+		// 		frappe.utils.copy_to_clipboard(frm.doc.qr_url);
+		// 	}, qr_group);
+		// 	frm.add_custom_button(__("Tải mã xuống"), () => {
+		// 		window.open(`${frm.doc.qr_url}&download=true`);
+		// 	}, qr_group);
+		// 	frm.add_custom_button(__("Mở mã QR"), () => {
+		// 		window.open(frm.doc.qr_url);
+		// 	}, qr_group);
+		// }
+		// if (frm.doc.docstatus === 2) {
+		// 	frm.events.get_payment_code(frm, (payment_code) => {
+		// 		if (payment_code === "banking") {
+		// 			frm.add_custom_button(__("Tạo lại phiếu nhanh"), function() {
+		// 				frappe.call({
+		// 					method: "erpnext.accounts.doctype.payment_entry.payment_entry.recreate_payment_entry",
+		// 					args: {
+		// 						payment_entry_name: frm.doc.name
+		// 					},
+		// 					freeze: true,
+		// 					freeze_message: __("Đang tạo phiếu mới và map giao dịch ngân hàng"),
+		// 					callback: function(r) {
+		// 						if (r.message) {
+		// 							if (r.message.name) {
+		// 								frappe.set_route("Form", "Payment Entry", r.message.name);
+		// 							}
+		// 							if (r.message.alert) {
+		// 								frappe.show_alert({
+		// 									message: r.message.alert,
+		// 									indicator: r.message.indicator || 'orange'
+		// 								});
+		// 							}
+		// 						}
+		// 					}
+		// 				});
+		// 			}).addClass("btn-primary");
+		// 		}
+		// 	});
+		// }
+		// if (
+		// 	!frm.is_new() &&
+		// 	!frm.doc.verified_by &&
+		// 	(frm.doc.payment_order_status === "Draft" || frm.doc.payment_order_status === "Pending" || frm.doc.payment_order_status === "Success") &&
+		// 	(frappe.user.has_role("Accounts User") || frappe.user.has_role("Accounts Manager"))
+		// ) {
+		// 	let has_sales_order = frm.doc.references && frm.doc.references.some(ref => ref.reference_doctype === "Sales Order");
+		// 	let btn = frm.add_custom_button(__("Xác nhận giao dịch"), () => {
+		// 		frm.events.get_payment_code(frm, (payment_code) => {
+		// 			let requires_bank_transaction = payment_code === "banking";
+		// 			if (requires_bank_transaction && (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0)) {
+		// 				frappe.msgprint({
+		// 					title: __("Không thể xác minh"),
+		// 					indicator: "red",
+		// 					message: __("- Thanh toán chuyển khoản phải có ít nhất <b>một giao dịch</b> ngân hàng để xác minh.<br><br><b>Yêu cầu: Bổ sung giao dịch ngân hàng.</b>")
+		// 				});
+		// 				return;
+		// 			}
+		// 			if (!frm.doc.references || !frm.doc.references.some(r => r.reference_doctype === "Sales Order")) {
+		// 				frappe.msgprint({
+		// 					title: __("Không thể xác minh"),
+		// 					indicator: "red",
+		// 					message: __("- Phiếu thanh toán phải có ít nhất <b>một đơn hàng</b> tham chiếu để xác minh.<br><br><b>Yêu cầu: Bổ sung đơn hàng.</b>")
+		// 				});
+		// 				return;
+		// 			}
+		// 			frappe.call({
+		// 				method: "verify_payment",
+		// 				doc: frm.doc,
+		// 				callback: function(r) {
+		// 					if (!r.exc) {
+		// 						frm.reload_doc();
+		// 					}
+		// 				}
+		// 			});
+		// 		});
+		// 	});
+		// 	if (!has_sales_order) {
+		// 		btn.addClass('disabled').prop('disabled', true);
+		// 	}
+		// }
 	},
 
 	validate: async function (frm) {
 		await frm.events.set_exchange_gain_loss_deduction(frm);
-		frm.events.validate_bank_transactions(frm);
-		frm.events.validate_total_allocated_amount(frm);
-		frm.events.checking_refund_amount(frm);
+		// [CUSTOM LOGIC MOVED TO Client Script]
+		// frm.events.validate_bank_transactions(frm);
+		// frm.events.validate_total_allocated_amount(frm);
+		// frm.events.checking_refund_amount(frm);
 	},
 
 	before_save: function(frm) {
-		frm.events.validate_bank_transactions(frm);
+		// [CUSTOM LOGIC MOVED TO Client Script]
+		// frm.events.validate_bank_transactions(frm);
 	},
 
-	validate_bank_transactions: function(frm) {
-		if (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0) {
-			return;
-		}
-
-		if (frm.doc.bank_transactions.length > 1) {
-			frappe.throw(__("Chỉ được phép có một giao dịch ngân hàng cho mỗi phiếu thanh toán"));
-		}
-
-		for (let bt of frm.doc.bank_transactions) {
-			if (bt.allocated_amount && frm.doc.paid_amount) {
-				if (Math.abs(flt(bt.allocated_amount) - flt(frm.doc.paid_amount)) > 0.01) {
-					frappe.throw(__("Số tiền phân bổ của giao dịch ngân hàng ({0}) phải khớp với số tiền thanh toán của phiếu ({1}).",
-						[bt.allocated_amount, frm.doc.paid_amount]));
-				}
-			}
-
-			if (!bt.bank_transaction) {
-				frappe.throw(__("Dòng #{0}: Bắt buộc chọn Giao dịch ngân hàng", [bt.idx]));
-			}
-		}
-	},
+	// [CUSTOM LOGIC MOVED TO Client Script]
+	// validate_bank_transactions: function(frm) {
+	// 	if (!frm.doc.bank_transactions || frm.doc.bank_transactions.length === 0) {
+	// 		return;
+	// 	}
+	// 	if (frm.doc.bank_transactions.length > 1) {
+	// 		frappe.throw(__("Chỉ được phép có một giao dịch ngân hàng cho mỗi phiếu thanh toán"));
+	// 	}
+	// 	for (let bt of frm.doc.bank_transactions) {
+	// 		if (bt.allocated_amount && frm.doc.paid_amount) {
+	// 			if (Math.abs(flt(bt.allocated_amount) - flt(frm.doc.paid_amount)) > 0.01) {
+	// 				frappe.throw(__("Số tiền phân bổ của giao dịch ngân hàng ({0}) phải khớp với số tiền thanh toán của phiếu ({1}).",
+	// 					[bt.allocated_amount, frm.doc.paid_amount]));
+	// 			}
+	// 		}
+	// 		if (!bt.bank_transaction) {
+	// 			frappe.throw(__("Dòng #{0}: Bắt buộc chọn Giao dịch ngân hàng", [bt.idx]));
+	// 		}
+	// 	}
+	// },
 
 	validate_company: (frm) => {
 		if (!frm.doc.company) {
@@ -765,70 +756,73 @@ frappe.ui.form.on("Payment Entry", {
 	},
 
 	mode_of_payment: function (frm) {
-		frm.set_value("gateway", "");
-		frm.events.update_gateway_options(frm);
-		frm.events.update_field_visibility(frm);
+		// [CUSTOM LOGIC MOVED TO Client Script]
+		// frm.set_value("gateway", "");
+		// frm.events.update_gateway_options(frm);
+		// frm.events.update_field_visibility(frm);
 
-		const update_references = (payment_code) => {
-			if (frm.doc.references && frm.doc.references.length > 0) {
-				frm.doc.references.forEach(function(row) {
-					if (row.reference_doctype === "Sales Order") {
-						frappe.model.set_value(row.doctype, row.name, "mode_of_payment", frm.doc.mode_of_payment);
+		// const update_references = (payment_code) => {
+		// 	if (frm.doc.references && frm.doc.references.length > 0) {
+		// 		frm.doc.references.forEach(function(row) {
+		// 			if (row.reference_doctype === "Sales Order") {
+		// 				frappe.model.set_value(row.doctype, row.name, "mode_of_payment", frm.doc.mode_of_payment);
 
-						if (payment_code !== 'banking') {
-							frappe.model.set_value(row.doctype, row.name, "bank_account", "");
-							frappe.model.set_value(row.doctype, row.name, "bank", "");
-							frappe.model.set_value(row.doctype, row.name, "bank_account_no", "");
-							frappe.model.set_value(row.doctype, row.name, "bank_account_branch", "");
-						}
-					}
-				});
-				frm.refresh_field("references");
-			}
-		};
+		// 				if (payment_code !== 'banking') {
+		// 					frappe.model.set_value(row.doctype, row.name, "bank_account", "");
+		// 					frappe.model.set_value(row.doctype, row.name, "bank", "");
+		// 					frappe.model.set_value(row.doctype, row.name, "bank_account_no", "");
+		// 					frappe.model.set_value(row.doctype, row.name, "bank_account_branch", "");
+		// 				}
+		// 			}
+		// 		});
+		// 		frm.refresh_field("references");
+		// 	}
+		// };
 
-		if (frm.doc.mode_of_payment) {
-			frappe.db.get_value("Mode of Payment", frm.doc.mode_of_payment, "payment_code", (r) => {
-				let payment_code = "";
-				if (r && r.payment_code) {
-					frm.set_value("payment_code", r.payment_code);
-					payment_code = r.payment_code;
-				}
-				update_references(payment_code);
-			});
-		} else {
-			update_references("");
-		}
+		// if (frm.doc.mode_of_payment) {
+		// 	frappe.db.get_value("Mode of Payment", frm.doc.mode_of_payment, "payment_code", (r) => {
+		// 		let payment_code = "";
+		// 		if (r && r.payment_code) {
+		// 			frm.set_value("payment_code", r.payment_code);
+		// 			payment_code = r.payment_code;
+		// 		}
+		// 		update_references(payment_code);
+		// 	});
+		// } else {
+		// 	update_references("");
+		// }
 
 		erpnext.accounts.pos.get_payment_mode_account(frm, frm.doc.mode_of_payment, function (account) {
 			let payment_account_field = frm.doc.payment_type == "Receive" ? "paid_to" : "paid_from";
 			frm.set_value(payment_account_field, account);
-			frm.events.update_bank_branch_logic(frm);
+			// [CUSTOM LOGIC MOVED TO Client Script]
+			// frm.events.update_bank_branch_logic(frm);
 		});
 	},
 
+	// [CUSTOM LOGIC MOVED TO Client Script]
+	// gateway: function(frm) {
+	// 	if (frm.doc.references && frm.doc.references.length > 0) {
+	// 		frm.doc.references.forEach(function(row) {
+	// 			if (row.reference_doctype === "Sales Order") {
+	// 				frappe.model.set_value(row.doctype, row.name, "gateway", frm.doc.gateway);
+	// 			}
+	// 		});
+	// 		frm.refresh_field("references");
+	// 	}
+	// },
 
-	gateway: function(frm) {
-		if (frm.doc.references && frm.doc.references.length > 0) {
-			frm.doc.references.forEach(function(row) {
-				if (row.reference_doctype === "Sales Order") {
-					frappe.model.set_value(row.doctype, row.name, "gateway", frm.doc.gateway);
-				}
-			});
-			frm.refresh_field("references");
-		}
-	},
-
-	bank_account_branch: function(frm) {
-		if (frm.doc.references && frm.doc.references.length > 0) {
-			frm.doc.references.forEach(function(row) {
-				if (row.reference_doctype === "Sales Order") {
-					frappe.model.set_value(row.doctype, row.name, "bank_account_branch", frm.doc.bank_account_branch);
-				}
-			});
-			frm.refresh_field("references");
-		}
-	},
+	// [CUSTOM LOGIC MOVED TO Client Script]
+	// bank_account_branch: function(frm) {
+	// 	if (frm.doc.references && frm.doc.references.length > 0) {
+	// 		frm.doc.references.forEach(function(row) {
+	// 			if (row.reference_doctype === "Sales Order") {
+	// 				frappe.model.set_value(row.doctype, row.name, "bank_account_branch", frm.doc.bank_account_branch);
+	// 			}
+	// 		});
+	// 		frm.refresh_field("references");
+	// 	}
+	// },
 
 	party_type: function (frm) {
 		let party_types = Object.keys(frappe.boot.party_account_types);
@@ -947,7 +941,8 @@ frappe.ui.form.on("Payment Entry", {
 									frm.doc.paid_to_account_currency,
 									company_currency
 								),
-							() => frm.events.auto_populate_sales_orders(frm),
+							// [CUSTOM LOGIC MOVED TO Client Script]
+							// () => frm.events.auto_populate_sales_orders(frm),
 						]);
 					}
 				},
@@ -966,87 +961,88 @@ frappe.ui.form.on("Payment Entry", {
 		frm.clear_table("tax_withholding_entries");
 	},
 
-	auto_populate_sales_orders: function(frm) {
-		if (!frm.doc.party || !frm.doc.paid_amount) {
-			return;
-		}
+	// [CUSTOM LOGIC MOVED TO Client Script]
+	// auto_populate_sales_orders: function(frm) {
+	// 	if (!frm.doc.party || !frm.doc.paid_amount) {
+	// 		return;
+	// 	}
 
-		frm.clear_table("references");
-		frappe.call({
-			method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_sales_orders_for_auto_populate",
-			args: {
-				company: frm.doc.company,
-				customer: frm.doc.party
-			},
-			callback: function(r) {
-				if (r.message && r.message.length > 0) {
-					let sales_orders = r.message.filter(so => !(so.financial_status === "Paid"));
-					if (sales_orders.length === 0) return;
+	// 	frm.clear_table("references");
+	// 	frappe.call({
+	// 		method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_sales_orders_for_auto_populate",
+	// 		args: {
+	// 			company: frm.doc.company,
+	// 			customer: frm.doc.party
+	// 		},
+	// 		callback: function(r) {
+	// 			if (r.message && r.message.length > 0) {
+	// 				let sales_orders = r.message.filter(so => !(so.financial_status === "Paid"));
+	// 				if (sales_orders.length === 0) return;
 
-					let single_order = sales_orders.length === 1;
+	// 				let single_order = sales_orders.length === 1;
 
-					sales_orders.forEach(function(so) {
-						let row = frm.add_child("references");
-						row.reference_doctype = "Sales Order";
-						row.reference_name = so.name;
+	// 				sales_orders.forEach(function(so) {
+	// 					let row = frm.add_child("references");
+	// 					row.reference_doctype = "Sales Order";
+	// 					row.reference_name = so.name;
 
-						if (single_order) {
-							row.allocated_amount = frm.doc.paid_amount;
-						} else {
-							row.allocated_amount = 0;
-						}
+	// 					if (single_order) {
+	// 						row.allocated_amount = frm.doc.paid_amount;
+	// 					} else {
+	// 						row.allocated_amount = 0;
+	// 					}
 
-						frappe.call({
-							method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_reference_details",
-							args: {
-								reference_doctype: "Sales Order",
-								reference_name: so.name,
-								party_account_currency: frm.doc.payment_type == "Receive"
-									? frm.doc.paid_from_account_currency
-									: frm.doc.paid_to_account_currency,
-								party_type: frm.doc.party_type,
-								party: frm.doc.party,
-							},
-							callback: function(ref_r) {
-								if (ref_r.message) {
-									$.each(ref_r.message, function(field, value) {
-										frappe.model.set_value(row.doctype, row.name, field, value);
-									});
+	// 					frappe.call({
+	// 						method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_reference_details",
+	// 						args: {
+	// 							reference_doctype: "Sales Order",
+	// 							reference_name: so.name,
+	// 							party_account_currency: frm.doc.payment_type == "Receive"
+	// 								? frm.doc.paid_from_account_currency
+	// 								: frm.doc.paid_to_account_currency,
+	// 							party_type: frm.doc.party_type,
+	// 							party: frm.doc.party,
+	// 						},
+	// 						callback: function(ref_r) {
+	// 							if (ref_r.message) {
+	// 								$.each(ref_r.message, function(field, value) {
+	// 									frappe.model.set_value(row.doctype, row.name, field, value);
+	// 								});
 
-									frappe.model.set_value(row.doctype, row.name, "mode_of_payment", frm.doc.mode_of_payment);
-									frappe.model.set_value(row.doctype, row.name, "gateway", frm.doc.gateway);
-									frappe.model.set_value(row.doctype, row.name, "paid_amount", frm.doc.paid_amount);
-									frappe.model.set_value(row.doctype, row.name, "payment_date", frm.doc.payment_date);
-									frappe.model.set_value(row.doctype, row.name, "payment_order_status", frm.doc.payment_order_status);
-									frappe.model.set_value(row.doctype, row.name, "bank_account", frm.doc.bank_account);
-									frappe.model.set_value(row.doctype, row.name, "bank", frm.doc.bank);
-									frappe.model.set_value(row.doctype, row.name, "bank_account_no", frm.doc.bank_account_no);
-									frappe.model.set_value(row.doctype, row.name, "bank_account_branch", frm.doc.bank_account_branch);
+	// 								frappe.model.set_value(row.doctype, row.name, "mode_of_payment", frm.doc.mode_of_payment);
+	// 								frappe.model.set_value(row.doctype, row.name, "gateway", frm.doc.gateway);
+	// 								frappe.model.set_value(row.doctype, row.name, "paid_amount", frm.doc.paid_amount);
+	// 								frappe.model.set_value(row.doctype, row.name, "payment_date", frm.doc.payment_date);
+	// 								frappe.model.set_value(row.doctype, row.name, "payment_order_status", frm.doc.payment_order_status);
+	// 								frappe.model.set_value(row.doctype, row.name, "bank_account", frm.doc.bank_account);
+	// 								frappe.model.set_value(row.doctype, row.name, "bank", frm.doc.bank);
+	// 								frappe.model.set_value(row.doctype, row.name, "bank_account_no", frm.doc.bank_account_no);
+	// 								frappe.model.set_value(row.doctype, row.name, "bank_account_branch", frm.doc.bank_account_branch);
 
-									frappe.db.get_value("Sales Order", so.name, [
-										"order_number",
-										"split_order_group_name",
-										"tracking_number"
-									], (so_data) => {
-										if (so_data) {
-											frappe.model.set_value(row.doctype, row.name, "order_number", so_data.order_number);
-											frappe.model.set_value(row.doctype, row.name, "split_order_group_name", so_data.split_order_group_name);
-											if (so_data.tracking_number) {
-												frm.set_value("shipping_code", so_data.tracking_number);
-											}
-										}
-									});
-								}
-							}
-						});
-					});
+	// 								frappe.db.get_value("Sales Order", so.name, [
+	// 									"order_number",
+	// 									"split_order_group_name",
+	// 									"tracking_number"
+	// 								], (so_data) => {
+	// 									if (so_data) {
+	// 										frappe.model.set_value(row.doctype, row.name, "order_number", so_data.order_number);
+	// 										frappe.model.set_value(row.doctype, row.name, "split_order_group_name", so_data.split_order_group_name);
+	// 										if (so_data.tracking_number) {
+	// 											frm.set_value("shipping_code", so_data.tracking_number);
+	// 										}
+	// 									}
+	// 								});
+	// 							}
+	// 						}
+	// 					});
+	// 				});
 
-					frm.refresh_field("references");
-					frm.events.set_total_allocated_amount(frm);
-				}
-			}
-		});
-	},
+	// 				frm.refresh_field("references");
+	// 				frm.events.set_total_allocated_amount(frm);
+	// 			}
+	// 		}
+	// 	});
+	// },
 
 	apply_tax_withholding_amount: function (frm) {
 		if (!frm.doc.apply_tax_withholding_amount) {
@@ -1219,16 +1215,17 @@ frappe.ui.form.on("Payment Entry", {
 		frm.events.paid_from_account_currency(frm);
 	},
 
-	payment_date: function (frm) {
-		if (frm.doc.references && frm.doc.references.length > 0) {
-			frm.doc.references.forEach(function(row) {
-				if (row.reference_doctype === "Sales Order") {
-					frappe.model.set_value(row.doctype, row.name, "payment_date", frm.doc.payment_date);
-				}
-			});
-			frm.refresh_field("references");
-		}
-	},
+	// [CUSTOM LOGIC MOVED TO Client Script]
+	// payment_date: function (frm) {
+	// 	if (frm.doc.references && frm.doc.references.length > 0) {
+	// 		frm.doc.references.forEach(function(row) {
+	// 			if (row.reference_doctype === "Sales Order") {
+	// 				frappe.model.set_value(row.doctype, row.name, "payment_date", frm.doc.payment_date);
+	// 			}
+	// 		});
+	// 		frm.refresh_field("references");
+	// 	}
+	// },
 
 	source_exchange_rate: function (frm) {
 		let company_currency = frappe.get_doc(":Company", frm.doc.company).default_currency;
@@ -1284,9 +1281,10 @@ frappe.ui.form.on("Payment Entry", {
 	},
 
 	paid_amount: function (frm) {
-		if (frm.doc.party && frm.doc.paid_amount) {
-			frm.events.auto_populate_sales_orders(frm);
-		}
+		// [CUSTOM LOGIC MOVED TO Client Script]
+		// if (frm.doc.party && frm.doc.paid_amount) {
+		// 	frm.events.auto_populate_sales_orders(frm);
+		// }
 
 		// Original logic
 		frm.set_value("base_paid_amount", flt(frm.doc.paid_amount) * flt(frm.doc.source_exchange_rate));
@@ -1622,144 +1620,147 @@ frappe.ui.form.on("Payment Entry", {
 		frm.events.set_unallocated_amount(frm);
 	},
 
-	validate_total_allocated_amount: function (frm) {
-		if (!frm.doc.paid_amount || !frm.doc.references || frm.doc.references.length === 0) {
-			return;
-		}
+	// [CUSTOM LOGIC MOVED TO Client Script]
+	// validate_total_allocated_amount: function (frm) {
+	// 	if (!frm.doc.paid_amount || !frm.doc.references || frm.doc.references.length === 0) {
+	// 		return;
+	// 	}
 
-		if (frappe.user.has_role("Administrator") || frappe.user.has_role("Developer")) {
-			frm.doc.admin_editing = 1;
-			return;
-		}
+	// 	if (frappe.user.has_role("Administrator") || frappe.user.has_role("Developer")) {
+	// 		frm.doc.admin_editing = 1;
+	// 		return;
+	// 	}
 
 
-		let total_allocated = 0;
+	// 	let total_allocated = 0;
 
-		$.each(frm.doc.references || [], function (i, row) {
-			if (!flt(row.allocated_amount)) {
-				frappe.throw({
-					title: __("Phân bổ không hợp lệ"),
-					indicator: "red",
-					message: __("- Dòng #{0}: Số tiền phân bổ bằng 0. <br><br><b>Yêu cầu: Nhập số tiền phân bổ hoặc xóa dòng.</b>", [row.idx])
-				});
-			}
+	// 	$.each(frm.doc.references || [], function (i, row) {
+	// 		if (!flt(row.allocated_amount)) {
+	// 			frappe.throw({
+	// 				title: __("Phân bổ không hợp lệ"),
+	// 				indicator: "red",
+	// 				message: __("- Dòng #{0}: Số tiền phân bổ bằng 0. <br><br><b>Yêu cầu: Nhập số tiền phân bổ hoặc xóa dòng.</b>", [row.idx])
+	// 			});
+	// 		}
 
-			if (row.allocated_amount) {
-				total_allocated += flt(row.allocated_amount);
-				let max_amount = row.balance || 0;
-				if (flt(max_amount) > 0 && flt(row.allocated_amount) > flt(max_amount)) {
-					frappe.throw({
-						title: __("Phân bổ không hợp lệ"),
-						indicator: "red",
-						message: __(
-							"- Dòng #{0}: Số tiền phân bổ ({1}) vượt quá số dư còn lại của đơn hàng <b>{3}</b>.<br><br><b>Yêu cầu: Điều chỉnh lại số tiền phân bổ.</b>",
-							[
-								row.idx,
-								format_currency(row.allocated_amount, frm.doc.paid_from_account_currency, 0),
-								format_currency(max_amount, frm.doc.paid_from_account_currency, 0),
-								row.order_number
-							]
-						)
-					});
-				}
-			}
-		});
+	// 		if (row.allocated_amount) {
+	// 			total_allocated += flt(row.allocated_amount);
+	// 			let max_amount = row.balance || 0;
+	// 			if (flt(max_amount) > 0 && flt(row.allocated_amount) > flt(max_amount)) {
+	// 				frappe.throw({
+	// 					title: __("Phân bổ không hợp lệ"),
+	// 					indicator: "red",
+	// 					message: __(
+	// 						"- Dòng #{0}: Số tiền phân bổ ({1}) vượt quá số dư còn lại của đơn hàng <b>{3}</b>.<br><br><b>Yêu cầu: Điều chỉnh lại số tiền phân bổ.</b>",
+	// 						[
+	// 							row.idx,
+	// 							format_currency(row.allocated_amount, frm.doc.paid_from_account_currency, 0),
+	// 							format_currency(max_amount, frm.doc.paid_from_account_currency, 0),
+	// 							row.order_number
+	// 						]
+	// 					)
+	// 				});
+	// 			}
+	// 		}
+	// 	});
 
-		const difference = total_allocated - flt(frm.doc.paid_amount);
-		const tolerance = 1000;
+	// 	const difference = total_allocated - flt(frm.doc.paid_amount);
+	// 	const tolerance = 1000;
 
-		if (difference > tolerance) {
-			frappe.throw({
-				title: __("Phân bổ không hợp lệ"),
-				indicator: "red",
-				message: __(
-					"- Số tiền thanh toán: {0}<br>- Đã phân bổ: {1}<br>- Chênh lệch: {2} (vượt mức cho phép)<br><br><b>Yêu cầu: Điều chỉnh tổng tiền phân bổ bằng với số tiền thanh toán.</b>",
-					[
-						format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
-						format_currency(total_allocated, frm.doc.paid_from_account_currency, 0),
-						format_currency(difference, frm.doc.paid_from_account_currency, 0)
-					]
-				)
-			});
-		} else if (difference > 0 && difference <= tolerance) {
-			frappe.show_alert({
-				message: __(
-					"Chênh lệch {0} nằm trong mức cho phép {1}.",
-					[
-						format_currency(difference, frm.doc.paid_from_account_currency, 0),
-						format_currency(tolerance, frm.doc.paid_from_account_currency, 0)
-					]
-				),
-				indicator: "blue"
-			}, 10);
-		}
-	},
+	// 	if (difference > tolerance) {
+	// 		frappe.throw({
+	// 			title: __("Phân bổ không hợp lệ"),
+	// 			indicator: "red",
+	// 			message: __(
+	// 				"- Số tiền thanh toán: {0}<br>- Đã phân bổ: {1}<br>- Chênh lệch: {2} (vượt mức cho phép)<br><br><b>Yêu cầu: Điều chỉnh tổng tiền phân bổ bằng với số tiền thanh toán.</b>",
+	// 				[
+	// 					format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
+	// 					format_currency(total_allocated, frm.doc.paid_from_account_currency, 0),
+	// 					format_currency(difference, frm.doc.paid_from_account_currency, 0)
+	// 				]
+	// 			)
+	// 		});
+	// 	} else if (difference > 0 && difference <= tolerance) {
+	// 		frappe.show_alert({
+	// 			message: __(
+	// 				"Chênh lệch {0} nằm trong mức cho phép {1}.",
+	// 				[
+	// 					format_currency(difference, frm.doc.paid_from_account_currency, 0),
+	// 					format_currency(tolerance, frm.doc.paid_from_account_currency, 0)
+	// 				]
+	// 			),
+	// 			indicator: "blue"
+	// 		}, 10);
+	// 	}
+	// },
 
-	checking_refund_amount: function (frm) {
-		if (!frm.doc.paid_amount || !frm.doc.references || frm.doc.references.length === 0) {
-			return;
-		}
+	// [CUSTOM LOGIC MOVED TO Client Script]
+	// checking_refund_amount: function (frm) {
+		// if (!frm.doc.paid_amount || !frm.doc.references || frm.doc.references.length === 0) {
+		// 	return;
+		// }
 
-		if (frappe.user.has_role("Administrator") || frappe.user.has_role("Developer")) {
-			return;
-		}
+	// 	if (frappe.user.has_role("Administrator") || frappe.user.has_role("Developer")) {
+	// 		return;
+	// 	}
 
-		let total_allocated = 0;
-		$.each(frm.doc.references || [], function (i, row) {
-			if (row.allocated_amount) {
-				total_allocated += flt(row.allocated_amount);
-			}
-		});
+	// 	let total_allocated = 0;
+	// 	$.each(frm.doc.references || [], function (i, row) {
+	// 		if (row.allocated_amount) {
+	// 			total_allocated += flt(row.allocated_amount);
+	// 		}
+	// 	});
 
-		const paid_amount = flt(frm.doc.paid_amount);
-		const refund_amount = flt(paid_amount - total_allocated, 0);
+	// 	const paid_amount = flt(frm.doc.paid_amount);
+	// 	const refund_amount = flt(paid_amount - total_allocated, 0);
 
-		if (refund_amount > 0) {
-			if (flt(frm.doc.refund_amount, 0) === refund_amount) {
-				return;
-			}
+	// 	if (refund_amount > 0) {
+	// 		if (flt(frm.doc.refund_amount, 0) === refund_amount) {
+	// 			return;
+	// 		}
 
-			frm.events.show_refund_confirmation_dialog(frm, refund_amount, total_allocated);
-			frappe.validated = false;
-			return;
-		}
+	// 		frm.events.show_refund_confirmation_dialog(frm, refund_amount, total_allocated);
+	// 		frappe.validated = false;
+	// 		return;
+	// 	}
 
-		if (flt(frm.doc.refund_amount) > 0) {
-			frm.set_value("refund_amount", 0);
-		}
-	},
+	// 	if (flt(frm.doc.refund_amount) > 0) {
+	// 		frm.set_value("refund_amount", 0);
+	// 	}
+	// },
 
-	show_refund_confirmation_dialog: function (frm, refund_amount, total_allocated) {
-		const message = __(
-			"<b>Cảnh báo: Số tiền phân bổ nhỏ hơn số tiền thanh toán</b><br><br>" +
-			"- <b>Số tiền thanh toán:</b> {0}<br>" +
-			"- <b>Đã phân bổ:</b> {1}<br>" +
-			"- <b>Tiền hoàn (dự kiến): {2}</b><br><br>",
-			[
-				format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
-				format_currency(total_allocated, frm.doc.paid_from_account_currency, 0),
-				format_currency(refund_amount, frm.doc.paid_from_account_currency, 0)
-			]
-		);
+	// [CUSTOM LOGIC MOVED TO Client Script]
+	// show_refund_confirmation_dialog: function (frm, refund_amount, total_allocated) {
+	// 	const message = __(
+	// 		"<b>Cảnh báo: Số tiền phân bổ nhỏ hơn số tiền thanh toán</b><br><br>" +
+	// 		"- <b>Số tiền thanh toán:</b> {0}<br>" +
+	// 		"- <b>Đã phân bổ:</b> {1}<br>" +
+	// 		"- <b>Tiền hoàn (dự kiến): {2}</b><br><br>",
+	// 		[
+	// 			format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
+	// 			format_currency(total_allocated, frm.doc.paid_from_account_currency, 0),
+	// 			format_currency(refund_amount, frm.doc.paid_from_account_currency, 0)
+	// 		]
+	// 	);
 
-		frappe.confirm(
-			message,
-			function() {
-				frm.set_value("refund_amount", refund_amount).then(() => {
-					frappe.show_alert({
-						message: __(
-							"Đã xác nhận hoàn tiền: {0}",
-							[format_currency(refund_amount, frm.doc.paid_from_account_currency, 0)]
-						),
-						indicator: "green"
-					}, 10);
-					frm.save();
-				});
-			},
-			function() { frm.set_value("refund_amount", 0); },
-			{ dialog_title: "Thông báo", confirm_title: "Xác nhận", reject_title: "Phân bổ lại" }
-		);
-	},
+	// 	frappe.confirm(
+	// 		message,
+	// 		function() {
+	// 			frm.set_value("refund_amount", refund_amount).then(() => {
+	// 				frappe.show_alert({
+	// 					message: __(
+	// 						"Đã xác nhận hoàn tiền: {0}",
+	// 						[format_currency(refund_amount, frm.doc.paid_from_account_currency, 0)]
+	// 					),
+	// 					indicator: "green"
+	// 				}, 10);
+	// 				frm.save();
+	// 			});
+	// 		},
+	// 		function() { frm.set_value("refund_amount", 0); },
+	// 		{ dialog_title: "Thông báo", confirm_title: "Xác nhận", reject_title: "Phân bổ lại" }
+	// 	);
+	// },
 
 	set_unallocated_amount: function (frm) {
 		let unallocated_amount = 0;
@@ -1964,7 +1965,8 @@ frappe.ui.form.on("Payment Entry", {
 	},
 
 	bank_account: function (frm) {
-		frm.events.update_bank_branch_logic(frm);
+		// [CUSTOM LOGIC MOVED TO Client Script]
+		// frm.events.update_bank_branch_logic(frm);
 		const field = frm.doc.payment_type == "Pay" ? "paid_from" : "paid_to";
 		if (frm.doc.bank_account && ["Pay", "Receive"].includes(frm.doc.payment_type)) {
 			frappe.call({
@@ -1997,17 +1999,18 @@ frappe.ui.form.on("Payment Entry", {
 						}
 						frm.set_value("bank", r.message.bank);
 						frm.set_value("bank_account_no", r.message.bank_account_no);
-						frm.events.update_bank_branch_logic(frm);
-						if (frm.doc.references && frm.doc.references.length > 0) {
-							$.each(frm.doc.references, function(i, d) {
-								if (d.reference_doctype === "Sales Order") {
-									frappe.model.set_value(d.doctype, d.name, "bank_account", frm.doc.bank_account);
-									frappe.model.set_value(d.doctype, d.name, "bank", r.message.bank);
-									frappe.model.set_value(d.doctype, d.name, "bank_account_no", r.message.bank_account_no);
-								}
-							});
-							frm.refresh_field("references");
-						}
+						// [CUSTOM LOGIC MOVED TO Client Script]
+						// frm.events.update_bank_branch_logic(frm);
+						// if (frm.doc.references && frm.doc.references.length > 0) {
+						// 	$.each(frm.doc.references, function(i, d) {
+						// 		if (d.reference_doctype === "Sales Order") {
+						// 			frappe.model.set_value(d.doctype, d.name, "bank_account", frm.doc.bank_account);
+						// 			frappe.model.set_value(d.doctype, d.name, "bank", r.message.bank);
+						// 			frappe.model.set_value(d.doctype, d.name, "bank_account_no", r.message.bank_account_no);
+						// 		}
+						// 	});
+						// 	frm.refresh_field("references");
+						// }
 					}
 				},
 			});
@@ -2365,107 +2368,107 @@ frappe.ui.form.on("Payment Entry", {
 	},
 });
 
-frappe.ui.form.on("Payment Entry Reference", {
-	references_add: function(frm, cdt, cdn) {
-		let row = locals[cdt][cdn];
-		if (!row.reference_doctype) {
-			frappe.model.set_value(cdt, cdn, "reference_doctype", "Sales Order");
-		}
-		// // Set default payment_date if not set in parent
-		// if (!frm.doc.payment_date) {
-		// 	frm.set_value("payment_date", frappe.datetime.now_datetime());
-		// }
-	},
-
-	reference_doctype: function (frm, cdt, cdn) {
-		var row = locals[cdt][cdn];
-		frm.events.validate_reference_document(frm, row);
-	},
-
-	reference_name: function (frm, cdt, cdn) {
-		var row = locals[cdt][cdn];
-		if (row.reference_name && row.reference_doctype) {
-			return frappe.call({
-				method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_reference_details",
-				args: {
-					reference_doctype: row.reference_doctype,
-					reference_name: row.reference_name,
-					party_account_currency:
-						frm.doc.payment_type == "Receive"
-							? frm.doc.paid_from_account_currency
-							: frm.doc.paid_to_account_currency,
-					party_type: frm.doc.party_type,
-					party: frm.doc.party,
-				},
-				callback: function (r, rt) {
-					if (r.message) {
-						$.each(r.message, function (field, value) {
-							frappe.model.set_value(cdt, cdn, field, value);
-						});
-
-						if (!row.allocated_amount || row.allocated_amount === 0) {
-							let allocated_amount =
-								frm.doc.unallocated_amount > row.outstanding_amount
-									? row.outstanding_amount
-									: frm.doc.unallocated_amount;
-
-							frappe.model.set_value(cdt, cdn, "allocated_amount", allocated_amount);
-						}
-
-						// Calculate cumulative unallocated for all rows after setting allocated_amount
-						let cumulative_allocated = 0;
-						$.each(frm.doc.references || [], function(i, ref) {
-							cumulative_allocated += flt(ref.allocated_amount);
-							let remaining = flt(frm.doc.paid_amount) - cumulative_allocated;
-							frappe.model.set_value('Payment Entry Reference', ref.name, 'unallocated_amount', remaining > 0 ? remaining : 0, null, true);
-						});
-
-
-						if (row.reference_doctype === "Sales Order") {
-							frappe.model.set_value(cdt, cdn, "mode_of_payment", frm.doc.mode_of_payment);
-							frappe.model.set_value(cdt, cdn, "gateway", frm.doc.gateway);
-							frappe.model.set_value(cdt, cdn, "paid_amount", frm.doc.paid_amount);
-							frappe.model.set_value(cdt, cdn, "payment_date", frm.doc.payment_date);
-							frappe.model.set_value(cdt, cdn, "payment_order_status", frm.doc.payment_order_status);
-							frappe.model.set_value(cdt, cdn, "bank_account", frm.doc.bank_account);
-							frappe.model.set_value(cdt, cdn, "bank", frm.doc.bank);
-							frappe.model.set_value(cdt, cdn, "bank_account_no", frm.doc.bank_account_no);
-							frappe.model.set_value(cdt, cdn, "bank_account_branch", frm.doc.bank_account_branch);
-
-							frappe.db.get_value("Sales Order", row.reference_name, [
-								"order_number",
-								"split_order_group_name"
-							], (so_data) => {
-								if (so_data) {
-									frappe.model.set_value(cdt, cdn, "order_number", so_data.order_number);
-									frappe.model.set_value(cdt, cdn, "split_order_group_name", so_data.split_order_group_name);
-								}
-							});
-						}
-
-						frm.refresh_fields();
-					}
-				},
-			});
-		}
-	},
-
-	allocated_amount: function (frm, cdt, cdn) {
-		let row = locals[cdt][cdn];
-		let cumulative_allocated = 0;
-		$.each(frm.doc.references || [], function(i, ref) {
-			cumulative_allocated += flt(ref.allocated_amount);
-			let remaining = flt(frm.doc.paid_amount) - cumulative_allocated;
-			frappe.model.set_value('Payment Entry Reference', ref.name, 'unallocated_amount', remaining > 0 ? remaining : 0, null, true);
-		});
-
-		frm.events.set_total_allocated_amount(frm);
-	},
-
-	references_remove: function (frm) {
-		frm.events.set_total_allocated_amount(frm);
-	},
-});
+// [CUSTOM LOGIC MOVED TO Client Script]
+// frappe.ui.form.on("Payment Entry Reference", {
+// 	references_add: function(frm, cdt, cdn) {
+// 		let row = locals[cdt][cdn];
+// 		if (!row.reference_doctype) {
+// 			frappe.model.set_value(cdt, cdn, "reference_doctype", "Sales Order");
+// 		}
+// 		// // Set default payment_date if not set in parent
+// 		// if (!frm.doc.payment_date) {
+// 		// 	frm.set_value("payment_date", frappe.datetime.now_datetime());
+// 		// }
+// 	},
+// 
+// 	reference_doctype: function (frm, cdt, cdn) {
+// 		var row = locals[cdt][cdn];
+// 		frm.events.validate_reference_document(frm, row);
+// 	},
+// 
+// 	reference_name: function (frm, cdt, cdn) {
+// 		var row = locals[cdt][cdn];
+// 		if (row.reference_name && row.reference_doctype) {
+// 			return frappe.call({
+// 				method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_reference_details",
+// 				args: {
+// 					reference_doctype: row.reference_doctype,
+// 					reference_name: row.reference_name,
+// 					party_account_currency:
+// 						frm.doc.payment_type == "Receive"
+// 							? frm.doc.paid_from_account_currency
+// 							: frm.doc.paid_to_account_currency,
+// 					party_type: frm.doc.party_type,
+// 					party: frm.doc.party,
+// 				},
+// 				callback: function (r, rt) {
+// 					if (r.message) {
+// 						$.each(r.message, function (field, value) {
+// 							frappe.model.set_value(cdt, cdn, field, value);
+// 						});
+// 
+// 						if (!row.allocated_amount || row.allocated_amount === 0) {
+// 							let allocated_amount =
+// 								frm.doc.unallocated_amount > row.outstanding_amount
+// 									? row.outstanding_amount
+// 									: frm.doc.unallocated_amount;
+// 
+// 							frappe.model.set_value(cdt, cdn, "allocated_amount", allocated_amount);
+// 						}
+// 
+// 						// Calculate cumulative unallocated for all rows after setting allocated_amount
+// 						let cumulative_allocated = 0;
+// 						$.each(frm.doc.references || [], function(i, ref) {
+// 							cumulative_allocated += flt(ref.allocated_amount);
+// 							let remaining = flt(frm.doc.paid_amount) - cumulative_allocated;
+// 							frappe.model.set_value('Payment Entry Reference', ref.name, 'unallocated_amount', remaining > 0 ? remaining : 0, null, true);
+// 						});
+// 
+// 						if (row.reference_doctype === "Sales Order") {
+// 							frappe.model.set_value(cdt, cdn, "mode_of_payment", frm.doc.mode_of_payment);
+// 							frappe.model.set_value(cdt, cdn, "gateway", frm.doc.gateway);
+// 							frappe.model.set_value(cdt, cdn, "paid_amount", frm.doc.paid_amount);
+// 							frappe.model.set_value(cdt, cdn, "payment_date", frm.doc.payment_date);
+// 							frappe.model.set_value(cdt, cdn, "payment_order_status", frm.doc.payment_order_status);
+// 							frappe.model.set_value(cdt, cdn, "bank_account", frm.doc.bank_account);
+// 							frappe.model.set_value(cdt, cdn, "bank", frm.doc.bank);
+// 							frappe.model.set_value(cdt, cdn, "bank_account_no", frm.doc.bank_account_no);
+// 							frappe.model.set_value(cdt, cdn, "bank_account_branch", frm.doc.bank_account_branch);
+// 
+// 							frappe.db.get_value("Sales Order", row.reference_name, [
+// 								"order_number",
+// 								"split_order_group_name"
+// 							], (so_data) => {
+// 								if (so_data) {
+// 									frappe.model.set_value(cdt, cdn, "order_number", so_data.order_number);
+// 									frappe.model.set_value(cdt, cdn, "split_order_group_name", so_data.split_order_group_name);
+// 								}
+// 							});
+// 						}
+// 
+// 						frm.refresh_fields();
+// 					}
+// 				},
+// 			});
+// 		}
+// 	},
+// 
+// 	allocated_amount: function (frm, cdt, cdn) {
+// 		let row = locals[cdt][cdn];
+// 		let cumulative_allocated = 0;
+// 		$.each(frm.doc.references || [], function(i, ref) {
+// 			cumulative_allocated += flt(ref.allocated_amount);
+// 			let remaining = flt(frm.doc.paid_amount) - cumulative_allocated;
+// 			frappe.model.set_value('Payment Entry Reference', ref.name, 'unallocated_amount', remaining > 0 ? remaining : 0, null, true);
+// 		});
+// 
+// 		frm.events.set_total_allocated_amount(frm);
+// 	},
+// 
+// 	references_remove: function (frm) {
+// 		frm.events.set_total_allocated_amount(frm);
+// 	},
+// });
 
 frappe.ui.form.on("Advance Taxes and Charges", {
 	rate: function (frm) {
@@ -2577,99 +2580,109 @@ function get_deduction_amount_precision() {
 	return frappe.meta.get_field_precision(frappe.meta.get_field("Payment Entry Deduction", "amount"));
 }
 
-frappe.ui.form.on("Payment Entry Bank Transaction", {
-	bank_transaction: function(frm, cdt, cdn) {
-		let row = locals[cdt][cdn];
-		if (row.bank_transaction) {
-			frappe.db.get_value("Bank Transaction", row.bank_transaction, [
-				"date",
-				"deposit",
-				"withdrawal",
-				"sepay_transaction_content",
-				"sepay_transaction_date",
-				"sepay_order_number",
-				"sepay_order_description",
-				"sepay_reference_number",
-				"sepay_id",
-			], (r) => {
-				if (r) {
-					frappe.model.set_value(cdt, cdn, "date", r.date);
-					let amount = r.deposit || r.withdrawal || 0;
-					frappe.model.set_value(cdt, cdn, "allocated_amount", amount);
-					frappe.model.set_value(cdt, cdn, "sepay_transaction_content", r.sepay_transaction_content);
-					frappe.model.set_value(cdt, cdn, "sepay_order_number", r.sepay_order_number);
-					frappe.model.set_value(cdt, cdn, "sepay_order_description", r.sepay_order_description);
-					frappe.model.set_value(cdt, cdn, "sepay_reference_number", r.sepay_reference_number);
-					frappe.model.set_value(cdt, cdn, "sepay_id", r.sepay_id);
-					if (r.sepay_transaction_date) {
-						let datetime_str = moment(r.sepay_transaction_date, "YYYY-MM-DD HH:mm:ss").format("YYYY-MM-DD HH:mm:ss");
-						frm.set_value("payment_date", datetime_str);
-					}
-				}
-			});
-		}
-	},
+// [CUSTOM LOGIC MOVED TO Client Script]
+// frappe.ui.form.on("Payment Entry Bank Transaction", {
+// 	bank_transaction: function(frm, cdt, cdn) {
+// 		let row = locals[cdt][cdn];
+// 		if (row.bank_transaction) {
+// 			frappe.db.get_value("Bank Transaction", row.bank_transaction, [
+// 				"date",
+// 				"deposit",
+// 				"withdrawal",
+// 				"sepay_transaction_content",
+// 				"sepay_transaction_date",
+// 				"sepay_order_number",
+// 				"sepay_order_description",
+// 				"sepay_reference_number",
+// 				"sepay_id",
+// 			], (r) => {
+// 				if (r) {
+// 					frappe.model.set_value(cdt, cdn, "date", r.date);
+// 					let amount = r.deposit || r.withdrawal || 0;
+// 					frappe.model.set_value(cdt, cdn, "allocated_amount", amount);
+// 					frappe.model.set_value(cdt, cdn, "sepay_transaction_content", r.sepay_transaction_content);
+// 					frappe.model.set_value(cdt, cdn, "sepay_order_number", r.sepay_order_number);
+// 					frappe.model.set_value(cdt, cdn, "sepay_order_description", r.sepay_order_description);
+// 					frappe.model.set_value(cdt, cdn, "sepay_reference_number", r.sepay_reference_number);
+// 					frappe.model.set_value(cdt, cdn, "sepay_id", r.sepay_id);
+// 					if (r.sepay_transaction_date) {
+// 						let datetime_str = moment(r.sepay_transaction_date, "YYYY-MM-DD HH:mm:ss").format("YYYY-MM-DD HH:mm:ss");
+// 						frm.set_value("payment_date", datetime_str);
+// 					}
+// 				}
+// 			});
+// 		}
+// 	},
+// 
+// 	allocated_amount: function(frm, cdt, cdn) {
+// 		let row = locals[cdt][cdn];
+// 		if (row.allocated_amount && frm.doc.paid_amount) {
+// 			if (Math.abs(flt(row.allocated_amount) - flt(frm.doc.paid_amount)) > 0.01) {
+// 				frappe.confirm(
+// 					__(
+// 						"- Số tiền thanh toán: {0}<br>- Giao dịch ngân hàng: {1}<br>- Chênh lệch: {2}<br><br><b>Yêu cầu: Kiểm tra lại và nhập đúng số tiền trước khi tiếp tục.</b><br><b>Nếu khách chuyển khoản dư thì bấm tiếp tục.</b>",
+// 						[
+// 							format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
+// 							format_currency(row.allocated_amount, frm.doc.paid_from_account_currency, 0),
+// 							format_currency(Math.abs(flt(row.allocated_amount) - flt(frm.doc.paid_amount)), frm.doc.paid_from_account_currency, 0)
+// 						]
+// 					),
+// 					() => {
+// 						// Keep transaction if customer overpaid and user clicked Continue
+// 					},
+// 					() => {
+// 						if (locals[cdt]?.[cdn]) {
+// 							frappe.model.clear_doc(cdt, cdn);
+// 							frm.refresh_field("bank_transactions");
+// 						}
+// 					},
+// 					{
+// 						dialog_title: __("Sai số tiền"),
+// 						confirm_title: __("Tiếp tục"),
+// 						reject_title: __("Huỷ")
+// 					}
+// 				);
+// 			}
+// 		}
+// 	},
+// 
+// 	bank_transactions_add: function(frm, cdt, cdn) {
+// 		if (frm.doc.payment_code !== 'banking') {
+// 			frappe.msgprint({
+// 				title: __("Sai hình thức thanh toán"),
+// 				indicator: "red",
+// 				message: __("Chỉ áp dụng cho hình thức <b>Chuyển khoản</b>.<br><br>Hệ thống đã <b>tự động xoá dòng</b> vừa thêm.")
+// 			});
+// 
+// 			setTimeout(() => {
+// 				frm.get_field("bank_transactions").grid.grid_rows.forEach(r => {
+// 					if (r.doc.name === cdn) {
+// 						r.remove();
+// 					}
+// 				});
+// 				frm.refresh_field("bank_transactions");
+// 			}, 100);
+// 			return;
+// 		}
+// 
+// 		if (frm.doc.bank_transactions && frm.doc.bank_transactions.length > 1) {
+// 			frappe.msgprint({
+// 				title: __("Sai số lượng giao dịch"),
+// 				indicator: "red",
+// 				message: __("Mỗi phiếu thanh toán chỉ được phép gắn <b>một giao dịch duy nhất</b>.<br><br>Hệ thống đã <b>tự động xoá dòng</b> vừa thêm.")
+// 			});
+// 
+// 			setTimeout(() => {
+// 				frappe.model.clear_doc(cdt, cdn);
+// 				frm.refresh_field("bank_transactions");
+// 			}, 100);
+// 			return;
+// 		}
+// 
+// 		let row = locals[cdt][cdn];
+// 		if (frm.doc.paid_amount) {
+// 			frappe.model.set_value(cdt, cdn, "allocated_amount", frm.doc.paid_amount);
+// 		}
+// 	}
+// });
 
-	allocated_amount: function(frm, cdt, cdn) {
-		let row = locals[cdt][cdn];
-		if (row.allocated_amount && frm.doc.paid_amount) {
-			if (Math.abs(flt(row.allocated_amount) - flt(frm.doc.paid_amount)) > 0.01) {
-				frappe.msgprint({
-					title: __("Sai số tiền"),
-					indicator: 'red',
-					message: __(
-						"- Số tiền thanh toán: {0}<br>- Giao dịch ngân hàng: {1}<br>- Chênh lệch: {2}<br><br><b>Yêu cầu: Kiểm tra lại và nhập đúng số tiền trước khi tiếp tục.</b>",
-						[
-							format_currency(frm.doc.paid_amount, frm.doc.paid_from_account_currency, 0),
-							format_currency(row.allocated_amount, frm.doc.paid_from_account_currency, 0),
-							format_currency(Math.abs(flt(row.allocated_amount) - flt(frm.doc.paid_amount)), frm.doc.paid_from_account_currency, 0)
-						]
-					)
-				});
-
-				frappe.model.clear_doc(cdt, cdn);
-				frm.refresh_field("bank_transactions");
-			}
-		}
-	},
-
-	bank_transactions_add: function(frm, cdt, cdn) {
-		if (frm.doc.payment_code !== 'banking') {
-			frappe.msgprint({
-				title: __("Sai hình thức thanh toán"),
-				indicator: "red",
-				message: __("Chỉ áp dụng cho hình thức <b>Chuyển khoản</b>.<br><br>Hệ thống đã <b>tự động xoá dòng</b> vừa thêm.")
-			});
-
-			setTimeout(() => {
-				frm.get_field("bank_transactions").grid.grid_rows.forEach(r => {
-					if (r.doc.name === cdn) {
-						r.remove();
-					}
-				});
-				frm.refresh_field("bank_transactions");
-			}, 100);
-			return;
-		}
-
-
-		if (frm.doc.bank_transactions && frm.doc.bank_transactions.length > 1) {
-			frappe.msgprint({
-				title: __("Sai số lượng giao dịch"),
-				indicator: "red",
-				message: __("Mỗi phiếu thanh toán chỉ được phép gắn <b>một giao dịch duy nhất</b>.<br><br>Hệ thống đã <b>tự động xoá dòng</b> vừa thêm.")
-			});
-
-			setTimeout(() => {
-				frappe.model.clear_doc(cdt, cdn);
-				frm.refresh_field("bank_transactions");
-			}, 100);
-			return;
-		}
-
-		let row = locals[cdt][cdn];
-		if (frm.doc.paid_amount) {
-			frappe.model.set_value(cdt, cdn, "allocated_amount", frm.doc.paid_amount);
-		}
-	}
-});
