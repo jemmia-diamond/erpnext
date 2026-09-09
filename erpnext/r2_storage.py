@@ -25,6 +25,7 @@ import frappe
 from frappe import _
 from frappe.utils import get_site_path
 from urllib.parse import quote, unquote
+from erpnext.config.config import config
 import requests
 
 class R2FileManager:
@@ -491,7 +492,6 @@ def compress_and_upload_to_r2(download_url, headers, file_name, attached_to_doct
 	compressor_url = frappe.conf.get("compressor_service_url")
 	if not compressor_url:
 		try:
-			from erpnext.config.config import config
 			compressor_url = getattr(config, "COMPRESSOR_SERVICE_URL", "")
 		except ImportError:
 			pass
@@ -518,7 +518,9 @@ def compress_and_upload_to_r2(download_url, headers, file_name, attached_to_doct
 	}
 
 	compress_url = f"{compressor_url.rstrip('/')}/compress"
-	response = requests.post(compress_url, json=payload, timeout=300)
+	req_headers = {}
+	req_headers["Authorization"] = f"Bearer {getattr(config, "COMPRESSOR_SERVICE_API_KEY", "")}"
+	response = requests.post(compress_url, json=payload, headers=req_headers, timeout=300)
 	response.raise_for_status()
 
 	final_r2_url = manager.get_file_url(object_key, file_name, is_private=True)
