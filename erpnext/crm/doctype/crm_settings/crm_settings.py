@@ -28,6 +28,7 @@ class CRMSettings(Document):
 		campaign_naming_by: DF.Literal["Campaign Name", "Naming Series"]
 		carry_forward_communication_and_comments: DF.Check
 		close_opportunity_after_days: DF.Int
+		compressing_audio_enabled: DF.Check
 		create_haravan_customer: DF.Check
 		create_haravan_customer_automatically: DF.Check
 		default_valid_till: DF.Data | None

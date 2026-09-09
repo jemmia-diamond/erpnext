@@ -13,6 +13,7 @@ from erpnext.crm.doctype.utils import get_scheduled_employees_for_popup, strip_n
 from erpnext.config.config import config
 from erpnext.utilities.phone_utils import get_phone_variants
 from erpnext.r2_storage import compress_and_upload_to_r2
+from erpnext.crm.doctype.crm_settings.crm_settings_service import get_crm_settings
 import jwt
 import time
 import requests
@@ -367,8 +368,7 @@ def download_and_attach_recording(call_log_name):
 		if config.CC_API_KEY:
 			headers["X-API-Key"] = config.CC_API_KEY
 
-	compressor_url = frappe.conf.get("compressor_service_url") or getattr(config, "COMPRESSOR_SERVICE_URL", "")
-	if not compressor_url:
+	if not get_crm_settings().get("compressing_audio_enabled", 0):
 		try:
 			response = requests.get(download_url, headers=headers)
 			if response.status_code == 200:
