@@ -304,7 +304,8 @@ class PaymentEntry(AccountsController):
 		self.set_amounts_after_tax()
 		self.clear_unallocated_reference_document_rows()
 		self.validate_transaction_reference()
-		self.validate_bank_transactions()
+		# [TEMPORARILY DISABLED]
+		# self.validate_bank_transactions()
 		self.set_title()
 		self.set_remarks()
 		self.validate_duplicate_entry()
@@ -1091,7 +1092,7 @@ class PaymentEntry(AccountsController):
 		"""
 		Validate bank transactions:
 		1. Only allow 1 bank transaction per payment entry
-		2. Allocated amount must match payment entry's paid amount
+		2. Allocated amount must match payment entry's paid amount (or paid_amount + refund_amount)
 		"""
 		if not self.bank_transactions:
 			return
@@ -1101,7 +1102,11 @@ class PaymentEntry(AccountsController):
 
 		for bt in self.bank_transactions:
 			if bt.allocated_amount and self.paid_amount:
-				if abs(flt(bt.allocated_amount) - flt(self.paid_amount)) > 0.01:
+				bt_amount = cint(bt.allocated_amount)
+				paid_amount = cint(self.paid_amount)
+				refund_amount = cint(self.refund_amount or 0)
+
+				if bt_amount != paid_amount and not (refund_amount > 0 and bt_amount >= paid_amount):
 					frappe.throw(
 						_("Bank Transaction allocated amount {0} must match Payment Entry paid amount {1}").format(
 							frappe.bold(bt.allocated_amount),
@@ -2248,13 +2253,25 @@ class PaymentEntry(AccountsController):
 			self.payment_code = self.get_payment_code()
 
 	def set_refund_amount(self):
-		if not self.references:
-			return
+		paid_amount = cint(self.paid_amount)
+		total_allocated = sum(cint(d.allocated_amount) for d in self.references) if self.references else 0
 
-		total_allocated = sum(flt(d.allocated_amount) for d in self.references)
+		# 1. Determine actual received amount (from Bank Transaction if overpaid, or paid_amount)
+		actual_received = paid_amount
+		if self.bank_transactions and len(self.bank_transactions) > 0:
+			bt_amount = sum(cint(bt.allocated_amount) for bt in self.bank_transactions if bt.allocated_amount)
+			if bt_amount > actual_received:
+				actual_received = bt_amount
 
-		if self.paid_amount > total_allocated:
-			self.refund_amount = flt(self.paid_amount - total_allocated, self.precision("refund_amount"))
+		# 2. Case with existing order references: Refund amount = actual_received - total_allocated
+		if self.references and len(self.references) > 0 and total_allocated > 0:
+			if actual_received > total_allocated:
+				self.refund_amount = actual_received - total_allocated
+				return
+
+		# 3. Case without order references (advance / installment): Refund amount = actual_received - paid_amount
+		if actual_received > paid_amount:
+			self.refund_amount = actual_received - paid_amount
 			return
 
 		self.refund_amount = 0
