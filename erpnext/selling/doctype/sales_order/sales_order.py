@@ -3829,3 +3829,83 @@ def fetch_promotions_from_split_group(sales_order_name):
 			break
 
 	return updated_items
+
+
+@frappe.whitelist()
+def unlink_from_split_group(sales_order_name):
+	"""
+	Unlink a Sales Order from its split order group.
+	Allowed only for Administrator or System Manager.
+	"""
+	if not sales_order_name:
+		frappe.throw(_("Sales Order name is required."))
+
+	so = frappe.get_doc("Sales Order", sales_order_name)
+
+	old_group = so.split_order_group
+
+	# Standalone values
+	standalone_group = so.haravan_order_id or so.name
+	standalone_group_name = so.order_number or so.name
+
+	# 1. Reset target Sales Order to standalone
+	so.db_set({
+		"split_order_group": standalone_group,
+		"split_order_group_name": standalone_group_name,
+		"is_split_order": 0,
+		"split_reason": "",
+	})
+
+	# 2. Update Payment Entry Reference for this order
+	frappe.db.sql(
+		"""
+		UPDATE `tabPayment Entry Reference`
+		SET split_order_group_name = %s
+		WHERE reference_doctype = 'Sales Order' AND reference_name = %s
+	""",
+		(standalone_group_name, so.name),
+	)
+
+	# 3. Collapse old group if only 1 order remains
+	if old_group:
+		remaining = frappe.get_all(
+			"Sales Order",
+			filters={
+				"split_order_group": old_group,
+				"is_split_order": 1,
+				"name": ["!=", so.name],
+				"cancelled_status": "Uncancelled",
+			},
+			fields=["name", "order_number", "haravan_order_id"],
+		)
+
+		if len(remaining) == 1:
+			last_so = remaining[0]
+			last_group = last_so.haravan_order_id or last_so.name
+			last_group_name = last_so.order_number or last_so.name
+
+			frappe.db.set_value(
+				"Sales Order",
+				last_so.name,
+				{
+					"split_order_group": last_group,
+					"split_order_group_name": last_group_name,
+					"is_split_order": 0,
+					"split_reason": "",
+				},
+			)
+			frappe.db.sql(
+				"""
+				UPDATE `tabPayment Entry Reference`
+				SET split_order_group_name = %s
+				WHERE reference_doctype = 'Sales Order' AND reference_name = %s
+			""",
+				(last_group_name, last_so.name),
+			)
+
+	frappe.db.commit()
+	return {
+		"status": "success",
+		"message": _("Sales Order {0} unlinked from split group.").format(standalone_group_name),
+	}
+
