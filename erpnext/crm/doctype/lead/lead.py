@@ -199,6 +199,45 @@ class Lead(SellingController, CRMNote):
 			pancake_user_id = self.pancake_data.get("pancake_user_id", None)
 			self.update_lead_owner(pancake_user_id)
 
+		self.match_livestream_campaign()
+
+	def match_livestream_campaign(self):
+		"""
+		Match incoming lead to active Livestream Campaign based on first_reach_at / creation and platform.
+		Automatically tags campaign_name and koc on Lead.
+		"""
+		if self.campaign_name and self.koc:
+			return
+
+		reach_time = self.first_reach_at or self.creation or frappe.utils.now_datetime()
+		active_campaigns = frappe.get_all(
+			"Campaign",
+			filters={
+				"campaign_type": "Livestream",
+				"start_time": ["<=", reach_time],
+				"end_time": [">=", reach_time],
+			},
+			fields=["name", "koc", "platforms"],
+			order_by="creation desc",
+			limit=1,
+		)
+
+		if not active_campaigns:
+			return
+
+		campaign = active_campaigns[0]
+		platforms = campaign.get("platforms")
+		if platforms:
+			allowed_platforms = [p.strip().lower() for p in platforms.replace(":", ",").split(",") if p.strip()]
+			lead_platform = (self.lead_source_platform or self.source or "").strip().lower()
+			if allowed_platforms and lead_platform and not any(p in lead_platform for p in allowed_platforms):
+				return
+
+		if not self.campaign_name:
+			self.campaign_name = campaign.name
+		if not self.koc and campaign.get("koc"):
+			self.koc = campaign.koc
+
 	def before_save(self):
 		self.set_store_from_source()
 		self.update_lead_stage()
@@ -208,6 +247,8 @@ class Lead(SellingController, CRMNote):
 		self.upsert_lead_source()
 		self.sync_pancake_data_fields()
 		self.set_spam_status()
+		if not self.campaign_name or not self.koc:
+			self.match_livestream_campaign()
 		self.update_status_from_message_timestamps()
 		self.set_lead_temperature()
 		self.check_and_auto_create_opportunity_for_converted_lead()

@@ -12,6 +12,15 @@
   "campaign",
   "campaign_name",
   "naming_series",
+  "campaign_type",
+  "koc",
+  "col_break_live",
+  "start_time",
+  "end_time",
+  "platforms",
+  "polymorphic_section",
+  "link_type",
+  "link_name",
   "campaign_schedules_section",
   "campaign_schedules",
   "description_section",
@@ -38,6 +47,67 @@
    "label": "Naming Series",
    "options": "SAL-CAM-.YYYY.-",
    "set_only_once": 1
+  },
+  {
+   "default": "Livestream",
+   "fieldname": "campaign_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Campaign Type",
+   "options": "Livestream\nEmail\nSocial\nOther"
+  },
+  {
+   "depends_on": "eval:doc.campaign_type==\"Livestream\"",
+   "fieldname": "koc",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "KOC",
+   "options": "KOC",
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_break_live",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "start_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Start Time"
+  },
+  {
+   "fieldname": "end_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "End Time"
+  },
+  {
+   "description": "Colon or comma-separated platforms e.g. Facebook,TikTok,IG",
+   "fieldname": "platforms",
+   "fieldtype": "Data",
+   "label": "Platforms"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "polymorphic_section",
+   "fieldtype": "Section Break",
+   "label": "Reference Link"
+  },
+  {
+   "fieldname": "link_type",
+   "fieldtype": "Link",
+   "label": "Link Type",
+   "options": "DocType",
+   "search_index": 1
+  },
+  {
+   "fieldname": "link_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Link Name",
+   "options": "link_type",
+   "search_index": 1
   },
   {
    "fieldname": "campaign_schedules_section",

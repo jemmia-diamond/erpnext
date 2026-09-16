@@ -23,6 +23,7 @@
   "column_break0",
   "account_manager",
   "lead_name",
+  "primary_sales",
   "opportunity_name",
   "territory",
   "prospect_name",
@@ -235,6 +236,15 @@
    "options": "Lead",
    "print_hide": 1,
    "report_hide": 1
+  },
+  {
+   "fieldname": "primary_sales",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Primary Sales",
+   "options": "User",
+   "search_index": 1
   },
   {
    "fieldname": "image",

@@ -562,6 +562,10 @@ class SalesOrder(SellingController):
 
 			validate_coupon_code(self.coupon_code)
 
+		from erpnext.crm.services.crm_service import link_lead_and_campaign
+
+		link_lead_and_campaign(self)
+
 		self.set_order_policies_summary()
 
 		from erpnext.stock.doctype.packed_item.packed_item import make_packing_list

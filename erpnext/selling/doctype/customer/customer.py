@@ -248,6 +248,11 @@ class Customer(TransactionBase):
 		else:
 			self.normalized_phone = None
 
+		if self.lead_name and not self.primary_sales:
+			lead_owner = frappe.db.get_value("Lead", self.lead_name, "lead_owner")
+			if lead_owner:
+				self.primary_sales = lead_owner
+
 	def validate(self):
 		self.flags.is_new_doc = self.is_new()
 		self.flags.old_lead = self.lead_name
@@ -398,13 +403,17 @@ class Customer(TransactionBase):
 					leads = frappe.get_all(
 						"Lead",
 						filters={"phone": ["in", list(variants)]},
-						fields=["name"],
+						fields=["name", "lead_owner"],
 						order_by="first_reach_at asc",
 						limit=1
 					)
 					if leads:
 						self.lead_name = leads[0].name
 						frappe.db.set_value("Customer", self.name, "lead_name", self.lead_name)
+						lead_owner = leads[0].get("lead_owner")
+						if not self.primary_sales and lead_owner:
+							self.primary_sales = lead_owner
+							frappe.db.set_value("Customer", self.name, "primary_sales", lead_owner)
 
 		if self.lead_name:
 			update_values = {"status": "Converted"}

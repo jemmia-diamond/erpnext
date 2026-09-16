@@ -1,0 +1,114 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "KOC-.YYYY.-.#####",
+ "creation": "2026-09-15 23:45:00.000000",
+ "description": "Key Opinion Consumer (KOC) master record for livestream and affiliate campaigns.",
+ "doctype": "DocType",
+ "document_type": "Setup",
+ "engine": "InnoDB",
+ "field_order": [
+  "full_name",
+  "phone",
+  "email",
+  "column_break_1",
+  "slugs",
+  "attribution_window_days"
+ ],
+ "fields": [
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Full Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Phone",
+   "search_index": 1
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Comma-separated slugs or tracking IDs (e.g. binh-gold, koc01)",
+   "fieldname": "slugs",
+   "fieldtype": "Small Text",
+   "label": "Slugs / Tracking IDs"
+  },
+  {
+   "default": "30",
+   "description": "Number of days after lead creation during which orders qualify for KOC commission",
+   "fieldname": "attribution_window_days",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Attribution Window (Days)"
+  }
+ ],
+ "icon": "fa fa-user-circle",
+ "idx": 1,
+ "links": [],
+ "modified": "2026-09-15 23:45:00.000000",
+ "modified_by": "Administrator",
+ "module": "CRM",
+ "name": "KOC",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "import": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
