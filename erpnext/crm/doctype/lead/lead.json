@@ -135,8 +135,10 @@
   "notes",
   "activities_tab",
   "last_customer_message_at",
-  "column_break_oznw",
   "last_sales_message_at",
+  "column_break_oznw",
+  "koc",
+  "campaign_name",
   "section_break_wcmy",
   "open_activities_html",
   "all_activities_section",
@@ -872,6 +874,24 @@
    "read_only": 1
   },
   {
+   "fieldname": "koc",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "KOC",
+   "options": "KOC",
+   "search_index": 1
+  },
+  {
+   "fieldname": "campaign_name",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Campaign",
+   "options": "Campaign",
+   "search_index": 1
+  },
+  {
    "default": "0",
    "fieldname": "is_assigned",
    "fieldtype": "Check",
@@ -991,7 +1011,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2026-08-24 23:35:24.930372",
+ "modified": "2026-09-16 04:19:11.879886",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",

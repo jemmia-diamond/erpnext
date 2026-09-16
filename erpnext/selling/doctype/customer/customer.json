@@ -23,6 +23,7 @@
   "column_break0",
   "account_manager",
   "lead_name",
+  "primary_sales",
   "opportunity_name",
   "territory",
   "prospect_name",
@@ -235,6 +236,15 @@
    "options": "Lead",
    "print_hide": 1,
    "report_hide": 1
+  },
+  {
+   "fieldname": "primary_sales",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Primary Sales",
+   "options": "User",
+   "search_index": 1
   },
   {
    "fieldname": "image",
@@ -1187,7 +1197,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2026-08-05 16:19:18.392644",
+ "modified": "2026-09-16 04:17:06.364063",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",
