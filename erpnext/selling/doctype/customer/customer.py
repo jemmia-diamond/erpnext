@@ -143,6 +143,7 @@ class Customer(TransactionBase):
 		portal_users: DF.Table[PortalUser]
 		primary_address: DF.SmallText | None
 		primary_contact: DF.SmallText | None
+		primary_sales: DF.Link | None
 		priority_bank_account: DF.Link | None
 		priority_login_date: DF.Date | None
 		prospect_name: DF.Link | None

@@ -112,6 +112,7 @@ class SalesOrder(SellingController):
 		billing_address: DF.Literal["", "72 Nguy\u1ec5n C\u01b0 Trinh, Ph\u01b0\u1eddng B\u1ebfn Th\u00e0nh, TP H\u1ed3 Ch\u00ed Minh", "63 Kim M\u00e3, Ph\u01b0\u1eddng Gi\u1ea3ng V\u00f5, TP H\u00e0 N\u1ed9i", "209 \u0110\u01b0\u1eddng 30 Th\u00e1ng 4, Ph\u01b0\u1eddng Ninh Ki\u1ec1u, TP C\u1ea7n Th\u01a1"]
 		billing_status: DF.Literal["Not Billed", "Fully Billed", "Partly Billed", "Closed"]
 		birth_date: DF.Date | None
+		campaign: DF.Link | None
 		cancelled_status: DF.Literal["", "Uncancelled", "Cancelled"]
 		carrier_status: DF.Literal["", "Not Delivered", "Ready To Pick", "Delivering", "Delivered"]
 		commission_base_amount: DF.Currency
@@ -176,6 +177,7 @@ class SalesOrder(SellingController):
 		item_wise_tax_details: DF.Table[ItemWiseTaxDetail]
 		items: DF.Table[SalesOrderItem]
 		language: DF.Link | None
+		lead: DF.Link | None
 		letter_head: DF.Link | None
 		loyalty_amount: DF.Currency
 		loyalty_points: DF.Int
