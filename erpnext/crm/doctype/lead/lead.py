@@ -50,6 +50,7 @@ class Lead(SellingController, CRMNote):
 		birth_date: DF.Date | None
 		blog_subscriber: DF.Check
 		budget_lead: DF.Link | None
+		campaign_name: DF.Link | None
 		ceo_name: DF.Data | None
 		check_duplicate: DF.Link | None
 		city: DF.Data | None
@@ -71,6 +72,7 @@ class Lead(SellingController, CRMNote):
 		industry: DF.Link | None
 		is_assigned: DF.Check
 		job_title: DF.Data | None
+		koc: DF.Link | None
 		language: DF.Link | None
 		last_customer_message_at: DF.Datetime | None
 		last_message_at: DF.Datetime | None
