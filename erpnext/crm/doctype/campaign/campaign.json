@@ -13,7 +13,8 @@
   "campaign_name",
   "naming_series",
   "campaign_type",
-  "koc",
+  "kocs",
+  "kocs_json",
   "col_break_live",
   "start_time",
   "end_time",
@@ -58,14 +59,16 @@
    "options": "Livestream\nEmail\nSocial\nOther"
   },
   {
-   "depends_on": "eval:doc.campaign_type==\"Livestream\"",
-   "fieldname": "koc",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "KOC",
-   "options": "KOC",
-   "search_index": 1
+   "fieldname": "kocs",
+   "fieldtype": "Table",
+   "label": "Campaign KOCs & Commission",
+   "options": "Campaign KOC"
+  },
+  {
+   "fieldname": "kocs_json",
+   "fieldtype": "JSON",
+   "label": "KOCs JSON",
+   "read_only": 1
   },
   {
    "fieldname": "col_break_live",
