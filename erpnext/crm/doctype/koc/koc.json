@@ -15,6 +15,9 @@
   "column_break_1",
   "slugs",
   "attribution_window_days",
+  "portal_section",
+  "portal_id",
+  "portal_password",
   "commission_section",
   "commission_rate",
   "referral_valid_from",
@@ -61,6 +64,26 @@
    "fieldtype": "Int",
    "in_list_view": 1,
    "label": "Attribution Window (Days)"
+  },
+  {
+   "fieldname": "portal_section",
+   "fieldtype": "Section Break",
+   "label": "Affiliate Portal Access"
+  },
+  {
+   "description": "Dedicated login username/ID for KOC affiliate portal (e.g. minh-anh, koc01)",
+   "fieldname": "portal_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Portal ID / Login",
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "description": "Password / PIN for KOC affiliate portal authentication",
+   "fieldname": "portal_password",
+   "fieldtype": "Password",
+   "label": "Portal Password"
   },
   {
    "fieldname": "commission_section",
