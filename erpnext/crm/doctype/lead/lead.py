@@ -201,7 +201,54 @@ class Lead(SellingController, CRMNote):
 			pancake_user_id = self.pancake_data.get("pancake_user_id", None)
 			self.update_lead_owner(pancake_user_id)
 
+		self.match_koc_referral()
 		self.match_livestream_campaign()
+
+	def match_koc_referral(self):
+		"""
+		Match incoming lead to a KOC via referral parameters (ref, koc, slug) or source.
+		Condition: Lead creation/reach_time must be >= KOC.referral_valid_from (if set).
+		Maps self.koc without requiring a campaign.
+		"""
+		try:
+			if self.koc:
+				return
+
+			# Check tracking parameters on lead or associated contact
+			candidate_slugs = []
+			for field in ["utm_term", "utm_content", "utm_campaign", "utm_source", "source"]:
+				val = getattr(self, field, None)
+				if val and isinstance(val, str):
+					candidate_slugs.extend([s.strip().lower() for s in val.replace("/", " ").replace("=", " ").split() if s.strip()])
+
+			if hasattr(self, "contact_doc") and self.contact_doc:
+				for field in ["referrer", "url_page", "utm_term", "utm_content", "utm_campaign", "utm_source"]:
+					val = getattr(self.contact_doc, field, None)
+					if val and isinstance(val, str):
+						candidate_slugs.extend([s.strip().lower() for s in val.replace("/", " ").replace("=", " ").replace("&", " ").replace("?", " ").split() if s.strip()])
+
+			if not candidate_slugs:
+				return
+
+			reach_time = self.first_reach_at or self.creation or frappe.utils.now_datetime()
+
+			# Query active KOCs that have slugs defined
+			kocs = frappe.get_all(
+				"KOC",
+				fields=["name", "slugs", "referral_valid_from"],
+			)
+
+			for k in kocs:
+				if k.referral_valid_from and frappe.utils.get_datetime(k.referral_valid_from) > frappe.utils.get_datetime(reach_time):
+					continue
+
+				if k.slugs:
+					koc_slugs = [s.strip().lower() for s in k.slugs.split(",") if s.strip()]
+					if any(slug in candidate_slugs or k.name.lower() in candidate_slugs for slug in koc_slugs):
+						self.koc = k.name
+						break
+		except Exception:
+			frappe.log_error(title="KOC Referral Match Error in Lead")
 
 	def match_livestream_campaign(self):
 		"""
@@ -237,8 +284,17 @@ class Lead(SellingController, CRMNote):
 
 		if not self.campaign_name:
 			self.campaign_name = campaign.name
-		if not self.koc and campaign.get("koc"):
-			self.koc = campaign.koc
+
+		if not self.koc:
+			# If campaign has KOCs in child table, check if single KOC exists
+			campaign_kocs = frappe.get_all(
+				"Campaign KOC",
+				filters={"parent": campaign.name},
+				fields=["koc"],
+				order_by="idx asc",
+			)
+			if len(campaign_kocs) == 1:
+				self.koc = campaign_kocs[0].koc
 
 	def before_save(self):
 		self.set_store_from_source()
@@ -249,6 +305,8 @@ class Lead(SellingController, CRMNote):
 		self.upsert_lead_source()
 		self.sync_pancake_data_fields()
 		self.set_spam_status()
+		if not self.koc:
+			self.match_koc_referral()
 		if not self.campaign_name or not self.koc:
 			self.match_livestream_campaign()
 		self.update_status_from_message_timestamps()
