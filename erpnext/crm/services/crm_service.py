@@ -2,7 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe.utils import getdate, add_days
+from frappe.utils import getdate, add_days, get_datetime
 
 
 @frappe.whitelist()
@@ -58,6 +58,12 @@ def check_koc_eligibility(sales_order):
 	Check if a Sales Order is eligible for KOC commission based on the KOC's attribution window.
 	Rule: sales_order.transaction_date between lead.creation and (lead.creation + attribution_window_days).
 	Default attribution window: 30 days (configurable on DocType KOC).
+
+	Commission resolution hierarchy:
+	1. Campaign KOC table rate (if Sales Order is tied to a Campaign with a Campaign KOC entry)
+	2. KOC Commission Plan timeline rate for the order transaction_date (referral timeline)
+	3. KOC Master default commission_rate
+	4. Fallback 5% (0.05)
 	"""
 	if isinstance(sales_order, str):
 		so_data = frappe.db.get_value(
@@ -101,14 +107,46 @@ def check_koc_eligibility(sales_order):
 
 	is_eligible = start_date <= order_date <= cutoff_date
 
+	commission_pct = 0.0
+	commission_source = "default"
+
+	# Hierarchy 1: Campaign KOC table rate
+	campaign_id = so_data.get("campaign") or lead_data.get("campaign_name")
+	if campaign_id and frappe.db.exists("Campaign", campaign_id):
+		campaign_doc = frappe.get_doc("Campaign", campaign_id)
+		if getattr(campaign_doc, "kocs", None):
+			for row in campaign_doc.kocs:
+				if row.koc == koc_id:
+					commission_pct = float(row.commission_rate or 0)
+					commission_source = f"Campaign KOC ({campaign_id})"
+					break
+
+	# Hierarchy 2 & 3: KOC Master Commission Plans timeline or default
+	if not commission_pct and frappe.db.exists("KOC", koc_id):
+		koc_doc = frappe.get_doc("KOC", koc_id)
+		commission_pct = koc_doc.get_commission_rate(order_date)
+		commission_source = "KOC Commission Plan / Master"
+
+	if not commission_pct:
+		commission_pct = 5.0
+		commission_source = "Fallback (5%)"
+
+	commission_rate_decimal = round(commission_pct / 100.0, 4)
+	grand_total = float(so_data.get("grand_total", 0) or 0)
+	estimated_commission = round(grand_total * commission_rate_decimal, 0) if is_eligible else 0
+
 	return {
 		"eligible": is_eligible,
 		"koc": koc_id,
 		"lead": lead_id,
+		"campaign": campaign_id,
 		"order_date": str(order_date),
 		"lead_start_date": str(start_date),
 		"cutoff_date": str(cutoff_date),
 		"attribution_window_days": window_days,
-		"commission_rate": 0.05,
-		"estimated_commission": round(float(so_data.get("grand_total", 0)) * 0.05, 0) if is_eligible else 0,
+		"commission_percent": commission_pct,
+		"commission_rate": commission_rate_decimal,
+		"commission_source": commission_source,
+		"grand_total": grand_total,
+		"estimated_commission": estimated_commission,
 	}
