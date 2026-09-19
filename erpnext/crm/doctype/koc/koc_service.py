@@ -7,9 +7,12 @@ from frappe.utils import getdate, add_days, get_datetime, now_datetime
 from frappe.utils.password import passlibctx
 
 
+from erpnext.utilities.phone_utils import get_phone_variants
+
+
 def resolve_koc_record(identifier):
 	"""
-	Resolve a KOC document by portal_id, phone, or name (primary key).
+	Resolve a KOC document by portal_id, phone (with variants), or name (primary key).
 	Fast indexed query.
 	"""
 	if not identifier:
@@ -24,9 +27,11 @@ def resolve_koc_record(identifier):
 	if not koc_name and frappe.db.exists("KOC", identifier):
 		koc_name = identifier
 
-	# 3. Direct search by phone (index)
+	# 3. Direct search by phone variants (e.g. 090..., 8490..., +8490...)
 	if not koc_name:
-		koc_name = frappe.db.get_value("KOC", {"phone": identifier}, "name")
+		variants = get_phone_variants(identifier, for_search=True)
+		if variants:
+			koc_name = frappe.db.get_value("KOC", {"phone": ["in", variants]}, "name")
 
 	# 4. Search within comma-separated slugs
 	if not koc_name:
