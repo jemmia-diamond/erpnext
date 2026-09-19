@@ -7,9 +7,12 @@ from frappe.utils import getdate, add_days, get_datetime, now_datetime
 from frappe.utils.password import passlibctx
 
 
+from erpnext.utilities.phone_utils import get_phone_variants
+
+
 def resolve_koc_record(identifier):
 	"""
-	Resolve a KOC document by portal_id, phone, or name (primary key).
+	Resolve a KOC document by portal_id, phone (with variants), or name (primary key).
 	Fast indexed query.
 	"""
 	if not identifier:
@@ -24,9 +27,11 @@ def resolve_koc_record(identifier):
 	if not koc_name and frappe.db.exists("KOC", identifier):
 		koc_name = identifier
 
-	# 3. Direct search by phone (index)
+	# 3. Direct search by phone variants (e.g. 090..., 8490..., +8490...)
 	if not koc_name:
-		koc_name = frappe.db.get_value("KOC", {"phone": identifier}, "name")
+		variants = get_phone_variants(identifier, for_search=True)
+		if variants:
+			koc_name = frappe.db.get_value("KOC", {"phone": ["in", variants]}, "name")
 
 	# 4. Search within comma-separated slugs
 	if not koc_name:
@@ -63,17 +68,32 @@ def verify_koc_login(identifier, password=None):
 		}
 
 	# Check password if configured
-	if koc.portal_password:
+	real_password = None
+	try:
+		real_password = koc.get_password("portal_password", raise_exception=False)
+	except Exception:
+		pass
+
+	if not real_password and getattr(koc, "portal_password", None):
+		if not koc.is_dummy_password(koc.portal_password):
+			real_password = koc.portal_password
+
+	if real_password:
 		if not password:
 			return {
 				"authenticated": False,
 				"error": "missing_password",
 				"message": _("Password is required"),
 			}
+
+		is_valid = False
 		try:
-			is_valid = passlibctx.verify(password, koc.portal_password)
+			is_valid = passlibctx.verify(password, real_password)
 		except Exception:
-			is_valid = (koc.portal_password == password)
+			pass
+
+		if not is_valid:
+			is_valid = (real_password == password)
 
 		if not is_valid:
 			return {
@@ -126,7 +146,16 @@ def get_koc_sessions(identifier):
 		as_dict=True,
 	)
 
-	return {"items": campaigns}
+	res_items = []
+	for camp in campaigns:
+		st = get_datetime(camp["start_time"]) if camp.get("start_time") else None
+		et = get_datetime(camp["end_time"]) if camp.get("end_time") else None
+		camp["start_time"] = st.strftime("%Y-%m-%dT%H:%M:%SZ") if st else None
+		camp["end_time"] = et.strftime("%Y-%m-%dT%H:%M:%SZ") if et else None
+		camp["commission_rate"] = float(camp.get("commission_rate") or 0)
+		res_items.append(camp)
+
+	return {"items": res_items}
 
 
 @frappe.whitelist()
@@ -156,7 +185,7 @@ def get_koc_dashboard_stats(identifier, session_id=None):
 			l.name AS id,
 			l.creation AS recorded_at,
 			l.first_reach_at,
-			COALESCE(ck.commission_rate, %(default_rate)s) AS commission_rate,
+			ck.commission_rate AS campaign_commission_rate,
 			so.name AS order_id,
 			so.transaction_date AS order_date,
 			COALESCE(so.grand_total, 0) AS order_value
@@ -202,7 +231,12 @@ def get_koc_dashboard_stats(identifier, session_id=None):
 		has_order = bool(item.get("order_id") and order_date)
 		order_in_window = has_order and (capture_date <= order_date <= cutoff_date)
 
-		comm_rate = float(item.get("commission_rate") or 0)
+		# Tiered commission rate: Campaign rate -> KOC timeline rate -> master fallback
+		if item.get("campaign_commission_rate"):
+			comm_rate = float(item["campaign_commission_rate"])
+		else:
+			comm_rate = koc.get_commission_rate(order_date or capture_date)
+
 		order_val = float(item.get("order_value") or 0) if has_order else 0.0
 
 		if order_in_window:
@@ -212,6 +246,7 @@ def get_koc_dashboard_stats(identifier, session_id=None):
 		elif today <= cutoff_date:
 			active_leads += 1
 
+	now_dt = now_datetime()
 	return {
 		"recorded_leads": recorded_leads,
 		"ordered_leads": ordered_leads,
@@ -219,7 +254,7 @@ def get_koc_dashboard_stats(identifier, session_id=None):
 		"active_window_days": window_days,
 		"total_order_value": int(total_order_val),
 		"commission_earned": int(total_commission),
-		"last_updated": str(now_datetime()),
+		"last_updated": now_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
 	}
 
 
@@ -296,7 +331,7 @@ def get_koc_leads(identifier, session_id=None, page=1, page_size=10, status=None
 			l.creation AS recorded_at,
 			l.first_reach_at,
 			l.modified AS updated_at,
-			COALESCE(ck.commission_rate, %(default_rate)s) AS commission_rate,
+			ck.commission_rate AS campaign_commission_rate,
 			so.name AS order_id,
 			so.transaction_date AS order_date,
 			COALESCE(so.grand_total, 0) AS order_value
@@ -344,7 +379,12 @@ def get_koc_leads(identifier, session_id=None, page=1, page_size=10, status=None
 		has_order = bool(item.get("order_id") and order_date)
 		order_in_window = has_order and (capture_date <= order_date <= cutoff_date)
 
-		comm_rate = float(item.get("commission_rate") or 0)
+		# Tiered commission rate: Campaign rate -> KOC timeline rate -> master fallback
+		if item.get("campaign_commission_rate"):
+			comm_rate = float(item["campaign_commission_rate"])
+		else:
+			comm_rate = koc.get_commission_rate(order_date or capture_date)
+
 		order_val = float(item.get("order_value") or 0) if has_order else 0.0
 
 		if order_in_window:
@@ -362,6 +402,14 @@ def get_koc_leads(identifier, session_id=None, page=1, page_size=10, status=None
 			status_label = f"Quá hạn {window_days} ngày"
 			sub_label = f"Đã hết hạn {cutoff_date.strftime('%d/%m/%Y')}"
 			comm_earned = 0.0
+
+		# Format timestamps to standard ISO 8601 UTC string
+		rec_at = get_datetime(item.get("recorded_at")) if item.get("recorded_at") else None
+		upd_at = get_datetime(item.get("updated_at")) if item.get("updated_at") else None
+
+		item["recorded_at"] = rec_at.strftime("%Y-%m-%dT%H:%M:%SZ") if rec_at else None
+		item["updated_at"] = upd_at.strftime("%Y-%m-%dT%H:%M:%SZ") if upd_at else None
+		item["commission_rate"] = comm_rate
 
 		item["status"] = {
 			"kind": status_kind,
