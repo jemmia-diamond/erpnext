@@ -14,7 +14,16 @@
   "email",
   "column_break_1",
   "slugs",
-  "attribution_window_days"
+  "attribution_window_days",
+  "portal_section",
+  "portal_id",
+  "portal_password",
+  "commission_section",
+  "commission_rate",
+  "referral_valid_from",
+  "commission_plans_section",
+  "commission_plans",
+  "commission_plans_json"
  ],
  "fields": [
   {
@@ -55,6 +64,64 @@
    "fieldtype": "Int",
    "in_list_view": 1,
    "label": "Attribution Window (Days)"
+  },
+  {
+   "fieldname": "portal_section",
+   "fieldtype": "Section Break",
+   "label": "Affiliate Portal Access"
+  },
+  {
+   "description": "Dedicated login username/ID for KOC affiliate portal (e.g. minh-anh, koc01)",
+   "fieldname": "portal_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Portal ID / Login",
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "description": "Password / PIN for KOC affiliate portal authentication",
+   "fieldname": "portal_password",
+   "fieldtype": "Password",
+   "label": "Portal Password"
+  },
+  {
+   "fieldname": "commission_section",
+   "fieldtype": "Section Break",
+   "label": "Referral & Default Commission"
+  },
+  {
+   "default": "0",
+   "description": "Default commission rate percentage for direct referrals (e.g. 5.0 for 5%)",
+   "fieldname": "commission_rate",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Default Commission Rate (%)"
+  },
+  {
+   "description": "Datetime from which new leads/contacts matching this KOC referral are eligible",
+   "fieldname": "referral_valid_from",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Referral Valid From"
+  },
+  {
+   "fieldname": "commission_plans_section",
+   "fieldtype": "Section Break",
+   "label": "Commission History & Timeline Tracking"
+  },
+  {
+   "description": "Historical timeline of commission rates (e.g. 2nd July got 2%, 1st Aug got 3%)",
+   "fieldname": "commission_plans",
+   "fieldtype": "Table",
+   "label": "Commission Plans Timeline",
+   "options": "KOC Commission Plan"
+  },
+  {
+   "fieldname": "commission_plans_json",
+   "fieldtype": "JSON",
+   "label": "Commission Plans JSON",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-user-circle",
