@@ -48,7 +48,7 @@ def resolve_koc_record(identifier):
 	return frappe.get_doc("KOC", koc_name)
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def verify_koc_login(identifier, password=None):
 	"""
 	Authenticate a KOC by portal_id / phone / name and password.
