@@ -63,8 +63,8 @@ def verify_koc_login(identifier, password=None):
 	if not koc:
 		return {
 			"authenticated": False,
-			"error": "invalid_user",
-			"message": _("KOC identifier not found"),
+			"error": "invalid_credentials",
+			"message": _("Tên đăng nhập hoặc mật khẩu không chính xác"),
 		}
 
 	# Check password if configured
@@ -82,8 +82,8 @@ def verify_koc_login(identifier, password=None):
 		if not password:
 			return {
 				"authenticated": False,
-				"error": "missing_password",
-				"message": _("Password is required"),
+				"error": "invalid_credentials",
+				"message": _("Tên đăng nhập hoặc mật khẩu không chính xác"),
 			}
 
 		is_valid = False
@@ -98,8 +98,8 @@ def verify_koc_login(identifier, password=None):
 		if not is_valid:
 			return {
 				"authenticated": False,
-				"error": "invalid_password",
-				"message": _("Mật khẩu không đúng"),
+				"error": "invalid_credentials",
+				"message": _("Tên đăng nhập hoặc mật khẩu không chính xác"),
 			}
 
 	return {
@@ -192,9 +192,15 @@ def get_koc_dashboard_stats(identifier, session_id=None):
 		FROM `tabLead` l
 		LEFT JOIN `tabCampaign` c ON c.name = l.campaign_name
 		LEFT JOIN `tabCampaign KOC` ck ON ck.parent = l.campaign_name AND ck.koc = %(koc)s
+		LEFT JOIN `tabCustomer` cust ON (
+			cust.lead_name = l.name 
+			OR (l.customer IS NOT NULL AND cust.name = l.customer)
+			OR (l.phone IS NOT NULL AND (cust.mobile_no = l.phone OR cust.mobile_no = REPLACE(l.phone, '+84', '0') OR cust.phone = l.phone))
+		)
 		LEFT JOIN `tabSales Order` so ON (
-			(so.lead = l.name OR (l.customer IS NOT NULL AND so.customer = l.customer))
-			AND so.docstatus = 1
+			so.lead = l.name 
+			OR (cust.name IS NOT NULL AND so.customer = cust.name)
+			OR (l.customer IS NOT NULL AND so.customer = l.customer)
 		)
 		WHERE l.koc = %(koc)s
 	"""
@@ -338,9 +344,15 @@ def get_koc_leads(identifier, session_id=None, page=1, page_size=10, status=None
 		FROM `tabLead` l
 		LEFT JOIN `tabCampaign` c ON c.name = l.campaign_name
 		LEFT JOIN `tabCampaign KOC` ck ON ck.parent = l.campaign_name AND ck.koc = %(koc)s
+		LEFT JOIN `tabCustomer` cust ON (
+			cust.lead_name = l.name 
+			OR (l.customer IS NOT NULL AND cust.name = l.customer)
+			OR (l.phone IS NOT NULL AND (cust.mobile_no = l.phone OR cust.mobile_no = REPLACE(l.phone, '+84', '0') OR cust.phone = l.phone))
+		)
 		LEFT JOIN `tabSales Order` so ON (
-			(so.lead = l.name OR (l.customer IS NOT NULL AND so.customer = l.customer))
-			AND so.docstatus = 1
+			so.lead = l.name 
+			OR (cust.name IS NOT NULL AND so.customer = cust.name)
+			OR (l.customer IS NOT NULL AND so.customer = l.customer)
 		)
 		WHERE l.name IN %(lead_ids)s
 		ORDER BY l.creation DESC
