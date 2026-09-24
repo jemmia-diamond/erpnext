@@ -29,3 +29,27 @@ class CRMNote(Document):
 	def update_added_by(self):
 		if not self.added_by:
 			self.added_by = frappe.session.user
+
+	def on_update(self):
+		self.sync_parent_opportunity_note_count()
+
+	def on_trash(self):
+		self.sync_parent_opportunity_note_count()
+
+	def sync_parent_opportunity_note_count(self):
+		if self.parenttype == "Opportunity" and self.parent:
+			try:
+				dates = frappe.db.sql(
+					"""
+					SELECT DISTINCT DATE(added_on) AS note_date
+					FROM `tabCRM Note`
+					WHERE parent = %(parent)s
+					  AND parenttype = 'Opportunity'
+					  AND added_on IS NOT NULL
+					""",
+					{"parent": self.parent},
+					as_dict=True,
+				)
+				frappe.db.set_value("Opportunity", self.parent, "note_count", len(dates), update_modified=False)
+			except Exception:
+				pass
