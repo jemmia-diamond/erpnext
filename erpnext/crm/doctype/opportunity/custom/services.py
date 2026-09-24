@@ -81,12 +81,31 @@ def get_todo_opportunities(pancake_id=None, employee_email=None, status_filter="
 
 	today = getdate(nowdate())
 
+	# Group conversations per opportunity so each opportunity appears exactly once with all its conversation_ids
+	opp_dict = {}
+	for r in rows:
+		opp_id = r["id"]
+		if opp_id not in opp_dict:
+			item_data = dict(r)
+			item_data["conversation_ids"] = []
+			item_data["pancake_urls"] = []
+			opp_dict[opp_id] = item_data
+
+		cid = r.get("pancake_conversation_id")
+		pid = r.get("pancake_page_id")
+		if cid and cid not in opp_dict[opp_id]["conversation_ids"]:
+			opp_dict[opp_id]["conversation_ids"].append(cid)
+			if pid:
+				p_url = f"https://pancake.vn/{pid}?c_id={cid}"
+				if p_url not in opp_dict[opp_id]["pancake_urls"]:
+					opp_dict[opp_id]["pancake_urls"].append(p_url)
+
 	total_count = 0
 	due_today_count = 0
 	overdue_count = 0
 	items = []
 
-	for r in rows:
+	for r in opp_dict.values():
 		# Calculate distinct note dates if note_count is not backfilled yet
 		note_cnt = r.get("note_count")
 		if note_cnt is None:
@@ -127,12 +146,8 @@ def get_todo_opportunities(pancake_id=None, employee_email=None, status_filter="
 		# Name fallback
 		display_name = r.get("customer_name") or r.get("title") or r.get("party_name") or r.get("id")
 
-		# Build Pancake URL if conversation_id and page_id are available
-		pancake_page_id = r.get("pancake_page_id")
-		pancake_conversation_id = r.get("pancake_conversation_id")
-		pancake_url = None
-		if pancake_page_id and pancake_conversation_id:
-			pancake_url = f"https://pancake.vn/{pancake_page_id}?c_id={pancake_conversation_id}"
+		cids = r.get("conversation_ids") or []
+		p_urls = r.get("pancake_urls") or []
 
 		items.append({
 			"id": r["id"],
@@ -147,9 +162,9 @@ def get_todo_opportunities(pancake_id=None, employee_email=None, status_filter="
 			"note_target": 3,
 			"note_progress": f"{note_cnt}/3 lần",
 			"image": r.get("lead_image"),
-			"pancake_page_id": pancake_page_id,
-			"pancake_conversation_id": pancake_conversation_id,
-			"pancake_url": pancake_url,
+			"conversation_ids": cids,
+			"pancake_urls": p_urls,
+			"pancake_url": p_urls[0] if p_urls else None,
 			"creation": r.get("creation").strftime("%Y-%m-%d %H:%M:%S") if r.get("creation") else None,
 			"first_reach_at": r.get("lead_first_reach_at").strftime("%Y-%m-%d %H:%M:%S") if r.get("lead_first_reach_at") else None,
 			"deadline_date": str(deadline_date),
