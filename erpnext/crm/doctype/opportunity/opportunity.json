@@ -103,6 +103,7 @@
   "notes_tab",
   "notes_html",
   "notes",
+  "note_count",
   "items_section",
   "items",
   "section_break_32",
@@ -642,6 +643,14 @@
    "options": "CRM Note"
   },
   {
+   "default": "0",
+   "fieldname": "note_count",
+   "fieldtype": "Int",
+   "label": "Note Count",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
    "fieldname": "city",
    "fieldtype": "Data",
    "label": "City"
@@ -849,7 +858,7 @@
  "icon": "fa fa-info-sign",
  "idx": 195,
  "links": [],
- "modified": "2026-07-28 12:11:07.651456",
+ "modified": "2026-09-24 11:00:00.000000",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Opportunity",

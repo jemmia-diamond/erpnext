@@ -208,6 +208,23 @@ class Opportunity(TransactionBase, CRMNote):
 		if self.probability_text in probability_map:
 			self.probability = probability_map[self.probability_text]
 
+		self.calculate_note_count()
+
+	def calculate_note_count(self):
+		"""
+		Smart note count: distinct dates on which notes were added.
+		Multiple notes added on the same day count as 1.
+		"""
+		dates = set()
+		for n in (self.get("notes") or []):
+			if n.added_on:
+				try:
+					note_date = getdate(n.added_on)
+					dates.add(note_date)
+				except Exception:
+					pass
+		self.note_count = len(dates)
+
 	def on_update(self):
 		self.update_prospect()
 		update_lead_status_on_lost(self)
@@ -620,3 +637,6 @@ def make_opportunity_from_communication(communication, company, ignore_communica
 	link_communication_to_document(doc, "Opportunity", opportunity.name, ignore_communication_links)
 
 	return opportunity.name
+
+
+from erpnext.crm.doctype.opportunity.custom.services import get_todo_opportunities
