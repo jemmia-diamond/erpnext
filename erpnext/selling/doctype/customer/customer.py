@@ -80,6 +80,7 @@ class Customer(TransactionBase):
 		birth_date: DF.Date | None
 		bizfly_customer_number: DF.Data | None
 		bizfly_id: DF.Data | None
+		fb_uid: DF.Data | None
 		buyback_history: DF.Table[CustomerBuybackRecord]
 		buyback_revenue: DF.Currency
 		ceo_name: DF.Data | None

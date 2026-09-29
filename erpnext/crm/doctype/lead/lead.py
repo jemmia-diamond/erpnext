@@ -63,6 +63,7 @@ class Lead(SellingController, CRMNote):
 		email_id: DF.Data | None
 		expected_delivery_date: DF.Date | None
 		fax: DF.Data | None
+		fb_uid: DF.Data | None
 		first_channel: DF.Link | None
 		first_name: DF.Data | None
 		first_reach_at: DF.Datetime | None

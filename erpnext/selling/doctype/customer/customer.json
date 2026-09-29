@@ -163,6 +163,7 @@
   "disabled",
   "is_frozen",
   "bizfly_id",
+  "fb_uid",
   "portal_users_tab",
   "portal_users",
   "more_info_tab",
@@ -937,6 +938,13 @@
    "fieldtype": "Data",
    "label": "Bizfly ID",
    "unique": 1
+  },
+  {
+   "fieldname": "fb_uid",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "FB UID",
+   "search_index": 1
   },
   {
    "fieldname": "priority_tab",

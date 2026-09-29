@@ -114,6 +114,7 @@
   "pancake_data",
   "stringee_data",
   "website_from_data",
+  "fb_uid",
   "column_break_22",
   "language",
   "image",
@@ -797,6 +798,13 @@
    "fieldname": "website_from_data",
    "fieldtype": "JSON",
    "label": "Website Form Data"
+  },
+  {
+   "fieldname": "fb_uid",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "FB UID",
+   "search_index": 1
   },
   {
    "fieldname": "check_duplicate",
