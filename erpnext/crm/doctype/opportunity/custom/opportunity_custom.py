@@ -28,7 +28,7 @@ DEFAULT_LEAD_OPPORTUNITY_FIELD_MAPPINGS = [
 def auto_close_opportunity():
 	"""Auto set Opportunity to Lost according to spec in docs (Line 83):
 	1. Past expected_delivery_date + 7 days without interaction -> Lost.
-	2. 7 days inactive in Nurturing status without interaction -> Lost.
+	2. 7 days inactive in Nurturing or Proposal status without interaction -> Lost.
 	"""
 	crm_settings = get_crm_settings()
 	enabled = crm_settings.get("auto_close_opportunity", 0)
@@ -73,12 +73,15 @@ def auto_close_opportunity():
 					target_opps.append((opp.name, reason))
 					continue
 
-		# Rule A (Doc Line 83): Inactive for over 7 days in Nurturing status without interaction -> Lost
-		if opp.status == "Nurturing":
+		# Rule A (Doc Line 83): Inactive for over 7 days in Nurturing or Proposal status without interaction -> Lost
+		if opp.status in ["Nurturing", "Proposal"]:
 			if (not cust_at or frappe.utils.get_datetime(cust_at) < cutoff) and (
 				not sales_at or frappe.utils.get_datetime(sales_at) < cutoff
 			) and (frappe.utils.get_datetime(opp.modified) < cutoff):
-				reason = messages.get("auto_lost_opportunity_nurturing") or "Tự động đóng: Quá 7 ngày ở Nuôi dưỡng mà không có tương tác"
+				if opp.status == "Nurturing":
+					reason = messages.get("auto_lost_opportunity_nurturing") or "Tự động đóng: Quá 7 ngày ở Nuôi dưỡng mà không có tương tác"
+				else:
+					reason = messages.get("auto_lost_opportunity_proposal") or "Tự động đóng: Quá 7 ngày ở Đề xuất (Proposal) mà không có tương tác"
 				target_opps.append((opp.name, reason))
 
 	if target_opps:
