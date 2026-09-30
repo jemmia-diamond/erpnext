@@ -112,14 +112,9 @@ def get_todo_opportunities(pancake_id=None, employee_email=None, status_filter="
 			note_cnt = get_distinct_note_days(r["id"])
 
 		created_date = getdate(r["creation"]) if r.get("creation") else today
-		first_reach_date = (
-			getdate(r["lead_first_reach_at"])
-			if r.get("lead_first_reach_at")
-			else created_date
-		)
 
-		# 7-day deadline from creation / first reach
-		deadline_date = frappe.utils.add_days(first_reach_date, 7)
+		# 7-day deadline from opportunity creation
+		deadline_date = frappe.utils.add_days(created_date, 7)
 		days_left = (deadline_date - today).days
 
 		if days_left == 0:
