@@ -1,6 +1,8 @@
 import frappe 
 
 def get_lead_purpose(purpose: str):
+	if not purpose:
+		return None
 
 	lead_purpose = None
 	try:
