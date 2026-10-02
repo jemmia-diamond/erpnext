@@ -956,6 +956,9 @@ def transform_price_label(label: str) -> str:
 
 
 def get_lead_province(province: str):
+	if not province:
+		return None
+
 	lead_province = None
 
 	try:
@@ -994,10 +997,12 @@ def update_lead_from_summary(data):
 	product_names = data.get("interested_products", [])
 	province = data.get("province")
 	expected_receiving_date = data.get("expected_receiving_date")
+	if expected_receiving_date and isinstance(expected_receiving_date, str):
+		expected_receiving_date = expected_receiving_date.strip().replace("/", "-")
 
 	new_lead_budget = find_range_budget(budget_name, budget_from, budget_to)
-	new_lead_purpose = get_lead_purpose(purpose)
-	new_lead_province = get_lead_province(province)
+	new_lead_purpose = get_lead_purpose(purpose) if purpose else None
+	new_lead_province = get_lead_province(province) if province else None
 
 	move_to_opportunity_flag = get_crm_settings().get("move_to_opportunity", 0)
 	products = []
