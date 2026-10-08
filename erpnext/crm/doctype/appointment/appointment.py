@@ -58,6 +58,7 @@ class Appointment(Document):
 		purchase_purpose: DF.Link | None
 		range_estimated_budget: DF.Link | None
 		record_id: DF.Data | None
+		sales_order: DF.Link | None
 		scheduled_time: DF.Datetime
 		source: DF.Link | None
 		source_name: DF.Data | None

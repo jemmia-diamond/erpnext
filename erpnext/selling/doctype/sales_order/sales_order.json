@@ -2554,6 +2554,7 @@
  "states": [],
  "timeline_field": "customer",
  "title_field": "order_number",
+ "show_title_field_in_link": 1,
  "track_changes": 1,
  "track_seen": 1
 }
