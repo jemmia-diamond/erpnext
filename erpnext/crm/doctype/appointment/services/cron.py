@@ -29,6 +29,8 @@ def map_sales_orders_to_appointments():
 		FROM `tabSales Order` so
 		LEFT JOIN `tabCustomer` c ON c.name = so.customer
 		WHERE so.cancelled_status = 'Uncancelled'
+		  AND so.grand_total > 1000
+		  AND (so.source_name IS NULL OR so.source_name NOT IN ('bhsc-cua-hang-hcm', 'bhsc-cua-hang-hn'))
 		  AND so.creation >= %(earliest_time)s
 		ORDER BY so.creation DESC
 		""",
