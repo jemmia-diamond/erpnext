@@ -44,6 +44,7 @@
   "budget",
   "source",
   "source_name",
+  "sales_order",
   "addition_information_section",
   "customer_response",
   "conversation_greeting",
@@ -156,6 +157,13 @@
    "fieldtype": "Dynamic Link",
    "label": "Party",
    "options": "appointment_with"
+  },
+  {
+   "fieldname": "sales_order",
+   "fieldtype": "Link",
+   "label": "Sales Order",
+   "options": "Sales Order",
+   "search_index": 1
   },
   {
    "fieldname": "store",
@@ -440,7 +448,7 @@
   }
  ],
  "links": [],
- "modified": "2026-08-13 08:32:27.951758",
+ "modified": "2026-10-07 08:33:40.278912",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Appointment",
