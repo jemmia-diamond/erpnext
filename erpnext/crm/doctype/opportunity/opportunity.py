@@ -177,6 +177,9 @@ class Opportunity(TransactionBase, CRMNote):
 			)
 
 	def validate_single_active_opportunity(self):
+		if not (self.is_new() or self.has_value_changed("status") or self.has_value_changed("party_name")):
+			return
+
 		if self.opportunity_from and self.party_name and self.status not in ["Won", "Lost"]:
 			active_opp = frappe.db.get_value(
 				"Opportunity",

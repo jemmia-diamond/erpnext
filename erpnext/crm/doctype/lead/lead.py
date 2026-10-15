@@ -831,10 +831,16 @@ class Lead(SellingController, CRMNote):
 				frappe.log_error(title="Manual Lead Webhook Call Failed", message=frappe.get_traceback())
 
 	def sync_active_opportunities(self):
-		from erpnext.crm.doctype.opportunity.custom.opportunity_custom import (
-			sync_lead_fields_to_active_opportunities,
-		)
-		sync_lead_fields_to_active_opportunities(self)
+		try:
+			from erpnext.crm.doctype.opportunity.custom.opportunity_custom import (
+				sync_lead_fields_to_active_opportunities,
+			)
+			sync_lead_fields_to_active_opportunities(self)
+		except Exception:
+			frappe.log_error(
+				title=f"Failed to sync active opportunities for Lead {self.name}",
+				message=frappe.get_traceback(),
+			)
 
 	def on_trash(self):
 		frappe.db.set_value("Issue", {"lead": self.name}, "lead", None)

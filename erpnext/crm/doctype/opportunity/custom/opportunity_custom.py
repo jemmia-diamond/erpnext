@@ -198,7 +198,14 @@ def sync_lead_fields_to_active_opportunities(doc, method=None):
 		if updated:
 			opp.flags.ignore_permissions = True
 			opp.flags.ignore_mandatory = True
-			opp.save()
+			opp.flags.ignore_validate = True
+			try:
+				opp.save()
+			except Exception:
+				frappe.log_error(
+					title=f"Failed to sync fields to Opportunity {opp.name}",
+					message=frappe.get_traceback(),
+				)
 
 def get_lead_to_opportunity_field_mappings(raw_mappings=None):
 	"""Parse custom JSON field mappings from CRM Settings or return default mapping list."""
