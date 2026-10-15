@@ -577,6 +577,9 @@ class Lead(SellingController, CRMNote):
 			else:
 				self.qualification_status = auto_status
 
+		if self.status == "Converted" and self.qualification_status == "Unqualified":
+			self.qualification_status = "Qualified"
+
 		if self.qualification_status == "Qualified" and old_status == "Unqualified":
 			if not self.qualified_by:
 				self.qualified_by = frappe.session.user
@@ -831,10 +834,16 @@ class Lead(SellingController, CRMNote):
 				frappe.log_error(title="Manual Lead Webhook Call Failed", message=frappe.get_traceback())
 
 	def sync_active_opportunities(self):
-		from erpnext.crm.doctype.opportunity.custom.opportunity_custom import (
-			sync_lead_fields_to_active_opportunities,
-		)
-		sync_lead_fields_to_active_opportunities(self)
+		try:
+			from erpnext.crm.doctype.opportunity.custom.opportunity_custom import (
+				sync_lead_fields_to_active_opportunities,
+			)
+			sync_lead_fields_to_active_opportunities(self)
+		except Exception:
+			frappe.log_error(
+				title=f"Failed to sync active opportunities for Lead {self.name}",
+				message=frappe.get_traceback(),
+			)
 
 	def on_trash(self):
 		frappe.db.set_value("Issue", {"lead": self.name}, "lead", None)
@@ -1309,10 +1318,14 @@ class Lead(SellingController, CRMNote):
 	def get_qualification_status(self):
 		"""
 		Determine qualification status based on 4 core fields:
-		  1. Must have phone and province
-		  2. Must have preferred_product_type and purpose_lead (or lead_purpose)
+		  1. Converted leads are always Qualified
+		  2. Must have phone and province
+		  3. Must have preferred_product_type and purpose_lead (or lead_purpose)
 		Only auto-qualifies, never auto-disqualifies.
 		"""
+		if self.status == "Converted":
+			return "Qualified"
+
 		if self.phone and self.province:
 			if self.source == "CRM-LEAD-SOURCE-0000023":
 				return "Qualified"

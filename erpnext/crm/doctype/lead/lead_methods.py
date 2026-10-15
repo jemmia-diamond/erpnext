@@ -737,6 +737,7 @@ def _relink_dynamic_links(from_lead: str, to_lead: str):
 
 DOWNSTREAM_RELINK_SPECS = [
 	("tabCustomer", "lead_name", "lead_name = %(from_lead)s"),
+	("tabSales Order", "lead", "lead = %(from_lead)s"),
 	("tabAppointment", ["party", "lead"], "appointment_with = 'Lead' AND party = %(from_lead)s"),
 	("tabOpportunity", "party_name", "opportunity_from = 'Lead' AND party_name = %(from_lead)s"),
 	("tabCall Log", "participant", "participant_type = 'Lead' AND participant = %(from_lead)s"),
