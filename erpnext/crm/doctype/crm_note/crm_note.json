@@ -48,7 +48,7 @@
    "fieldname": "type",
    "fieldtype": "Select",
    "label": "Type",
-   "options": "Status Update\nCustomer Persona\nProducts of Interest\nStore Visit\nC\\u1eadp nh\\u1eadt hi\\u1ec7n tr\\u1ea1ng\nSystem\nOther\nCh\\u00e2n dung kh\\u00e1ch h\\u00e0ng\nX\\u1eed l\\u00fd t\\u1eeb ch\\u1ed1i\nKh\\u00e1c\nCustomer Profile\nObjection Handling"
+   "options": "Status Update\nCustomer Persona\nProducts of Interest\nStore Visit\nCập nhật hiện trạng\nSystem\nOther\nChân dung khách hàng\nXử lý từ chối\nKhác\nCustomer Profile\nObjection Handling"
   },
   {
    "fieldname": "from_platform",
