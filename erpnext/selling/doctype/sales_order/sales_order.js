@@ -96,8 +96,6 @@ frappe.ui.form.on("Sales Order", {
 			return false;
 		});
 		if (missing_availability.length) {
-			frappe.validated = false;
-
 			let item_rows_html = missing_availability
 				.map((item, i) => {
 					let safe_name = frappe.utils.escape_html(item.item_name || item.item_code);
@@ -148,7 +146,6 @@ frappe.ui.form.on("Sales Order", {
 				},
 			});
 			d.show();
-			return;
 		}
 
 		var items_with_promos = (frm.doc.items || []).filter(
@@ -510,15 +507,15 @@ frappe.ui.form.on("Sales Order", {
 	// sync_reference_promotion_by_serial: function (frm, cdt, cdn) {
 	// 	const row = locals[cdt][cdn];
 	// 	if (!row.serial_numbers) return;
-	
+
 	// 	const serials = row.serial_numbers
 	// 		.split("\n")
 	// 		.map((s) => s.trim())
 	// 		.filter((s) => s);
 	// 	const target_serial = serials[serials.length - 1];
-	
+
 	// 	if (!target_serial) return;
-	
+
 	// 	frappe.call({
 	// 		method: "erpnext.selling.doctype.sales_order.sales_order.get_item_promotions_by_serial",
 	// 		args: {
@@ -530,7 +527,7 @@ frappe.ui.form.on("Sales Order", {
 	// 				const data = r.message;
 	// 				if (data.new_promotions && data.new_promotions !== "[]") {
 	// 					frappe.model.set_value(cdt, cdn, "new_promotions", data.new_promotions);
-	
+
 	// 					if (typeof render_promotion_pills !== "undefined") {
 	// 						setTimeout(() => render_promotion_pills(frm, cdt, cdn), 100);
 	// 					}
