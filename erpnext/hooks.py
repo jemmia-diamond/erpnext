@@ -459,7 +459,8 @@ scheduler_events = {
 		# "erpnext.projects.doctype.project.project.collect_project_status",
 		"erpnext.accounts.doctype.payment_entry.payment_entry.cancel_pending_transfers",
 		"erpnext.crm.doctype.appointment.appointment.auto_cancel_overdue_appointments",
-		"erpnext.crm.doctype.appointment.services.cron.map_sales_orders_to_appointments"
+		"erpnext.crm.doctype.appointment.services.cron.map_sales_orders_to_appointments",
+		"erpnext.accounts.doctype.payment_entry.services.cron.remap_payment_entries_from_cancelled_orders"
 	],
 	"hourly_long": [],
 	"hourly_maintenance": [
