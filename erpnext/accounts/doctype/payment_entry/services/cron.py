@@ -1,15 +1,18 @@
 import frappe
-from frappe.utils import add_to_date, now_datetime
+from frappe.utils import add_to_date, flt, now_datetime
 
 
-def remap_payment_entries_from_cancelled_orders(hours=1):
+@frappe.whitelist()
+def remap_payment_entries_from_cancelled_orders(hours=1, sales_orders=None):
 	"""
-	Hourly cron job:
+	Hourly cron job, also callable by hand (SO form / list view button):
 	Repoints Payment Entries still referencing a cancelled Sales Order to the
 	active order that replaced it.
 
 	1. Find Payment Entry References (Sales Order) whose order has cancelled_status == 'Cancelled'
-	   and was modified in the last `hours` hours (hours=None scans all, e.g. for a backfill)
+	   and was modified in the last `hours` hours (hours=None scans all, e.g. for a backfill).
+	   If `sales_orders` (a name or a list of names) is given, only those orders are checked
+	   and the time window is ignored.
 	2. Resolve the live replacement (via ref_sales_orders / haravan_ref_order_id, walking chains)
 	3. Save the Payment Entry with the new reference. Payment Entry.update_sales_order_financials
 	   re-saves both the old and the new order, so the old order's payment_entries clear
@@ -21,6 +24,21 @@ def remap_payment_entries_from_cancelled_orders(hours=1):
 	Idempotent: once remapped, the Payment Entry no longer matches step 1.
 	Orders without a live replacement yet are skipped and retried on the next run.
 	"""
+	# frappe.has_permission("Payment Entry", "write", throw=True)
+
+	if isinstance(sales_orders, str):
+		sales_orders = frappe.parse_json(sales_orders) if sales_orders.startswith("[") else [sales_orders]
+
+	if sales_orders:
+		modified_filter = "AND so.name IN %(sales_orders)s"
+		values = {"sales_orders": tuple(sales_orders)}
+	elif hours:
+		modified_filter = "AND so.modified >= %(since)s"
+		values = {"since": add_to_date(now_datetime(), hours=-flt(hours))}
+	else:
+		modified_filter = ""
+		values = {}
+
 	stale_refs = frappe.db.sql(
 		"""
 		SELECT DISTINCT pr.parent AS payment_entry, pr.reference_name AS sales_order
@@ -36,11 +54,12 @@ def remap_payment_entries_from_cancelled_orders(hours=1):
 			WHERE r.parent = pe.name AND r.reference_doctype = 'Sales Order'
 		  ) = 1
 		  {modified_filter}
-		""".format(modified_filter="AND so.modified >= %(since)s" if hours else ""),
-		{"since": add_to_date(now_datetime(), hours=-(hours or 0))},
+		""".format(modified_filter=modified_filter),
+		values,
 		as_dict=True,
 	)
 
+	result = {"remapped": [], "no_replacement": [], "failed": []}
 	target_cache = {}
 	for row in stale_refs:
 		old_so = row.sales_order
@@ -49,17 +68,22 @@ def remap_payment_entries_from_cancelled_orders(hours=1):
 
 		target = target_cache[old_so]
 		if not target:
+			result["no_replacement"].append({"payment_entry": row.payment_entry, "from": old_so})
 			continue
 
 		try:
 			remap_payment_entry(row.payment_entry, old_so, target)
 			frappe.db.commit()
+			result["remapped"].append({"payment_entry": row.payment_entry, "from": old_so, "to": target})
 		except Exception as e:
 			frappe.db.rollback()
+			result["failed"].append({"payment_entry": row.payment_entry, "from": old_so, "to": target})
 			frappe.log_error(
 				f"Error remapping Payment Entry {row.payment_entry} from {old_so} to {target}: {e!s}",
 				"Payment Entry Remap Error",
 			)
+
+	return result
 
 
 def find_active_replacement(cancelled_so):
