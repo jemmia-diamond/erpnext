@@ -62,158 +62,158 @@ frappe.ui.form.on("Sales Order", {
 		});
 		refresh_field("items");
 	},
-	validate: function (frm) {
-		if (frm.is_new()) return;
+	// validate: function (frm) {
+	// 	if (frm.is_new()) return;
 
-		if (frm._promo_validated) {
-			frm._promo_validated = false;
-			return;
-		}
+	// 	if (frm._promo_validated) {
+	// 		frm._promo_validated = false;
+	// 		return;
+	// 	}
 
-		let message = "";
-		(frm.doc.items || []).forEach((item) => {
-			if (erpnext.utils.item.isJewelryItem(item)) {
-				if (!item.serial_numbers) {
-					message = __("Chưa nhập serial number cho sản phẩm {0}", [item.item_name]);
-				}
-			}
-		});
+	// 	let message = "";
+	// 	(frm.doc.items || []).forEach((item) => {
+	// 		if (erpnext.utils.item.isJewelryItem(item)) {
+	// 			if (!item.serial_numbers) {
+	// 				message = __("Chưa nhập serial number cho sản phẩm {0}", [item.item_name]);
+	// 			}
+	// 		}
+	// 	});
 
-		if (message) {
-			frappe.msgprint(message);
-			frappe.validated = false;
-			return;
-		}
+	// 	if (message) {
+	// 		frappe.msgprint(message);
+	// 		frappe.validated = false;
+	// 		return;
+	// 	}
 
-		// Validate product_availability_status is set on all items
-		let missing_availability = (frm.doc.items || []).filter((item) => {
-			if (!item.product_availability_status) {
-				if (erpnext.utils.item.isWarrantyItem(item) || erpnext.utils.item.isGiftItemByName(item)) {
-					return false;
-				}
-				return true;
-			}
-			return false;
-		});
-		if (missing_availability.length) {
-			frappe.validated = false;
+	// 	// Validate product_availability_status is set on all items
+	// 	let missing_availability = (frm.doc.items || []).filter((item) => {
+	// 		if (!item.product_availability_status) {
+	// 			if (erpnext.utils.item.isWarrantyItem(item) || erpnext.utils.item.isGiftItemByName(item)) {
+	// 				return false;
+	// 			}
+	// 			return true;
+	// 		}
+	// 		return false;
+	// 	});
+	// 	if (missing_availability.length) {
+	// 		frappe.validated = false;
 
-			let item_rows_html = missing_availability
-				.map((item, i) => {
-					let safe_name = frappe.utils.escape_html(item.item_name || item.item_code);
-					return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0;">
-					<span style="flex:1;font-weight:600;color:#333;font-size:13px;">${i + 1}. ${safe_name}</span>
-					<div style="display:flex;gap:16px;flex-shrink:0;">
-						<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;color:#555;">
-							<input type="radio" name="avail_${i}" value="In Stock" style="cursor:pointer;"> ${__("In Stock")}
-						</label>
-						<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;color:#555;">
-							<input type="radio" name="avail_${i}" value="Pre-order" style="cursor:pointer;"> ${__("Pre-order")}
-						</label>
-					</div>
-				</div>`;
-				})
-				.join("");
+	// 		let item_rows_html = missing_availability
+	// 			.map((item, i) => {
+	// 				let safe_name = frappe.utils.escape_html(item.item_name || item.item_code);
+	// 				return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0;">
+	// 				<span style="flex:1;font-weight:600;color:#333;font-size:13px;">${i + 1}. ${safe_name}</span>
+	// 				<div style="display:flex;gap:16px;flex-shrink:0;">
+	// 					<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;color:#555;">
+	// 						<input type="radio" name="avail_${i}" value="In Stock" style="cursor:pointer;"> ${__("In Stock")}
+	// 					</label>
+	// 					<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;color:#555;">
+	// 						<input type="radio" name="avail_${i}" value="Pre-order" style="cursor:pointer;"> ${__("Pre-order")}
+	// 					</label>
+	// 				</div>
+	// 			</div>`;
+	// 			})
+	// 			.join("");
 
-			let d = new frappe.ui.Dialog({
-				title: __("Thiếu trạng thái tồn kho sản phẩm"),
-				fields: [
-					{
-						fieldtype: "HTML",
-						options: `<div style="margin-bottom:4px;">
-							<div style="color:#555;margin-bottom:8px;font-size:13px;">Vui lòng chọn <b>Trạng thái tồn kho</b> cho từng sản phẩm:</div>
-							<div>${item_rows_html}</div>
-						</div>`,
-					},
-				],
-				primary_action_label: __("Áp dụng & Lưu"),
-				primary_action() {
-					let all_set = missing_availability.every(
-						(item, i) => d.$wrapper.find(`input[name="avail_${i}"]:checked`).length > 0
-					);
-					if (!all_set) {
-						frappe.msgprint(__("Vui lòng chọn trạng thái cho tất cả sản phẩm."));
-						return;
-					}
-					missing_availability.forEach((item, i) => {
-						let val = d.$wrapper.find(`input[name="avail_${i}"]:checked`).val();
-						frappe.model.set_value(item.doctype, item.name, "product_availability_status", val);
-					});
-					d.hide();
-					frm.save();
-				},
-				secondary_action_label: __("Tự điền thủ công"),
-				secondary_action() {
-					d.hide();
-				},
-			});
-			d.show();
-			return;
-		}
+	// 		let d = new frappe.ui.Dialog({
+	// 			title: __("Thiếu trạng thái tồn kho sản phẩm"),
+	// 			fields: [
+	// 				{
+	// 					fieldtype: "HTML",
+	// 					options: `<div style="margin-bottom:4px;">
+	// 						<div style="color:#555;margin-bottom:8px;font-size:13px;">Vui lòng chọn <b>Trạng thái tồn kho</b> cho từng sản phẩm:</div>
+	// 						<div>${item_rows_html}</div>
+	// 					</div>`,
+	// 				},
+	// 			],
+	// 			primary_action_label: __("Áp dụng & Lưu"),
+	// 			primary_action() {
+	// 				let all_set = missing_availability.every(
+	// 					(item, i) => d.$wrapper.find(`input[name="avail_${i}"]:checked`).length > 0
+	// 				);
+	// 				if (!all_set) {
+	// 					frappe.msgprint(__("Vui lòng chọn trạng thái cho tất cả sản phẩm."));
+	// 					return;
+	// 				}
+	// 				missing_availability.forEach((item, i) => {
+	// 					let val = d.$wrapper.find(`input[name="avail_${i}"]:checked`).val();
+	// 					frappe.model.set_value(item.doctype, item.name, "product_availability_status", val);
+	// 				});
+	// 				d.hide();
+	// 				frm.save();
+	// 			},
+	// 			secondary_action_label: __("Tự điền thủ công"),
+	// 			secondary_action() {
+	// 				d.hide();
+	// 			},
+	// 		});
+	// 		d.show();
+	// 		return;
+	// 	}
 
-		var items_with_promos = (frm.doc.items || []).filter(
-			(item) => parse_promos(item.new_promotions).length > 0
-		);
-		var has_order_promos = (frm.doc.promotions || []).some((row) => row.promotion);
+	// 	var items_with_promos = (frm.doc.items || []).filter(
+	// 		(item) => parse_promos(item.new_promotions).length > 0
+	// 	);
+	// 	var has_order_promos = (frm.doc.promotions || []).some((row) => row.promotion);
 
-		var items_missing_promos = (frm.doc.items || []).filter(function (item) {
-			if (parse_promos(item.new_promotions).length > 0) return false;
-			if (!item.price_list_rate) return false;
-			var diff = Math.abs(item.rate * item.qty - item.price_list_rate * item.qty);
-			return diff > 5000;
-		});
+	// 	var items_missing_promos = (frm.doc.items || []).filter(function (item) {
+	// 		if (parse_promos(item.new_promotions).length > 0) return false;
+	// 		if (!item.price_list_rate) return false;
+	// 		var diff = Math.abs(item.rate * item.qty - item.price_list_rate * item.qty);
+	// 		return diff > 5000;
+	// 	});
 
-		if (!items_with_promos.length && !has_order_promos && !items_missing_promos.length) return;
+	// 	if (!items_with_promos.length && !has_order_promos && !items_missing_promos.length) return;
 
-		frappe.validated = false;
-		let run_price_validation = function () {
-			validate_promotion_prices(frm, items_with_promos, items_missing_promos).then(function (errors) {
-				if (errors.length) {
-					frappe.msgprint({
-						title: __("Giá không khớp với khuyến mãi"),
-						message: errors.join("<br>"),
-						indicator: "red",
-					});
-				} else {
-					frm._promo_validated = true;
-					frappe.validated = true;
-					frm.save();
-				}
-			});
-		};
+	// 	frappe.validated = false;
+	// 	let run_price_validation = function () {
+	// 		validate_promotion_prices(frm, items_with_promos, items_missing_promos).then(function (errors) {
+	// 			if (errors.length) {
+	// 				frappe.msgprint({
+	// 					title: __("Giá không khớp với khuyến mãi"),
+	// 					message: errors.join("<br>"),
+	// 					indicator: "red",
+	// 				});
+	// 			} else {
+	// 				frm._promo_validated = true;
+	// 				frappe.validated = true;
+	// 				frm.save();
+	// 			}
+	// 		});
+	// 	};
 
-		if (items_missing_promos.length > 0 && !frm.is_new()) {
-			frappe.call({
-				method: "erpnext.selling.doctype.sales_order.sales_order.fetch_promotions_from_split_group",
-				args: { sales_order_name: frm.doc.name },
-				callback: function (r) {
-					let was_updated = false;
-					if (r.message && r.message.length > 0) {
-						r.message.forEach((data) => {
-							let row = frappe.get_doc("Sales Order Item", data.name);
-							if (row) {
-								frappe.model.set_value(
-									row.doctype,
-									row.name,
-									"new_promotions",
-									data.new_promotions
-								);
-								was_updated = true;
-							}
-						});
-					}
+	// 	if (items_missing_promos.length > 0 && !frm.is_new()) {
+	// 		frappe.call({
+	// 			method: "erpnext.selling.doctype.sales_order.sales_order.fetch_promotions_from_split_group",
+	// 			args: { sales_order_name: frm.doc.name },
+	// 			callback: function (r) {
+	// 				let was_updated = false;
+	// 				if (r.message && r.message.length > 0) {
+	// 					r.message.forEach((data) => {
+	// 						let row = frappe.get_doc("Sales Order Item", data.name);
+	// 						if (row) {
+	// 							frappe.model.set_value(
+	// 								row.doctype,
+	// 								row.name,
+	// 								"new_promotions",
+	// 								data.new_promotions
+	// 							);
+	// 							was_updated = true;
+	// 						}
+	// 					});
+	// 				}
 
-					if (was_updated) {
-						setTimeout(() => frm.save(), 500);
-					} else {
-						run_price_validation();
-					}
-				},
-			});
-		} else {
-			run_price_validation();
-		}
-	},
+	// 				if (was_updated) {
+	// 					setTimeout(() => frm.save(), 500);
+	// 				} else {
+	// 					run_price_validation();
+	// 				}
+	// 			},
+	// 		});
+	// 	} else {
+	// 		run_price_validation();
+	// 	}
+	// },
 
 	onload_post_render: async function (frm) {
 		if (erpnext.utils.sales_order_gallery && erpnext.utils.sales_order_gallery.render_gallery) {
@@ -2650,92 +2650,92 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 };
 
 // Sales Team event handlers
-frappe.ui.form.on("Sales Team", {
-	merator: function (frm, cdt, cdn) {
-		calculate_allocated_percentage(frm, cdt, cdn);
-	},
-	denominator: function (frm, cdt, cdn) {
-		calculate_allocated_percentage(frm, cdt, cdn);
-	},
-});
+// frappe.ui.form.on("Sales Team", {
+// 	merator: function (frm, cdt, cdn) {
+// 		calculate_allocated_percentage(frm, cdt, cdn);
+// 	},
+// 	denominator: function (frm, cdt, cdn) {
+// 		calculate_allocated_percentage(frm, cdt, cdn);
+// 	},
+// });
 
 // Order and Debt Tracking event handlers
-frappe.ui.form.on("Order and Debt Tracking", {
-	progress_status: function (frm, cdt, cdn) {
-		set_reason_options(frm, cdt, cdn);
-	},
-	form_render: function (frm, cdt, cdn) {
-		set_reason_options(frm, cdt, cdn);
-	},
-	debt_history_add: function (frm, cdt, cdn) {
-		frappe.model.set_value(cdt, cdn, "date", frappe.datetime.get_today());
-		frappe.model.set_value(cdt, cdn, "added_by", frappe.session.user);
-		let default_options = [
-			"Khách đã chốt ngày đến nhận tại cửa hàng",
-			"Sale sẽ giao tận nơi cho khách",
-			"Gửi đơn vị vận chuyển (COD) về địa chỉ khách",
-		];
-		frm.fields_dict["debt_history"].grid.update_docfield_property(
-			"status_reason",
-			"options",
-			default_options.join("\n")
-		);
-	},
-});
+// frappe.ui.form.on("Order and Debt Tracking", {
+// 	progress_status: function (frm, cdt, cdn) {
+// 		set_reason_options(frm, cdt, cdn);
+// 	},
+// 	form_render: function (frm, cdt, cdn) {
+// 		set_reason_options(frm, cdt, cdn);
+// 	},
+// 	debt_history_add: function (frm, cdt, cdn) {
+// 		frappe.model.set_value(cdt, cdn, "date", frappe.datetime.get_today());
+// 		frappe.model.set_value(cdt, cdn, "added_by", frappe.session.user);
+// 		let default_options = [
+// 			"Khách đã chốt ngày đến nhận tại cửa hàng",
+// 			"Sale sẽ giao tận nơi cho khách",
+// 			"Gửi đơn vị vận chuyển (COD) về địa chỉ khách",
+// 		];
+// 		frm.fields_dict["debt_history"].grid.update_docfield_property(
+// 			"status_reason",
+// 			"options",
+// 			default_options.join("\n")
+// 		);
+// 	},
+// });
 
-function set_reason_options(frm, cdt, cdn) {
-	let row = locals[cdt][cdn];
+// function set_reason_options(frm, cdt, cdn) {
+// 	let row = locals[cdt][cdn];
 
-	let valid_reasons = {
-		"Đủ hàng – khách sẽ nhận tuần tới": [
-			"Khách đã chốt ngày đến nhận tại cửa hàng",
-			"Sale sẽ giao tận nơi cho khách",
-			"Gửi đơn vị vận chuyển (COD) về địa chỉ khách",
-		],
-		"Đủ hàng – khách chưa chốt ngày nhận": [
-			"Khách chưa hẹn ngày nhận cụ thể, sale đang care thêm",
-			"Khách bận (công tác, nước ngoài, du lịch...)",
-			"Khách chưa đủ tiền / đang gom tiền",
-			"Đơn quá hạn công nợ, đã làm đề xuất gia hạn",
-		],
-		"Chưa đủ hàng": [
-			"Đang gia công",
-			"Đợi quà tặng",
-			"Khách chờ nhận cùng các đơn khác",
-			"Hàng lỗi, đang bảo hành tại xưởng",
-		],
-		"Đã giao – chưa thu đủ tiền": [
-			"Đã giao hàng nhưng chưa thanh toán đủ (quản lý đã duyệt)",
-			"Chờ đơn vị vận chuyển trả tiền COD",
-			"Chờ hoàn tất thủ tục thu đổi",
-			"Đã cà thẻ – Chờ tiền về tài khoản",
-		],
-	};
+// 	let valid_reasons = {
+// 		"Đủ hàng – khách sẽ nhận tuần tới": [
+// 			"Khách đã chốt ngày đến nhận tại cửa hàng",
+// 			"Sale sẽ giao tận nơi cho khách",
+// 			"Gửi đơn vị vận chuyển (COD) về địa chỉ khách",
+// 		],
+// 		"Đủ hàng – khách chưa chốt ngày nhận": [
+// 			"Khách chưa hẹn ngày nhận cụ thể, sale đang care thêm",
+// 			"Khách bận (công tác, nước ngoài, du lịch...)",
+// 			"Khách chưa đủ tiền / đang gom tiền",
+// 			"Đơn quá hạn công nợ, đã làm đề xuất gia hạn",
+// 		],
+// 		"Chưa đủ hàng": [
+// 			"Đang gia công",
+// 			"Đợi quà tặng",
+// 			"Khách chờ nhận cùng các đơn khác",
+// 			"Hàng lỗi, đang bảo hành tại xưởng",
+// 		],
+// 		"Đã giao – chưa thu đủ tiền": [
+// 			"Đã giao hàng nhưng chưa thanh toán đủ (quản lý đã duyệt)",
+// 			"Chờ đơn vị vận chuyển trả tiền COD",
+// 			"Chờ hoàn tất thủ tục thu đổi",
+// 			"Đã cà thẻ – Chờ tiền về tài khoản",
+// 		],
+// 	};
 
-	let options = valid_reasons[row.progress_status] || [""];
+// 	let options = valid_reasons[row.progress_status] || [""];
 
-	if (frm.fields_dict["debt_history"] && frm.fields_dict["debt_history"].grid) {
-		frm.fields_dict["debt_history"].grid.update_docfield_property(
-			"status_reason",
-			"options",
-			options.join("\n")
-		);
-	}
+// 	if (frm.fields_dict["debt_history"] && frm.fields_dict["debt_history"].grid) {
+// 		frm.fields_dict["debt_history"].grid.update_docfield_property(
+// 			"status_reason",
+// 			"options",
+// 			options.join("\n")
+// 		);
+// 	}
 
-	if (!options.includes(row.status_reason)) {
-		frappe.model.set_value(cdt, cdn, "status_reason", options[0]);
-	}
-}
+// 	if (!options.includes(row.status_reason)) {
+// 		frappe.model.set_value(cdt, cdn, "status_reason", options[0]);
+// 	}
+// }
 
-function calculate_allocated_percentage(frm, cdt, cdn) {
-	var row = locals[cdt][cdn];
+// function calculate_allocated_percentage(frm, cdt, cdn) {
+// 	var row = locals[cdt][cdn];
 
-	if (row.merator && row.denominator && row.denominator > 0) {
-		// Calculate percentage from merator/denominator
-		var percentage = (row.merator / row.denominator) * 100;
-		frappe.model.set_value(cdt, cdn, "allocated_percentage", percentage);
-	}
-}
+// 	if (row.merator && row.denominator && row.denominator > 0) {
+// 		// Calculate percentage from merator/denominator
+// 		var percentage = (row.merator / row.denominator) * 100;
+// 		frappe.model.set_value(cdt, cdn, "allocated_percentage", percentage);
+// 	}
+// }
 
 // Helper to decode unicode escape sequences (e.g. B\u00f4ng Tai -> Bông Tai)
 function decode_unicode(str) {
@@ -2754,172 +2754,172 @@ function prevent_past_delivery_dates(frm) {
 	}
 }
 
-function apply_promo_discount(price, p, scope) {
-	if (!p) return price;
+// function apply_promo_discount(price, p, scope) {
+// 	if (!p) return price;
 
-	if (scope === "Line Item") {
-		if (p.priority === "G0") return price;
-		if (p.priority === "G1") {
-			return price * (1 - (p.discount_percent || 0) / 100);
-		}
-		if (p.priority === "G2") {
-			return price - (p.discount_amount || 0);
-		}
-		if (p.priority === "G3" || p.priority === "G6" || p.priority === "G7" || p.priority === "G4") {
-			if (p.discount_type === "Percentage") {
-				return price * (1 - (p.discount_percent || 0) / 100);
-			} else if (p.discount_type === "Fix Amount") {
-				return price - (p.discount_amount || 0);
-			}
-			return price;
-		}
-	}
+// 	if (scope === "Line Item") {
+// 		if (p.priority === "G0") return price;
+// 		if (p.priority === "G1") {
+// 			return price * (1 - (p.discount_percent || 0) / 100);
+// 		}
+// 		if (p.priority === "G2") {
+// 			return price - (p.discount_amount || 0);
+// 		}
+// 		if (p.priority === "G3" || p.priority === "G6" || p.priority === "G7" || p.priority === "G4") {
+// 			if (p.discount_type === "Percentage") {
+// 				return price * (1 - (p.discount_percent || 0) / 100);
+// 			} else if (p.discount_type === "Fix Amount") {
+// 				return price - (p.discount_amount || 0);
+// 			}
+// 			return price;
+// 		}
+// 	}
 
-	if (scope === "Order") {
-		if (p.priority === "G4") {
-			return price - (p.discount_amount || 0);
-		}
-		if (p.priority === "G5") {
-			return price * (1 - (p.discount_percent || 0) / 100);
-		}
-		if (p.priority === "G6" || p.priority === "G7") {
-			if (p.discount_type === "Percentage") {
-				return price * (1 - (p.discount_percent || 0) / 100);
-			} else if (p.discount_type === "Fix Amount") {
-				return price - (p.discount_amount || 0);
-			}
-			return price;
-		}
-	}
+// 	if (scope === "Order") {
+// 		if (p.priority === "G4") {
+// 			return price - (p.discount_amount || 0);
+// 		}
+// 		if (p.priority === "G5") {
+// 			return price * (1 - (p.discount_percent || 0) / 100);
+// 		}
+// 		if (p.priority === "G6" || p.priority === "G7") {
+// 			if (p.discount_type === "Percentage") {
+// 				return price * (1 - (p.discount_percent || 0) / 100);
+// 			} else if (p.discount_type === "Fix Amount") {
+// 				return price - (p.discount_amount || 0);
+// 			}
+// 			return price;
+// 		}
+// 	}
 
-	return price;
-}
+// 	return price;
+// }
 
-function fetch_promo_map(names) {
-	return new Promise(function (resolve) {
-		if (!names || !names.length) {
-			resolve({});
-			return;
-		}
-		frappe.call({
-			method: "frappe.client.get_list",
-			args: {
-				doctype: "Promotion",
-				filters: { name: ["in", names] },
-				fields: ["name", "title", "priority", "discount_type", "discount_amount", "discount_percent"],
-				limit_page_length: 0,
-			},
-			callback: function (r) {
-				var map = {};
-				(r.message || []).forEach(function (p) {
-					map[p.name] = p;
-				});
-				resolve(map);
-			},
-		});
-	});
-}
+// function fetch_promo_map(names) {
+// 	return new Promise(function (resolve) {
+// 		if (!names || !names.length) {
+// 			resolve({});
+// 			return;
+// 		}
+// 		frappe.call({
+// 			method: "frappe.client.get_list",
+// 			args: {
+// 				doctype: "Promotion",
+// 				filters: { name: ["in", names] },
+// 				fields: ["name", "title", "priority", "discount_type", "discount_amount", "discount_percent"],
+// 				limit_page_length: 0,
+// 			},
+// 			callback: function (r) {
+// 				var map = {};
+// 				(r.message || []).forEach(function (p) {
+// 					map[p.name] = p;
+// 				});
+// 				resolve(map);
+// 			},
+// 		});
+// 	});
+// }
 
-function validate_promotion_prices(frm, items, items_missing_promos) {
-	var all_promo_names = [];
+// function validate_promotion_prices(frm, items, items_missing_promos) {
+// 	var all_promo_names = [];
 
-	items.forEach(function (item) {
-		parse_promos(item.new_promotions).forEach(function (p) {
-			if (!all_promo_names.includes(p)) all_promo_names.push(p);
-		});
-	});
+// 	items.forEach(function (item) {
+// 		parse_promos(item.new_promotions).forEach(function (p) {
+// 			if (!all_promo_names.includes(p)) all_promo_names.push(p);
+// 		});
+// 	});
 
-	var order_promo_names = (frm.doc.promotions || [])
-		.map(function (row) {
-			return row.promotion;
-		})
-		.filter(Boolean);
-	order_promo_names.forEach(function (p) {
-		if (!all_promo_names.includes(p)) all_promo_names.push(p);
-	});
+// 	var order_promo_names = (frm.doc.promotions || [])
+// 		.map(function (row) {
+// 			return row.promotion;
+// 		})
+// 		.filter(Boolean);
+// 	order_promo_names.forEach(function (p) {
+// 		if (!all_promo_names.includes(p)) all_promo_names.push(p);
+// 	});
 
-	return new Promise(function (resolve) {
-		var errors = [];
+// 	return new Promise(function (resolve) {
+// 		var errors = [];
 
-		(items_missing_promos || []).forEach(function (item) {
-			var diff = Math.abs(item.rate * item.qty - item.price_list_rate * item.qty);
-			errors.push(
-				__("Sản phẩm {0}: giá {1} lệch {2} so với giá niêm yết {3} nhưng chưa chọn khuyến mãi", [
-					item.item_name,
-					format_currency(item.rate, frm.doc.currency),
-					format_currency(diff, frm.doc.currency),
-					format_currency(item.price_list_rate, frm.doc.currency),
-				])
-			);
-		});
+// 		(items_missing_promos || []).forEach(function (item) {
+// 			var diff = Math.abs(item.rate * item.qty - item.price_list_rate * item.qty);
+// 			errors.push(
+// 				__("Sản phẩm {0}: giá {1} lệch {2} so với giá niêm yết {3} nhưng chưa chọn khuyến mãi", [
+// 					item.item_name,
+// 					format_currency(item.rate, frm.doc.currency),
+// 					format_currency(diff, frm.doc.currency),
+// 					format_currency(item.price_list_rate, frm.doc.currency),
+// 				])
+// 			);
+// 		});
 
-		if (!all_promo_names.length) {
-			resolve(errors);
-			return;
-		}
+// 		if (!all_promo_names.length) {
+// 			resolve(errors);
+// 			return;
+// 		}
 
-		fetch_promo_map(all_promo_names).then(function (promo_map) {
-			items.forEach(function (item) {
-				var promos = parse_promos(item.new_promotions);
-				if (!promos.length) return;
+// 		fetch_promo_map(all_promo_names).then(function (promo_map) {
+// 			items.forEach(function (item) {
+// 				var promos = parse_promos(item.new_promotions);
+// 				if (!promos.length) return;
 
-				var expected = item.price_list_rate || 0;
-				var promo_objects = promos
-					.map(function (name) {
-						return promo_map[name];
-					})
-					.filter(Boolean);
-				promo_objects.forEach(function (p) {
-					expected = apply_promo_discount(expected, p, "Line Item");
-				});
+// 				var expected = item.price_list_rate || 0;
+// 				var promo_objects = promos
+// 					.map(function (name) {
+// 						return promo_map[name];
+// 					})
+// 					.filter(Boolean);
+// 				promo_objects.forEach(function (p) {
+// 					expected = apply_promo_discount(expected, p, "Line Item");
+// 				});
 
-				var diff = Math.abs(item.rate * item.qty - expected * item.qty);
-				if (diff > 5000) {
-					errors.push(
-						__("Sản phẩm {0}: giá thực tế {1} lệch {2} so với giá sau khuyến mãi {3}", [
-							item.item_name,
-							format_currency(item.rate, frm.doc.currency),
-							format_currency(diff, frm.doc.currency),
-							format_currency(expected, frm.doc.currency),
-						])
-					);
-				}
-			});
+// 				var diff = Math.abs(item.rate * item.qty - expected * item.qty);
+// 				if (diff > 5000) {
+// 					errors.push(
+// 						__("Sản phẩm {0}: giá thực tế {1} lệch {2} so với giá sau khuyến mãi {3}", [
+// 							item.item_name,
+// 							format_currency(item.rate, frm.doc.currency),
+// 							format_currency(diff, frm.doc.currency),
+// 							format_currency(expected, frm.doc.currency),
+// 						])
+// 					);
+// 				}
+// 			});
 
-			var base_total = (frm.doc.items || []).reduce(function (sum, item) {
-				return sum + item.rate * item.qty;
-			}, 0);
-			var expected_total = base_total;
-			var order_promo_objects = order_promo_names
-				.map(function (name) {
-					return promo_map[name];
-				})
-				.filter(Boolean);
-			order_promo_objects.forEach(function (p) {
-				expected_total = apply_promo_discount(expected_total, p, "Order");
-			});
-			var order_diff = Math.abs(frm.doc.grand_total - expected_total);
-			if (order_diff > 5000) {
-				errors.push(
-					__("Tổng đơn hàng: giá thực tế {0} lệch {1} so với giá sau khuyến mãi {2}", [
-						format_currency(frm.doc.grand_total, frm.doc.currency),
-						format_currency(order_diff, frm.doc.currency),
-						format_currency(expected_total, frm.doc.currency),
-					])
-				);
-			}
+// 			var base_total = (frm.doc.items || []).reduce(function (sum, item) {
+// 				return sum + item.rate * item.qty;
+// 			}, 0);
+// 			var expected_total = base_total;
+// 			var order_promo_objects = order_promo_names
+// 				.map(function (name) {
+// 					return promo_map[name];
+// 				})
+// 				.filter(Boolean);
+// 			order_promo_objects.forEach(function (p) {
+// 				expected_total = apply_promo_discount(expected_total, p, "Order");
+// 			});
+// 			var order_diff = Math.abs(frm.doc.grand_total - expected_total);
+// 			if (order_diff > 5000) {
+// 				errors.push(
+// 					__("Tổng đơn hàng: giá thực tế {0} lệch {1} so với giá sau khuyến mãi {2}", [
+// 						format_currency(frm.doc.grand_total, frm.doc.currency),
+// 						format_currency(order_diff, frm.doc.currency),
+// 						format_currency(expected_total, frm.doc.currency),
+// 					])
+// 				);
+// 			}
 
-			resolve(errors);
-		});
-	});
-}
-function parse_promos(val) {
-	try {
-		return JSON.parse(val) || [];
-	} catch (e) {
-		return [];
-	}
-}
+// 			resolve(errors);
+// 		});
+// 	});
+// }
+// function parse_promos(val) {
+// 	try {
+// 		return JSON.parse(val) || [];
+// 	} catch (e) {
+// 		return [];
+// 	}
+// }
 
 // frappe.ui.form.on("Sales Order Item", {
 // 	select_promotions: function (frm, cdt, cdn) {
