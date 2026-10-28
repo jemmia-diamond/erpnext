@@ -34,6 +34,7 @@ class CRMSettings(Document):
 		default_valid_till: DF.Data | None
 		enable_auto_lead_insert: DF.Check
 		enable_lead_phone_update_or_merge: DF.Check
+		lead_connections_config: DF.Code | None
 		lost_reason_messages: DF.Code | None
 		move_to_opportunity: DF.Check
 		not_allowed_product_types: DF.Text | None
@@ -50,6 +51,8 @@ class CRMSettings(Document):
 
 	def on_update(self):
 		clear_crm_settings_cache()
+		frappe.clear_cache(doctype="Lead")
 
 	def on_change(self):
 		clear_crm_settings_cache()
+		frappe.clear_cache(doctype="Lead")

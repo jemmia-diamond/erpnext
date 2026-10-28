@@ -588,7 +588,6 @@
   {
    "fieldname": "dashboard_tab",
    "fieldtype": "Tab Break",
-   "hidden": 1,
    "label": "Connections",
    "show_dashboard": 1
   },
