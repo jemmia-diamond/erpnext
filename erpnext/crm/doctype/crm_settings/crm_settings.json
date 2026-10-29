@@ -15,6 +15,7 @@
   "transfer_assign_to_lead_owner",
   "overwrite_existing_lead_owner",
   "auto_nurture_leads",
+  "lead_connections_config",
   "column_break_4",
   "allow_auto_create_lead_product",
   "allowed_product_types",
@@ -102,6 +103,13 @@
    "fieldname": "auto_nurture_leads",
    "fieldtype": "Check",
    "label": "Auto Nurture Inactive Leads"
+  },
+  {
+   "description": "Custom JSON configuration for Lead Connections dashboard (e.g. list of transactions or dictionary). Leave empty to use system defaults.",
+   "fieldname": "lead_connections_config",
+   "fieldtype": "Code",
+   "label": "Lead Connections Config",
+   "options": "JSON"
   },
   {
    "default": "0",
