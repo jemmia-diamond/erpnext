@@ -58,7 +58,9 @@ class Appointment(Document):
 		purchase_purpose: DF.Link | None
 		range_estimated_budget: DF.Link | None
 		record_id: DF.Data | None
+		group_order_grand_total: DF.Currency
 		sales_order: DF.Link | None
+		sales_order_group_names: DF.Data | None
 		scheduled_time: DF.Datetime
 		source: DF.Link | None
 		source_name: DF.Data | None
@@ -131,6 +133,35 @@ class Appointment(Document):
 
 		if not self.party or not self.appointment_with or not self.source:
 			self.handle_missing_party_or_source()
+
+		self.update_group_order_fields()
+
+	def update_group_order_fields(self):
+		if not self.sales_order:
+			self.group_order_grand_total = 0
+			self.sales_order_group_names = None
+			return
+
+		so_data = frappe.db.get_value(
+			"Sales Order",
+			self.sales_order,
+			["split_order_group_name", "grand_total", "cancelled_status"],
+			as_dict=True,
+		)
+		if not so_data:
+			return
+
+		if so_data.cancelled_status == "Cancelled" and not so_data.split_order_group_name:
+			self.group_order_grand_total = 0
+			self.sales_order_group_names = self.sales_order
+		else:
+			from erpnext.crm.doctype.appointment.services.cron import get_sales_order_group_info
+
+			total, names = get_sales_order_group_info(
+				self.sales_order, so_data.split_order_group_name, so_data.grand_total
+			)
+			self.group_order_grand_total = total
+			self.sales_order_group_names = names
 
 	def before_insert(self):
 		# number_of_appointments_in_same_slot = frappe.db.count(
