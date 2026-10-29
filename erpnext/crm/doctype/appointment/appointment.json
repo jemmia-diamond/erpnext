@@ -45,6 +45,8 @@
   "source",
   "source_name",
   "sales_order",
+  "group_order_grand_total",
+  "sales_order_group_names",
   "addition_information_section",
   "customer_response",
   "conversation_greeting",
@@ -164,6 +166,21 @@
    "label": "Sales Order",
    "options": "Sales Order",
    "search_index": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "group_order_grand_total",
+   "fieldtype": "Currency",
+   "hidden": 1,
+   "label": "Group Order Grand Total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sales_order_group_names",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Sales Order Group Names",
+   "read_only": 1
   },
   {
    "fieldname": "store",
