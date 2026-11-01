@@ -9,6 +9,7 @@
  "field_order": [
   "section_thong_tin_san_pham",
   "item_name",
+  "serial",
   "serial_numbers",
   "variant_title",
   "column_break_sp1",
@@ -53,7 +54,6 @@
   "discount_rate",
   "section_break_eour",
   "column_break_lnqd",
-  "serial",
   "section_break_5",
   "description",
   "item_group",
@@ -1163,8 +1163,7 @@
    "fieldname": "serial",
    "fieldtype": "Link",
    "label": "Find Serial Number",
-   "options": "Serial",
-   "hidden": 1
+   "options": "Serial"
   },
   {
    "fieldname": "column_break_klcw",
@@ -1311,7 +1310,7 @@
  "idx": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-02-21 16:39:00.200328",
+ "modified": "2026-11-01 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order Item",
