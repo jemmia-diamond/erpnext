@@ -966,6 +966,7 @@ class SalesOrder(SellingController):
 	def on_update(self):
 		self.check_status_changes_for_rank()
 		self.sync_tracking_number_to_payment_entry()
+		self.flags.candidate_reference_orders = None
 		self.copy_from_reference_order()
 		self.autofill_serials_from_reference_chain()
 		self.sync_promotions_to_split_group()
@@ -2039,14 +2040,26 @@ class SalesOrder(SellingController):
 			get_candidate_reference_orders,
 		)
 
-		return get_candidate_reference_orders(self)
+		# Cached for the current save; on_update clears it
+		key = (self.haravan_ref_order_id, self.is_split_order, self.split_order_group)
+		cached = self.flags.candidate_reference_orders
+		if cached and cached[0] == key:
+			return list(cached[1])
+
+		result = get_candidate_reference_orders(self)
+		self.flags.candidate_reference_orders = (key, result)
+		return list(result)
 
 	def autofill_serials_from_reference_chain(self):
 		"""Fill empty jewelry serials from the full reference chain (variant ID, then SPT -> real product)"""
 		try:
-			from erpnext.selling.doctype.sales_order.services.serial_autofill import autofill_missing_serials
+			from erpnext.selling.doctype.sales_order.services.serial_autofill import (
+				autofill_missing_serials,
+				has_serial_relevant_changes,
+			)
 
-			autofill_missing_serials(self)
+			if has_serial_relevant_changes(self):
+				autofill_missing_serials(self)
 		except Exception as e:
 			frappe.log_error(f"Error auto-filling serials from reference chain: {e!s}")
 
@@ -3761,30 +3774,11 @@ def validate_serial_number(serial_number, sales_order_name=None):
 		so = frappe.get_doc("Sales Order", sales_order_name)
 		related_orders = set(so.get_all_related_sales_orders() or [])
 
-	duplicate_items = frappe.db.sql(
-		"""
-		SELECT
-			so_item.parent as order_name,
-			so_item.serial_numbers
-		FROM
-			`tabSales Order Item` so_item
-		INNER JOIN
-			`tabSales Order` so ON so.name = so_item.parent
-		WHERE
-			so_item.serial_numbers LIKE %s
-			AND so.docstatus < 2
-			AND so.cancelled_status = 'Uncancelled'
-			AND so.name != %s
-	""",
-		(f"%{serial_number}%", sales_order_name or ""),
-		as_dict=True,
-	)
+	from erpnext.selling.doctype.sales_order.services.serial_autofill import get_serials_used_elsewhere
 
-	for d in duplicate_items:
-		d_serials = [s.strip() for s in (d.serial_numbers or "").split("\n") if s.strip()]
-		if serial_number in d_serials:
-			if d.order_name not in related_orders:
-				return {"allowed": False, "duplicate_order": d.order_name}
+	used = get_serials_used_elsewhere([serial_number], sales_order_name, related_orders)
+	if serial_number in used:
+		return {"allowed": False, "duplicate_order": used[serial_number]}
 
 	return {"allowed": True}
 
