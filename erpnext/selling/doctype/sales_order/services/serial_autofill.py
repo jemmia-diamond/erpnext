@@ -172,7 +172,7 @@ def _find_claim(item, ref_levels, rules, is_serial_allowed):
 	return None
 
 
-def backfill_missing_serials(sales_order):
+def autofill_missing_serials(sales_order):
 	"""
 	Fill empty serial_numbers on jewelry items from the full reference chain.
 	Only writes items that are still empty; never overwrites a serial.

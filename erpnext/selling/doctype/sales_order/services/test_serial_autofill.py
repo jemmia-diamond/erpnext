@@ -6,7 +6,7 @@ from unittest.mock import patch
 import frappe
 from frappe.tests import UnitTestCase
 
-from erpnext.selling.doctype.sales_order.services.serial_backfill import (
+from erpnext.selling.doctype.sales_order.services.serial_autofill import (
 	RULE_TEMPORARY_TO_REAL,
 	RULE_VARIANT,
 	get_reference_chain_levels,
@@ -132,7 +132,7 @@ class TestReferenceChainLevels(UnitTestCase):
 		with (
 			patch("frappe.db.get_all", side_effect=get_all),
 			patch(
-				"erpnext.selling.doctype.sales_order.services.serial_backfill.get_candidate_reference_orders",
+				"erpnext.selling.doctype.sales_order.services.serial_autofill.get_candidate_reference_orders",
 				side_effect=lambda order: refs.get(order.name, []),
 			),
 		):
@@ -147,7 +147,7 @@ class TestReferenceChainLevels(UnitTestCase):
 		with (
 			patch("frappe.db.get_all", side_effect=get_all),
 			patch(
-				"erpnext.selling.doctype.sales_order.services.serial_backfill.get_candidate_reference_orders",
+				"erpnext.selling.doctype.sales_order.services.serial_autofill.get_candidate_reference_orders",
 				side_effect=lambda order: [f"SO-{int(order.name.split('-')[1]) + 1}"],
 			),
 		):
