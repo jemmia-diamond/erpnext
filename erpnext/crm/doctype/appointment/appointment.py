@@ -88,10 +88,18 @@ class Appointment(Document):
 	def handle_missing_party_or_source(self):
 		if not self.party or not self.appointment_with:
 			if self.customer_phone_number:
-				doctype, docname = search_doc_by_phone(self.customer_phone_number, ["Customer", "Lead"])
-				if doctype and docname:
-					self.appointment_with = doctype
-					self.party = docname
+				# Customer with sales orders wins; otherwise prefer its Lead
+				_, customer = search_doc_by_phone(self.customer_phone_number, ["Customer"])
+				lead = None
+				if not (customer and has_sales_orders(customer)):
+					lead = customer and frappe.db.get_value("Customer", customer, "lead_name")
+					if not lead:
+						_, lead = search_doc_by_phone(self.customer_phone_number, ["Lead"])
+
+				if lead:
+					self.appointment_with, self.party = "Lead", lead
+				elif customer:
+					self.appointment_with, self.party = "Customer", customer
 
 		if self.party and not self.source:
 			self.handle_missing_source()
