@@ -12,7 +12,7 @@ from frappe.share import add_docshare
 from frappe.utils import get_url, getdate, now, add_to_date, now_datetime
 from frappe.utils.verified_command import get_signed_params
 from erpnext.utilities.phone_utils import get_phone_variants, search_doc_by_phone
-from erpnext.selling.doctype.customer.customer_service.service import has_paid_sales_order
+from erpnext.selling.doctype.customer.customer_service.service import has_sales_orders
 class Appointment(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
@@ -88,10 +88,18 @@ class Appointment(Document):
 	def handle_missing_party_or_source(self):
 		if not self.party or not self.appointment_with:
 			if self.customer_phone_number:
-				doctype, docname = search_doc_by_phone(self.customer_phone_number, ["Customer", "Lead"])
-				if doctype and docname:
-					self.appointment_with = doctype
-					self.party = docname
+				# Customer with sales orders wins; otherwise prefer its Lead
+				_, customer = search_doc_by_phone(self.customer_phone_number, ["Customer"])
+				lead = None
+				if not (customer and has_sales_orders(customer)):
+					lead = customer and frappe.db.get_value("Customer", customer, "lead_name")
+					if not lead:
+						_, lead = search_doc_by_phone(self.customer_phone_number, ["Lead"])
+
+				if lead:
+					self.appointment_with, self.party = "Lead", lead
+				elif customer:
+					self.appointment_with, self.party = "Customer", customer
 
 		if self.party and not self.source:
 			self.handle_missing_source()
@@ -182,7 +190,7 @@ class Appointment(Document):
 						customer = frappe.db.get_value("Customer", {"phone": ("in", variants)}, "name")
 					
 					if customer:
-						if not has_paid_sales_order(customer):
+						if not has_sales_orders(customer):
 							customer = None
 						
 					if customer:
@@ -200,7 +208,7 @@ class Appointment(Document):
 				customer = self.find_customer_by_email()
 				
 				if customer:
-					if not has_paid_sales_order(customer):
+					if not has_sales_orders(customer):
 						customer = None
 
 				if customer:

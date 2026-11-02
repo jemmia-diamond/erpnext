@@ -123,3 +123,24 @@ def has_paid_sales_order(customer_name=None):
         return True
         
     return False
+
+@frappe.whitelist()
+def has_sales_orders(customer_name=None):
+    if not customer_name:
+        return False
+
+    if hasattr(customer_name, "name"):
+        customer_name = customer_name.name
+
+    count = frappe.db.sql(
+        """
+        SELECT COUNT(DISTINCT COALESCE(NULLIF(split_order_group_name, ''), name))
+        FROM `tabSales Order`
+        WHERE customer = %s
+          AND grand_total > 1000
+          AND cancelled_status = 'Uncancelled'
+        """,
+        (customer_name,),
+    )[0][0]
+
+    return count > 1
