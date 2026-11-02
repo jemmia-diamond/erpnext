@@ -967,6 +967,7 @@ class SalesOrder(SellingController):
 		self.check_status_changes_for_rank()
 		self.sync_tracking_number_to_payment_entry()
 		self.copy_from_reference_order()
+		self.autofill_serials_from_reference_chain()
 		self.sync_promotions_to_split_group()
 
 	def sync_promotions_to_split_group(self):
@@ -2034,29 +2035,20 @@ class SalesOrder(SellingController):
 		"""
 		Given this sales order, find all ref sales orders of member orders in its split group
 		"""
-		reference_ids = set()
-
-		if self.haravan_ref_order_id:
-			reference_ids.add(self.haravan_ref_order_id)
-
-		if self.is_split_order and self.split_order_group:
-			sibling_orders = frappe.db.get_all(
-				"Sales Order",
-				filters={"split_order_group": self.split_order_group},
-				fields=["haravan_ref_order_id"],
-			)
-			for order in sibling_orders:
-				if order.haravan_ref_order_id:
-					reference_ids.add(order.haravan_ref_order_id)
-
-		if not reference_ids:
-			return []
-
-		original_sales_orders = frappe.db.get_all(
-			"Sales Order", filters={"haravan_order_id": ["in", list(reference_ids)]}, fields=["name"]
+		from erpnext.selling.doctype.sales_order.services.serial_autofill import (
+			get_candidate_reference_orders,
 		)
 
-		return [order.name for order in original_sales_orders]
+		return get_candidate_reference_orders(self)
+
+	def autofill_serials_from_reference_chain(self):
+		"""Fill empty jewelry serials from the full reference chain (variant ID, then SPT -> real product)"""
+		try:
+			from erpnext.selling.doctype.sales_order.services.serial_autofill import autofill_missing_serials
+
+			autofill_missing_serials(self)
+		except Exception as e:
+			frappe.log_error(f"Error auto-filling serials from reference chain: {e!s}")
 
 	def copy_sales_order_items_from_reference(self, ref_order_doc, include_fields=None, target_items=None):
 		"""Copy Sales Order Items from reference order based on haravan_variant_id mapping"""
