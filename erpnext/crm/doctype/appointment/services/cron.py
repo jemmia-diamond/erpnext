@@ -1,5 +1,5 @@
 import frappe
-from frappe.utils import add_to_date, now_datetime
+from frappe.utils import add_to_date, getdate, now_datetime
 from erpnext.utilities.phone_utils import get_phone_variants
 
 
@@ -39,28 +39,155 @@ def get_sales_order_group_info(so_name, split_order_group_name=None, grand_total
 	return float(grand_total or 0), (so_name or "")
 
 
+def cleanup_duplicate_appointment_sales_orders():
+	"""
+	Cleans up existing appointments sharing the same Sales Order.
+	Keeps the appointment closest to the Sales Order real_order_date (appt_date <= order_date),
+	and unmaps older duplicate appointments (sets sales_order=None, group_order_grand_total=0.0, sales_order_group_names=None).
+	Also unmaps any appointment where real_order_date is strictly before the appointment's scheduled date.
+	"""
+	duplicates = frappe.db.sql(
+		"""
+		SELECT sales_order, COUNT(*) AS cnt
+		FROM `tabAppointment`
+		WHERE sales_order IS NOT NULL AND sales_order != ''
+		GROUP BY sales_order
+		HAVING cnt > 1
+		""",
+		as_dict=True,
+	)
+
+	unmapped_appointments = []
+	for dup in duplicates:
+		so_name = dup["sales_order"]
+		so = frappe.db.get_value(
+			"Sales Order", so_name, ["creation", "real_order_date", "transaction_date"], as_dict=True
+		)
+		if not so:
+			continue
+		order_date = so.real_order_date or so.transaction_date or getdate(so.creation)
+
+		appts = frappe.db.sql(
+			"""
+			SELECT name, scheduled_time
+			FROM `tabAppointment`
+			WHERE sales_order = %s
+			ORDER BY scheduled_time DESC
+			""",
+			(so_name,),
+			as_dict=True,
+		)
+
+		valid_appts = [a for a in appts if getdate(a.scheduled_time) <= order_date]
+		keep_appt = valid_appts[0] if valid_appts else appts[0]
+
+		for appt in appts:
+			if appt.name != keep_appt.name:
+				frappe.db.set_value(
+					"Appointment",
+					appt.name,
+					{
+						"sales_order": None,
+						"group_order_grand_total": 0.0,
+						"sales_order_group_names": None,
+					},
+					update_modified=False,
+				)
+				unmapped_appointments.append({"appointment": appt.name, "sales_order": so_name, "kept": keep_appt.name})
+
+	# Unmap any appointment whose sales order real_order_date is strictly before scheduled date
+	mismatched = frappe.db.sql(
+		"""
+		SELECT appt.name, appt.sales_order
+		FROM `tabAppointment` appt
+		JOIN `tabSales Order` so ON so.name = appt.sales_order
+		WHERE appt.sales_order IS NOT NULL AND appt.sales_order != ''
+		  AND so.real_order_date IS NOT NULL
+		  AND so.real_order_date < DATE(appt.scheduled_time)
+		""",
+		as_dict=True,
+	)
+	for row in mismatched:
+		frappe.db.set_value(
+			"Appointment",
+			row.name,
+			{
+				"sales_order": None,
+				"group_order_grand_total": 0.0,
+				"sales_order_group_names": None,
+			},
+			update_modified=False,
+		)
+		unmapped_appointments.append({
+			"appointment": row.name,
+			"sales_order": row.sales_order,
+			"kept": None,
+			"reason": "real_order_date before scheduled_time",
+		})
+
+	if unmapped_appointments:
+		frappe.db.commit()
+
+	return unmapped_appointments
+
+
 def map_sales_orders_to_appointments():
 	"""
 	Hourly cron job:
-	1. Maps recently created Sales Orders to Appointments based on:
-	   - Appointment scheduled_time < Sales Order creation
-	   - Appointment scheduled_time within 15 days of Sales Order creation
+	1. Cleans up any existing duplicate appointment mappings (keeps only the closest appointment to SO real_order_date).
+	2. Maps recently created Sales Orders to Appointments based on:
+	   - Order date is based on real_order_date (Date), falling back to transaction_date / creation date.
+	   - Appointment scheduled date <= Sales Order real_order_date
+	   - Appointment scheduled date within 15 days of Sales Order real_order_date
+	   - 1 Sales Order maps to at most 1 Appointment (the closest scheduled_time on or before real_order_date).
+	   - Split orders in the same group do not greedily map to older appointments.
 	   - Sales Order cancelled_status == 'Uncancelled' (no docstatus check)
 	   - Both SO and Appointment within recent 15-day window (now() - 15 days)
 	   - Appointment customer_phone_number matches any phone variant of Sales Order's customer
 	   - Sets sales_order, group_order_grand_total, and sales_order_group_names
-	2. Syncs group_order_grand_total and sales_order_group_names for mapped appointments in 15-day window
+	3. Syncs group_order_grand_total and sales_order_group_names for mapped appointments in 15-day window
 	"""
+	# Rule 3: Clean up duplicate / mismatched mappings first
+	cleanup_duplicate_appointment_sales_orders()
+
 	earliest_time = add_to_date(now_datetime(), days=-15)
+	earliest_date = add_to_date(now_datetime(), days=-15).date()
 	group_cache = {}
 
-	# Fetch uncancelled Sales Orders created within last 15 days
+	# Track Sales Orders already mapped to an appointment
+	mapped_so_names = set(
+		frappe.db.sql_list(
+			"""
+			SELECT DISTINCT sales_order
+			FROM `tabAppointment`
+			WHERE sales_order IS NOT NULL AND sales_order != ''
+			"""
+		)
+	)
+
+	# Track split order groups already mapped to an appointment (Rule 2: avoid sibling orders claiming older appointments)
+	mapped_split_groups = set(
+		frappe.db.sql_list(
+			"""
+			SELECT DISTINCT so.split_order_group_name
+			FROM `tabAppointment` appt
+			JOIN `tabSales Order` so ON so.name = appt.sales_order
+			WHERE appt.sales_order IS NOT NULL AND appt.sales_order != ''
+			  AND so.split_order_group_name IS NOT NULL AND so.split_order_group_name != ''
+			"""
+		)
+	)
+
+	# Fetch uncancelled Sales Orders within last 15 days (by creation or real_order_date)
 	sales_orders = frappe.db.sql(
 		"""
 		SELECT
 			so.name,
 			so.customer,
 			so.creation,
+			so.real_order_date,
+			so.transaction_date,
+			COALESCE(so.real_order_date, so.transaction_date, DATE(so.creation)) AS order_date,
 			so.contact_phone,
 			so.contact_mobile,
 			so.grand_total,
@@ -72,10 +199,10 @@ def map_sales_orders_to_appointments():
 		WHERE so.cancelled_status = 'Uncancelled'
 		  AND so.grand_total > 1000
 		  AND (so.source_name IS NULL OR so.source_name NOT IN ('bhsc-cua-hang-hcm', 'bhsc-cua-hang-hn'))
-		  AND so.creation >= %(earliest_time)s
-		ORDER BY so.creation DESC
+		  AND (so.creation >= %(earliest_time)s OR COALESCE(so.real_order_date, so.transaction_date) >= %(earliest_date)s)
+		ORDER BY COALESCE(so.real_order_date, so.transaction_date, DATE(so.creation)) DESC, so.creation DESC
 		""",
-		{"earliest_time": earliest_time},
+		{"earliest_time": earliest_time, "earliest_date": earliest_date},
 		as_dict=True,
 	)
 
@@ -99,8 +226,16 @@ def map_sales_orders_to_appointments():
 
 	if sales_orders and unmapped_appointments:
 		for so in sales_orders:
-			so_creation = so.creation
-			cutoff_time = add_to_date(so_creation, days=-15)
+			# Skip if this Sales Order is already mapped to an appointment
+			if so.name in mapped_so_names:
+				continue
+
+			# Rule 2: Skip if this split group is already mapped to an appointment
+			if so.split_order_group_name and so.split_order_group_name in mapped_split_groups:
+				continue
+
+			order_date = getdate(so.order_date)
+			cutoff_date = add_to_date(order_date, days=-15)
 
 			# Collect phone numbers for this Sales Order / Customer
 			phones = set()
@@ -121,23 +256,25 @@ def map_sales_orders_to_appointments():
 			if not variants:
 				continue
 
-			# Find matching appointments
-			matched_appts = []
+			# Rule 1: Find closest matching appointment (unmapped_appointments is ORDER BY scheduled_time DESC)
+			# Order date must be on or after appointment scheduled date, within 15 days
+			target_appt = None
 			for appt in unmapped_appointments:
 				appt_phone = str(appt.customer_phone_number).strip()
 				if appt_phone in variants:
-					# Rule: appointment scheduled_time < SO creation AND scheduled_time >= SO creation - 15 days
-					if cutoff_time <= appt.scheduled_time < so_creation:
-						matched_appts.append(appt)
+					appt_date = getdate(appt.scheduled_time)
+					if cutoff_date <= appt_date <= order_date:
+						target_appt = appt
+						break
 
-			for appt in matched_appts:
+			if target_appt:
 				try:
 					group_total, group_names = get_sales_order_group_info(
 						so.name, so.split_order_group_name, so.grand_total, group_cache
 					)
 					frappe.db.set_value(
 						"Appointment",
-						appt.name,
+						target_appt.name,
 						{
 							"sales_order": so.name,
 							"group_order_grand_total": group_total,
@@ -145,9 +282,12 @@ def map_sales_orders_to_appointments():
 						},
 						update_modified=False,
 					)
-					unmapped_appointments.remove(appt)
+					unmapped_appointments.remove(target_appt)
+					mapped_so_names.add(so.name)
+					if so.split_order_group_name:
+						mapped_split_groups.add(so.split_order_group_name)
 				except Exception as e:
-					frappe.log_error(f"Failed to map Sales Order {so.name} to Appointment {appt.name}: {e!s}")
+					frappe.log_error(f"Failed to map Sales Order {so.name} to Appointment {target_appt.name}: {e!s}")
 
 	# Sync group totals and group names for existing mapped appointments in the 15-day window
 	mapped_appointments = frappe.db.sql(
