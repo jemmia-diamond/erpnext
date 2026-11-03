@@ -32,20 +32,24 @@ def get_candidate_reference_orders(order):
 	Reference orders of `order` and of the other member orders in its split group.
 	`order` is any object with haravan_ref_order_id, is_split_order and split_order_group.
 	"""
-	reference_ids = set()
+	return get_candidate_reference_orders_for([order])
 
-	if order.haravan_ref_order_id:
-		reference_ids.add(order.haravan_ref_order_id)
 
-	if order.is_split_order and order.split_order_group:
+def get_candidate_reference_orders_for(orders):
+	"""
+	Candidate reference orders of several orders at once (at most 2 queries).
+	Same result as joining get_candidate_reference_orders() of each order.
+	"""
+	reference_ids = {o.haravan_ref_order_id for o in orders if o.haravan_ref_order_id}
+	split_groups = {o.split_order_group for o in orders if o.is_split_order and o.split_order_group}
+
+	if split_groups:
 		sibling_orders = frappe.db.get_all(
 			"Sales Order",
-			filters={"split_order_group": order.split_order_group},
+			filters={"split_order_group": ["in", list(split_groups)]},
 			fields=["haravan_ref_order_id"],
 		)
-		for sibling in sibling_orders:
-			if sibling.haravan_ref_order_id:
-				reference_ids.add(sibling.haravan_ref_order_id)
+		reference_ids.update(s.haravan_ref_order_id for s in sibling_orders if s.haravan_ref_order_id)
 
 	if not reference_ids:
 		return []
@@ -62,7 +66,7 @@ def get_reference_chain_levels(sales_order, max_depth=MAX_REFERENCE_DEPTH):
 	Walk the reference chain up to `max_depth` levels.
 	Level 1 is sales_order.get_candidate_reference_orders(); each next level holds the
 	candidate reference orders of the previous one. Returns a list of levels (lists of names),
-	nearest first. Every order appears once, so cycles stop.
+	nearest first. Every order appears once, so cycles stop. At most 3 queries per level.
 	"""
 	seen = {sales_order.name}
 	levels = []
@@ -73,15 +77,15 @@ def get_reference_chain_levels(sales_order, max_depth=MAX_REFERENCE_DEPTH):
 		seen.update(current)
 		levels.append(current)
 
+		if len(levels) == max_depth:
+			break
+
 		orders = frappe.db.get_all(
 			"Sales Order",
 			filters={"name": ["in", current]},
 			fields=["name", "haravan_ref_order_id", "is_split_order", "split_order_group"],
 		)
-		next_level = []
-		for order in orders:
-			next_level += [n for n in get_candidate_reference_orders(order) if n not in seen]
-		current = next_level
+		current = [n for n in get_candidate_reference_orders_for(orders) if n not in seen]
 
 	return levels
 
@@ -172,6 +176,67 @@ def _find_claim(item, ref_levels, rules, is_serial_allowed):
 	return None
 
 
+def get_serials_used_elsewhere(serials, sales_order_name=None, related_orders=()):
+	"""
+	One query for many serials. Returns {serial: order_name} for each serial found on another
+	uncancelled order that is not in `related_orders` (same rule as validate_serial_number).
+	"""
+	serials = [s for s in dict.fromkeys(serials) if s]
+	if not serials:
+		return {}
+
+	like_conditions = " OR ".join(["so_item.serial_numbers LIKE %s"] * len(serials))
+	rows = frappe.db.sql(
+		f"""
+		SELECT
+			so_item.parent as order_name,
+			so_item.serial_numbers
+		FROM
+			`tabSales Order Item` so_item
+		INNER JOIN
+			`tabSales Order` so ON so.name = so_item.parent
+		WHERE
+			({like_conditions})
+			AND so.docstatus < 2
+			AND so.cancelled_status = 'Uncancelled'
+			AND so.name != %s
+	""",
+		(*[f"%{s}%" for s in serials], sales_order_name or ""),
+		as_dict=True,
+	)
+
+	used = {}
+	for row in rows:
+		if row.order_name in related_orders:
+			continue
+		row_serials = {s.strip() for s in (row.serial_numbers or "").split("\n") if s.strip()}
+		for serial in serials:
+			if serial in row_serials and serial not in used:
+				used[serial] = row.order_name
+	return used
+
+
+REFERENCE_FIELDS = ("haravan_ref_order_id", "is_split_order", "split_order_group")
+
+
+def has_serial_relevant_changes(sales_order):
+	"""
+	True when this save could change the auto-fill result: a new order, a changed reference or
+	split group, or an item added, removed or with its serial changed. Other saves skip the walk.
+	"""
+	before = sales_order.get_doc_before_save()
+	if not before:
+		return True
+
+	if any(before.get(field) != sales_order.get(field) for field in REFERENCE_FIELDS):
+		return True
+
+	def serials_by_row(doc):
+		return {row.name: _serial(row) for row in (doc.get("items") or [])}
+
+	return serials_by_row(before) != serials_by_row(sales_order)
+
+
 def autofill_missing_serials(sales_order):
 	"""
 	Fill empty serial_numbers on jewelry items from the full reference chain.
@@ -203,19 +268,29 @@ def autofill_missing_serials(sales_order):
 		items_by_parent.setdefault(ref.parent, []).append(ref)
 	ref_levels = [[ref for name in level for ref in items_by_parent.get(name, [])] for level in levels]
 
-	from erpnext.selling.doctype.sales_order.sales_order import _tokenize_serials, validate_serial_number
+	from erpnext.selling.doctype.sales_order.sales_order import _tokenize_serials
 
 	serials_on_order = set()
 	for item in sales_order.get("items") or []:
 		serials_on_order |= _tokenize_serials(_serial(item)) if _serial(item) else set()
 
-	def is_serial_allowed(serial):
+	def is_serial_free_on_order(serial):
 		tokens = _tokenize_serials(serial)
-		if not tokens or tokens & serials_on_order:
-			return False
-		return all(validate_serial_number(token, sales_order.name).get("allowed") for token in tokens)
+		return bool(tokens) and not tokens & serials_on_order
 
-	matches = match_missing_serials(missing_items, ref_levels, is_serial_allowed)
+	matches = match_missing_serials(missing_items, ref_levels, is_serial_free_on_order)
+	if not matches:
+		return {}
+
+	# One duplicate check for every matched serial
+	tokens = sorted({t for serial, _ref, _rule in matches.values() for t in _tokenize_serials(serial)})
+	used = get_serials_used_elsewhere(
+		tokens, sales_order.name, set(sales_order.get_all_related_sales_orders() or [])
+	)
+	matches = {
+		name: match for name, match in matches.items() if not _tokenize_serials(match[0]) & used.keys()
+	}
+
 	for item in missing_items:
 		if item.name in matches:
 			item.db_set("serial_numbers", matches[item.name][0])
