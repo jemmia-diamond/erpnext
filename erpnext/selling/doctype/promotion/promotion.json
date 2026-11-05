@@ -14,6 +14,8 @@
   "priority",
   "discount_type",
   "promotion_type",
+  "for_new_customer",
+  "for_old_customer",
   "min_value",
   "max_value",
   "discount_amount",
@@ -107,6 +109,20 @@
    "reqd": 1
   },
   {
+   "default": "1",
+   "fieldname": "for_new_customer",
+   "fieldtype": "Check",
+   "in_standard_filter": 1,
+   "label": "For New Customers"
+  },
+  {
+   "default": "1",
+   "fieldname": "for_old_customer",
+   "fieldtype": "Check",
+   "in_standard_filter": 1,
+   "label": "For Old Customers"
+  },
+  {
    "depends_on": "eval:doc.product_category == 'Kim Cương Viên'",
    "fieldname": "min_value",
    "fieldtype": "Float",
@@ -148,7 +164,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-12 14:40:00.000000",
+ "modified": "2026-11-05 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Promotion",

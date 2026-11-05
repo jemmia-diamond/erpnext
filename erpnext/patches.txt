@@ -491,3 +491,4 @@ erpnext.seeds.contact.backfill_inserted_at
 # 2025-08-20
 erpnext.seeds.sales_order_item.drop_obsolete_promotion_columns
 erpnext.seeds.promotion.drop_type_column
+erpnext.seeds.promotion.set_customer_type
