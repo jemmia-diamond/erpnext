@@ -9,10 +9,16 @@ from frappe import _
 from frappe.desk.form.assign_to import add as add_assignment
 from frappe.model.document import Document
 from frappe.share import add_docshare
-from frappe.utils import get_url, getdate, now, add_to_date, now_datetime
+from frappe.utils import flt, get_url, getdate, now, add_to_date, now_datetime
 from frappe.utils.verified_command import get_signed_params
 from erpnext.utilities.phone_utils import get_phone_variants, search_doc_by_phone
 from erpnext.selling.doctype.customer.customer_service.service import has_sales_orders
+
+# Roles allowed to edit the sales split table besides the appointment's primary sales.
+# Not "Sales Manager": every sales user has it.
+SALES_SPLIT_MANAGER_ROLES = ("System Manager", "Jemmia Sales Leader")
+
+
 class Appointment(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
@@ -22,6 +28,7 @@ class Appointment(Document):
 	if TYPE_CHECKING:
 		from erpnext.crm.doctype.appointment_policy.appointment_policy import AppointmentPolicy
 		from erpnext.crm.doctype.appointment_sales_person.appointment_sales_person import AppointmentSalesPerson
+		from erpnext.crm.doctype.appointment_sales_split.appointment_sales_split import AppointmentSalesSplit
 		from erpnext.crm.doctype.lead_product_item.lead_product_item import LeadProductItem
 		from frappe.types import DF
 
@@ -61,6 +68,7 @@ class Appointment(Document):
 		group_order_grand_total: DF.Currency
 		sales_order: DF.Link | None
 		sales_order_group_names: DF.Data | None
+		sales_splits: DF.Table[AppointmentSalesSplit]
 		scheduled_time: DF.Datetime
 		source: DF.Link | None
 		source_name: DF.Data | None
@@ -405,6 +413,32 @@ class Appointment(Document):
 			add_docshare(self.doctype, self.name, agent, flags={"ignore_share_permission": True})
 
 		add_assignment({"doctype": self.doctype, "name": self.name, "assign_to": [agent]})
+
+
+def _sales_split_signature(rows):
+	return sorted(
+		(row.sales_person or "", flt(row.percentage, 2), (row.reason or "").strip()) for row in rows or []
+	)
+
+
+@frappe.whitelist()
+def can_edit_sales_splits(primary_sales=None):
+	"""True if the session user may edit an appointment's sales split table."""
+	user = frappe.session.user
+	if user == "Administrator" or set(frappe.get_roles(user)) & set(SALES_SPLIT_MANAGER_ROLES):
+		return True
+
+	if not primary_sales:
+		return False
+
+	employee_email, employee = frappe.db.get_value(
+		"Sales Person", primary_sales, ["employee_email", "employee"]
+	) or (None, None)
+	allowed_users = {employee_email}
+	if employee:
+		allowed_users.add(frappe.db.get_value("Employee", employee, "user_id"))
+	allowed_users.discard(None)
+	return user in allowed_users
 
 
 def _get_agents_sorted_by_asc_workload(date):

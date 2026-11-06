@@ -47,6 +47,8 @@
   "sales_order",
   "group_order_grand_total",
   "sales_order_group_names",
+  "sales_split_section",
+  "sales_splits",
   "addition_information_section",
   "customer_response",
   "conversation_greeting",
@@ -462,10 +464,25 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Source name"
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval:doc.sales_splits && doc.sales_splits.length",
+   "depends_on": "eval:doc.sales_order || (doc.sales_splits && doc.sales_splits.length)",
+   "fieldname": "sales_split_section",
+   "fieldtype": "Section Break",
+   "label": "Sales Split"
+  },
+  {
+   "description": "Adding an order auto-fills the primary sales at 100%. Percentages must add up to 100%.",
+   "fieldname": "sales_splits",
+   "fieldtype": "Table",
+   "label": "Sales Split",
+   "options": "Appointment Sales Split"
   }
  ],
  "links": [],
- "modified": "2026-10-07 08:33:40.278912",
+ "modified": "2026-11-06 08:00:00.000000",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Appointment",
