@@ -160,7 +160,8 @@
    "fieldname": "party",
    "fieldtype": "Dynamic Link",
    "label": "Party",
-   "options": "appointment_with"
+   "options": "appointment_with",
+   "search_index": 1
   },
   {
    "fieldname": "sales_order",
